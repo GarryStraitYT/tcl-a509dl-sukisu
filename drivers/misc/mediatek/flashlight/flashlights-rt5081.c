@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -79,9 +76,6 @@ struct rt5081_platform_data {
 };
 
 
-/******************************************************************************
- * rt5081 operations
- *****************************************************************************/
 static const int rt5081_current[RT5081_LEVEL_NUM] = {
 	  25,   50,  75, 100, 125, 150, 175,  200,  225,  250,
 	 275,  300, 325, 350, 375, 400, 450,  500,  550,  600,
@@ -310,9 +304,6 @@ static int rt5081_uninit(void)
 }
 
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static void rt5081_work_disable_ch1(struct work_struct *data)
 {
 	pr_debug("ht work queue callback\n");
@@ -365,9 +356,6 @@ static int rt5081_timer_cancel(int channel)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operation wrapper function
- *****************************************************************************/
 static int rt5081_operate(int channel, int enable)
 {
 	ktime_t ktime;
@@ -436,9 +424,6 @@ static int rt5081_operate(int channel, int enable)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int rt5081_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -583,9 +568,6 @@ static struct flashlight_operations rt5081_ops = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int rt5081_parse_dt(struct device *dev,
 		struct rt5081_platform_data *pdata)
 {

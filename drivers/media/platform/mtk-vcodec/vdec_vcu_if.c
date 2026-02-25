@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/fdtable.h>
 #include <linux/interrupt.h>
@@ -179,10 +176,6 @@ inline void close_mapped_fd(unsigned int target_fd)
 #endif
 }
 
-/*
- * This function runs in interrupt context and it means there's a IPI MSG
- * from VCU.
- */
 int vcu_dec_ipi_handler(void *data, unsigned int len, void *priv)
 {
 	struct vdec_vcu_ipi_ack *msg = data;

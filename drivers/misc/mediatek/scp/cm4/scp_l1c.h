@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __SCP_L1C_H
 #define __SCP_L1C_H
@@ -13,8 +10,6 @@
 #define L1C_SEL(x) ((struct L1C_REGISTER_T *)(L1C_BASE+x*0x3000))
 
 
-/* L1C_OP register definitions
- */
 	#define L1C_OP_EN_OFFSET		(0)
 	#define L1C_OP_EN_MASK			(1<<L1C_OP_EN_OFFSET)
 	#define L1C_OP_OP_OFFSET		(1)
@@ -24,8 +19,6 @@ enum scp_l1c_status_t {
 	SCP_L1C_STATUS_OK = 0
 };
 
-/* structure type to access the L1C register
- */
 struct L1C_REGISTER_T {
 	uint32_t L1C_CON;
 	uint32_t L1C_OP;

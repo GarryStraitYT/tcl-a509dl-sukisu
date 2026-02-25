@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mt2701-afe-clock-ctrl.c  --  Mediatek 2701 afe clock ctrl
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Garlic Tseng <garlic.tseng@mediatek.com>
- *	   Ryder Lee <ryder.lee@mediatek.com>
- */
 
 #include "mt2701-afe-common.h"
 #include "mt2701-afe-clock-ctrl.h"

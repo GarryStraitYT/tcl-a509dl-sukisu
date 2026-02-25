@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- * Author: Weiyi Lu <weiyi.lu@mediatek.com>
- */
 
 #include <linux/clk-provider.h>
 #include <linux/syscore_ops.h>

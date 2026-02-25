@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- *
- */
 
 //Add-begin by baiwei.peng for TP porting on 2020/09/03
 #include "novatek-nt36xxx-spi.dtsi"

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/list.h>
@@ -15,15 +12,6 @@
 /* ep0 is always musb->endpoints[0].ep_in */
 #define	next_ep0_request(musb)	next_in_request(&(musb)->endpoints[0])
 
-/*
- * locking note:  we use only the controller lock, for simpler correctness.
- * It's always held with IRQs blocked.
- *
- * It protects the ep0 request queue as well as ep0_state, not just the
- * controller and indexed registers.  And that lock stays held unless it
- * needs to be dropped to allow reentering this driver ... like upcalls to
- * the gadget driver, or adjusting endpoint halt status.
- */
 
 static char *decode_ep0stage(u8 stage)
 {
@@ -39,9 +27,6 @@ static char *decode_ep0stage(u8 stage)
 	}
 }
 
-/* handle a standard GET_STATUS request
- * Context:  caller holds controller lock
- */
 static int service_tx_status_request(
 	struct musb *musb,
 	const struct usb_ctrlrequest *ctrlrequest)
@@ -137,17 +122,6 @@ static int service_tx_status_request(
 	return handled;
 }
 
-/*
- * handle a control-IN request, the end0 buffer contains the current request
- * that is supposed to be a standard control request. Assumes the fifo to
- * be at least 2 bytes long.
- *
- * @return 0 if the request was NOT HANDLED,
- * < 0 when error
- * > 0 when the request is processed
- *
- * Context:  caller holds controller lock
- */
 static int
 service_in_request(struct musb *musb, const struct usb_ctrlrequest *ctrlrequest)
 {
@@ -170,17 +144,11 @@ service_in_request(struct musb *musb, const struct usb_ctrlrequest *ctrlrequest)
 	return handled;
 }
 
-/*
- * Context:  caller holds controller lock
- */
 static void musb_g_ep0_giveback(struct musb *musb, struct usb_request *req)
 {
 	musb_g_giveback(&musb->endpoints[0].ep_in, req, 0);
 }
 
-/*
- * Tries to start B-device HNP negotiation if enabled via sysfs
- */
 static inline void musb_try_b_hnp_enable(struct musb *musb)
 {
 	void __iomem	*mbase = musb->mregs;
@@ -198,16 +166,6 @@ static inline void musb_try_b_hnp_enable(struct musb *musb)
 #endif
 }
 
-/*
- * Handle all control requests with no DATA stage, including standard
- * requests such as:
- * USB_REQ_SET_CONFIGURATION, USB_REQ_SET_INTERFACE, unrecognized
- *	always delegated to the gadget driver
- * USB_REQ_SET_ADDRESS, USB_REQ_CLEAR_FEATURE, USB_REQ_SET_FEATURE
- *	always handled here, except for class/vendor/... features
- *
- * Context:  caller holds controller lock
- */
 static int
 service_zero_data_request(struct musb *musb,
 		struct usb_ctrlrequest *ctrlrequest)
@@ -531,9 +489,6 @@ stall:
 	return handled;
 }
 
-/* we have an ep0out data packet
- * Context:  caller holds controller lock
- */
 static void ep0_rxstate(struct musb *musb)
 {
 	void __iomem		*regs = musb->control_ep->regs;
@@ -583,12 +538,6 @@ static void ep0_rxstate(struct musb *musb)
 	musb_writew(regs, MUSB_CSR0, csr);
 }
 
-/*
- * transmitting to the host (IN), this code might be called from IRQ
- * and from kernel thread.
- *
- * Context:  caller holds controller lock
- */
 static void ep0_txstate(struct musb *musb)
 {
 	void __iomem		*regs = musb->control_ep->regs;
@@ -640,12 +589,6 @@ static void ep0_txstate(struct musb *musb)
 	musb_writew(regs, MUSB_CSR0, csr);
 }
 
-/*
- * Read a SETUP packet (struct usb_ctrlrequest) from the hardware.
- * Fields are left in USB byte-order.
- *
- * Context:  caller holds controller lock.
- */
 static void
 musb_read_setup(struct musb *musb, struct usb_ctrlrequest *req)
 {
@@ -725,11 +668,6 @@ __acquires(musb->lock)
 	return retval;
 }
 
-/*
- * Handle peripheral ep0 interrupt
- *
- * Context: irq handler; we won't re-enter the driver that way.
- */
 irqreturn_t musb_g_ep0_irq(struct musb *musb)
 {
 	u16		csr;

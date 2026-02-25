@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include "cmdq_driver.h"
 #include "cmdq_struct.h"
@@ -40,12 +37,6 @@
 #endif
 
 #ifdef CMDQ_OF_SUPPORT
-/**
- * @device tree porting note
- * alps/kernel-3.10/arch/arm64/boot/dts/{platform}.dts
- *  - use of_device_id to match driver and device
- *  - use io_map to map and get VA of HW's rgister
- **/
 static const struct of_device_id cmdq_of_ids[] = {
 	{.compatible = "mediatek,gce",},
 	{.compatible = "mediatek,mt8167-gce",},

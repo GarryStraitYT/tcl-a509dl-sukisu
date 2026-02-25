@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef CONFIG_MTK_M4U
 #include <m4u.h>
@@ -99,12 +96,6 @@ out:
 	return 0;
 }
 
-/**
- * vpu_dmp_free_locked() - Free VPU register and memory dump
- * @vd: vpu device
- *
- * vd->lock must be locked before calling this function
- */
 void vpu_dmp_free_locked(int c)
 {
 	struct vpu_dmp *d;
@@ -229,13 +220,6 @@ static bool vpu_dmp_is_alive(int c)
 	return false;
 }
 
-/**
- * vpu_dmp_create_locked() - Create VPU register and memory dump
- * @vd: vpu device
- * @req: on-going vpu request, set NULL if not available
- *
- * vd->lock must be locked before calling this function
- */
 
 struct vpu_dmp_cfg {
 	unsigned long reg;
@@ -547,12 +531,6 @@ void vpu_dmp_seq_core(struct seq_file *s, int c_s)
 
 }
 
-/**
- * vpu_dmp_seq() - Show VPU dump of all cores
- * @s: output seq file
- *
- * Called by vpu_debug_vpu_memory()
- */
 void vpu_dmp_seq(struct seq_file *s)
 {
 	int c;
@@ -561,9 +539,6 @@ void vpu_dmp_seq(struct seq_file *s)
 		vpu_dmp_seq_core(s, c);
 }
 
-/**
- * vpu_dmp_clear_all() - Free VPU dump of all cores
- */
 void vpu_dmp_free_all(void)
 {
 	int c;

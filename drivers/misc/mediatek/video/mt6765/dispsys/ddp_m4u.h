@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __DSI_M4U_H__
 #define __DSI_M4U_H__
@@ -20,9 +17,6 @@
 extern "C" {
 #endif
 
-/* display m4u port wrapper
- * -- by chip
- */
 #define DISP_M4U_PORT_DISP_OVL0 M4U_PORT_DISP_OVL0
 #define DISP_M4U_PORT_DISP_OVL0_2L M4U_PORT_DISP_2L_OVL0_LARB0
 #define DISP_M4U_PORT_DISP_RDMA0 M4U_PORT_DISP_RDMA0

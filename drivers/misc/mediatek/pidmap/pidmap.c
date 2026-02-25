@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/sched.h>
@@ -10,18 +7,6 @@
 #include <linux/uaccess.h>
 #include <mt-plat/mtk_pidmap.h>
 
-/*
- * The best way favor performance to know task name is
- * keeping pid and task name mapping in a one-way table.
- *
- * Other options will suffer performance, for example,
- * using find_task_by_vpid() w/ rcu read lock, or
- * maintaining mapping in an rb-tree.
- *
- * Besides, static memory is chosen for pid map because
- * static memory layout is required for some exception
- * handling flow, e.g., hwt or hw reboot.
- */
 
 static char mtk_pidmap[PIDMAP_AEE_BUF_SIZE];
 static int  mtk_pidmap_proc_dump_mode;
@@ -29,9 +14,6 @@ static int  mtk_pidmap_max_pid;
 static char mtk_pidmap_proc_cmd_buf[PIDMAP_PROC_CMD_BUF_SIZE];
 static struct proc_dir_entry *mtk_pidmap_proc_entry;
 
-/**
- * Data structures to store tracepoints information
- */
 struct tracepoints_table {
 	const char *name;
 	void *func;
@@ -39,12 +21,6 @@ struct tracepoints_table {
 	bool init;
 };
 
-/*
- * mtk_pidmap_update
- * insert or update new mapping between pid and task name.
- *
- * task: current task
- */
 static void mtk_pidmap_update(struct task_struct *task)
 {
 	char *name;
@@ -103,10 +79,6 @@ static struct tracepoints_table interests[] = {
 	for (i = 0; i < sizeof(interests) / \
 	     sizeof(struct tracepoints_table); i++)
 
-/**
- * Find the struct tracepoint* associated with a given tracepoint
- * name.
- */
 static void lookup_tracepoints(struct tracepoint *tp, void *ignore)
 {
 	int i;
@@ -337,10 +309,6 @@ static void __exit mtk_pidmap_exit(void)
 	proc_remove(mtk_pidmap_proc_entry);
 }
 
-/*
- * TODO: The timing of loadable module is too late to have full
- * list of kernel threads. Need to find out solution.
- */
 early_initcall(mtk_pidmap_init);
 
 MODULE_AUTHOR("Stanley Chu <stanley.chu@mediatek.com>");

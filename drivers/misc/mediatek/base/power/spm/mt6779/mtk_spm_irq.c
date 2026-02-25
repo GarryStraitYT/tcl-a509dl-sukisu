@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 
 #include <linux/init.h>
@@ -58,9 +55,6 @@ void __attribute__((weak)) set_wakeup_sources(u32 *list, u32 num_events)
 	printk_deferred("[name:spm&]NO %s !!!\n", __func__);
 }
 
-/***************************************************
- * spm edge trigger irq backup/restore
- ***************************************************/
 
 /* edge_trigger_irq_list is defined in header file 'mtk_spm_irq_edge.h' */
 #include <mtk_spm_irq_edge.h>
@@ -178,9 +172,6 @@ void mtk_spm_irq_restore(void)
 #endif
 }
 
-/********************************************************************
- * spm irq handler and initialize function
- *******************************************************************/
 static irqreturn_t spm_irq0_handler(int irq, void *dev_id)
 {
 	u32 isr = 0;

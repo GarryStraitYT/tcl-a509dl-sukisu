@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef __MTK_CPUFREQ_INTERNAL_H__
 #define __MTK_CPUFREQ_INTERNAL_H__
@@ -47,9 +44,6 @@
 #define MAX(a, b) ((a) >= (b) ? (a) : (b))
 #define MIN(a, b) ((a) >= (b) ? (b) : (a))
 
-/*
- * LOCK
- */
 extern struct mutex cpufreq_mutex;
 extern bool is_in_cpufreq;
 #define cpufreq_lock(flags) \
@@ -156,9 +150,6 @@ static const struct file_operations name ## _proc_fops = {		\
 #define PROC_ENTRY_DATA(name)	\
 {__stringify(name), &name ## _proc_fops, g_ ## name}
 
-/*
- * BIT Operation
- */
 #define _BIT_(_bit_)                    (unsigned int)(1 << (_bit_))
 #define _BITS_(_bits_, _val_) \
 ((((unsigned int) -1 >> (31 - ((1) ? _bits_))) & \
@@ -168,9 +159,6 @@ static const struct file_operations name ## _proc_fops = {		\
 #define _GET_BITS_VAL_(_bits_, _val_)   \
 (((_val_) & (_BITMASK_(_bits_))) >> ((0) ? _bits_))
 
-/*
- * REG ACCESS
- */
 //#define cpufreq_read(addr)                  __raw_readl(IOMEM(addr))
 #define cpufreq_read(addr) __raw_readl(((void __force __iomem *)((addr))))
 #define cpufreq_write(addr, val)            \

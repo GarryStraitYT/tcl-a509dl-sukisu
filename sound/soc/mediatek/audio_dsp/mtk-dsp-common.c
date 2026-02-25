@@ -86,9 +86,6 @@ int copy_ipi_payload(void *dst, void *src, unsigned int size)
 	return 0;
 }
 
-/*
- * common function for IPI message
- */
 int mtk_scp_ipi_send(int task_scene, int data_type, int ack_type,
 		     uint16_t msg_id, uint32_t param1, uint32_t param2,
 		     char *payload)

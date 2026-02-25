@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- *
- * Author:
- *  Min Guo <min.guo@mediatek.com>
- *  Yonglong Wu <yonglong.wu@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>

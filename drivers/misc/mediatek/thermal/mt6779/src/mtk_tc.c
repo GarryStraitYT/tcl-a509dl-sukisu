@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 /* #define DEBUG 1 */
 #include <linux/version.h>
@@ -34,9 +31,6 @@
 #define __MT_MTK_TS_CPU_C__
 #include <tscpu_settings.h>
 
-/* 1: turn on RT kthread for thermal protection in this sw module;
- * 0: turn off
- */
 #if MTK_TS_CPU_RT
 #include <linux/sched.h>
 #include <linux/kthread.h>
@@ -53,35 +47,9 @@
 #include <linux/nvmem-consumer.h>
 #endif
 
-/*=============================================================
- * Local variable definition
- *=============================================================
- */
 
-/*
- * PTP#	module		TSMCU Plan
- *  0	MCU_LITTLE	TSMCU-5,6,7
- *  1	MCU_BIG		TSMCU-8,9
- *  2	MCU_CCI		TSMCU-5,6,7
- *  3	MFG(GPU)	TSMCU-4
- *  4	MDLA		TSMCU-1
- *  5	VPU		TSMCU-2
- *  6	TOP		TSMCU-2,3,4
- *  7	MD		TSMCU-0
- */
 
 /* chip dependent */
-/*
- * TO-DO: I assume AHB bus frequecy is 78MHz.
- * Please confirm it.
- */
-/*
- * The tscpu_g_tc structure controls the polling rates and sensor mapping table
- * of all thermal controllers.  If HW thermal controllers are more than you
- * actually needed, you should pay attention to default setting of unneeded
- * thermal controllers.  Otherwise, these unneeded thermal controllers will be
- * initialized and work unexpectedly.
- */
 struct thermal_controller tscpu_g_tc[THERMAL_CONTROLLER_NUM] = {
 	[0] = {
 		.ts = {L_TS_MCU1, L_TS_MCU2, L_TS_MCU3, L_TS_MCU4},
@@ -170,11 +138,6 @@ static __s32 g_gain;
 
 static __s32 g_x_roomt[L_TS_MCU_NUM] = { 0 };
 
-/**
- * If curr_temp >= tscpu_polling_trip_temp1, use interval else if cur_temp >=
- * tscpu_polling_trip_temp2 && curr_temp < tscpu_polling_trip_temp1, use
- * interval*tscpu_polling_factor1 else, use interval*tscpu_polling_factor2
- */
 /* chip dependent */
 int tscpu_polling_trip_temp1 = 40000;
 int tscpu_polling_trip_temp2 = 20000;
@@ -182,10 +145,6 @@ int tscpu_polling_factor1 = 1;
 int tscpu_polling_factor2 = 4;
 
 #if MTKTSCPU_FAST_POLLING
-/* Combined fast_polling_trip_temp and fast_polling_factor,
- *it means polling_delay will be 1/5 of original interval
- *after mtktscpu reports > 65C w/o exit point
- */
 int fast_polling_trip_temp = 60000;
 int fast_polling_trip_temp_high = 60000; /* deprecaed */
 int fast_polling_factor = 1;
@@ -193,18 +152,10 @@ int tscpu_cur_fp_factor = 1;
 int tscpu_next_fp_factor = 1;
 #endif
 
-/*=============================================================
- * Local function declartation
- *=============================================================
- */
 static __s32 temperature_to_raw_room(__u32 ret, enum tsmcu_sensor_enum ts_name);
 static void set_tc_trigger_hw_protect
 	(int temperature, int temperature2, int tc_num);
 
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 	void __attribute__ ((weak))
 mt_ptp_lock(unsigned long *flags)
 {
@@ -795,10 +746,6 @@ static void thermal_reset_and_initial(int tc_num)
 	writel(0x0, (void *)(offset + TEMPADCVOLTAGESHIFT));
 }
 
-/**
- *  temperature2 to set the middle threshold for interrupting CPU.
- *  -275000 to disable it.
- */
 static void set_tc_trigger_hw_protect
 (int temperature, int temperature2, int tc_num)
 {

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
@@ -251,15 +248,6 @@ int32_t cmdq_check_before_append(struct cmdqRecStruct *handle)
 	return 0;
 }
 
-/**
- * centralize the write/polling/read command for APB and GPR handle
- * this function must be called inside cmdq_append_command
- * because we ignore buffer and pre-fetch check here.
- * Parameter:
- *     same as cmdq_append_command
- * Return:
- *     same as cmdq_append_command
- */
 static int32_t cmdq_append_wpr_command(struct cmdqRecStruct *handle,
 	enum CMDQ_CODE_ENUM code,
 	uint32_t arg_a, uint32_t arg_b, uint32_t arg_a_type,
@@ -967,10 +955,6 @@ void cmdqCoreReadWriteAddressBatch(u32 *addrs, u32 count, u32 *val_out)
 		val_out[i] = cmdqCoreReadWriteAddress(pa);
 	}
 }
-/**
- *  Allocate 32-bit register backup slot
- *
- */
 int32_t cmdq_alloc_mem(cmdqBackupSlotHandle *p_h_backup_slot,
 	uint32_t slotCount)
 {
@@ -993,10 +977,6 @@ int32_t cmdq_alloc_mem(cmdqBackupSlotHandle *p_h_backup_slot,
 #endif				/* CMDQ_GPR_SUPPORT */
 }
 
-/**
- *  Read 32-bit register backup slot by index
- *
- */
 int32_t cmdq_cpu_read_mem(cmdqBackupSlotHandle h_backup_slot,
 	uint32_t slot_index,
 	uint32_t *value)
@@ -1040,11 +1020,6 @@ int32_t cmdq_cpu_write_mem(cmdqBackupSlotHandle h_backup_slot,
 #endif				/* CMDQ_GPR_SUPPORT */
 }
 
-/**
- *  Free allocated backup slot. DO NOT free them before corresponding
- *  task finishes. Becareful on AsyncFlush use cases.
- *
- */
 int32_t cmdq_free_mem(cmdqBackupSlotHandle h_backup_slot)
 {
 #ifdef CMDQ_GPR_SUPPORT
@@ -1055,14 +1030,6 @@ int32_t cmdq_free_mem(cmdqBackupSlotHandle h_backup_slot)
 #endif				/* CMDQ_GPR_SUPPORT */
 }
 
-/**
- *  Insert instructions to backup given 32-bit HW register
- *  to a backup slot.
- *  You can use cmdq_cpu_read_mem() to retrieve the result
- *  AFTER cmdq_task_flush() returns, or INSIDE
- * the callback of cmdq_task_flush_async_callback().
- *
- */
 int32_t cmdq_op_read_reg_to_mem(struct cmdqRecStruct *handle,
 			    cmdqBackupSlotHandle h_backup_slot,
 			    uint32_t slot_index, uint32_t addr)

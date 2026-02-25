@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author: James Liao <jamesjj.liao@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/clkdev.h>
 #include <linux/delay.h>
@@ -36,12 +23,6 @@
 #define POSTDIV_MASK		0x7
 #define INTEGER_BITS		7
 
-/*
- * MediaTek PLLs are configured through their pcw value. The pcw value describes
- * a divider in the PLL feedback loop which consists of 7 bits for the integer
- * part and the remaining bits (if present) for the fractional part. Also they
- * have a 3 bit power-of-two post divider.
- */
 
 struct mtk_clk_pll {
 	struct clk_hw	hw;
@@ -159,15 +140,6 @@ static void mtk_pll_set_rate_regs(struct mtk_clk_pll *pll, u32 pcw,
 	udelay(20);
 }
 
-/*
- * mtk_pll_calc_values - calculate good values for a given input frequency.
- * @pll:	The pll
- * @pcw:	The pcw value (output)
- * @postdiv:	The post divider (output)
- * @freq:	The desired target frequency
- * @fin:	The input frequency
- *
- */
 static void mtk_pll_calc_values(struct mtk_clk_pll *pll, u32 *pcw, u32 *postdiv,
 		u32 freq, u32 fin)
 {

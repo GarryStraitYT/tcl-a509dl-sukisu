@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -10,13 +7,6 @@
 
 #include "thermal_core.h"
 
-/**
- * backward_compatible_throttle
- * @tz - thermal_zone_device
- *
- * This function update the cooler state by monitoring the current
- * temperature and trip points
- */
 static int backward_compatible_throttle(struct thermal_zone_device *tz,
 	 int trip)
 {

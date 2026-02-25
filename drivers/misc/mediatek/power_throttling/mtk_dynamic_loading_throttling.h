@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef __MTK_DYNAMIC_LOADING_H__
 #define __MTK_DYNAMIC_LOADING_H__

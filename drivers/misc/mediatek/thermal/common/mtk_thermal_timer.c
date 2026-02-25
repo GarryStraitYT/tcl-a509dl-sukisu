@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -12,20 +9,7 @@
 #include <linux/string.h>
 #include "mach/mtk_thermal.h"
 #include <mt-plat/aee.h>
-/*
- * mtk_thermal_timer.c is an interface to collect all thermal timer functions
- * It exports two common functions for Suspend, SODI, Deep idle scenarios
- *	mtkTTimer_cancel_timer
- *	mtkTTimer_start_timer
- *
- * We don't have to take care those two function lists project by project,
- * because each thermal zone will register his functions to mtk_thermal_timer.c
- * when booting up
- */
 
-/* MAX_NUM is the maximum number of pair of
- * thermal zone functions we can hold
- */
 #define MAX_NUM (20)
 
 #define NAME_LEN (20)

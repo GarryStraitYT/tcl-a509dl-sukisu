@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/atomic.h>
 #include <linux/console.h>
@@ -48,10 +45,6 @@ static u32 mbootlog_buf_len = SZ_128K;
 static u32 mbootlog_first_idx;
 static u32 mbootlog_size;
 
-/*
- *  This group of API call by sub-driver module to report reboot reasons
- *  aee_rr_* stand for previous reboot reason
- */
 struct last_reboot_reason {
 	uint32_t fiq_step;
 	/* 0xaeedeadX: X=1 (HWT), X=2 (KE), X=3 (nested panic) */
@@ -2906,15 +2899,6 @@ void aee_rr_show_idvfs_swreq_next_pct_x100(struct seq_file *m)
 
 void aee_rr_show_idvfs_state_manchine(struct seq_file *m)
 {
-/*
- * 0: disable finish
- * 1: enable finish
- * 2: enable start
- * 3: disable start
- * 4: SWREQ start
- * 5: disable and wait SWREQ finish
- * 6: SWREQ finish can into disable
- */
 
 	switch (LAST_RRR_VAL(idvfs_state_manchine)) {
 	case 0:

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #ifndef _TEE_ROUTING_CONFIG_H_
@@ -13,16 +10,6 @@
 #define MAX_TEE_ROUTING_SRV_NAME (16)
 #define MAX_TEE_ROUTING_NUM (32)
 
-/**
- * struct tee_routing_obj - Record the service(HA) and its coressponding MTEE.
- * @srv_name: The FIRST word of a service name.
- * @tee_id: The tee_id of the coressponding MTEE.
- *	    See include/trusty/trusty.h to get the detail.
- *
- * We use the srv_name and the tee_id to find the correct virtio_device, so
- * that we can route the msg to correct MTEE.
- *
- */
 
 struct tee_routing_obj {
 	/**
@@ -37,12 +24,6 @@ struct tee_routing_obj {
 	struct hlist_node node;
 };
 
-/**
- * tee_routing_config - The configing array of struct tee_routing_obj
- *
- * The conent of tee_routing_config will be added into a hash table.
- * You can add new elements like the example below.
- */
 static struct tee_routing_obj tee_routing_config[MAX_TEE_ROUTING_NUM] = {
 	/* The first element is the default. Do not modify it unless needed.*/
 	[0] = { .srv_name = "com",

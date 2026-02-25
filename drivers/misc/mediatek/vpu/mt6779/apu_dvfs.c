@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/device.h>
 #include <linux/err.h>
@@ -505,9 +502,6 @@ void apu_get_power_info(void)
 }
 EXPORT_SYMBOL(apu_get_power_info);
 
-/************************************************
- * return current Vvpu voltage mV*100
- *************************************************/
 bool vvpu_vmdla_vcore_checker(void)
 {
 	int ret = 0;
@@ -745,9 +739,6 @@ unsigned int mdla_get_volt_by_idx(unsigned int idx)
 }
 EXPORT_SYMBOL(mdla_get_volt_by_idx);
 
-/*
- * API : disable DVFS for PTPOD initializing
- */
 void vpu_disable_by_ptpod(void)
 {
 	int ret = 0;
@@ -775,9 +766,6 @@ void ptpod_is_enabled(bool enable)
 }
 EXPORT_SYMBOL(ptpod_is_enabled);
 
-/*
- * API : enable DVFS for PTPOD initializing
- */
 void vpu_enable_by_ptpod(void)
 {
 	/* Freerun VPU DVFS */
@@ -793,9 +781,6 @@ bool get_vvpu_DVFS_is_paused_by_ptpod(void)
 }
 EXPORT_SYMBOL(get_vvpu_DVFS_is_paused_by_ptpod);
 
-/*
- * API : disable DVFS for PTPOD initializing
- */
 void mdla_disable_by_ptpod(void)
 {
 	int ret = 0;
@@ -816,9 +801,6 @@ void mdla_disable_by_ptpod(void)
 }
 
 
-/*
- * API : enable DVFS for PTPOD initializing
- */
 void mdla_enable_by_ptpod(void)
 {
 	int ret = 0;

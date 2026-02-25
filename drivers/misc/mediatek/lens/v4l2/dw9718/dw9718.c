@@ -12,10 +12,6 @@
 
 #define DW9718_NAME				"dw9718"
 #define DW9718_MAX_FOCUS_POS			1023
-/*
- * This sets the minimum granularity for the focus positions.
- * A value of 1 gives maximum accuracy for a desired focus position
- */
 #define DW9718_FOCUS_STEPS			1
 #define DW9718_CONTROL_REG			0x00
 #define DW9718_SET_POSITION_ADDR		0x02
@@ -24,12 +20,6 @@
 
 #define DW9718_CMD_DELAY			0xff
 #define DW9718_CTRL_DELAY_US			5000
-/*
- * This acts as the minimum granularity of lens movement.
- * Keep this value power of 2, so the control steps can be
- * uniformly adjusted for gradual lens movement, with desired
- * number of control steps.
- */
 #define DW9718_MOVE_STEPS			16
 #define DW9718_MOVE_DELAY_US			8400
 #define DW9718_STABLE_TIME_US			20000

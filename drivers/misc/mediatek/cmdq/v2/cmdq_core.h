@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 #ifndef __CMDQ_CORE_H__
 #define __CMDQ_CORE_H__
 
@@ -658,18 +655,12 @@ struct WriteAddrStruct {
 	pid_t user;
 };
 
-/**
- * shared memory between normal and secure world
- */
 struct cmdqSecSharedMemoryStruct {
 	void *pVABase;		/* virtual address of command buffer */
 	dma_addr_t MVABase;	/* physical address of command buffer */
 	uint32_t size;		/* buffer size */
 };
 
-/**
- * resource unit between each module
- */
 struct ResourceUnitStruct {
 	struct list_head listEntry;
 	CMDQ_TIME notify;	/* notify time from module prepare */
@@ -786,121 +777,34 @@ extern "C" {
 
 	void cmdqCoreHandleIRQ(int32_t index);
 
-/**
- * Wait for completion of the given CmdQ task
- *
- * Parameter:
- *      scenario: The Scnerio enumeration
- *      priority: Desied task priority
- *      engineFlag: HW engine involved in the CMDs
- *      pCMDBlock: The command buffer
- *      blockSize: Size of the command buffer
- *      ppTaskOut: output pointer to a pTask for the resulting task
- *                 if fail, this gives NULL
- *      loopCB:    Assign this CB if your command loops itself.
- *          since this disables thread completion handling, do not set this CB
- *          if it is not intended to be a HW looping thread.
- *      loopData:  The user data passed to loopCB
- *
- * Return:
- *      >=0 for success; else the error code is returned
- */
 	int32_t cmdqCoreSubmitTaskAsync(
 		struct cmdqCommandStruct *pCommandDesc,
 		CmdqInterruptCB loopCB,
 		unsigned long loopData, struct TaskStruct **ppTaskOut);
 
-/**
- * Wait for completion of the given CmdQ task
- *
- * Parameter:
- *      pTask: Task returned from successful cmdqCoreSubmitTaskAsync
- *             additional cleanup will be performed.
- *
- *      timeout: SW timeout error will be generated after this threshold
- * Return:
- *      >=0 for success; else the error code is returned
- */
 	int32_t cmdqCoreWaitAndReleaseTask(
 		struct TaskStruct *pTask,
 		long timeout_jiffies);
 
-/**
- * Wait for completion of the given CmdQ task, and retrieve
- * read register result.
- *
- * Parameter:
- *      pTask: Task returned from successful cmdqCoreSubmitTaskAsync
- *             additional cleanup will be performed.
- *
- *      timeout: SW timeout error will be generated after this threshold
- * Return:
- *      >=0 for success; else the error code is returned
- */
 	int32_t cmdqCoreWaitResultAndReleaseTask(
 		struct TaskStruct *pTask,
 		struct cmdqRegValueStruct *pResult,
 		long timeout_jiffies);
 
-/**
- * Stop task and release it immediately
- *
- * Parameter:
- *      pTask: Task returned from successful cmdqCoreSubmitTaskAsync
- *             additional cleanup will be performed.
- *
- * Return:
- *      >=0 for success; else the error code is returned
- */
 	int32_t cmdqCoreReleaseTask(struct TaskStruct *pTask);
 
-/**
- * Register the task in the auto-release queue. It will be released
- * upon finishing. You MUST NOT perform further operations on this task.
- *
- * Parameter:
- *      pTask: Task returned from successful cmdqCoreSubmitTaskAsync.
- *             additional cleanup will be performed.
- * Return:
- *      >=0 for success; else the error code is returned
- */
 	int32_t cmdqCoreAutoReleaseTask(struct TaskStruct *pTask);
 
-/**
- * Create CMDQ Task and block wait for its completion
- *
- * Return:
- *     >=0 for success; else the error code is returned
- */
 	int32_t cmdqCoreSubmitTask(
 		struct cmdqCommandStruct *pCommandDesc);
 
-/**
- * Helper function get valid task pointer
- *
- * Return:
- *     task pointer if available
- */
 	struct TaskStruct *cmdq_core_get_task_ptr(void *task_handle);
 
-/**
- * Immediately clear CMDQ event to 0 with CPU
- *
- */
 
 	void cmdqCoreClearEvent(enum CMDQ_EVENT_ENUM event);
 
-/**
- * Immediately set CMDQ event to 1 with CPU
- *
- */
 	void cmdqCoreSetEvent(enum CMDQ_EVENT_ENUM event);
 
-/**
- * Get event value with CPU. This is for debug purpose only
- * since it does not guarantee atomicity.
- *
- */
 	uint32_t cmdqCoreGetEvent(enum CMDQ_EVENT_ENUM event);
 
 	int32_t cmdqCoreInitialize(void);
@@ -909,9 +813,6 @@ extern "C" {
 #endif
 	void cmdqCoreDeInitialize(void);
 
-/**
- * Allocate/Free HW use buffer, e.g. command buffer forCMDQ HW
- */
 	void *cmdq_core_alloc_hw_buffer(struct device *dev,
 		size_t size, dma_addr_t *dma_handle,
 		const gfp_t flag);
@@ -922,9 +823,6 @@ extern "C" {
 	struct cmdqSecSharedMemoryStruct *
 		cmdq_core_get_secure_shared_memory(void);
 
-/*
- * GCE capability
- */
 	uint32_t cmdq_core_subsys_to_reg_addr(uint32_t arg_a);
 	const char *cmdq_core_parse_subsys_from_reg_addr(
 		uint32_t reg_addr);
@@ -932,21 +830,12 @@ extern "C" {
 	int32_t cmdq_core_suspend_HW_thread(int32_t thread,
 		uint32_t lineNum);
 
-/**
- * Event
- */
 	void cmdq_core_reset_hw_events(void);
 
-/**
- * Get and HW information from device tree
- */
 	void cmdq_core_init_DTS_data(void);
 	struct cmdqDTSDataStruct *cmdq_core_get_whole_DTS_Data(void);
 	uint32_t cmdq_core_get_thread_prefetch_size(int32_t thread);
 
-/**
- * Get and set HW event form device tree
- */
 	void cmdq_core_set_event_table(enum CMDQ_EVENT_ENUM event,
 		const int32_t value);
 	int32_t cmdq_core_get_event_value(enum CMDQ_EVENT_ENUM event);
@@ -955,9 +844,6 @@ extern "C" {
 	const char *cmdq_core_get_event_name(
 		enum CMDQ_EVENT_ENUM event);
 
-/**
- * Utilities
- */
 	void cmdq_core_set_log_level(const int32_t value);
 	int32_t cmdq_core_get_log_level(void);
 	ssize_t log_level_show(struct device *dev,
@@ -1062,46 +948,11 @@ extern "C" {
 		struct seq_file *m, void *v);
 #endif	/* CMDQ_INSTRUCTION_COUNT */
 
-/**
- * Save first error dump
- */
 	void cmdq_core_turnon_first_dump(
 		const struct TaskStruct *pTask);
 	void cmdq_core_turnoff_first_dump(void);
 	void cmdq_core_reset_first_dump(void);
-/**
- * cmdq_core_save_first_dump - save a CMDQ first error dump to file
- */
 	int32_t cmdq_core_save_first_dump(const char *string, ...);
-/**
- * cmdq_core_save_hex_first_dump - save a CMDQ first error hex dump to file
- * @prefix_str: string to prefix each line with;
- *	caller supplies trailing spaces for alignment if desired
- * @rowsize: number of bytes to print per line; must be 16 or 32
- * @groupsize: number of bytes to print at a time (1, 2, 4, 8; default = 1)
- * @buf: data blob to dump
- * @len: number of bytes in the @buf
- *
- * Given a buffer of u8 data, cmdq_core_save_hex_first_dump()
- * save a CMDQ first error hex dump
- * to the file , with an optional leading prefix.
- *
- * cmdq_core_save_hex_first_dump() works on
- * one "line" of output at a time, i.e.,
- * 16 or 32 bytes of input data converted to hex.
- * cmdq_core_save_hex_first_dump() iterates over
- * the entire input @buf, breaking it into
- * "line size" chunks to format and print.
- *
- * E.g.:
- *	 cmdq_core_save_hex_first_dump("", 16, 4,
- *			       pTask->pVABase, (pTask->commandSize));
- *
- * Example output using 4-byte mode:
- * ed7e4510: ff7fffff 02000000 00800000 0804401d
- * ed7e4520: fffffffe 02000000 00000001 04044001
- * ed7e4530: 80008001 20000043
- */
 	void cmdq_core_save_hex_first_dump(const char *prefix_str,
 					   int rowsize, int groupsize,
 					   const void *buf, size_t len);

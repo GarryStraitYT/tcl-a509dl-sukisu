@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_BOOT_H__
 #define __MTK_BOOT_H__

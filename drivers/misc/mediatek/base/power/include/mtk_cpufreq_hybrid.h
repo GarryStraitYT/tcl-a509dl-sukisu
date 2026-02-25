@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef _MTK_CPUFREQ_HYBRID_
 #define _MTK_CPUFREQ_HYBRID_
@@ -9,9 +6,6 @@
 #include <linux/kernel.h>
 
 
-/**************************************
- * [Hybrid DVFS] Config
- **************************************/
 #if defined(CONFIG_MACH_MT6755)
 #define CONFIG_HYBRID_CPU_DVFS
 /*#define __TRIAL_RUN__*/
@@ -36,9 +30,6 @@
 #endif
 
 
-/**************************************
- * [Hybrid DVFS] Parameter
- **************************************/
 #if defined(CONFIG_MACH_MT6797)
 enum cpu_cluster {
 	CPU_CLUSTER_LL,
@@ -74,9 +65,6 @@ enum cpu_cluster {
 #endif
 
 
-/**************************************
- * [Hybrid DVFS] Definition
- **************************************/
 #define OPP_AT_SUSPEND		UINT_MAX
 #define VOLT_AT_SUSPEND		UINT_MAX
 #define VSRAM_AT_SUSPEND	UINT_MAX
@@ -122,9 +110,6 @@ struct dvfs_log {
 typedef void (*dvfs_notify_t)(struct dvfs_log *log_box, int num_log);
 
 
-/**************************************
- * [Hybrid DVFS] Macro / Inline
- **************************************/
 static inline unsigned int opp_limit_to_ceiling(int limit)
 {
 	unsigned int ceiling;
@@ -150,9 +135,6 @@ static inline unsigned int opp_limit_to_floor(int limit)
 }
 
 
-/**************************************
- * [Hybrid DVFS] API
- **************************************/
 #ifdef CONFIG_HYBRID_CPU_DVFS
 extern int cpuhvfs_module_init(void);
 extern int cpuhvfs_kick_dvfsp_to_run(struct init_sta *sta);

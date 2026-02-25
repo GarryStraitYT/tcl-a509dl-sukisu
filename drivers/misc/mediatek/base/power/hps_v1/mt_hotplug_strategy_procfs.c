@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/*
- * @file    mt_hotplug_strategy_procfs.c
- * @brief   hotplug strategy(hps) - procfs
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>	/* MODULE_DESCRIPTION, MODULE_LICENSE */
@@ -130,17 +123,8 @@ static ssize_t hps_proc_uint_write_with_lock_reset(
 
 #define PROC_ENTRY(name)	{__stringify(name), &hps_##name##_proc_fops}
 
-/***********************************************************
- * procfs callback - state series
- *                     - init_state
- ***********************************************************/
 PROC_FOPS_RO_UINT(init_state, hps_ctxt.init_state);
 
-/***********************************************************
- * procfs callback - enabled series
- *                     - enabled
- *                     - log_mask
- ***********************************************************/
 PROC_FOPS_RW_UINT(
 	enabled,
 	hps_ctxt.enabled,
@@ -150,18 +134,6 @@ PROC_FOPS_RW_UINT(
 	hps_ctxt.log_mask,
 	hps_proc_uint_write_with_lock);
 
-/***********************************************************
- * procfs callback - algo config series
- *                     - up_threshold
- *                     - up_times
- *                     - down_threshold
- *                     - down_times
- *                     - rush_boost_enabled
- *                     - rush_boost_threshold
- *                     - rush_boost_times
- *                     - quick_landing_enabled
- *                     - tlp_times
- ***********************************************************/
 PROC_FOPS_RW_UINT(
 	up_threshold,
 	hps_ctxt.up_threshold,
@@ -199,15 +171,6 @@ PROC_FOPS_RW_UINT(
 	hps_ctxt.tlp_times,
 	hps_proc_uint_write_with_lock_reset);
 
-/***********************************************************
- * procfs callback - algo bound series
- *                     - little_num_base_perf_serv
- *                     - big_num_base_perf_serv
- *                     - little_num_base_custom1
- *                     - big_num_base_custom1
- *                     - little_num_base_custom2
- *                     - big_num_base_custom2
- ***********************************************************/
 static int hps_num_base_proc_show(unsigned int nbl, unsigned int nbb,
 				struct seq_file *m, void *v)
 {
@@ -361,9 +324,6 @@ PROC_FOPS_RW(num_base_perf_serv);
 PROC_FOPS_RW(num_base_custom1);
 PROC_FOPS_RW(num_base_custom2);
 
-/***********************************************************
- * common read/write for num_limit
- ***********************************************************/
 static int hps_num_limit_proc_show(unsigned int nll, unsigned int nlb,
 				struct seq_file *m, void *v)
 {
@@ -445,11 +405,6 @@ static ssize_t hps_num_limit_proc_write(
 	return -EINVAL;
 }
 
-/***********************************************************
- * procfs callback - algo bound series
- *                     - little_num_limit_thermal
- *                     - big_num_limit_thermal
- ***********************************************************/
 static int hps_num_limit_thermal_proc_show(struct seq_file *m, void *v)
 {
 	return hps_num_limit_proc_show(
@@ -472,11 +427,6 @@ static ssize_t hps_num_limit_thermal_proc_write(
 
 PROC_FOPS_RW(num_limit_thermal);
 
-/***********************************************************
- * procfs callback - algo bound series
- *                     - little_num_limit_low_battery
- *                     - big_num_limit_low_battery
- ***********************************************************/
 static int hps_num_limit_low_battery_proc_show(struct seq_file *m, void *v)
 {
 	return hps_num_limit_proc_show(
@@ -499,11 +449,6 @@ static ssize_t hps_num_limit_low_battery_proc_write(
 
 PROC_FOPS_RW(num_limit_low_battery);
 
-/***********************************************************
- * procfs callback - algo bound series
- *                     - little_num_limit_ultra_power_saving
- *                     - big_num_limit_ultra_power_saving
- ***********************************************************/
 static int hps_num_limit_ultra_power_saving_proc_show(
 			struct seq_file *m, void *v)
 {
@@ -527,11 +472,6 @@ static ssize_t hps_num_limit_ultra_power_saving_proc_write(
 
 PROC_FOPS_RW(num_limit_ultra_power_saving);
 
-/***********************************************************
- * procfs callback - algo bound series
- *                     - little_num_limit_power_serv
- *                     - big_num_limit_power_serv
- ***********************************************************/
 static int hps_num_limit_power_serv_proc_show(struct seq_file *m, void *v)
 {
 	return hps_num_limit_proc_show(
@@ -554,13 +494,6 @@ static ssize_t hps_num_limit_power_serv_proc_write(
 
 PROC_FOPS_RW(num_limit_power_serv);
 
-/***********************************************************
- * procfs callback - algo bound series
- *                     - little_num_limit_custom1
- *                     - big_num_limit_custom1
- *                     - little_num_limit_custom2
- *                     - big_num_limit_custom2
- ***********************************************************/
 static int hps_num_limit_custom1_proc_show(struct seq_file *m, void *v)
 {
 	return hps_num_limit_proc_show(
@@ -604,9 +537,6 @@ static ssize_t hps_num_limit_custom2_proc_write(
 PROC_FOPS_RW(num_limit_custom1);
 PROC_FOPS_RW(num_limit_custom2);
 
-/*
- * init
- */
 int hps_procfs_init(void)
 {
 	/* struct proc_dir_entry *entry = NULL; */

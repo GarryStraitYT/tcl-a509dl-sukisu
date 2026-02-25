@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __SWTP_H__
 #define __SWTP_H__

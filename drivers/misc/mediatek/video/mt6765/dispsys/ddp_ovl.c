@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "OVL"
 #include "ddp_log.h"
@@ -1069,10 +1066,6 @@ static int setup_ovl_sec(enum DISP_MODULE_ENUM module,
 	return has_sec_layer;
 }
 
-/**
- * for enabled layers: layout continuously for each OVL HW engine
- * for disabled layers: ignored
- */
 static int ovl_layer_layout(enum DISP_MODULE_ENUM module,
 	struct disp_ddp_path_config *pConfig)
 {

@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include <linux/delay.h>
@@ -516,9 +513,6 @@ static inline int Map_DSP_Freq_Table(int freq_opp)
 	return freq_value;
 }
 
-/******************************************************************************
- * Add MET ftrace event for power profilling.
- *****************************************************************************/
 #if defined(VPU_MET_READY)
 void MET_Events_DVFS_Trace(void)
 {
@@ -4901,10 +4895,6 @@ out:
 	return ret;
 }
 
-/* do whole processing for enque request, including check algo, load algo,
- * run d2d. minimize timing gap between each step for a single eqneu request
- * and minimize the risk of timing issue
- */
 int vpu_hw_processing_request(int core_s, struct vpu_request *request)
 {
 	int ret;

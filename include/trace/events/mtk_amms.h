@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM mtk_amms
@@ -12,16 +9,6 @@
 #include <linux/types.h>
 #include <linux/tracepoint.h>
 
-/**
- * workqueue_queue_work - called when a work gets queued
- * @req_cpu:	the requested cpu
- * @pwq:	pointer to struct pool_workqueue
- * @work:	pointer to struct work_struct
- *
- * This event occurs when a work is queued immediately or once a
- * delayed work is actually queued on a workqueue (ie: once the delay
- * has been reached).
- */
 
 DECLARE_EVENT_CLASS(amms_event,
 

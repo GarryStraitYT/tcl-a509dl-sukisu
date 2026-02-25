@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __PORT_RPC_H__
 #define __PORT_RPC_H__
@@ -64,9 +61,6 @@ struct rpc_buffer {
 	u8 buffer[0];
 } __packed;
 
-/* hardcode, becarefull with data size, should not exceed tmp_data[]
- * in ccci_rpc_work_helper()
- */
 #define CLKBUF_MAX_COUNT 4
 struct ccci_rpc_clkbuf_result {
 	u16 CLKBuf_Count;
@@ -74,9 +68,6 @@ struct ccci_rpc_clkbuf_result {
 	u8 CLKBuf_SWCtrl_Status[CLKBUF_MAX_COUNT];
 	u16 ClkBuf_Driving[CLKBUF_MAX_COUNT];
 } __packed;
-/* the total size should sync with tmp_data[] using
- * in ccci_rpc_work_helper()
- */
 
 struct ccci_rpc_clkbuf_input {
 	u16 CLKBuf_Num;
@@ -99,14 +90,8 @@ struct ccci_rpc_queue_mapping {
 };
 
 #ifdef CONFIG_MTK_TC1_FEATURE
-/* hardcode, becarefull with data size, should not exceed tmp_data[]
- * in ccci_rpc_work_helper()
- */
 #define GPIO_MAX_COUNT 6
 #else
-/* hardcode, becarefull with data size, should not exceed tmp_data[]
- * in ccci_rpc_work_helper()
- */
 #define GPIO_MAX_COUNT 3
 #endif
 #define GPIO_MAX_COUNT_V2 10
@@ -135,9 +120,6 @@ struct ccci_rpc_gpio_adc_output {
 	u32 adcChNum;
 	u32 adcChMeasSum;
 } __packed;
-/* the total size should sync with tmp_data[] using
- * in ccci_rpc_work_helper()
- */
 
 struct ccci_rpc_gpio_adc_intput_v2 { /* 10 pin GPIO support */
 	u16 reqMask;
@@ -155,9 +137,6 @@ struct ccci_rpc_gpio_adc_output_v2 { /* 10 pin GPIO support */
 	u32 adcChNum;
 	u32 adcChMeasSum;
 } __packed;
-/* the total size should sync with tmp_data[] using
- * in ccci_rpc_work_helper()
- */
 
 struct ccci_rpc_dsp_emi_mpu_input {
 	u32 request;

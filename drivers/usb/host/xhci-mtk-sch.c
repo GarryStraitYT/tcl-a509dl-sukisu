@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- * Author:
- *  Zhigang.Wei <zhigang.wei@mediatek.com>
- *  Chunfeng.Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -31,18 +25,6 @@ static int is_fs_or_ls(enum usb_device_speed speed)
 	return speed == USB_SPEED_FULL || speed == USB_SPEED_LOW;
 }
 
-/*
-* get the index of bandwidth domains array which @ep belongs to.
-*
-* the bandwidth domain array is saved to @sch_array of struct xhci_hcd_mtk,
-* each HS root port is treated as a single bandwidth domain,
-* but each SS root port is treated as two bandwidth domains, one for IN eps,
-* one for OUT eps.
-* @real_port value is defined as follow according to xHCI spec:
-* 1 for SSport0, ..., N+1 for SSportN, N+2 for HSport0, N+3 for HSport1, etc
-* so the bandwidth domain array is organized as follow for simplification:
-* SSport0-OUT, SSport0-IN, ..., SSportX-OUT, SSportX-IN, HSport0, ..., HSportY
-*/
 static int get_bw_index(struct xhci_hcd *xhci, struct usb_device *udev,
 	struct usb_host_endpoint *ep)
 {

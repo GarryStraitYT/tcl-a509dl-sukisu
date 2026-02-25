@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- */
 
 #include <linux/kernel.h>
 #include <linux/leds.h>
@@ -21,10 +17,6 @@
 #define UNUSED(x) { (void)(x); }
 #endif
 
-/*
- * Register field for mt6357_TOP_CKPDN0 to enable
- * 128K clock common for LED device.
- */
 
 #define RG_DRV_ISINK_CK_PDN					MT6357_XPP_TOP_CKPDN_CON0
 #define RG_DRV_128K_CK_PDN_SHIFT			4
@@ -94,7 +86,8 @@
 
 #define mt6357_MAX_PERIOD		10000
 /* Begin modified by bitao.xiong for task-10075354 on 2020-10-20 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 #define mt6357_MAX_BRIGHTNESS	130
 #else
 #define mt6357_MAX_BRIGHTNESS	255
@@ -123,13 +116,6 @@ enum {
 
 struct mt6357_leds;
 
-/**
- * struct mt6357_led - state container for the LED device
- * @id:			the identifier in mt6357 LED device
- * @parent:		the pointer to mt6357 LED controller
- * @cdev:		LED class device for this LED device
- * @current_brightness: current state of the LED device
- */
 struct mt6357_led {
 	struct mt_led_info l_info; /* most be the first member */
 	int			id;
@@ -138,16 +124,6 @@ struct mt6357_led {
 	int step;
 };
 
-/**
- * struct mt6357_leds -	state container for holding LED controller
- *			of the driver
- * @dev:		the device pointer
- * @hw:			the underlying hardware providing shared
- *			bus for the register operations
- * @lock:		the lock among process context
- * @led:		the array that contains the state of individual
- *			LED device
- */
 struct mt6357_leds {
 	struct device		*dev;
 	struct regmap *regmap;
@@ -308,9 +284,6 @@ static int mt6357_led_get_ISINK(struct led_classdev *cdev, int *CTL0, int *CTL1)
 }
 
 
-/*
- * Trigger : register mode / breath mode / PWM mode
- */
  //Trigger mode change
 static int mt6357_led_set_current_step(struct mt_led_info *info, int step);
 static int mt6357_led_set_pwm_dim_freq(struct mt_led_info *info, int freq);
@@ -449,9 +422,6 @@ static int mt6357_led_set_current_step(struct mt_led_info *info, int step)
 	return value;
 }
 
-/*
- * Trigger : PWM mode
- */
 static int mt6357_led_list_pwm_duty(struct mt_led_info *info, char *buf)
 {
 	snprintf(buf, PAGE_SIZE, "%s\n", "0~255");
@@ -594,9 +564,6 @@ static int mt6357_led_set_pwm_dim_freq(struct mt_led_info *info, int freq)
 	return ret;
 }
 
-/*
- * Trigger : breath mode
- */
 
 static int mt6357_led_get_breath_tr1(struct mt_led_info *info, int *value)
 {
@@ -1009,10 +976,6 @@ struct mt_led_ops mt6357_led_ops = {
 	.list_pwm_freq = &mt6357_led_list_pwm_freq,
 };
 
-/*
- * Setup current output for the corresponding
- * brightness level.
- */
 static int mt6357_led_hw_brightness(struct led_classdev *cdev,
 				    enum led_brightness brightness)
 {

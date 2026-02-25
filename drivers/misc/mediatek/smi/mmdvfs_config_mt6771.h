@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef __MMDVFS_CONFIG_MT6771_H__
 #define __MMDVFS_CONFIG_MT6771_H__
@@ -37,21 +34,6 @@ struct mmdvfs_clk_source_desc mt6771_clk_sources[MT6771_CLK_SOURCE_NUM] = {
 		{NULL, "mmdvfs_clk_univpll_d2_d2_ck", 312},
 };
 
-/*
- * B. CLK Change adaption configurtion
- * B.1 Define the clk change method and data of each MM CLK step
- * Field decscription:
- * 1. config_method:
- *     a. MMDVFS_CLK_CONFIG_BY_MUX
- *     b. MMDVFS_CLK_CONFIG_PLL
- *     c. MMDVFS_CLK_CONFIG_NONE
- * 2. pll_id: PLL ID, please set -1 if PLL hopping is not used
- * 3. clk mux desc {handle, name}, plz set -1
- *       and it will be initialized by driver automaticlly
- * 4. total step: the number of the steps supported by this sub sys
- * 5. hopping dss of each steps: please set -1 if it is not used
- * 6. clk sources id of each steps: please set -1 if it is not used
- */
 struct mmdvfs_clk_hw_map mt6771_mmdvfs_clk_hw_map[MMDVFS_CLK_MUX_NUM] = {
 		{ MMDVFS_CLK_CONFIG_NONE,
 			{ NULL, "MMDVFS_CLK_MUX_TOP_SMI0_2X_SEL"}, -1, 2,

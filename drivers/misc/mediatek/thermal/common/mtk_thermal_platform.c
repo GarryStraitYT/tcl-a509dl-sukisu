@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/uaccess.h>
 #include <linux/kernel.h>
@@ -31,9 +28,6 @@
 /* Number of CPU CORE */
 #define NUMBER_OF_CORE (8)
 
-/* This function pointer is for GPU LKM to register
- * a function to get GPU loading.
- */
 unsigned long (*mtk_thermal_get_gpu_loading_fp)(void) = NULL;
 EXPORT_SYMBOL(mtk_thermal_get_gpu_loading_fp);
 
@@ -492,13 +486,6 @@ EXPORT_SYMBOL(mtk_thermal_get_gpu_info);
 
 
 enum {
-/*	TXPWR_MD1 = 0,
- *	TXPWR_MD2 =1,
- *	RFTEMP_2G_MD1 =2,
- *	RFTEMP_2G_MD2 = 3,
- *	RFTEMP_3G_MD1 = 4,
- *	RFTEMP_3G_MD2 = 5,
- */
 	WiFi_TP = 6,
 	Mobile_TP = 7,
 	NO_EXTRA_THERMAL_ATTR

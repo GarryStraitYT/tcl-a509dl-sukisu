@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
-/**
- * @file	mtk_eem_platform.c
- * @brief   Driver for EEM
- *
- */
 #define __MTK_EEM_PLATFORM_C__
 
 #include <linux/kernel.h>
@@ -16,9 +8,6 @@
 #include "mtk_eem_internal_ap.h"
 #include "mtk_eem_internal.h"
 #include "mtk_cpufreq_api.h"
-/*
- * operation of EEM detectors
- */
 /* legacy ptp need to define other hook functions */
 
 enum mt_cpu_dvfs_id {
@@ -184,9 +173,6 @@ void get_freq_table_cpu(struct eem_det *det)
 	FUNC_EXIT(FUNC_LV_HELP);
 }
 
-/* get original volt from cpu dvfs, and apply this table to dvfs
- *   when ptp need to restore volt
- */
 void get_orig_volt_table_cpu(struct eem_det *det)
 {
 #if SET_PMIC_VOLT_TO_DVFS
@@ -212,10 +198,6 @@ void get_orig_volt_table_cpu(struct eem_det *det)
 #endif
 }
 
-/************************************************
- * common det operations for legacy and sspm ptp
- ************************************************
- */
 int base_ops_volt_2_pmic(struct eem_det *det, int volt)
 {
 	return (((volt) - det->pmic_base + det->pmic_step - 1) /

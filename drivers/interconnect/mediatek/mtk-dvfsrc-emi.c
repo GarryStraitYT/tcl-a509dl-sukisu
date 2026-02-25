@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <dt-bindings/interconnect/mtk,mt6779-emi.h>
 #include <dt-bindings/interconnect/mtk,mt6761-emi.h>
@@ -35,16 +32,6 @@ enum mtk_icc_name {
 
 #define MAX_LINKS	6
 
-/**
- * struct mtk_icc_node - Mediatek specific interconnect nodes
- * @name: the node name used in debugfs
- * @links: an array of nodes where we can go next while traversing
- * @id: a unique node identifier
- * @num_links: the total number of @links
- * @buswidth: width of the interconnect between a node and the bus
- * @sum_avg: current sum aggregate value of all avg bw [kBps] requests
- * @max_peak: current max aggregate value of all peak bw [kBps] requests
- */
 struct mtk_icc_node {
 	unsigned char *name;
 	bool ep;

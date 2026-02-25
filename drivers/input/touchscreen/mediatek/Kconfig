@@ -64,4 +64,29 @@ config TOUCHSCREEN_MTK_FT5446_BANGKOKTF
 	  module will be called.
 source "drivers/input/touchscreen/mediatek/bangkoktf_ft5446/Kconfig"
 
+config TOUCHSCREEN_MTK_CHSC5XXX_BANGKOKTF
+	bool "bangkoktf chsc5xxx for Mediatek package"
+	default n
+	help
+	  Say Y here if you have chsc5xxx touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+source "drivers/input/touchscreen/mediatek/bangkoktf_CHSC5XXX/Kconfig"
+
+
+config TOUCHSCREEN_MTK_BETTERLIFE_BANGKOKTF
+	bool "bangkoktf betterlife for Mediatek package"
+	default n
+	help
+	  Say Y here if you have betterlife touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+source "drivers/input/touchscreen/mediatek/bangkoktf_betterlife_ts/Kconfig"
+
 endif

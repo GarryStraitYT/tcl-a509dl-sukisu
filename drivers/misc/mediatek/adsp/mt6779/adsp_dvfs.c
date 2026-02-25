@@ -438,10 +438,6 @@ void adsp_stop_suspend_timer(void)
 	mutex_unlock(&adsp_timer_mutex);
 }
 
-/*
- * callback function for work struct
- * @param ws:   work struct
- */
 
 static void adsp_suspend_ws(struct work_struct *ws)
 {
@@ -595,9 +591,6 @@ int adsp_suspend_init(void)
 	return 0;
 }
 
-/* actually execute suspend flow, which cannot be disabled.
- * retry the resume flow after adsp_ready = 0.
- */
 void adsp_suspend(enum adsp_core_id core_id)
 {
 	enum adsp_ipi_status ret;

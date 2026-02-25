@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
@@ -32,9 +29,6 @@ DECL_PE_STATE_TRANSITION(PD_DATA_MSG_SOURCE_CAP) = {
 };
 DECL_PE_STATE_REACTION(PD_DATA_MSG_SOURCE_CAP);
 
-/*
- * [BLOCK] Porcess Ctrl MSG
- */
 
 static bool pd_process_ctrl_msg_get_source_cap(
 		struct pd_port *pd_port, uint8_t next)
@@ -155,9 +149,6 @@ static inline bool pd_process_ctrl_msg(
 	return pd_process_protocol_error(pd_port, pd_event);
 }
 
-/*
- * [BLOCK] Porcess Data MSG
- */
 
 static inline bool pd_process_data_msg(
 		struct pd_port *pd_port, struct pd_event *pd_event)
@@ -196,9 +187,6 @@ static inline bool pd_process_data_msg(
 	return pd_process_protocol_error(pd_port, pd_event);
 }
 
-/*
- * [BLOCK] Porcess Extend MSG
- */
 #ifdef CONFIG_USB_PD_REV30
 static inline bool pd_process_ext_msg(
 		struct pd_port *pd_port, struct pd_event *pd_event)
@@ -238,9 +226,6 @@ static inline bool pd_process_ext_msg(
 }
 #endif	/* CONFIG_USB_PD_REV30 */
 
-/*
- * [BLOCK] Porcess DPM MSG
- */
 
 static inline bool pd_process_dpm_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -255,9 +240,6 @@ static inline bool pd_process_dpm_msg(
 	}
 }
 
-/*
- * [BLOCK] Porcess HW MSG
- */
 
 static inline bool pd_process_hw_msg_sink_tx_change(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -306,9 +288,6 @@ static inline bool pd_process_hw_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess PE MSG
- */
 
 static inline bool pd_process_pe_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -332,9 +311,6 @@ static inline bool pd_process_pe_msg(
 
 }
 
-/*
- * [BLOCK] Porcess Timer MSG
- */
 
 static inline void pd_report_typec_only_charger(struct pd_port *pd_port)
 {
@@ -413,9 +389,6 @@ static inline bool pd_process_timer_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Process Policy Engine's SNK Message
- */
 
 bool pd_process_event_snk(struct pd_port *pd_port, struct pd_event *pd_event)
 {

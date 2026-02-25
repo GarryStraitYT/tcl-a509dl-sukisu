@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Sirui Zhao <Sirui.Zhao@mediatek.com>
- */
 
 #include <linux/types.h>
 #include <linux/kernel.h>

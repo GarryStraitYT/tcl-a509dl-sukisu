@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #include "mtk_battery.h"
 
@@ -364,10 +360,6 @@ void fgr_construct_battery_profile(struct mtk_battery *gm, int table_idx)
 			low_pseudo100, high_pseudo100,
 			algo->batterypseudo100);
 
-/*
- *	low_qmax and High_qmax need to do
- *	UNIT_TRANS_10 from "1 mAHR" to "0.1 mAHR"
- */
 		algo->qmax_t_0ma_h = interpolation(
 			low_temp, UNIT_TRANS_10 * low_qmax,
 			high_temp, UNIT_TRANS_10 * high_qmax,
@@ -400,10 +392,6 @@ void fgr_construct_battery_profile(struct mtk_battery *gm, int table_idx)
 			algo->shutdown_hl_zcv);
 
 	} else if (table_idx == ptable->temperature_tb1) {
-/*
- *	low_qmax and High_qmax need to do
- *	UNIT_TRANS_10 from "1 mAHR" to "0.1 mAHR"
- */
 		algo->qmax_t_0ma_h_tb1 = interpolation(
 		low_temp, UNIT_TRANS_10 * low_qmax,
 			high_temp, UNIT_TRANS_10 * high_qmax,

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_SUSPEND_SYSFS__
 #define __MTK_SUSPEND_SYSFS__

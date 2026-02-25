@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/************************************************************************
- *
- * Filename:
- * ---------
- *   OV2281mipi_Sensor.h
- *
- * Project:
- * --------
- *   ALPS
- *
- * Description:
- * ------------
- *   CMOS sensor header file
- *
- ************************************************************************/
 #ifndef _OV2281MIPI_SENSOR_H_
 #define _OV2281MIPI_SENSOR_H_
 

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/miscdevice.h>
 #include <linux/fs.h>
@@ -721,9 +718,6 @@ static int mmprofile_register_static_events(int sync)
 	return ret;
 }
 
-/* the MMP_TRACING is defined only when CONFIG_TRACING is defined
- * and we enable mmp to trace its API.
- */
 #ifdef MMP_TRACING
 static unsigned long __read_mostly tracing_mark_write_addr;
 static inline void __mt_update_tracing_mark_write_addr(void)

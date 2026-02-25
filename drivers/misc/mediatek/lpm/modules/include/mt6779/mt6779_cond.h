@@ -1,17 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT6779_COND_H__
 #define __MT6779_COND_H__
 
-/* Definition about SPM_COND_CHECK_BLOCKED
- * bit [00 ~ 15]: cg blocking index
- * bit [16 ~ 29]: pll blocking index
- * bit [30]     : pll blocking information
- * bit [31]    : idle condition check fail
- */
 
 #define SPM_COND_BLOCKED_CG_IDX		(0)
 #define SPM_COND_BLOCKED_PLL_IDX	(16)

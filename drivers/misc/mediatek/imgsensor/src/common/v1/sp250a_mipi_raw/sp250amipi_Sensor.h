@@ -1,26 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- *
- * Filename:
- * ---------
- *     sp2509mipi_Sensor.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor header file
- * Author:
- * --------
- *     Dream Yeh (HuanYu.Ye@transsion.com)
- *
- */
 #ifndef _SP250aMIPI_SENSOR_H
 #define _SP250aMIPI_SENSOR_H
 

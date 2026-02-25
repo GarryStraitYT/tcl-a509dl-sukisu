@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -18,9 +15,6 @@
 #include "inc/tcpci_event.h"
 #endif /* CONFIG_USB_POWER_DELIVERY */
 
-/*
- * [BLOCK] TCPCI IRQ Handler
- */
 
 static int tcpci_alert_cc_changed(struct tcpc_device *tcpc_dev)
 {
@@ -378,9 +372,6 @@ int tcpci_alert(struct tcpc_device *tcpc_dev)
 	return ret;
 }
 
-/*
- * [BLOCK] TYPEC device changed
- */
 
 static inline void tcpci_attach_wake_lock(struct tcpc_device *tcpc)
 {
@@ -550,9 +541,6 @@ int tcpci_report_usb_port_changed(struct tcpc_device *tcpc)
 	return 0;
 }
 
-/*
- * [BLOCK] TYPEC power control changed
- */
 
 int tcpci_report_power_control_on(struct tcpc_device *tcpc)
 {

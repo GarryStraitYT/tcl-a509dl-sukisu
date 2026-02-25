@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Authors:
- *	Stanley Chu <stanley.chu@mediatek.com>
- *	Peter Wang <peter.wang@mediatek.com>
- */
 
 #include <asm/unaligned.h>
 #include <linux/arm-smccc.h>
@@ -79,9 +73,6 @@ static inline int ufshcd_read_geometry_desc_param(struct ufs_hba *hba,
 				      param_offset, param_read_buf, param_size);
 }
 
-/*
- * RPMB feature
- */
 #define SEC_PROTOCOL_UFS  0xEC
 #define SEC_SPECIFIC_UFS_RPMB 0x0001
 
@@ -321,15 +312,6 @@ void ufs_mtk_rpmb_quiesce(struct ufs_hba *hba)
 		scsi_device_quiesce(host->sdev_ufs_rpmb);
 }
 
-/**
- * ufs_mtk_ioctl_rpmb - perform user rpmb read/write request
- * @hba: per-adapter instance
- * @buf_user: user space buffer for ioctl rpmb_cmd data
- * @return: 0 for success negative error code otherwise
- *
- * Expected/Submitted buffer structure is struct rpmb_cmd.
- * It will read/write data to rpmb
- */
 int ufs_mtk_ioctl_rpmb(struct ufs_hba *hba, void __user *buf_user)
 {
 	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
@@ -802,14 +784,6 @@ out:
 	return ret;
 }
 
-/**
- * ufs_mtk_setup_clocks - enables/disable clocks
- * @hba: host controller instance
- * @on: If true, enable clocks else disable them.
- * @status: PRE_CHANGE or POST_CHANGE notify
- *
- * Returns 0 on success, non-zero on failure.
- */
 static int ufs_mtk_setup_clocks(struct ufs_hba *hba, bool on,
 				enum ufs_notify_change_status status)
 {
@@ -852,16 +826,6 @@ static int ufs_mtk_setup_clocks(struct ufs_hba *hba, bool on,
 	return ret;
 }
 
-/**
- * ufs_mtk_init - find other essential mmio bases
- * @hba: host controller instance
- *
- * Binds PHY with controller and powers up PHY enabling clocks
- * and regulators.
- *
- * Returns -EPROBE_DEFER if binding fails, returns negative error
- * on phy power up failure and returns zero on success.
- */
 static int ufs_mtk_init(struct ufs_hba *hba)
 {
 	const struct of_device_id *id;
@@ -1371,12 +1335,6 @@ static void ufs_mtk_hibern8_notify(struct ufs_hba *hba, enum uic_cmd_dme cmd,
 	}
 }
 
-/**
- * struct ufs_hba_mtk_vops - UFS MTK specific variant operations
- *
- * The variant operations configure the necessary controller and PHY
- * handshake during initialization.
- */
 static struct ufs_hba_variant_ops ufs_hba_mtk_vops = {
 	.name                = "mediatek.ufshci",
 	.init                = ufs_mtk_init,
@@ -1397,12 +1355,6 @@ static struct ufs_hba_variant_ops ufs_hba_mtk_vops = {
 	.abort_handler       = ufs_mtk_abort_handler,
 };
 
-/**
- * ufs_mtk_probe - probe routine of the driver
- * @pdev: pointer to Platform device handle
- *
- * Return zero for success and non-zero for failure
- */
 static int ufs_mtk_probe(struct platform_device *pdev)
 {
 	int err;
@@ -1424,12 +1376,6 @@ struct ufs_hba *ufs_mtk_get_hba(void)
 }
 EXPORT_SYMBOL_GPL(ufs_mtk_get_hba);
 
-/**
- * ufs_mtk_remove - set driver_data of the device to NULL
- * @pdev: pointer to platform device handle
- *
- * Always return 0
- */
 static int ufs_mtk_remove(struct platform_device *pdev)
 {
 	struct ufs_hba *hba =  platform_get_drvdata(pdev);

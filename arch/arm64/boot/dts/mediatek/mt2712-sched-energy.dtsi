@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 energy-costs {
 	MT2712E_CPU_COST_0: mt2712e-core-cost0 {

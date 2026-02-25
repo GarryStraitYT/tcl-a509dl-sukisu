@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef __ARCHCOUNTER_TIMESYNC__
 #define __ARCHCOUNTER_TIMESYNC__

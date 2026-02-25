@@ -1,16 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
 
 #include <asm/assembler.h>
 
@@ -95,21 +83,6 @@ ENTRY(__disable_cache)
 	ret
 ENDPROC(__disable_cache)
 
-/* ---------------------------------------------------------------
-* Data cache operations by set/way to the level specified
-*
-* The main function, do_dcsw_op requires:
-* x0: The operation type (0-2), as defined in arch.h
-* x1: The first cache level to operate on
-* x3: The last cache level to operate on
-* x9: clidr_el1
-* and will carry out the operation on each data cache from level 0
-* to the level in x3 in sequence
-*
-* The dcsw_op macro sets up the x3 and x9 parameters based on
-* clidr_el1 cache information before invoking the main function
-* ---------------------------------------------------------------
-*/
 ENTRY(do_dcsw_op)
 	lsl	x3, x3, #1
 	cbz	x3, exit
@@ -281,15 +254,6 @@ ENTRY(dis_D_inner_flush_all)
 	__inner_dcache_all #DCCISW
 ENDPROC(dis_D_inner_flush_all)
 
-/*
- *	__xxxx_dcache_user_range(start,size)
- *
- *	Ensure that any D-cache lines for the interval [start, start+size)
- *	are cleaned or/and invalidated to the PoC.
- *
- *	- start        - virtual start address of region (EL0/EL1)
- *	- size         - size in question
- */
 
 ENTRY(__flush_dcache_user_area)
 	uaccess_ttbr0_enable x2, x3, x4

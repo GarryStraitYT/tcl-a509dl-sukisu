@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __SCP_H
 #define __SCP_H
@@ -12,9 +9,6 @@ enum scp_core_id {
 	SCP_CORE_TOTAL = 1,
 };
 
-/* scp ipi ID definition
- * need to sync with SCP-side
- */
 enum ipi_id {
 	IPI_WDT = 0,
 	IPI_TEST1,

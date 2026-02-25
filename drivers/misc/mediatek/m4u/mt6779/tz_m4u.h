@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef __TZ_M4U_H__
 #define __TZ_M4U_H__

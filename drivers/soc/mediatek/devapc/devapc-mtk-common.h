@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __DEVAPC_MTK_COMMON_H__
 #define __DEVAPC_MTK_COMMON_H__
@@ -9,9 +6,6 @@
 #include <linux/platform_device.h>
 #include <linux/types.h>
 
-/******************************************************************************
- * VARIABLE DEFINATION
- ******************************************************************************/
 
 #define MOD_NO_IN_1_DEVAPC	16
 #define VIOLATION_TRIGGERED	1
@@ -23,9 +17,6 @@
 #define devapc_log(p, s, fmt, args...) \
 	(p += scnprintf(p, sizeof(s) - strlen(s), fmt, ##args))
 
-/******************************************************************************
- * DATA STRUCTURE & FUNCTION DEFINATION
- ******************************************************************************/
 
 enum DEVAPC_DT_NODE_INDEX {
 	DT_DEVAPC_PD_IDX = 0,

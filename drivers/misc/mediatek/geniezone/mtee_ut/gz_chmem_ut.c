@@ -1,19 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -820,13 +807,6 @@ int chunk_memory_ut(void *args)
 	if (ret != TZ_RESULT_SUCCESS)
 		goto out;
 
-/*  // another chunk memory
- *	ret =
- *	    _set_test_size(MTEE_MCHUNKS_SDSP_SHARED_VPU_MTEE_TEE, _sz_4M,
- *			   _sz_4M);
- *	if (ret != TZ_RESULT_SUCCESS)
- *		goto out;
- */
 #endif
 
 	ret = _mcm_test_main();

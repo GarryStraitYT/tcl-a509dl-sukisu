@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include "./../lastbus.h"
 #include "plat_lastbus.h"

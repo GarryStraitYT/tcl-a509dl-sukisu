@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 #include <mmdvfs_pmqos.h>
 #include "smi_port.h"
 #include "ccu_qos.h"

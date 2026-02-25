@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_FDVT_H
 #define _MT_FDVT_H
@@ -14,9 +11,6 @@
 #include <linux/compat.h>
 #endif
 
-/*
- *   enforce kernel log enable
- */
 #define KERNEL_LOG		/* enable debug log flag if defined */
 
 #define _SUPPORT_MAX_FDVT_FRAME_REQUEST_ 32
@@ -24,9 +18,6 @@
 
 
 #define SIG_ERESTARTSYS 512	/* ERESTARTSYS */
-/*
- *
- */
 #define FDVT_DEV_MAJOR_NUMBER    258
 
 #define FDVT_MAGIC               'N'
@@ -36,9 +27,6 @@
 #define FDVT_BASE_HW   0x1B001000
 
 
-/*This macro is for setting irq status represnted
- * by a local variable,FDVTInfo.IrqInfo.Status[FDVT_IRQ_TYPE_INT_FDVT_ST]
- */
 #define FDVT_INT_ST                 (1<<0)
 
 
@@ -55,9 +43,6 @@ struct FDVT_REG_IO_STRUCT {
 };
 #define FDVT_REG_IO_STRUCT struct FDVT_REG_IO_STRUCT
 
-/*
- *   interrupt clear type
- */
 enum FDVT_IRQ_CLEAR_ENUM {
 	FDVT_IRQ_CLEAR_NONE,	/* non-clear wait, clear after wait */
 	FDVT_IRQ_CLEAR_WAIT,	/* clear wait, clear before and after wait */
@@ -67,11 +52,6 @@ enum FDVT_IRQ_CLEAR_ENUM {
 	FDVT_IRQ_CLEAR_ALL	/* clear all status */
 };
 #define FDVT_IRQ_CLEAR_ENUM enum FDVT_IRQ_CLEAR_ENUM
-/*
- *   module's interrupt , each module should have its own isr.
- *   note:
- *   mapping to isr table,ISR_TABLE when using no device tree
- */
 enum FDVT_IRQ_TYPE_ENUM {
 	FDVT_IRQ_TYPE_INT_FDVT_ST,	/* FDVT */
 	FDVT_IRQ_TYPE_AMOUNT
@@ -170,9 +150,6 @@ struct FDVT_Config {
 };
 #define FDVT_Config struct FDVT_Config
 
-/*
- *
- */
 enum FDVT_CMD_ENUM {
 	FDVT_CMD_RESET,		/* Reset */
 	FDVT_CMD_DUMP_REG,	/* Dump FDVT Register */

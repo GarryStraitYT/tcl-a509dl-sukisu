@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
-/**
- * @file	mtk_eem_api.
- * @brief   Driver for EEM
- *
- */
 
 #define __MTK_EEM_API_C__
 #include "mtk_eem_config.h"

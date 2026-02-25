@@ -1,18 +1,3 @@
-/*
- * MTK NAND Flash controller driver.
- * Copyright (C) 2016 MediaTek Inc.
- * Authors:	Xiaolei Li		<xiaolei.li@mediatek.com>
- *		Jorge Ramirez-Ortiz	<jorge.ramirez-ortiz@linaro.org>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
@@ -118,9 +103,6 @@ struct mtk_nfc_bad_mark_ctl {
 	u32 pos;
 };
 
-/*
- * FDM: region used to store free OOB data
- */
 struct mtk_nfc_fdm {
 	u32 reg_size;
 	u32 ecc_size;
@@ -160,11 +142,6 @@ struct mtk_nfc {
 	u8 *buffer;
 };
 
-/*
- * supported spare size of each IP.
- * order should be the same with the spare size bitfiled defination of
- * register NFI_PAGEFMT.
- */
 static const u8 spare_size_mt2701[] = {
 	16, 26, 27, 28, 32, 36, 40, 44,	48, 49, 50, 51, 52, 62, 63, 64
 };

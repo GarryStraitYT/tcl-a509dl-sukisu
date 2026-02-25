@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtk-afe-platform-driver.c  --  Mediatek afe platform driver
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Garlic Tseng <garlic.tseng@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/dma-mapping.h>

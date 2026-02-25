@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
-/*
- * @file    mtk_udi.c
- * @brief   Driver for UDI interface
- *
- */
 /* system includes */
 #ifdef __KERNEL__
 #include <linux/kernel.h>
@@ -42,9 +34,6 @@
 #define udi_write(addr, val)	mt_reg_sync_writel((val), ((void *)addr))
 #endif
 
-/*
- * LOG
- */
 #define	UDI_TAG	  "[mt_udi] "
 #ifdef __KERNEL__
 #ifdef USING_XLOG
@@ -219,9 +208,6 @@ static int _create_procfs(void)
 
 #endif /* CONFIG_PROC_FS */
 
-/*
- * Module driver
- */
 static int __init udi_init(void)
 {
 	int err = 0;

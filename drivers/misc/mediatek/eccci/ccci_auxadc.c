@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/device.h>
 #include <linux/module.h>
@@ -22,11 +19,6 @@ static int adc_num;
 static int adc_val;
 
 #ifdef CCCI_KMODULE_ENABLE
-/*
- * for debug log:
- * 0 to disable; 1 for print to ram; 2 for print to uart
- * other value to desiable all log
- */
 #ifndef CCCI_LOG_LEVEL /* for platform override */
 #define CCCI_LOG_LEVEL CCCI_LOG_CRITICAL_UART
 #endif

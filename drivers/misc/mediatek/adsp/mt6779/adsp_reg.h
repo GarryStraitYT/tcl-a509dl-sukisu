@@ -1,9 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_reg.h --  Mediatek ADSP HW register
- *
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 
 #ifndef __ADSP_REG_H

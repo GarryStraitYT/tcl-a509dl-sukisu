@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 /* GCE subsys */
 DECLARE_CMDQ_SUBSYS(CMDQ_SUBSYS_G3D_CONFIG_BASE, 0, MFG, g3d_config_base)

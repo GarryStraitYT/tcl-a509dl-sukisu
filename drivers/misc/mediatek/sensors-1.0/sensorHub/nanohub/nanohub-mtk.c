@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/platform_device.h>
 #include <linux/delay.h>
@@ -32,10 +29,6 @@ struct nanohub_ipi_data {
 	/* todo */
 };
 
-/*
- *Add the function weak defination, to avoid the build error
- *when the MTK_SENSOR_SUPPORT is not set(SOC bringup).
- */
 int __attribute__((weak))
 scp_power_monitor_register(struct scp_power_monitor *monitor)
 {

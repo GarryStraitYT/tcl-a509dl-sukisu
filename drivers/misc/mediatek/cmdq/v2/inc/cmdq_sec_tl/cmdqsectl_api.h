@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __CMDQSECTL_API_H__
 #define __CMDQSECTL_API_H__
 
-/**
- * Command IDs for normal world(TLC or linux kernel) to Trustlet
- */
 #define CMD_CMDQ_TL_SUBMIT_TASK	  1
 /* (not used)release resource in secure path per session */
 #define CMD_CMDQ_TL_RES_RELEASE	  2
@@ -36,19 +30,9 @@
 #define CMD_CMDQ_TL_SECTRACE_TRANSACT (3002)
 
 
-/**
- * Termination codes
- */
 #define EXIT_ERROR				  ((uint32_t)(-1))
 
-/**
- * TCI message data: see cmdq_sec_iwc_common.h
- */
 
-/**
- * Trustlet UUID:
- * filename of output bin is {TL_UUID}.tlbin
- */
 #ifndef CONFIG_MTK_CMDQ_TAB
 #define TL_CMDQ_UUID { { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
 #else

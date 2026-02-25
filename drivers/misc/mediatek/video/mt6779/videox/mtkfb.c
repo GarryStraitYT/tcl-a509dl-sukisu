@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <generated/autoconf.h>
 #include <linux/module.h>
@@ -215,11 +212,6 @@ void mtkfb_log_enable(int enable)
 	MTKFB_LOG("mtkfb log %s\n", enable ? "enabled" : "disabled");
 }
 
-/*
- * ----------------------------------------------------------
- * fbdev framework callbacks and the ioctl interface
- * ----------------------------------------------------------
- */
 /* Called each time the mtkfb device is opened */
 static int mtkfb_open(struct fb_info *info, int user)
 {
@@ -646,10 +638,6 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 	return ret;
 }
 
-/**
- * Set fb_info.fix fields and also updates fbdev.
- * When calling this fb_info.var must be set up already.
- */
 static void set_fb_fix(struct mtkfb_device *fbdev)
 {
 	struct fb_info *fbi = fbdev->fb_info;
@@ -692,10 +680,6 @@ static void set_fb_fix(struct mtkfb_device *fbdev)
 	fbops->fb_imageblit = cfb_imageblit;
 }
 
-/**
- * Check values in var, try to adjust them in case of out of bound values if
- * possible, or return error.
- */
 static int mtkfb_check_var(struct fb_var_screeninfo *var, struct fb_info *fbi)
 {
 	unsigned int bpp;
@@ -822,10 +806,6 @@ static int mtkfb_check_var(struct fb_var_screeninfo *var, struct fb_info *fbi)
 	return 0;
 }
 
-/**
- * Switch to a new mode. The parameters for it has been check already by
- * mtkfb_check_var.
- */
 static int mtkfb_set_par(struct fb_info *fbi)
 {
 	struct fb_var_screeninfo *var = &fbi->var;
@@ -1197,7 +1177,9 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd,
 
 		dprec_logger_start(DPREC_LOGGER_WDMA_DUMP, 0, 0);
 		ret = primary_display_capture_framebuffer_ovl(
-					(unsigned long)src_pbuf, UFMT_BGRA8888);
+					(unsigned long)src_pbuf,
+					fbsize,
+					UFMT_BGRA8888);
 		if (ret < 0)
 			DISP_PR_ERR("primary capture framebuffer failed\n");
 		dprec_logger_done(DPREC_LOGGER_WDMA_DUMP, 0, 0);
@@ -1256,7 +1238,8 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd,
 		}
 
 		ret = primary_display_capture_framebuffer_ovl(
-					(unsigned long)src_pbuf, format);
+					(unsigned long)src_pbuf, fbsize,
+					format);
 		if (ret < 0)
 			DISP_PR_ERR("primary capture framebuffer failed\n");
 
@@ -1846,10 +1829,6 @@ static int mtkfb_pan_display_proxy(struct fb_var_screeninfo *var,
 static int mtkfb_mmap(struct fb_info *info, struct vm_area_struct *vma);
 #endif
 
-/*
- * Callback table for the frame buffer framework. Some of these pointers
- * will be changed according to the current setting of fb_info->accel_flags.
- */
 static struct fb_ops mtkfb_ops = {
 	.owner = THIS_MODULE,
 	.fb_open = mtkfb_open,
@@ -1893,11 +1872,6 @@ static struct fb_ops mtkfb1_ops = {
 	.fb_blank = mtkfb1_blank,
 };
 #endif
-/*
- * ---------------------------------------------------------------
- * Sysfs interface
- * ---------------------------------------------------------------
- */
 
 static int mtkfb_register_sysfs(struct mtkfb_device *fbdev)
 {
@@ -1911,14 +1885,6 @@ static void mtkfb_unregister_sysfs(struct mtkfb_device *fbdev)
 	NOT_REFERENCED(fbdev);
 }
 
-/*
- * ----------------------------------------------------------------
- * LDM callbacks
- * ----------------------------------------------------------------
- */
-/* Initialize system fb_info object and set the default video mode.
- * The frame buffer memory already allocated by lcddma_init
- */
 static int mtkfb_fbinfo_init(struct fb_info *info)
 {
 	struct mtkfb_device *fbdev = (struct mtkfb_device *)info->par;
@@ -2006,10 +1972,6 @@ static int init_framebuffer(struct fb_info *info)
 }
 
 
-/**
- * Free driver resources. Can be called to rollback an aborted initialization
- * sequence.
- */
 static void mtkfb_free_resources(struct mtkfb_device *fbdev, int state)
 {
 	int ret = 0;
@@ -2467,12 +2429,8 @@ static int mtkfb_probe(struct platform_device *pdev)
 #endif
 	int init_state;
 	int ret = 0;
-
-#if defined(MTK_FB_ION_SUPPORT)
-	struct ion_client *ion_display_client = NULL;
-	struct ion_handle *ion_display_handle = NULL;
 	size_t temp_va = 0;
-#endif
+
 	/* struct platform_device *pdev; */
 	long dts_gpio_state = 0;
 
@@ -2514,34 +2472,12 @@ static int mtkfb_probe(struct platform_device *pdev)
 #endif
 
 	DISPMSG("%s: fb_pa = %pa\n", __func__, &fb_base);
-
-#if defined(MTK_FB_ION_SUPPORT)
 	temp_va = (size_t)ioremap_nocache(fb_base, vramsize);
 	fbdev->fb_va_base = (void *)temp_va;
-	ion_display_client = disp_ion_create("disp_fb0");
-	if (ion_display_client == NULL) {
-		DISP_PR_ERR("%s: fail to create ion\n", __func__);
-		ret = -1;
-		goto cleanup;
-	}
 
-	ion_display_handle = disp_ion_alloc(ion_display_client,
-					    ION_HEAP_MULTIMEDIA_MAP_MVA_MASK,
-					    temp_va, vramsize);
-	if (!ion_display_handle) {
-		DISP_PR_ERR("%s: fail to allocate buffer\n", __func__);
-		ret = -1;
-		goto cleanup;
-	}
-
-	disp_ion_get_mva(ion_display_client, ion_display_handle,
-			 (unsigned int *)&fb_mva, DISP_M4U_PORT_DISP_OVL0);
-
-#else
 	disp_hal_allocate_framebuffer(fb_base, (fb_base + vramsize - 1),
 				(unsigned long *)(&fbdev->fb_va_base), &fb_mva);
 
-#endif
 	fbdev->fb_pa_base = fb_base;
 
 	primary_display_set_frame_buffer_address((unsigned long)

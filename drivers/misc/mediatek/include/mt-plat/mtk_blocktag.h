@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef _MTK_BLOCKTAG_H
 #define _MTK_BLOCKTAG_H
@@ -12,15 +9,6 @@
 
 #if defined(CONFIG_MTK_BLOCK_TAG)
 
-/*
- * MTK_BTAG_FEATURE_MICTX_IOSTAT
- *
- * Shall be defined if we can provide iostat
- * produced by mini context.
- *
- * This feature is used to extend kernel
- * trace events to have more I/O information.
- */
 #define MTK_BTAG_FEATURE_MICTX_IOSTAT
 
 #define BLOCKTAG_PIDLOG_ENTRIES 50
@@ -77,13 +65,6 @@ struct mtk_btag_req {
 	struct mtk_btag_req_rw w; /* write */
 };
 
-/*
- * public structure to provide IO statistics
- * in a period of time.
- *
- * Make sure MTK_BTAG_FEATURE_MICTX_IOSTAT is
- * defined alone with mictx series.
- */
 struct mtk_btag_mictx_iostat_struct {
 	__u64 duration;  /* duration time for below performance data (ns) */
 	__u32 tp_req_r;  /* throughput (per-request): read  (KB/s) */
@@ -98,10 +79,6 @@ struct mtk_btag_mictx_iostat_struct {
 	__u16 q_depth;   /* storage cmdq queue depth */
 };
 
-/*
- * mini context for integration with
- * other performance analysis tools.
- */
 struct mtk_btag_mictx_struct {
 	struct mtk_btag_throughput tp;
 	struct mtk_btag_req req;

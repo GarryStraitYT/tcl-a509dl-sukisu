@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2011 MediaTek Inc.
- */
 
-/******************************************************************************
- *  INCLUDE LINUX HEADER
- ******************************************************************************/
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -44,9 +38,6 @@
 #ifdef CONFIG_OF
 #include <linux/of_fdt.h>
 #endif
-/******************************************************************************
- *  INCLUDE LIBRARY
- ******************************************************************************/
 #include "sec_osal.h"
 #include "sec_mod.h"
 #include "sec_boot_lib.h"
@@ -61,9 +52,6 @@
 
 #define TRACE_FUNC()                MSG_FUNC(SEC_DEV_NAME)
 
-/*************************************************************************
- *  GLOBAL VARIABLE
- **************************************************************************/
 static struct sec_mod sec = { 0 };
 static struct cdev sec_dev;
 static struct class *sec_class;
@@ -75,25 +63,16 @@ static const struct of_device_id masp_of_ids[] = {
 	{}
 };
 
-/**************************************************************************
- *  SEC DRIVER OPEN
- **************************************************************************/
 static int sec_open(struct inode *inode, struct file *file)
 {
 	return 0;
 }
 
-/**************************************************************************
- *  SEC DRIVER RELEASE
- **************************************************************************/
 static int sec_release(struct inode *inode, struct file *file)
 {
 	return 0;
 }
 
-/**************************************************************************
- *  SEC DRIVER IOCTL
- **************************************************************************/
 static long sec_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 #ifdef MTK_SECURITY_MODULE_LITE
@@ -112,9 +91,6 @@ static const struct file_operations sec_fops = {
 	.unlocked_ioctl = sec_ioctl
 };
 
-/**************************************************************************
- *  SEC RID PROC FUNCTION
- **************************************************************************/
 static int sec_proc_rid_show(struct seq_file *m, void *v)
 {
 	unsigned int rid[4] = { 0 };
@@ -141,9 +117,6 @@ static const struct file_operations sec_proc_rid_fops = {
 };
 
 
-/**************************************************************************
- *  SEC MODULE PARAMETER
- **************************************************************************/
 static uint recovery_done;
 module_param(recovery_done, uint, 0644); /* rw-r--r-- */
 
@@ -229,9 +202,6 @@ exit:
 }
 
 
-/**************************************************************************
- *  SEC DRIVER EXIT
- **************************************************************************/
 static void sec_exit(void)
 {
 	remove_proc_entry("rid", NULL);
@@ -248,9 +218,6 @@ static void sec_exit(void)
 #endif
 }
 
-/**************************************************************************
- *  MASP PLATFORM DRIVER WRAPPER, FOR BUILD-IN SEQUENCE
- **************************************************************************/
 int masp_probe(struct platform_device *dev)
 {
 	int ret = 0;
@@ -335,9 +302,6 @@ static void __exit masp_exit(void)
 module_init(masp_init);
 module_exit(masp_exit);
 
-/**************************************************************************
- *  EXPORT FUNCTION
- **************************************************************************/
 EXPORT_SYMBOL(sec_get_random_id);
 
 MODULE_LICENSE("GPL");

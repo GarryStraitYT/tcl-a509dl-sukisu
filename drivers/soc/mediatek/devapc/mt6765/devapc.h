@@ -1,16 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __DAPC_H__
 #define __DAPC_H__
 
 #include <linux/types.h>
 
-/******************************************************************************
- * CONSTANT DEFINATION
- ******************************************************************************/
 
 #define MOD_NO_IN_1_DEVAPC                  16
 #define DEVAPC_TAG                          "DEVAPC"
@@ -57,9 +51,6 @@
 #define INFRA_VIO_ADDR_HIGH             0x0F000000
 #define INFRA_VIO_ADDR_HIGH_START_BIT   24
 
-/******************************************************************************
- * REGISTER ADDRESS DEFINATION
- ******************************************************************************/
 
 /* Device APC PD */
 #define PD_INFRA_VIO_SHIFT_MAX_BIT      22

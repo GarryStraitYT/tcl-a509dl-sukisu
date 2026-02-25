@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include <linux/mm.h>
 #include <linux/uaccess.h>
 #include <linux/pagemap.h>
@@ -126,10 +123,6 @@ bool gup_fast_permitted(unsigned long start, int nr_pages, int write)
 	return end >= start;
 }
 
-/*
- * Like get_user_pages_fast() except its IRQ-safe in that it won't fall
- * back to the regular GUP.
- */
 int __get_user_pages_fast(unsigned long start, int nr_pages, int write,
 			  struct page **pages)
 {

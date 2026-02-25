@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MSDC_REG_H_
 #define _MSDC_REG_H_
@@ -1043,9 +1040,6 @@
 #define MSDC_DEBUG_REGISTER_COUNT               0x27
 #endif
 
-/*
- *MSDC TOP REG
- */
 /* #define MSDC_TOP_BASE                   (0x11d60000) */
 
 /* TOP REGISTER */

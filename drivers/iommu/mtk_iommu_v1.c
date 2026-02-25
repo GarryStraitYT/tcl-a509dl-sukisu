@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2015-2016 MediaTek Inc.
- * Author: Honghui Zhang <honghui.zhang@mediatek.com>
- *
- * Based on driver/iommu/mtk_iommu.c
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 #include <linux/bootmem.h>
 #include <linux/bug.h>
 #include <linux/clk.h>
@@ -88,10 +73,6 @@
 #define MT2701_IOMMU_PAGE_SHIFT			12
 #define MT2701_IOMMU_PAGE_SIZE			(1UL << MT2701_IOMMU_PAGE_SHIFT)
 
-/*
- * MTK m4u support 4GB iova address space, and only support 4K page
- * mapping. So the pagetable size should be exactly as 4M.
- */
 #define M2701_IOMMU_PGT_SIZE			SZ_4M
 
 struct mtk_iommu_domain {
@@ -374,10 +355,6 @@ static phys_addr_t mtk_iommu_iova_to_phys(struct iommu_domain *domain,
 
 static const struct iommu_ops mtk_iommu_ops;
 
-/*
- * MTK generation one iommu HW only support one iommu domain, and all the client
- * sharing the same iova address space.
- */
 static int mtk_iommu_create_mapping(struct device *dev,
 				    struct of_phandle_args *args)
 {

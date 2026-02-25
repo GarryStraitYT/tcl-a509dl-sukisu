@@ -1,41 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *  mt-soc-digital-type.h
- *
- * Project:
- * --------
- *   MT6583  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
 #ifndef _AUDIO_DIGITAL_TYPE_H
 #define _AUDIO_DIGITAL_TYPE_H
 
 #include <linux/list.h>
 
-/*****************************************************************************
- *                ENUM DEFINITION
- *****************************************************************************/
 
 enum soc_aud_digital_block {
 	/* memmory interfrace */
@@ -1024,10 +994,6 @@ struct audio_afe_reg_cache {
 	 */
 };
 
-/*
- *  mUser is record for User
- *    using substream pointer as reach user
- */
 struct audio_sram_block {
 	bool mValid;
 	void *mUser;
@@ -1036,10 +1002,6 @@ struct audio_sram_block {
 	void *msram_virt_addr;
 };
 
-/*
- * use memory interface number as block number
- * todo ?
- */
 
 struct audio_sram_manager {
 	dma_addr_t msram_phys_addr;
@@ -1051,9 +1013,6 @@ struct audio_sram_manager {
 	enum audio_sram_mode sram_mode;
 };
 
-/*
- * IRQ Manager
- */
 #define IRQ_MIN_RATE 48000
 #define IRQ_MAX_RATE 260000
 #define IRQ_TOLERANCE_US 10 /* irq period difference that can be tolerated */
@@ -1073,9 +1032,6 @@ struct irq_manager {
 	const struct irq_user *selected_user;
 };
 
-/*
- * Ultrasound
- */
 
 struct voice_ultra_info {
 	/* voice dl with ultra --> playback */

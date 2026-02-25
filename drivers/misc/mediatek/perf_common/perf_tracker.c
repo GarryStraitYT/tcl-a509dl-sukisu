@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <trace/events/sched.h>
 
@@ -126,12 +123,6 @@ void perf_tracker(u64 wallclock,
 			);
 }
 
-/*
- * make perf tracker on
- * /sys/devices/system/cpu/perf/enable
- * 1: on
- * 0: off
- */
 static ssize_t show_perf_enable(struct kobject *kobj,
 				struct kobj_attribute *attr, char *buf)
 {

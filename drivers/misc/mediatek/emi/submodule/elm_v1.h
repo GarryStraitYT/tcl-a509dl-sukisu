@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #ifndef __ELM_H__
 #define __ELM_H__

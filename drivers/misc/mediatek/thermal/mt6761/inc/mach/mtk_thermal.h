@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __MT6761_THERMAL_H__
 #define __MT6761_THERMAL_H__
@@ -20,15 +17,7 @@
 #include "mtk_gpufreq.h"
 #endif
 
-/*
- *Bank0: CA7L (TSMCU1)
- *Bank3: GPU  (TSMCU2)
- *Bank4: SoC  (TSMCU3)
- */
 
-/*
- * TC0: (TS_MCU1, TS_MCU2, TS_MCU3)
- */
 enum thermal_sensor {
 	TS_MCU1 = 0,
 	TS_MCU2,
@@ -134,9 +123,6 @@ extern int mtk_thermal_get_tpcb_target(void);
 extern void thermal_set_big_core_speed
 (unsigned int tempMonCtl1, unsigned int tempMonCtl2, unsigned int tempAhbPoll);
 
-/* return value(1): cooler of abcct/abcct_lcmoff is deactive,
- * and no thermal current limit.
- */
 extern int mtk_cooler_is_abcct_unlimit(void);
 
 #endif /* __MT6761_THERMAL_H__ */

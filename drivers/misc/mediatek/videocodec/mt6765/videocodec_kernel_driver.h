@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef __VCODEC_DRIVER_H__
 #define __VCODEC_DRIVER_H__

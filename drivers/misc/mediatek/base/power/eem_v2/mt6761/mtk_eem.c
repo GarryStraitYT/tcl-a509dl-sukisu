@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
-/**
- * @file	mtk_eem.
- * @brief   Driver for EEM
- *
- */
 
 #define __MTK_EEM_C__
-/*=============================================================
- * Include files
- *=============================================================
- */
 
 /* system includes */
 #include <linux/init.h>
@@ -77,10 +65,6 @@
 
 #include "mtk_mcdi_api.h"
 
-/****************************************
- * define variables for legacy and eem
- ****************************************
- */
 #if ENABLE_INIT1_STRESS
 static int eem_init1stress_en, testCnt;
 wait_queue_head_t wqStress;
@@ -112,10 +96,6 @@ static struct hrtimer eem_log_timer;
 static DEFINE_SPINLOCK(eem_spinlock);
 DEFINE_SPINLOCK(record_spinlock);
 
-/******************************************
- * common variables for legacy ptp
- *******************************************
- */
 static int eem_log_en;
 static unsigned int eem_checkEfuse = 1;
 static unsigned int informEEMisReady;
@@ -145,10 +125,6 @@ void __iomem *eem_base;
 static u32 eem_irq_number;
 #endif
 
-/*=============================================================
- * weak function
- *=============================================================
- */
 void __attribute__ ((weak))
 mt_ppm_ptpod_policy_activate(void)
 {
@@ -161,10 +137,6 @@ mt_ppm_ptpod_policy_deactivate(void)
 	pr_info("%s not ready\n", __func__);
 }
 
-/*=============================================================
- * common functions for both ap and eem
- *=============================================================
- */
 unsigned int mt_eem_is_enabled(void)
 {
 	return informEEMisReady;
@@ -328,17 +300,9 @@ static int get_devinfo(void)
 	return ret;
 }
 
-/*============================================================
- * function declarations of EEM detectors
- *============================================================
- */
 static void mt_ptp_lock(unsigned long *flags);
 static void mt_ptp_unlock(unsigned long *flags);
 
-/*=============================================================
- * Local function definition
- *=============================================================
- */
 #ifdef CONFIG_EEM_AEE_RR_REC
 static void _mt_eem_aee_init(void)
 {
@@ -576,10 +540,6 @@ int base_ops_mon_mode(struct eem_det *det)
 	det->BTS = ts_info.ts_BTS;
 #endif
 
-/*
- * eem_debug("[base_ops_mon_mode] Bk = %d, MTS = 0x%08X, BTS = 0x%08X\n",
- *			det->ctrl_id, det->MTS, det->BTS);
- */
 	/* det->ops->dump_status(det); */
 	det->ops->set_phase(det, EEM_PHASE_MON);
 
@@ -933,10 +893,6 @@ static long long eem_get_current_time_us(void)
 	return((t.tv_sec & 0xFFF) * 1000000 + t.tv_usec);
 }
 
-/*=============================================================
- * Global function definition
- *=============================================================
- */
 static void mt_ptp_lock(unsigned long *flags)
 {
 	spin_lock_irqsave(&eem_spinlock, *flags);
@@ -965,9 +921,6 @@ void mt_record_unlock(unsigned long *flags)
 }
 EXPORT_SYMBOL(mt_record_unlock);
 
-/*
- * timer for log
- */
 static enum hrtimer_restart eem_log_timer_func(struct hrtimer *timer)
 {
 	struct eem_det *det;
@@ -1001,9 +954,6 @@ static enum hrtimer_restart eem_log_timer_func(struct hrtimer *timer)
 	return HRTIMER_RESTART;
 }
 
-/*
- * Thread for voltage setting
- */
 static int eem_volt_thread_handler(void *data)
 {
 	struct eem_ctrl *ctrl = (struct eem_ctrl *)data;
@@ -2417,9 +2367,6 @@ void mt_eem_opp_status(enum eem_det_id id, unsigned int *temp,
 }
 EXPORT_SYMBOL(mt_eem_opp_status);
 
-/***************************
- * return current EEM stauts
- ****************************/
 int mt_eem_status(enum eem_det_id id)
 {
 	struct eem_det *det = id_to_eem_det(id);
@@ -2438,15 +2385,7 @@ int mt_eem_status(enum eem_det_id id)
 	return det->ops->get_status(det);
 }
 
-/**
- * ===============================================
- * PROCFS interface for debugging
- * ===============================================
- */
 
-/*
- * show current EEM stauts
- */
 static int eem_debug_proc_show(struct seq_file *m, void *v)
 {
 	struct eem_det *det = (struct eem_det *)m->private;
@@ -2465,9 +2404,6 @@ static int eem_debug_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * set EEM status by procfs interface
- */
 static ssize_t eem_debug_proc_write(struct file *file,
 	const char __user *buffer, size_t count, loff_t *pos)
 {
@@ -2516,9 +2452,6 @@ out:
 	return (ret < 0) ? ret : count;
 }
 
-/*
- * show current EEM data
- */
 void eem_dump_reg_by_det(struct eem_det *det, struct seq_file *m)
 {
 	unsigned int i, k;
@@ -2596,9 +2529,6 @@ static int eem_dump_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * show current voltage
- */
 static int eem_cur_volt_proc_show(struct seq_file *m, void *v)
 {
 	struct eem_det *det = (struct eem_det *)m->private;
@@ -2628,9 +2558,6 @@ static int eem_cur_volt_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * show current EEM status
- */
 static int eem_status_proc_show(struct seq_file *m, void *v)
 {
 	int i;
@@ -2654,9 +2581,6 @@ static int eem_status_proc_show(struct seq_file *m, void *v)
 
 	return 0;
 }
-/*
- * set EEM log enable by procfs interface
- */
 
 static int eem_log_en_proc_show(struct seq_file *m, void *v)
 {
@@ -2792,9 +2716,6 @@ out:
 }
 #endif
 
-/*
- * show EEM offset
- */
 static int eem_offset_proc_show(struct seq_file *m, void *v)
 {
 	struct eem_det *det = (struct eem_det *)m->private;
@@ -2808,9 +2729,6 @@ static int eem_offset_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * set EEM offset by procfs
- */
 static ssize_t eem_offset_proc_write(struct file *file,
 	const char __user *buffer, size_t count, loff_t *pos)
 {
@@ -2995,9 +2913,6 @@ unsigned int get_efuse_status(void)
 {
 	return eem_checkEfuse;
 }
-/*
- * Module driver
- */
 static int __init eem_init(void)
 {
 	int err = 0;

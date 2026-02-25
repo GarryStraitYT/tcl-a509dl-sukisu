@@ -138,9 +138,6 @@ unsigned int adsp_A_log_if_poll(struct file *file, poll_table *wait)
 
 	return ret;
 }
-/*
- * ipi send to enable adsp logger flag
- */
 static unsigned int adsp_A_log_enable_set(unsigned int enable)
 {
 	int ret = 0;
@@ -200,9 +197,6 @@ error:
 }
 #endif
 
-/*
- * create device sysfs, adsp logger status
- */
 static ssize_t adsp_A_mobile_log_show(struct device *kobj,
 				      struct device_attribute *attr, char *buf)
 {
@@ -231,10 +225,6 @@ static ssize_t adsp_A_mobile_log_store(struct device *kobj,
 }
 DEVICE_ATTR_RW(adsp_A_mobile_log);
 
-/*
- * logger UT test
- *
- */
 #if ADSP_LOGGER_UT
 static ssize_t adsp_A_mobile_log_UT_show(struct device *kobj,
 					 struct device_attribute *attr,
@@ -355,12 +345,6 @@ struct attribute_group adsp_logger_attr_group = {
 	.attrs = adsp_logger_attrs,
 };
 
-/*
- * IPI for logger init
- * @param id:   IPI id
- * @param data: IPI data
- * @param len:  IPI data length
- */
 static void adsp_A_logger_init_handler(int id, void *data, unsigned int len)
 {
 	/* send work to initialize logger*/
@@ -385,13 +369,6 @@ static void adsp_A_trax_done_handler(int id, void *data, unsigned int len)
 #endif
 
 
-/*
- * callback function for work struct
- * notify apps to start their tasks or generate an exception according to flag
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void adsp_logger_init_ws(struct work_struct *ws)
 {
 	enum adsp_ipi_status ret;
@@ -454,10 +431,6 @@ static void adsp_trax_init_ws(struct work_struct *ws)
 }
 #endif
 
-/*
- * init adsp logger dram ctrl structure
- * @return:     0: success, otherwise: fail
- */
 int adsp_logger_init(void)
 {
 	int last_ofs;

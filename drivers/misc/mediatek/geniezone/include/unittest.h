@@ -1,19 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 
 #define UT_LOG(fmt...) pr_info("[GZTEST]" fmt)
 
@@ -39,9 +26,6 @@
 		}                                                              \
 	}
 
-/*
- *   Begin and end test macro
- */
 #define TEST_BEGIN(name)                                                       \
 	bool _success = true;                                                  \
 	char *_test = name
@@ -54,9 +38,6 @@
 		else                                                           \
 			UT_LOG("%s: FAILED\n", _test);                         \
 	}
-/*
- * CHECK_* macros to check test results.
- */
 #define CHECK_EQ(expected, actual, msg)                                        \
 	{                                                                      \
 		typeof(actual) _e = expected;                                  \

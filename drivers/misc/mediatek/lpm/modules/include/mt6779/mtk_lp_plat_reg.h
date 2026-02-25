@@ -1,15 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_PLAT_CPC_REG_H__
 #define __MTK_PLAT_CPC_REG_H__
 
-/**************************************
- * CPC related register
- * base address = 0x0C53A000
- **************************************/
 #define CPC_FLOW_CTRL_CFG              (0x814)
 #define CPC_MCUSYS_LAST_CORE_REQ       (0x818)
 #define CPC_CPUSYS_LAST_CORE_RESP      (0x81C)
@@ -37,10 +30,6 @@
 #define CPC_DORMANT_COUNTER_CLR        (0xB74)
 #define CPC_CPU_LATENCY(cpu)           ((CPC_CPU0_LATENCY) + 4 * (cpu))
 
-/**************************************
- * system sram for apmcu debug
- * base address = 0x0011B000
- **************************************/
 #define SYSRAM_CPUSYS_CNT              (0x1E8)
 #define SYSRAM_MCUSYS_CNT              (0x1EC)
 #define SYSRAM_CPC_CPUSYS_CNT_BACKUP   (0x1F0)

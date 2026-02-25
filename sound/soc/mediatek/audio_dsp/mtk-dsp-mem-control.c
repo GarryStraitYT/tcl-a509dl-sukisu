@@ -657,11 +657,6 @@ void dump_all_task_attr(void)
 }
 
 
-/*
- * gen_pool_create - create a new special memory pool
- * @min_alloc_order: log base 2 of number of bytes each bitmap bit represents
- * @nid: node id of the node the pool structure should be allocated on, or -1
- */
 int mtk_adsp_gen_pool_create(int min_alloc_order, int nid)
 {
 	int i;

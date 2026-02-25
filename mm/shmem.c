@@ -3224,6 +3224,14 @@ static const struct xattr_handler shmem_trusted_xattr_handler = {
 	.get = shmem_xattr_handler_get,
 	.set = shmem_xattr_handler_set,
 };
+//begin add by kaiyi.chen  for task 9843862(HDT2), 2020-09-01
+//kaiyi.chen Task: 9625590 should support user.* in production mode
+static const struct xattr_handler shmem_user_xattr_handler = {
+	.prefix = XATTR_USER_PREFIX,
+	.get = shmem_xattr_handler_get,
+	.set = shmem_xattr_handler_set,
+};
+//end add by kaiyi.chen  for task 9843862(HDT2), 2020-09-01
 
 static const struct xattr_handler *shmem_xattr_handlers[] = {
 #ifdef CONFIG_TMPFS_POSIX_ACL
@@ -3232,6 +3240,7 @@ static const struct xattr_handler *shmem_xattr_handlers[] = {
 #endif
 	&shmem_security_xattr_handler,
 	&shmem_trusted_xattr_handler,
+	&shmem_user_xattr_handler,//add by kaiyi.chen  for task 9843862(HDT2), 2020-09-01
 	NULL
 };
 

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifdef CONFIG_MTK_SIM_LOCK_POWER_ON_WRITE_PROTECT
 /* #include <mt-plat/env.h> Fix me, header file not found */

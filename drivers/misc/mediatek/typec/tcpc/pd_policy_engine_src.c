@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include "inc/pd_core.h"
@@ -9,9 +6,6 @@
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
 
-/*
- * [PD2.0] Figure 8-38 Source Port Policy Engine state diagram
- */
 
 void pe_src_startup_entry(struct pd_port *pd_port)
 {
@@ -172,10 +166,6 @@ void pe_src_soft_reset_entry(struct pd_port *pd_port)
 	pd_handle_soft_reset(pd_port);
 }
 
-/*
- * [PD2.0] Figure 8-81
- Source Startup Structured VDM Discover Identity State Diagram (TODO)
- */
 
 #ifdef CONFIG_USB_PD_SRC_STARTUP_DISCOVER_ID
 
@@ -213,9 +203,6 @@ void pe_src_vdm_identity_naked_entry(struct pd_port *pd_port)
 
 #ifdef CONFIG_USB_PD_REV30
 
-/*
- * [PD3.0] Source Port Not Supported Message State Diagram
- */
 
 void pe_src_send_not_supported_entry(struct pd_port *pd_port)
 {
@@ -236,9 +223,6 @@ void pe_src_chunk_received_entry(struct pd_port *pd_port)
 	pd_enable_timer(pd_port, PD_TIMER_CK_NO_SUPPORT);
 }
 
-/*
- * [PD3.0] Figure 8-73 Source Port Source Alert State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_ALERT_LOCAL
 void pe_src_send_source_alert_entry(struct pd_port *pd_port)
@@ -248,9 +232,6 @@ void pe_src_send_source_alert_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_ALERT_REMOTE */
 
-/*
- * [PD3.0] Figure 8-76 Source Port Sink Alert State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_ALERT_REMOTE
 void pe_src_sink_alert_received_entry(struct pd_port *pd_port)
@@ -261,9 +242,6 @@ void pe_src_sink_alert_received_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_ALERT_REMOTE */
 
-/*
- * [PD3.0] Figure 8-78 Source Give Source Capabilities Extended State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_SRC_CAP_EXT_LOCAL
 void pe_src_give_source_cap_ext_entry(struct pd_port *pd_port)
@@ -274,9 +252,6 @@ void pe_src_give_source_cap_ext_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_SRC_CAP_EXT_LOCAL */
 
-/*
- * [PD3.0] Figure 8-80 Source Give Source Status State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_STATUS_LOCAL
 void pe_src_give_source_status_entry(struct pd_port *pd_port)
@@ -287,9 +262,6 @@ void pe_src_give_source_status_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_STATUS_LOCAL */
 
-/*
- * [PD3.0] Figure 8-81 Source Port Get Sink Status State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_STATUS_REMOTE
 void pe_src_get_sink_status_entry(struct pd_port *pd_port)
@@ -304,9 +276,6 @@ void pe_src_get_sink_status_exit(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_STATUS_REMOTE */
 
-/*
- * [PD3.0] Figure 8-84 Source Give Source PPS Status State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_PPS_SOURCE
 void pe_src_give_pps_status_entry(struct pd_port *pd_port)

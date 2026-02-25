@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/list.h>
 #include <linux/device.h>
@@ -149,9 +146,6 @@ static struct c2k_port c2k_ports[] = {
 	{STATUS_CH_C2K, STATUS_CH_C2K, CCCI_CONTROL_TX, CCCI_CONTROL_RX,},
 };
 
-/*always keep this in mind:
- * what if there are more than 1 modems using CLDMA...
- */
 
 /*ccif share memory setting*/
 /*need confirm with md. haow*/
@@ -196,11 +190,6 @@ static int tx_exp_buffer_size[QUEUE_NUM] = { 12 * 1024, 32 * 1024,
 };
 
 #ifdef CCCI_KMODULE_ENABLE
-/*
- * for debug log:
- * 0 to disable; 1 for print to ram; 2 for print to uart
- * other value to desiable all log
- */
 #ifndef CCCI_LOG_LEVEL /* for platform override */
 #define CCCI_LOG_LEVEL CCCI_LOG_CRITICAL_UART
 #endif

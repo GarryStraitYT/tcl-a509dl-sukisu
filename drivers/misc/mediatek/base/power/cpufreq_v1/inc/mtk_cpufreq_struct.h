@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef __MTK_CPUFREQ_STRUCT_H__
 #define __MTK_CPUFREQ_STRUCT_H__

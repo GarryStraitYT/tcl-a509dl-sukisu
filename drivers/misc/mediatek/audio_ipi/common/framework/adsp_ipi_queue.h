@@ -1,9 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_ipi_queue.h --  Mediatek ADSP IPI with queue
- *
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #ifndef MTK_ADSP_IPI_QUEUE_H
 #define MTK_ADSP_IPI_QUEUE_H

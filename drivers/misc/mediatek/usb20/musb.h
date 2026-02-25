@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef __LINUX_USB_MUSB_H
 #define __LINUX_USB_MUSB_H
 
-/* The USB role is defined by the connector used on the board, so long as
- * standards are being followed.  (Developer boards sometimes won't.)
- */
 enum musb_mode {
 	MUSB_UNDEFINED = 0,
 	MUSB_HOST,		/* A or Mini-A connector */
@@ -16,9 +10,6 @@ enum musb_mode {
 	MUSB_OTG		/* Mini-AB connector */
 };
 
-/* add MUSB_ prefix to avoid
- * confilicts with musbfsh.h, gang
- */
 
 enum musb_fifo_style {
 	MUSB_FIFO_RXTX,
@@ -26,10 +17,6 @@ enum musb_fifo_style {
 	MUSB_FIFO_RX
 } __packed;
 
-/* add MUSB_ prefix to
- * avoid confilicts
- * with musbfsh.h, gang
- */
 
 enum musb_buf_mode {
 	MUSB_BUF_SINGLE,

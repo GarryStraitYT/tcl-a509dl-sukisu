@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -111,10 +108,6 @@ static s32 mt_pwm_sel_ap(u32 pwm_no)
 	return ret;
 }
 
-/*******************************************************
- *   Set PWM_ENABLE register bit to enable pwm1~pwm7
- *
- ********************************************************/
 static s32 mt_set_pwm_enable(u32 pwm_no)
 {
 	unsigned long flags;
@@ -269,12 +262,6 @@ s32 mt_get_pwm_clk(u32 pwm_no)
 	return mt_get_pwm_clk_hal(pwm_no);
 }
 
-/******************************************
- * Set PWM_CON register data source
- * pwm_no: pwm1~pwm7(0~6)
- * val: 0 is fifo mode
- *  1 is memory mode
- *******************************************/
 
 static s32 mt_set_pwm_con_datasrc(u32 pwm_no, u32 val)
 {
@@ -303,13 +290,6 @@ err:
 }
 
 
-/************************************************
- * set the PWM_CON register
- * pwm_no : pwm1~pwm7 (0~6)
- * val: 0 is period mode
- * 1 is random mode
- *
- ***************************************************/
 static s32 mt_set_pwm_con_mode(u32 pwm_no, u32 val)
 {
 	unsigned long flags;
@@ -337,14 +317,6 @@ err:
 	return -EPARMNOSUPPORT;
 }
 
-/***********************************************
- * Set PWM_CON register, idle value bit
- * val: 0 means that  idle state is not put out.
- *	   1 means that idle state is put out
- *
- *	  IDLE_FALSE: 0
- *	  IDLE_TRUE: 1
- ***********************************************/
 static s32 mt_set_pwm_con_idleval(u32 pwm_no, u16 val)
 {
 	unsigned long flags;
@@ -371,14 +343,6 @@ err:
 	return -EPARMNOSUPPORT;
 }
 
-/*********************************************
- * Set PWM_CON register guardvalue bit
- *  val: 0 means guard state is not put out.
- *		1 mens guard state is put out.
- *
- *	GUARD_FALSE: 0
- *	GUARD_TRUE: 1
- **********************************************/
 static s32 mt_set_pwm_con_guardval(u32 pwm_no, u16 val)
 {
 	unsigned long flags;
@@ -405,11 +369,6 @@ err:
 	return -EPARMNOSUPPORT;
 }
 
-/*************************************************
- * Set PWM_CON register stopbits
- * stop bits should be less then 0x3f
- *
- **************************************************/
 static s32 mt_set_pwm_con_stpbit(u32 pwm_no, u32 stpbit, u32 srcsel)
 {
 	unsigned long flags;
@@ -444,14 +403,6 @@ static s32 mt_set_pwm_con_stpbit(u32 pwm_no, u32 stpbit, u32 srcsel)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set PWM_CON register oldmode bit
- * val: 0 means disable oldmode
- *		1 means enable oldmode
- *
- *	  OLDMODE_DISABLE: 0
- *	  OLDMODE_ENABLE: 1
- ******************************************************/
 
 static s32 mt_set_pwm_con_oldmode(u32 pwm_no, u32 val)
 {
@@ -481,10 +432,6 @@ err:
 	return -EPARMNOSUPPORT;
 }
 
-/***********************************************************
- * Set PWM_HIDURATION register
- *
- *************************************************************/
 
 static s32 mt_set_pwm_HiDur(u32 pwm_no, u16 DurVal)
 {
@@ -509,9 +456,6 @@ static s32 mt_set_pwm_HiDur(u32 pwm_no, u16 DurVal)
 	return RSUCCESS;
 }
 
-/************************************************
- * Set PWM Low Duration register
- *************************************************/
 static s32 mt_set_pwm_LowDur(u32 pwm_no, u16 DurVal)
 {
 	unsigned long flags;
@@ -535,11 +479,6 @@ static s32 mt_set_pwm_LowDur(u32 pwm_no, u16 DurVal)
 	return RSUCCESS;
 }
 
-/***************************************************
- * Set PWM_GUARDDURATION register
- * pwm_no: PWM1~PWM7(0~6)
- * DurVal:   the value of guard duration
- ****************************************************/
 static s32 mt_set_pwm_GuardDur(u32 pwm_no, u16 DurVal)
 {
 	unsigned long flags;
@@ -563,11 +502,6 @@ static s32 mt_set_pwm_GuardDur(u32 pwm_no, u16 DurVal)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_buf0_addr register
- * pwm_no: pwm1~pwm7 (0~6)
- * addr: data address
- ******************************************************/
 s32 mt_set_pwm_buf0_addr(u32 pwm_no, dma_addr_t addr)
 {
 	unsigned long flags;
@@ -590,11 +524,6 @@ s32 mt_set_pwm_buf0_addr(u32 pwm_no, dma_addr_t addr)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_buf0_size register
- * pwm_no: pwm1~pwm7 (0~6)
- * size: size of data
- ******************************************************/
 s32 mt_set_pwm_buf0_size(u32 pwm_no, u16 size)
 {
 	unsigned long flags;
@@ -618,11 +547,6 @@ s32 mt_set_pwm_buf0_size(u32 pwm_no, u16 size)
 }
 
 
-/*****************************************************
- * Set pwm_send_data0 register
- * pwm_no: pwm1~pwm7 (0~6)
- * data: the data in the register
- ******************************************************/
 static s32 mt_set_pwm_send_data0(u32 pwm_no, u32 data)
 {
 	unsigned long flags;
@@ -646,11 +570,6 @@ static s32 mt_set_pwm_send_data0(u32 pwm_no, u32 data)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_send_data1 register
- * pwm_no: pwm1~pwm7 (0~6)
- * data: the data in the register
- ******************************************************/
 static s32 mt_set_pwm_send_data1(u32 pwm_no, u32 data)
 {
 	unsigned long flags;
@@ -674,11 +593,6 @@ static s32 mt_set_pwm_send_data1(u32 pwm_no, u32 data)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_wave_num register
- * pwm_no: pwm1~pwm7 (0~6)
- * num:the wave number
- ******************************************************/
 static s32 mt_set_pwm_wave_num(u32 pwm_no, u16 num)
 {
 	unsigned long flags;
@@ -702,12 +616,6 @@ static s32 mt_set_pwm_wave_num(u32 pwm_no, u16 num)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_data_width register.
- * This is only for old mode
- * pwm_no: pwm1~pwm7 (0~6)
- * width: set the guard value in the old mode
- ******************************************************/
 static s32 mt_set_pwm_data_width(u32 pwm_no, u16 width)
 {
 	unsigned long flags;
@@ -731,11 +639,6 @@ static s32 mt_set_pwm_data_width(u32 pwm_no, u16 width)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_thresh register
- * pwm_no: pwm1~pwm7 (0~6)
- * thresh:  the thresh of the wave
- ******************************************************/
 static s32 mt_set_pwm_thresh(u32 pwm_no, u16 thresh)
 {
 	unsigned long flags;
@@ -759,11 +662,6 @@ static s32 mt_set_pwm_thresh(u32 pwm_no, u16 thresh)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set pwm_send_wavenum register
- * pwm_no: pwm1~pwm7 (0~6)
- *
- ******************************************************/
 s32 mt_get_pwm_send_wavenum(u32 pwm_no)
 {
 	struct pwm_device *dev = pwm_dev;
@@ -782,11 +680,6 @@ s32 mt_get_pwm_send_wavenum(u32 pwm_no)
 }
 
 
-/*******************************************
- * Set intr enable register
- * pwm_intr_enable_bit: the intr bit,
- *
- *********************************************/
 s32 mt_set_intr_enable(u32 pwm_intr_enable_bit)
 {
 	unsigned long flags;
@@ -810,11 +703,6 @@ s32 mt_set_intr_enable(u32 pwm_intr_enable_bit)
 	return RSUCCESS;
 }
 
-/*****************************************************
- * Set intr status register
- * pwm_no: pwm1~pwm7 (0~6)
- * pwm_intr_status_bit
- ******************************************************/
 s32 mt_get_intr_status(u32 pwm_intr_status_bit)
 {
 	unsigned long flags;
@@ -839,11 +727,6 @@ s32 mt_get_intr_status(u32 pwm_intr_status_bit)
 	return ret;
 }
 
-/*****************************************************
- * Set intr ack register
- * pwm_no: pwm1~pwm7 (0~6)
- * pwm_intr_ack_bit
- ******************************************************/
 s32 mt_set_intr_ack(u32 pwm_intr_ack_bit)
 {
 	unsigned long flags;

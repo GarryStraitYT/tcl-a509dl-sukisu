@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * AK7374AF voice coil motor driver
- *
- *
- */
 
 #include <linux/delay.h>
 #include <linux/fs.h>

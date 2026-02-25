@@ -431,7 +431,7 @@ static void lcm_init(void)
 	int ret=0;
 
 	cmd=0x00;
-	data=0x10; //vsp 5.6v
+	data=0x12; //vsp 5.8v
 	//VPS=0x00;data=0x0A;VSP=5V,
 	//         data=0x0E;VSP=5.4V,
 	//	   data=0x12;VSP=5.8V,
@@ -458,7 +458,7 @@ static void lcm_init(void)
 	set_gpio_lcd_enn(1);
 	MDELAY(5);
 	cmd=0x01;
-	data=0x10; //vsp 5.6v
+	data=0x12; //vsp 5.8v
 	//VPS=0x00;data=0x0A;VSP=5V,
 	//         data=0x0E;VSP=5.4V,
 	//	   data=0x12;VSP=5.8V,

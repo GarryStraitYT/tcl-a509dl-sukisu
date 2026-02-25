@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -50,11 +47,6 @@ struct cooler_data {
 	struct thermal_cooling_device *cooler_dev;
 	int state; /* 0: inactivated, 1: activated */
 };
-/* Our purpose is to make all tsX report their temperatures
- * regularly without activating by a thermal policy,
- * so we have to create the same amount of coolers and bind
- * them together.
- */
 static struct cooler_data g_coolerData[RESERVED_TZS];
 #endif
 

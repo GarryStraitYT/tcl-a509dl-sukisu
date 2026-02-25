@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   AudDrv_Gpio.c
- *
- * Project:
- * --------
- *   MT6797  Audio Driver GPIO
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * George
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 #include "mtk-auddrv-gpio.h"
 #include <linux/gpio.h>
 #include <linux/pinctrl/consumer.h>
@@ -242,10 +209,6 @@ static bool AudDrv_GPIO_IsValid(enum audio_system_gpio_type _type)
 
 static int set_aud_clk_mosi(bool _enable)
 {
-/*
- * scp also need this gpio on mt6797,
- * don't switch gpio if they exist.
- */
 #ifndef CONFIG_MTK_TINYSYS_SCP_SUPPORT
 	static int aud_clk_mosi_counter;
 

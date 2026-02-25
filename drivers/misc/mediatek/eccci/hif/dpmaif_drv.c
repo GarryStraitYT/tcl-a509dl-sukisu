@@ -1,18 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include "dpmaif_drv.h"
 #include "ccci_hif_dpmaif.h"
 
 #define TAG "dpmaif"
-/* =======================================================
- *
- * Descriptions: RX part
- *
- * =======================================================
- */
  #if defined(_E1_SB_SW_WORKAROUND_)
 
 static void drv_dpmaif_dl_pit_only_update_enable_bit_done(unsigned char q_num)
@@ -558,12 +549,6 @@ unsigned int drv_dpmaif_dl_idle_check(void)
 
 	return ret;
 }
-/* =======================================================
- *
- * Descriptions:  TX part
- *
- * ========================================================
- */
 
 void drv_dpmaif_mask_ul_que_interrupt(unsigned char q_num)
 {
@@ -639,12 +624,6 @@ int drv_dpmaif_ul_add_wcnt(unsigned char q_num, unsigned short drb_wcnt)
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: ISR part
- *
- * ========================================================
- */
 /* definition in dpmaif_drv.h directly. */
 
 void drv_dpmaif_clear_ip_busy(void)
@@ -654,12 +633,6 @@ void drv_dpmaif_clear_ip_busy(void)
 			DPMA_READ_PD_MISC(DPMAIF_PD_AP_IP_BUSY));
 }
 
-/* =======================================================
- *
- * Descriptions: State part (1/3): Init(RX) -- rx hw init
- *
- * ========================================================
- */
 
 void drv_dpmaif_dl_bat_init_done(unsigned char q_num, bool frg_en)
 {
@@ -996,12 +969,6 @@ void drv_dpmaif_dl_set_ao_chksum_en(unsigned char q_num, bool enable)
 }
 #endif
 
-/* =======================================================
- *
- * Descriptions: State part (1/3): Init(RX) -- tx hw init
- *
- * ========================================================
- */
 
 void drv_dpmaif_init_ul_intr(void)
 {
@@ -1107,12 +1074,6 @@ unsigned int drv_dpmaif_ul_idle_check(void)
 	return ret;
 }
 
-/* =======================================================
- *
- * Descriptions: State part (1/3): Init(ISR)
- *
- * ========================================================
- */
 void drv_dpmaif_intr_hw_init(void)
 {
 	/* UL/TX interrupt init */
@@ -1147,12 +1108,6 @@ void drv_dpmaif_intr_hw_init(void)
 	DPMA_WRITE_PD_MISC(DPMAIF_PD_AP_DLUL_IP_BUSY_MASK, 0);
 }
 
-/* =======================================================
- *
- * Descriptions: State part (2/3): Resume
- *
- * ========================================================
- */
 /* suspend resume */
 bool drv_dpmaif_check_power_down(void)
 {

@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2011 MediaTek Inc.
- */
 
 #include "sec_hal.h"
 #include <linux/types.h>
 #include "hacc_mach.h"
 
-/******************************************************************************
- * DEBUG
- ******************************************************************************/
 #define SEC_DEBUG                   (false)
 #define SMSG                        DBG_MSG
 #if SEC_DEBUG
@@ -24,9 +18,6 @@ static const unsigned int g_CFG_RANDOM_PATTERN[3][4] = {
 	{0x54536405, 0xD546A6B1, 0x1CC3EC3A, 0xDE377A83}
 };
 
-/******************************************************************************
- * HACC HW internal function
- ******************************************************************************/
 void HACC_V3_Init(bool encode, const unsigned int g_AC_CFG[])
 {
 

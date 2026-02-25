@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MediaTek Pinctrl Moore Driver, which implement the generic dt-binding
- * pinctrl-bindings.txt for MediaTek SoC.
- *
- * Copyright (C) 2017-2018 MediaTek Inc.
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #include <linux/gpio/driver.h>
 #include "pinctrl-moore.h"

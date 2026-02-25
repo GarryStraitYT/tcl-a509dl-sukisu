@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_CHARGER_H
 #define __MTK_CHARGER_H
@@ -121,14 +118,6 @@ struct battery_thermal_protection_data {
 #define TEMP_T0_THRES_PLUS_X_DEGREE  0
 #define TEMP_NEG_10_THRES 0
 
-/*
- * Software JEITA
- * T0: -10 degree Celsius
- * T1: 0 degree Celsius
- * T2: 10 degree Celsius
- * T3: 45 degree Celsius
- * T4: 50 degree Celsius
- */
 enum sw_jeita_state_enum {
 	TEMP_BELOW_T0 = 0,
 	TEMP_T0_TO_T1,
@@ -322,7 +311,8 @@ struct mtk_charger {
 
 	bool enable_dynamic_mivr;
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)	\
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	int input_avg_current;
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */

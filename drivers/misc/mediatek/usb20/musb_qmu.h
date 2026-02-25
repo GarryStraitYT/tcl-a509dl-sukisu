@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef _MUSB_QMU_H_
 #define _MUSB_QMU_H_

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/arm-smccc.h>
 #include <linux/clk.h>
@@ -32,11 +29,6 @@ static struct mtk_devapc_context {
 static LIST_HEAD(viocb_list);
 static DEFINE_SPINLOCK(devapc_lock);
 
-/*
- * mtk_devapc_pd_get - get devapc pd_types of register address.
- *
- * Returns the value of reg addr
- */
 static void __iomem *mtk_devapc_pd_get(enum DEVAPC_PD_REG_TYPE pd_type,
 				       uint32_t index)
 {
@@ -56,10 +48,6 @@ static void __iomem *mtk_devapc_pd_get(enum DEVAPC_PD_REG_TYPE pd_type,
 	return reg;
 }
 
-/*
- * handle_sramrom_vio - clean sramrom violation & print violation information
- *			for debugging.
- */
 static void handle_sramrom_vio(void)
 {
 	const struct mtk_sramrom_sec_vio_desc *sramrom_vios;
@@ -190,10 +178,6 @@ static void print_vio_mask_sta(void)
 	}
 }
 
-/*
- * start_devapc - initialize devapc status and start receiving interrupt
- *		  while devapc violation is triggered.
- */
 static void start_devapc(void)
 {
 	const struct mtk_device_info *device_info;
@@ -239,12 +223,6 @@ static void start_devapc(void)
 	print_vio_mask_sta();
 }
 
-/*
- * sync_vio_dbg - start to get violation information by selecting violation
- *		  group and enable violation shift.
- *
- * Returns sync done or not
- */
 static uint32_t sync_vio_dbg(int shift_bit)
 {
 	void __iomem *pd_vio_shift_sta_reg;
@@ -307,11 +285,6 @@ static const char *perm_to_string(uint8_t perm)
 		return perm_to_str[4];
 }
 
-/*
- * get_permission - get slave's access permission of domain id.
- *
- * Returns the value of access permission
- */
 static uint8_t get_permission(int vio_index, int domain)
 {
 	const struct mtk_device_info *device_info;
@@ -347,19 +320,11 @@ static uint8_t get_permission(int vio_index, int domain)
 	return (ret & 0x3);
 }
 
-/*
- * mtk_devapc_vio_check - check violation shift status is raised or not.
- *
- * Returns the value of violation shift status reg
- */
 static uint32_t mtk_devapc_vio_check(void)
 {
 	return readl(mtk_devapc_pd_get(VIO_SHIFT_STA, 0));
 }
 
-/*
- * mtk_devapc_dump_vio_dbg - shift & dump the violation debug information.
- */
 static void mtk_devapc_dump_vio_dbg(void)
 {
 	const struct mtk_infra_vio_dbg_desc *vio_dbgs;
@@ -415,11 +380,6 @@ static void mtk_devapc_dump_vio_dbg(void)
 
 }
 
-/*
- * devapc_violation_irq - the devapc Interrupt Service Routine (ISR) will dump
- *			  violation information including which master violates
- *			  access slave.
- */
 static irqreturn_t devapc_violation_irq(int irq_number, void *dev_id)
 {
 	const struct mtk_device_info *device_info;
@@ -485,11 +445,6 @@ static irqreturn_t devapc_violation_irq(int irq_number, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-/*
- * devapc_ut - There are two UT commands to support
- * 1. test permission denied violation
- * 2. test sramrom decode error violation
- */
 static void devapc_ut(uint32_t cmd)
 {
 	void __iomem *devapc_ao_base = mtk_devapc_ctx->devapc_ao_base;
@@ -522,15 +477,6 @@ static void devapc_ut(uint32_t cmd)
 	}
 }
 
-/*
- * mtk_devapc_dbg_read - dump status of struct mtk_devapc_dbg_status.
- * Currently, we have four debug status:
- * 1. enable_ut: enable/disable devapc ut commands
- * 2. enable_WARN: enable/disable trigger kernel warning while violation
- *    is triggered.
- * 3. enable_dapc: enable/disable dump access permission control
- *
- */
 ssize_t mtk_devapc_dbg_read(struct file *file, char __user *buffer,
 	size_t count, loff_t *ppos)
 {
@@ -550,15 +496,6 @@ ssize_t mtk_devapc_dbg_read(struct file *file, char __user *buffer,
 	return simple_read_from_buffer(buffer, count, ppos, msg_buf, len);
 }
 
-/*
- * mtk_devapc_dbg_write - control status of struct mtk_devapc_dbg_status.
- * There are five nodes we can control:
- * 1. enable_ut
- * 2. enable_WARN
- * 3. enable_dapc
- * 4. devapc_ut
- * 5. dump_apc
- */
 ssize_t mtk_devapc_dbg_write(struct file *file, const char __user *buffer,
 	size_t count, loff_t *data)
 {

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef GED_DVFS_STRESS_TEST
 #include<linux/random.h>
@@ -40,11 +37,6 @@
 #define MTK_DEFER_DVFS_WORK_MS          10000
 #define MTK_DVFS_SWITCH_INTERVAL_MS     50
 
-/* Definition of GED_DVFS_SKIP_ROUNDS is to skip DVFS when boost raised
- *  the value stands for counting down rounds of DVFS period
- *  Current using vsync that would be 16ms as period,
- *  below boost at (32, 48] seconds per boost
- */
 #define GED_DVFS_SKIP_ROUNDS 3
 
 #ifdef GED_ENABLE_FB_DVFS
@@ -147,12 +139,6 @@ static unsigned int ged_commit_freq;
 static unsigned int ged_commit_opp_freq;
 
 #ifdef GED_DVFS_STRESS_TEST
-/***************************
- * GPU DVFS stress test
- * 0 : disable GPU DVFS stress test
- * 1 : enable GPU DVFS stress test for OPP Index
- * 2 : enable GPU DVFS stress test for fine-grained OPP
- ****************************/
 static unsigned int ged_dvfs_stress_test;
 module_param(ged_dvfs_stress_test, uint, 0644);
 #endif
@@ -464,12 +450,6 @@ void ged_dvfs_get_bw_record(unsigned int *pui32MaxBW,
 			g_bw_head = (g_bw_head + 1) % MAX_BW_PROFILE;
 		}
 
-/* Reserved for debug
- * GED_LOGD("@%s: Frame-based: ui64MaxBW:%llu, ui64AvgBW:%llu h/t %u/%u\n",
- * __func__, ui64MaxBW, ui64AvgBW, g_bw_head, g_bw_tail);
- * GED_LOGD("@%s: Frame-based: ui32MaxBW:%u, ui32AvgBW:%u, inst:%d\n",
- * __func__, ui32MaxBW, ui32AvgBW, cur_max_inst);
- */
 	} else {
 		g_bw_head = 0;
 		g_bw_tail = 0;
@@ -542,12 +522,6 @@ unsigned int ged_dvfs_vcore(unsigned int prev_freq_khz,
 		return g_ui32NextAvBW;
 }
 
-/*-----------------------------------------------------------------------------
- * void (*ged_dvfs_gpu_freq_commit_fp)(unsigned long ui32NewFreqID)
- * call back function
- * This shall be registered in vendor's GPU driver,
- * since each IP has its own rule
- */
 static unsigned long g_ged_dvfs_commit_idx; /* max freq opp idx */
 void (*ged_dvfs_gpu_freq_commit_fp)(unsigned long ui32NewFreqID,
 	GED_DVFS_COMMIT_TYPE eCommitType, int *pbCommited) = NULL;
@@ -964,9 +938,6 @@ static void ged_dvfs_trigger_fb_dvfs(void)
 {
 	is_fb_dvfs_triggered = 1;
 }
-/*
- *	t_gpu, t_gpu_target in ms * 10
- */
 static int ged_dvfs_fb_gpu_dvfs(int t_gpu, int t_gpu_target,
 	int target_fps_margin, unsigned int force_fallback)
 {

@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #ifndef _MT6357_CHARGER_H_
 #define _MT6357_CHARGER_H_

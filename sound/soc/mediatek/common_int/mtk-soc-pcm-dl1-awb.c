@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mtk_pcm_dl1_awb.c
- *
- * Project:
- * --------
- *   Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio dl1 to  awb capture
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -52,9 +19,6 @@ static struct afe_mem_control_t *Dl1_AWB_Control_context;
 static struct snd_dma_buffer *Awb_Capture_dma_buf;
 static int deep_buffer_mem_blk_io;
 
-/*
- *    function implementation
- */
 static void StartAudioDl1AWBHardware(struct snd_pcm_substream *substream);
 static void StopAudioDl1AWBHardware(struct snd_pcm_substream *substream);
 static int mtk_dl1_awb_probe(struct platform_device *pdev);

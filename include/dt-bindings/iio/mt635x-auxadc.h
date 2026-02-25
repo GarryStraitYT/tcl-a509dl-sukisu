@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _DT_BINDINGS_MT635X_AUXADC_H
 #define _DT_BINDINGS_MT635X_AUXADC_H

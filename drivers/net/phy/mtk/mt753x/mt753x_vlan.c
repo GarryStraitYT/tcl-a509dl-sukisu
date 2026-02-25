@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #include "mt753x.h"
 #include "mt753x_regs.h"

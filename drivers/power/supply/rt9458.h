@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __I2C_CHARGER_RT9458_H
 #define __I2C_CHARGER_RT9458_H

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -3637,36 +3634,3 @@ MODULE_DESCRIPTION("MT6360 PMU CHG Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(MT6360_PMU_CHG_DRV_VERSION);
 
-/*
- * Version Note
- * 1.0.7_MTK
- * (1) Fix Unbalanced enable for MIVR IRQ
- * (2) Sleep 200ms before do another iteration in mt6360_chg_mivr_task_threadfn
- *
- * 1.0.6_MTK
- * (1) Fix the usages of charger power supply
- *
- * 1.0.5_MTK
- * (1) Prevent charger type infromed repeatedly
- *
- * 1.0.4_MTK
- * (1) Mask mivr irq until mivr task has run an iteration
- *
- * 1.0.3_MTK
- * (1) fix zcv adc from 5mV to 1.25mV per step
- * (2) add BC12 initial setting dcd timeout disable when unuse dcd
- *
- * 1.0.2_MTK
- * (1) remove eoc, rechg, te irq for evb with phone load
- * (2) report power supply online with chg type detect done
- * (3) remove unused irq event and status
- * (4) add chg termination irq notifier when safety timer timeout
- *
- * 1.0.1_MTK
- * (1) fix dtsi parse attribute about en_te, en_wdt, aicc_once
- * (2) add charger class get vbus adc interface
- * (3) add initial setting about disable en_sdi, and check batsysuv.
- *
- * 1.0.0_MTK
- * (1) Initial Release
- */

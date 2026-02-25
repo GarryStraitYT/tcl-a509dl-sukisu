@@ -1,18 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
-/*
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
 
 #ifndef _MT_GPUFREQ_H_
 #define _MT_GPUFREQ_H_
@@ -37,9 +24,6 @@ struct mt_gpufreq_power_table_info {
 
 typedef void (*gpufreq_power_limit_notify)(unsigned int); /* legacy */
 
-/****************************
- * MTK GPUFREQ API
- ****************************/
 extern unsigned int mt_gpufreq_get_cur_freq_index(void);
 extern unsigned int mt_gpufreq_get_cur_freq(void);
 extern unsigned int mt_gpufreq_get_cur_volt(void);

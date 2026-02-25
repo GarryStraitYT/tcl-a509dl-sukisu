@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/device.h>
 #include <linux/iio/consumer.h>
@@ -97,9 +94,6 @@ static struct dlpt_priv dlpt = {
 #define DLPTCB_MAX_NUM 16
 static struct dlpt_callback_table dlptcb_tb[DLPTCB_MAX_NUM] = { {0} };
 
-/*
- * Get ZCV/imix_r Auxadc function
- */
 static void update_dlpt_imix_r(void)
 {
 	if (!PTR_ERR_OR_ZERO(dlpt.chan_imix_r))
@@ -143,9 +137,6 @@ static int dlpt_adc_chan_init(struct platform_device *pdev)
 	return ret;
 }
 
-/*
- * DLPT notify function
- */
 void register_dlpt_notify(dlpt_callback dlpt_cb,
 			  enum DLPT_PRIO_TAG prio_val)
 {

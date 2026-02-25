@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/sched.h>
 #include <linux/time.h>
@@ -1895,9 +1892,6 @@ static int aal_config(enum DISP_MODULE_ENUM module,
 }
 
 
-/*****************************************************************************
- * AAL Backup / Restore function
- *****************************************************************************/
 #if defined(CONFIG_MACH_MT6763) || defined(CONFIG_MACH_MT6758) || \
 	defined(CONFIG_MACH_MT6739) || defined(CONFIG_MACH_MT6765) || \
 	defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT3967) || \

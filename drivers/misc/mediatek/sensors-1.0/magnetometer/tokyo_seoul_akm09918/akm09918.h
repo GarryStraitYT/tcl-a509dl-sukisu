@@ -1,22 +1,4 @@
-/*
-* Copyright(C)2014 MediaTek Inc.
-* Modification based on code covered by the below mentioned copyright
-* and/or permission notice(S).
-*/
 
-/* akm09911.c - akm09911 compass driver
- *
- *
- * This software is licensed under the terms of the GNU General Public
- * License version 2, as published by the Free Software Foundation, and
- * may be copied, distributed, and modified under those terms.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- */
 
 #ifndef AKM09911_H
 #define AKM09911_H
@@ -32,10 +14,6 @@
 #define RWBUF_SIZE				16	/* Read/Write buffer size. */
 #define CALIBRATION_DATA_SIZE	26
 
-/*! \name AK09911 register address
-*\anchor AK09911_REG
-*Defines a register address of the AK09911.
-*/
 /*! @{*/
 /* Device specific constant values */
 #define AK09911_REG_WIA1			0x00
@@ -55,18 +33,10 @@
 #define AK09911_REG_CNTL2			0x31
 #define AK09911_REG_CNTL3			0x32
 
-/*! \name AK09911 fuse-rom address
-*\anchor AK09911_FUSE
-*Defines a read-only address of the fuse ROM of the AK09911.
-*/
 #define AK09911_FUSE_ASAX			0x60
 #define AK09911_FUSE_ASAY			0x61
 #define AK09911_FUSE_ASAZ			0x62
 
-/*! \name AK09911 operation mode
-* \anchor AK09911_Mode
-* Defines an operation mode of the AK09911.
-*/
 #define AK09911_MODE_SNG_MEASURE	0x01
 #define AK09911_MODE_SELF_TEST		0x10
 #define AK09911_MODE_FUSE_ACCESS	0x1F
@@ -173,24 +143,6 @@
 #define AKECS_ASA_CACULATE_AK09911(x)	((x / 128) + 1)
 
 
-/*
-*sensors_io.h need modify@junger
-*#define AKMIO                   0xA1
-*
-*IOCTLs for AKM library *
-*#define ECS_IOCTL_READ              _IOWR(AKMIO, 0x01, char*)
-*#define ECS_IOCTL_WRITE             _IOW(AKMIO, 0x02, char*)
-*#define ECS_IOCTL_SET_MODE          _IOW(AKMIO, 0x03, short)
-*#define ECS_IOCTL_GETDATA           _IOR(AKMIO, 0x04, char[SENSOR_DATA_SIZE])
-*#define ECS_IOCTL_SET_YPR           _IOW(AKMIO, 0x05, int[YPR_DATA_SIZE])
-*#define ECS_IOCTL_GET_OPEN_STATUS   _IOR(AKMIO, 0x06, int)
-*#define ECS_IOCTL_GET_CLOSE_STATUS  _IOR(AKMIO, 0x07, int)
-*#define ECS_IOCTL_GET_DELAY         _IOR(AKMIO, 0x08, long long int[AKM_NUM_SENSORS])
-*#define ECS_IOCTL_GET_LAYOUT        _IOR(AKMIO, 0x09, char)
-*#define ECS_IOCTL_GET_OUTBIT        _IOR(AKMIO, 0x0B, char)
-*#define ECS_IOCTL_RESET             _IO(AKMIO, 0x0C)
-*#define ECS_IOCTL_GET_ACCEL         _IOR(AKMIO, 0x30, short[3])
-*/
 
 /* IOCTLs for Msensor misc. device library */
 #define MSENSOR						   0x83

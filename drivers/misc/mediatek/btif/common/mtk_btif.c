@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 /*-----------linux system header files----------------*/
 
 #include <linux/module.h>
@@ -1712,13 +1709,6 @@ int _btif_enter_dpidle_from_sus(struct _mtk_btif_ *p_btif)
 int _btif_enter_dpidle_from_on(struct _mtk_btif_ *p_btif)
 {
 #define MAX_WAIT_TIME_MS 5000
-/*
- * this max wait time cannot exceed 12s,
- * because dpm will monitor each device's
- * resume/suspend process by start up a watch dog timer of 12s
- * incase of one driver's suspend/resume process block other device's
- * suspend/resume
- */
 	int i_ret = 0;
 	unsigned int retry = 0;
 	unsigned int wait_period = 1;
@@ -1812,10 +1802,6 @@ bool _btif_is_tx_complete(struct _mtk_btif_ *p_btif)
 	bool b_ret = false;
 	enum _ENUM_BTIF_MODE_ tx_mode = p_btif->tx_mode;
 
-/*
- * make sure BTIF tx finished in PIO mode
- * make sure BTIF tx finished and DMA tx finished in DMA mode
- */
 	if (tx_mode == BTIF_MODE_DMA) {
 		b_ret = hal_dma_is_tx_complete(p_btif->p_tx_dma->p_dma_info);
 		if (b_ret == false) {
@@ -1962,10 +1948,6 @@ static int _btif_state_set(struct _mtk_btif_ *p_btif,
 		case B_S_ON:
 /*B_S_ON can only be switched to B_S_OFF, B_S_SUSPEND and B_S_DPIDLE*/
 /*B_S_ON->B_S_OFF : do nothing here*/
-/*
- * B_S_ON->B_S_DPLE : disable clock backup
- * BTIF and DMA controller's register if necessary
- */
 			if (state == B_S_DPIDLE) {
 				/*clock control is done in _btif_enter_dpidle*/
 				p_btif->state = state;
@@ -1988,10 +1970,6 @@ static int _btif_state_set(struct _mtk_btif_ *p_btif,
 		case B_S_DPIDLE:
 /*B_S_DPIDLE can only be switched to B_S_ON and B_S_SUSPEND*/
 /*B_S_DPIDLE-> B_S_ON: do nothing for this moment*/
-/*
- * B_S_DPIDLE-> B_S_SUSPEND:
- * disable clock backup BTIF and DMA controller's register if necessary
- */
 			if (state == B_S_ON) {
 				/*clock control is done in _btif_exit_dpidle*/
 				p_btif->state = state;
@@ -2095,11 +2073,6 @@ static int btif_rx_data_consummer(struct _mtk_btif_ *p_btif)
 	unsigned char *p_buf = NULL;
 /*get BTIF rx buffer's information*/
 	struct _btif_buf_str_ *p_bbs = &(p_btif->btif_buf);
-/*
- * wr_idx of btif_buf may be modified in IRQ handler,
- * in order not to be effected by case in which irq interrupt this operation,
- * we record wr_idx here
- */
 	unsigned int wr_idx = p_bbs->wr_idx;
 
 	length = BBS_COUNT_CUR(p_bbs, wr_idx);
@@ -3289,10 +3262,6 @@ static int BTIF_init(void)
 		}
 #endif
 
-/*
- * viftual FIFO memory must be physical continuous,
- * because DMA will access it directly without MMU
- */
 #if ENABLE_BTIF_TX_DMA
 		p_tx_dma = &g_dma[index][BTIF_TX];
 		g_btif[index].p_tx_dma = p_tx_dma;

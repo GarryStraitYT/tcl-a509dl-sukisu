@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __DISP_ASSERT_LAYER_H__
 #define __DISP_ASSERT_LAYER_H__

@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #ifndef __PASR_API_H__
 #define __PASR_API_H__

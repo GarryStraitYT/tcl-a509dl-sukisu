@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -55,13 +52,6 @@ static kgid_t gid = KGIDT_INIT(1000);
 
 #define MIN(_a_, _b_) ((_a_) > (_b_) ? (_b_) : (_a_))
 #define MAX(_a_, _b_) ((_a_) > (_b_) ? (_a_) : (_b_))
-/* Charger Limiter
- * Charger Limiter provides API to limit charger IC input current and
- * battery charging current. It arbitrates the limitation from users and sets
- * limitation to charger driver via two API functions:
- *	set_chr_input_current_limit()
- *	set_bat_charging_current_limit()
- */
  /**< -1 is unlimit, unit is mA. */
 static int x_chrlmt_chr_input_curr_limit = -1;
 /**< -1 is unlimit, unit is mA. */
@@ -687,12 +677,6 @@ struct file *filp, const char __user *buf, size_t len, loff_t *data)
 	if (copy_from_user(tmp, buf, len))
 		return -EFAULT;
 
-/**
- * sscanf format <klog_on> <mtk-cl-bcct_2nd00 limit> <mtk-cl-bcct_2nd01 limit>
- * <klog_on> can only be 0 or 1
- * <mtk-cl-bcct_2nd00 limit> can only be positive integer
- *				or -1 to denote no limit
- */
 
 	if (data == NULL) {
 		mtk_cooler_bcct_2nd_dprintk("%s null data\n", __func__);

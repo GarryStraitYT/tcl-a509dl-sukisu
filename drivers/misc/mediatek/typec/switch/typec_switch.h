@@ -1,13 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 #ifndef MTK_TYPEC_SWITCH_H
 #define MTK_TYPEC_SWITCH_H
 
-/*
- * struct fusb304
- */
 struct fusb304 {
 	struct device *dev;
 	struct pinctrl *pinctrl;
@@ -17,9 +11,6 @@ struct fusb304 {
 	struct pinctrl_state *disable;
 };
 
-/*
- * struct ptn36241g
- */
 struct ptn36241g {
 	struct device *dev;
 	struct pinctrl *pinctrl;
@@ -29,9 +20,6 @@ struct ptn36241g {
 	struct pinctrl_state *c2_sleep;
 };
 
-/*
- * struct mtk_typec_switch
- */
 struct mtk_typec_switch {
 	struct device *dev;
 	struct typec_switch *sw;

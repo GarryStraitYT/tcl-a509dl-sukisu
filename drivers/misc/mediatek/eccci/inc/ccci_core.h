@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __CCCI_CORE_H__
 #define __CCCI_CORE_H__
@@ -24,12 +21,6 @@
 
 
 #define CCCI_MAGIC_NUM 0xFFFFFFFF
-/*
- * this is a trick for port->minor, which is configured in-sequence
- * by different type (char, net, ipc),
- * but when we use it in code, we need it's unique among
- * all ports for addressing.
- */
 #define CCCI_IPC_MINOR_BASE 100
 #define CCCI_SMEM_MINOR_BASE 150
 #define CCCI_NET_MINOR_BASE 200
@@ -58,10 +49,6 @@ static struct ccci_md_attribute ccci_md_attr_##_name = {	\
 	.store = _store,					\
 }
 
-/*
- * do not modify this c2k structure, because we assume its total size is 32bit,
- * and used as ccci_header's 'reserved' member
- */
 struct c2k_ctrl_port_msg {
 	unsigned char id_hi;
 	unsigned char id_low;

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- *
- */
 
 &i2c5 {
 	mt6360_typec: usb_type_c@4e {

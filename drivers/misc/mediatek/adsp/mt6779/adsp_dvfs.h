@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_dvfs.h --  Mediatek ADSP DVFS control
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Celine Liu <Celine.liu@mediatek.com>
- */
 
 #ifndef __ADSP_DVFS_H__
 #define __ADSP_DVFS_H__

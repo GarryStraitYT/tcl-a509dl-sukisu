@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
-/**
- * @file	mtk_eem_internal.c
- * @brief   Driver for EEM
- *
- */
 #define __MTK_EEM_INTERNAL_C__
 
 #include "mtk_eem_config.h"
@@ -15,9 +7,6 @@
 #include "mtk_eem_internal_ap.h"
 #include "mtk_eem_internal.h"
 
-/**
- * EEM controllers
- */
 struct eem_ctrl eem_ctrls[NR_EEM_CTRL] = {
 
 	[EEM_CTRL_2L] = {

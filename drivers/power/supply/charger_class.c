@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/stat.h>
@@ -658,18 +655,6 @@ int unregister_charger_device_notifier(struct charger_device *chg_dev,
 }
 EXPORT_SYMBOL(unregister_charger_device_notifier);
 
-/**
- * charger_device_register - create and register a new object of
- *   charger_device class.
- * @name: the name of the new object
- * @parent: a pointer to the parent device
- * @devdata: an optional pointer to be stored for private driver use.
- * The methods may retrieve it by using charger_get_data(charger_dev).
- * @ops: the charger operations structure.
- *
- * Creates and registers new charger device. Returns either an
- * ERR_PTR() or a pointer to the newly allocated device.
- */
 struct charger_device *charger_device_register(const char *name,
 		struct device *parent, void *devdata,
 		const struct charger_ops *ops,
@@ -711,14 +696,6 @@ struct charger_device *charger_device_register(const char *name,
 }
 EXPORT_SYMBOL(charger_device_register);
 
-/**
- * charger_device_unregister - unregisters a switching charger device
- * object.
- * @charger_dev: the switching charger device object to be unregistered
- * and freed.
- *
- * Unregisters a previously registered via charger_device_register object.
- */
 void charger_device_unregister(struct charger_device *chg_dev)
 {
 	if (!chg_dev)

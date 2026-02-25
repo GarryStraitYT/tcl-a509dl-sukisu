@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_PLATFORM_DEBUG_H__
 #define __MTK_PLATFORM_DEBUG_H__

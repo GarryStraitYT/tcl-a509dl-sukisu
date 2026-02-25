@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include "mdla_debug.h"
 #include <linux/semaphore.h>
@@ -69,9 +66,6 @@ static int mdla_process_command(struct command_entry *ce);
 static void mdla_power_timeup(struct timer_list *t);
 static void mdla_start_power_off(struct work_struct *work);
 
-/* TODO: move these global control vaiables into device specific data.
- * to support multiple instance (multiple MDLA).
- */
 #define MDLA_TIMEOUT_DEFAULT 6000 /* ms */
 #define MDLA_POWEROFF_TIME_DEFAULT 2000 /* ms */
 #define MDLA_POLLING_LATENCY (5) /* ms */
@@ -385,11 +379,6 @@ static void mdla_start_power_off(struct work_struct *work)
 	mutex_unlock(&cmd_lock);
 }
 
-/* if there's no more reqeusts
- * 1. delete command timeout timer
- * 2. setup delay power off timer
- * this function is protected by cmd_list_lock
- */
 static void mdla_command_done(void)
 {
 	mutex_lock(&power_lock);

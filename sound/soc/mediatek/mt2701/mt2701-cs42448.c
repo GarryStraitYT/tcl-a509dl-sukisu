@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mt2701-cs42448.c  --  MT2701 CS42448 ALSA SoC machine driver
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Ir Lian <ir.lian@mediatek.com>
- *	   Garlic Tseng <garlic.tseng@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <sound/soc.h>

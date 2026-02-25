@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "[sensorHub] " fmt
 
@@ -39,18 +36,7 @@
 #include <linux/timekeeping.h>
 #include <uapi/linux/sched/types.h>
 
-/* ALGIN TO SCP SENSOR_IPI_SIZE AT FILE CONTEXTHUB_FW.H, ALGIN
- * TO SCP_SENSOR_HUB_DATA UNION, ALGIN TO STRUCT DATA_UNIT_T
- * SIZEOF(STRUCT DATA_UNIT_T) = SCP_SENSOR_HUB_DATA = SENSOR_IPI_SIZE
- * BUT AT THE MOMENT AP GET DATA THROUGH IPI, WE ONLY TRANSFER
- * 44 BYTES DATA_UNIT_T, THERE ARE 4 BYTES HEADER IN SCP_SENSOR_HUB_DATA
- * HEAD
- */
 #define SENSOR_IPI_SIZE 48
-/*
- * experience number for delay_count per DELAY_COUNT sensor input delay 10ms
- * msleep(10) system will schedule to hal process then read input node
- */
 #define SENSOR_IPI_HEADER_SIZE 4
 #define SENSOR_IPI_PACKET_SIZE (SENSOR_IPI_SIZE - SENSOR_IPI_HEADER_SIZE)
 #define SENSOR_DATA_SIZE 44
@@ -655,21 +641,6 @@ static void SCP_sensorHub_notify_cmd(union SCP_SENSOR_HUB_DATA *rsp,
 		wake_up(&chre_kthread_wait);
 		break;
 	case SCP_NOTIFY:
-/*
- *		handle = rsp->rsp.sensorType;
- *		if (handle > ID_SENSOR_MAX_HANDLE) {
- *			pr_err("invalid sensor %d\n", handle);
- *		} else {
- *			event = (struct data_unit_t *)rsp->notify_rsp.int8_Data;
- *			if (obj->dispatch_data_cb[handle] != NULL)
- *				obj->dispatch_data_cb[handle](event, NULL);
- *			else
- *				pr_err("type:%d don't support this flow?\n",
- *					handle);
- *			if (event->flush_action == FLUSH_ACTION)
- *				atomic_dec(&mSensorState[handle].flushCnt);
- *		}
- */
 		break;
 	case SCP_INIT_DONE:
 		spin_lock_irqsave(&scp_state_lock, flags);

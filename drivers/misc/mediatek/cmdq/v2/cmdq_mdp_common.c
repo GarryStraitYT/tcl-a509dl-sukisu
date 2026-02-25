@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include "cmdq_mdp_common.h"
 #include "cmdq_core.h"

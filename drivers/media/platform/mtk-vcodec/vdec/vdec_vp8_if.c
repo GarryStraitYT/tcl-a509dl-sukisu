@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include "../vdec_drv_if.h"
@@ -47,18 +44,6 @@
 #define VP8_DEC_TABLE_OFFSET            2
 #define VP8_DEC_TABLE_RW_UNIT           4
 
-/**
- * struct vdec_vp8_dec_info - decode misc information
- * @working_buf_dma   : working buffer dma address
- * @prev_y_dma        : previous decoded frame buffer Y plane address
- * @cur_y_fb_dma      : current plane Y frame buffer dma address
- * @cur_c_fb_dma      : current plane C frame buffer dma address
- * @bs_dma            : bitstream dma address
- * @bs_sz             : bitstream size
- * @resolution_changed: resolution change flag 1 - changed,  0 - not change
- * @show_frame        : display this frame or not
- * @wait_key_frame    : wait key frame coming
- */
 struct vdec_vp8_dec_info {
 	uint64_t working_buf_dma;
 	uint64_t prev_y_dma;
@@ -71,14 +56,6 @@ struct vdec_vp8_dec_info {
 	uint32_t wait_key_frame;
 };
 
-/**
- * struct vdec_vp8_vsi - VPU shared information
- * @dec                 : decoding information
- * @pic                 : picture information
- * @dec_table           : decoder coefficient table
- * @segment_buf         : segmentation buffer
- * @load_data           : flag to indicate reload decode data
- */
 struct vdec_vp8_vsi {
 	struct vdec_vp8_dec_info dec;
 	struct vdec_pic_info pic;
@@ -87,16 +64,6 @@ struct vdec_vp8_vsi {
 	uint32_t load_data;
 };
 
-/**
- * struct vdec_vp8_hw_reg_base - HW register base
- * @sys         : base address for sys
- * @misc        : base address for misc
- * @ld          : base address for ld
- * @top         : base address for top
- * @cm          : base address for cm
- * @hwd         : base address for hwd
- * @hwb         : base address for hwb
- */
 struct vdec_vp8_hw_reg_base {
 	void __iomem *sys;
 	void __iomem *misc;
@@ -107,13 +74,6 @@ struct vdec_vp8_hw_reg_base {
 	void __iomem *hwb;
 };
 
-/**
- * struct vdec_vp8_vpu_inst - VPU instance for VP8 decode
- * @wq_hd       : Wait queue to wait VPU message ack
- * @signaled    : 1 - Host has received ack message from VPU, 0 - not recevie
- * @failure     : VPU execution result status 0 - success, others - fail
- * @inst_addr   : VPU decoder instance address
- */
 struct vdec_vp8_vpu_inst {
 	wait_queue_head_t wq_hd;
 	int signaled;
@@ -121,34 +81,7 @@ struct vdec_vp8_vpu_inst {
 	uint32_t inst_addr;
 };
 
-/* frame buffer (fb) list
- * [available_fb_node_list]  - decode fb are initialized to 0 and populated in
- * [fb_use_list]  - fb is set after decode and is moved to this list
- * [fb_free_list] - fb is not needed for reference will be moved from
- *                   [fb_use_list] to [fb_free_list] and
- *                   once user remove fb from [fb_free_list],
- *                   it is circulated back to [available_fb_node_list]
- * [fb_disp_list] - fb is set after decode and is moved to this list
- *                   once user remove fb from [fb_disp_list] it is
- *                   circulated back to [available_fb_node_list]
- */
 
-/**
- * struct vdec_vp8_inst - VP8 decoder instance
- * @cur_fb                 : current frame buffer
- * @dec_fb                 : decode frame buffer node
- * @available_fb_node_list : list to store available frame buffer node
- * @fb_use_list            : list to store frame buffer in use
- * @fb_free_list           : list to store free frame buffer
- * @fb_disp_list           : list to store display ready frame buffer
- * @working_buf            : HW decoder working buffer
- * @reg_base               : HW register base address
- * @frm_cnt                : decode frame count
- * @ctx                    : V4L2 context
- * @dev                    : platform device
- * @vpu                    : VPU instance for decoder
- * @vsi                    : VPU share information
- */
 struct vdec_vp8_inst {
 	struct vdec_fb *cur_fb;
 	struct vdec_fb_node dec_fb[VP8_MAX_FRM_BUF_NODE_NUM];

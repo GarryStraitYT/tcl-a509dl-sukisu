@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/cpumask.h>
 #include <linux/gpio.h>
@@ -246,12 +243,3 @@ MODULE_AUTHOR("Jeff Chang");
 MODULE_DESCRIPTION("Richtek pd manager driver");
 MODULE_LICENSE("GPL");
 
-/*
- * Release Note
- * 1.0.6
- * (1) enable power path in sink vbus
- *
- * 1.0.6
- * (1) refactor data struct and remove unuse part
- * (2) move bc12 relative to charger ic driver
- */

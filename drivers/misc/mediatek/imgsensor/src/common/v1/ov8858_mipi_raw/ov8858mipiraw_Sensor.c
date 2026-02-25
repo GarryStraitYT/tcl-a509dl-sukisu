@@ -1,33 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 OV8858mipiraw_sensor.c
- *
- * Project:
- * --------
- *	 ALPS MT6580 2lane ov8858r2a
- *
- * Description:
- * ------------
- *	 Source code of Sensor driver
- *	PengtaoFan
- *  0528:ä¿®æ¹get_info,??mipi ??? *  0604:å¢?init preview å»¶æ¶??0ms
- *  0604:??­init settingä¸?stream on,?otp??è®?
- *  0608:??°ov???setting
- *  0703:for  ä¿®æ¹?non continue mode 4800
- *  0703:for  crc test 0x5002=00
- *  ---RD ??????? *  0714 ??¥capture setting full size@30fps 24fps 15fps
- *  15072115172729: ??¥nick??full size 30fps settingï¼for ???size ä¸???®é??
- *------------------------------------------------------------------------------
- * Upper this line, this part is controlled by CC/CQ. DO NOT MODIFY!!
- *============================================================================
- ****************************************************************************/
 
 /************************Modify Following Strings for Debug****************/
 #define PFX "OV88582LANE"
@@ -422,22 +394,6 @@ static void set_max_framerate(UINT16 framerate, kal_bool min_framelength_en)
 }			/*      set_max_framerate  */
 
 
-/*************************************************************************
- * FUNCTION
- *	set_shutter
- *
- * DESCRIPTION
- *	This function set e-shutter of sensor to change exposure time.
- *
- * PARAMETERS
- * iShutter : exposured lines
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static void set_shutter(kal_uint16 shutter)
 {
 	unsigned long flags;
@@ -520,22 +476,6 @@ static kal_uint16 gain2reg(const kal_uint16 gain)
 	return (kal_uint16) reg_gain;
 }
 #endif
-/*************************************************************************
- * FUNCTION
- *	set_gain
- *
- * DESCRIPTION
- *	This function is to set global gain to sensor.
- *
- * PARAMETERS
- *	iGain : sensor global gain(base: 0x40)
- *
- * RETURNS
- *	the actually gain set to sensor.
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint16 set_gain(kal_uint16 gain)
 {
 	kal_uint16 reg_gain;
@@ -648,22 +588,6 @@ static void set_mirror_flip(kal_uint8 image_mirror)
 
 }
 #endif
-/*************************************************************************
- * FUNCTION
- *	night_mode
- *
- * DESCRIPTION
- *	This function night mode of sensor.
- *
- * PARAMETERS
- *	bEnable: KAL_TRUE -> enable night mode, otherwise, disable night mode
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static void night_mode(kal_bool enable)
 {
 /*No Need to implement this function*/
@@ -2040,22 +1964,6 @@ static void slim_video_setting(void)
 }
 
 
-/*************************************************************************
- * FUNCTION
- *	get_imgsensor_id
- *
- * DESCRIPTION
- *	This function get the sensor ID
- *
- * PARAMETERS
- *      *sensorID : return the sensor ID
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 {
 	kal_uint8 i = 0;
@@ -2305,22 +2213,6 @@ int apply_otp(struct otp_struct *otp_ptr)
 }
 
 #endif
-/*************************************************************************
- * FUNCTION
- *	open
- *
- * DESCRIPTION
- *	This function initialize the registers of CMOS sensor
- *
- * PARAMETERS
- *	None
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 open(void)
 {
 	/* const kal_uint8 i2c_addr[] =
@@ -2397,22 +2289,6 @@ static kal_uint32 open(void)
 
 
 
-/*************************************************************************
- * FUNCTION
- *	close
- *
- * DESCRIPTION
- *
- *
- * PARAMETERS
- *	None
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 close(void)
 {
 	pr_debug("E\n");
@@ -2423,23 +2299,6 @@ static kal_uint32 close(void)
 }				/*      close  */
 
 
-/*************************************************************************
- * FUNCTION
- * preview
- *
- * DESCRIPTION
- * This function start the sensor preview.
- *
- * PARAMETERS
- * *image_window : address pointer of pixel numbers in one period of HSYNC
- * *sensor_config_data : address pointer of line numbers in one period of VSYNC
- *
- * RETURNS
- * None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 			  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
@@ -2459,21 +2318,6 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 	return ERROR_NONE;
 }				/*      preview   */
 
-/*************************************************************************
- * FUNCTION
- *	capture
- *
- * DESCRIPTION
- *	This function setup the CMOS sensor in capture MY_OUTPUT mode
- *
- * PARAMETERS
- *
- * RETURNS
- * None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 capture(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 			  MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
@@ -2994,9 +2838,6 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 	UINT32 *feature_data_32 = (UINT32 *) feature_para;
 	unsigned long long *feature_data = (unsigned long long *)feature_para;
 
-/* unsigned long long *feature_return_para =
- * (unsigned long long *) feature_para;
- */
 
 	struct SENSOR_WINSIZE_INFO_STRUCT *wininfo;
 

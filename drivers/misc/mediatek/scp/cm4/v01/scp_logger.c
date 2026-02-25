@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/fs.h>           /* needed by file_operations* */
 #include <linux/miscdevice.h>   /* needed by miscdevice* */
@@ -90,22 +87,11 @@ unsigned int r_pos_debug;
 unsigned int log_ctl_debug;
 static struct mutex scp_logger_mutex;
 
-/*
- * get log from scp when received a buf full notify
- * @param id:   IPI id
- * @param data: IPI data
- * @param len:  IPI data length
- */
 static void scp_logger_wakeup_handler(int id, void *data, unsigned int len)
 {
 	pr_debug("[SCP]wakeup by SCP logger\n");
 }
 
-/*
- * get log from scp to last_log_buf
- * @param len:  data length
- * @return:     length of log
- */
 static size_t scp_A_get_last_log(size_t b_len)
 {
 	size_t ret = 0;
@@ -283,9 +269,6 @@ static unsigned int scp_A_log_if_poll(struct file *file, poll_table *wait)
 
 	return ret;
 }
-/*
- * ipi send to enable scp logger flag
- */
 static unsigned int scp_A_log_enable_set(unsigned int enable)
 {
 	int ret;
@@ -325,9 +308,6 @@ error:
 	return 0;
 }
 
-/*
- *ipi send enable scp logger wake up flag
- */
 static unsigned int scp_A_log_wakeup_set(unsigned int enable)
 {
 	int ret;
@@ -367,9 +347,6 @@ error:
 	return 0;
 }
 
-/*
- * create device sysfs, scp logger status
- */
 static ssize_t scp_mobile_log_show(struct device *kobj,
 		struct device_attribute *attr, char *buf)
 {
@@ -398,9 +375,6 @@ static ssize_t scp_mobile_log_store(struct device *kobj,
 
 DEVICE_ATTR_RW(scp_mobile_log);
 
-/*
- * create device sysfs, scp ADB cmd to set SCP wakeup AP flag
- */
 static ssize_t scp_A_logger_wakeup_AP_show(struct device *kobj,
 		struct device_attribute *attr, char *buf)
 {
@@ -430,9 +404,6 @@ static ssize_t scp_A_logger_wakeup_AP_store(struct device *kobj,
 DEVICE_ATTR_RW(scp_A_logger_wakeup_AP);
 
 
-/*
- * create device sysfs, scp last log show
- */
 static ssize_t scp_A_get_last_log_show(struct device *kobj,
 		struct device_attribute *attr, char *buf)
 {
@@ -444,10 +415,6 @@ static ssize_t scp_A_get_last_log_show(struct device *kobj,
 
 DEVICE_ATTR_RO(scp_A_get_last_log);
 
-/*
- * logger UT test
- *
- */
 #if SCP_LOGGER_UT
 static ssize_t scp_A_mobile_log_UT_show(struct device *kobj,
 		struct device_attribute *attr, char *buf)
@@ -514,12 +481,6 @@ static ssize_t scp_A_mobile_log_UT_store(struct device *kobj,
 DEVICE_ATTR_RW(scp_A_mobile_log_UT);
 #endif
 
-/*
- * IPI for logger init
- * @param id:   IPI id
- * @param data: IPI data
- * @param len:  IPI data length
- */
 static void scp_A_logger_init_handler(int id, void *data, unsigned int len)
 {
 	unsigned long flags;
@@ -549,13 +510,6 @@ static void scp_A_logger_init_handler(int id, void *data, unsigned int len)
 #endif
 }
 
-/*
- * callback function for work struct
- * notify apps to start their tasks or generate an exception according to flag
- * NOTE: this function may be blocked and should not be called in interrupt
- *       context
- * @param ws:   work struct
- */
 static void scp_logger_notify_ws(struct work_struct *ws)
 {
 	struct scp_work_struct *sws =
@@ -598,10 +552,6 @@ static void scp_logger_notify_ws(struct work_struct *ws)
 }
 
 
-/******************************************************************************
- * init scp logger dram ctrl structure
- * @return:     -1: fail, otherwise: end of buffer
- *****************************************************************************/
 int scp_logger_init(phys_addr_t start, phys_addr_t limit)
 {
 	int last_ofs;
@@ -689,11 +639,6 @@ const struct file_operations scp_A_log_file_ops = {
 };
 
 
-/*
- * move scp last log from sram to dram
- * NOTE: this function may be blocked
- * @param scp_core_id:  fill scp id to get last log
- */
 void scp_crash_log_move_to_buf(enum scp_core_id scp_id)
 {
 	int pos;
@@ -806,11 +751,6 @@ void scp_crash_log_move_to_buf(enum scp_core_id scp_id)
 
 
 
-/*
- * get log from scp and optionally save it
- * NOTE: this function may be blocked
- * @param scp_core_id:  fill scp id to get last log
- */
 void scp_get_log(enum scp_core_id scp_id)
 {
 	pr_debug("[SCP] %s\n", __func__);
@@ -821,9 +761,6 @@ void scp_get_log(enum scp_core_id scp_id)
 #endif
 }
 
-/*
- * return scp last log
- */
 char *scp_get_last_log(enum scp_core_id id)
 {
 	char *last_log;
@@ -833,9 +770,6 @@ char *scp_get_last_log(enum scp_core_id id)
 	return last_log;
 }
 
-/*
- * set scp_A_logger_inited
- */
 void scp_logger_init_set(unsigned int value)
 {
 	/*scp_A_logger_inited

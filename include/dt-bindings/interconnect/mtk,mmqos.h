@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Ming-Fan Chen <ming-fan.chen@mediatek.com>
- */
 
 
 #ifndef __DT_BINDINGS_INTERCONNECT_MTK_MMQOS_H

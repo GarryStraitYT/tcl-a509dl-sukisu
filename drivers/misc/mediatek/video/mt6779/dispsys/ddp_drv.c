@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "ddp_drv"
 
@@ -207,11 +204,6 @@ static const struct file_operations disp_fops = {
 #endif
 };
 
-/**
- * disp_clk_init
- * 1. parsing dtsi
- * 2. clk force on
- */
 static void disp_clk_init(struct platform_device *pdev)
 {
 	int i;

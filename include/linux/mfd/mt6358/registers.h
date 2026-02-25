@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MFD_MT6358_REGISTERS_H__
 #define __MFD_MT6358_REGISTERS_H__

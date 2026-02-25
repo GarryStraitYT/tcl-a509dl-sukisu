@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __CMDQ_HELPER_EXT_H__
 #define __CMDQ_HELPER_EXT_H__
@@ -562,11 +559,6 @@ struct ResourceUnitStruct {
 	struct delayed_work delayCheckWork;
 };
 
-/* SRAM chunk structure
- *	allocated_start: allocated start address
- *	allocated_size: allocated SRAM size
- *	allocated_owner: allocate owner name
- */
 struct SRAMChunk {
 	struct list_head list_node;
 	u32 start_offset;
@@ -574,9 +566,6 @@ struct SRAMChunk {
 	char owner[CMDQ_MAX_SRAM_OWNER_NAME];
 };
 
-/**
- * shared memory between normal and secure world
- */
 struct cmdqSecSharedMemoryStruct {
 	void *pVABase;		/* virtual address of command buffer */
 	dma_addr_t MVABase;	/* physical address of command buffer */
@@ -666,9 +655,6 @@ enum CMDQ_SPM_MODE {
 	CMDQ_PD_MODE,
 };
 
-/* secure world wsm metadata type in message ex,
- * must sync with cmdq_sec_meta_type in cmdq_sec_iwc_common.h
- */
 enum cmdq_sec_rec_meta_type {
 	CMDQ_SEC_METAEX_NONE,
 	CMDQ_SEC_METAEX_FD,
@@ -901,9 +887,6 @@ void cmdqCoreClearEvent(enum cmdq_event event);
 /* Immediately set CMDQ event to 1 with CPU */
 void cmdqCoreSetEvent(enum cmdq_event event);
 
-/* Get event value with CPU. This is for debug purpose only
- * since it does not guarantee atomicity.
- */
 u32 cmdqCoreGetEvent(enum cmdq_event event);
 
 
@@ -990,20 +973,6 @@ s32 cmdq_pkt_auto_release_task(struct cmdqRecStruct *handle);
 
 s32 cmdq_pkt_flush_ex(struct cmdqRecStruct *handle);
 
-/*
- * cmdq_pkt_flush_async() - trigger CMDQ to asynchronously execute the CMDQ
- *                          packet and call back at the end of done packet
- * @client:	the CMDQ mailbox client
- * @pkt:	the CMDQ packet
- * @cb:		called at the end of done packet
- * @data:	this data will pass back to cb
- *
- * Return: 0 for success; else the error code is returned
- *
- * Trigger CMDQ to asynchronously execute the CMDQ packet and call back
- * at the end of done packet. Note that this is an ASYNC function. When the
- * function returned, it may or may not be finished.
- */
 s32 cmdq_pkt_flush_async_ex(struct cmdqRecStruct *handle,
 	CmdqAsyncFlushCB cb, u64 user_data, bool auto_release);
 

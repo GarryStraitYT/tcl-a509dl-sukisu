@@ -1,27 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *   ccmni.c
- *
- * Project:
- * --------
- *
- *
- * Description:
- * ------------
- *   Cross Chip Modem Network Interface
- *
- * Author:
- * -------
- *   Anny.Hu(mtk80401)
- *
- ****************************************************************************/
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/ip.h>

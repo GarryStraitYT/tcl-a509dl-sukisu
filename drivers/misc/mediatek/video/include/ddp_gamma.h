@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __DDP_GAMMA_H__
 #define __DDP_GAMMA_H__

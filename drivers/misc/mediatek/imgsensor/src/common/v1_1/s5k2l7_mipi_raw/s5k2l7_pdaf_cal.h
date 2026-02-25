@@ -1,27 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     s5k2l7_pdaf_cal.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor setting file
- *
- * Setting Release Date:
- * ------------
- *     2016.09.01
- *
- ****************************************************************************/
 #ifndef _s5k2l7_PDAF_CAL_H_
 #define _s5k2l7_PDAF_CAL_H_
 

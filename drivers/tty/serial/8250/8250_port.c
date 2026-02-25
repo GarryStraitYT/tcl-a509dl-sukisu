@@ -1,15 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- *  Base port operations for 8250/16550-type serial ports
- *
- *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
- *  Split from 8250_core.c, Copyright (C) 2001 Russell King.
- *
- * A note about mapbase / membase
- *
- *  mapbase is the physical address of the IO port.
- *  membase is an 'ioremapped' cookie.
- */
 
 #if defined(CONFIG_SERIAL_8250_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
 #define SUPPORT_SYSRQ
@@ -40,9 +29,6 @@
 
 #include "8250.h"
 
-/*
- * These are definitions for the Exar XR17V35X and XR17(C|D)15X
- */
 #define UART_EXAR_INT0		0x80
 #define UART_EXAR_SLEEP		0x8b	/* Sleep mode */
 #define UART_EXAR_DVID		0x8d	/* Device identification */
@@ -51,9 +37,6 @@
 #define UART_NPCM_TOR          7
 #define UART_NPCM_TOIE         BIT(7)  /* Timeout Interrupt Enable */
 
-/*
- * Debugging.
- */
 #if 0
 #define DEBUG_AUTOCONF(fmt...)	printk(fmt)
 #else
@@ -62,9 +45,6 @@
 
 #define BOTH_EMPTY	(UART_LSR_TEMT | UART_LSR_THRE)
 
-/*
- * Here we define the default xmit fifo size used for each type of UART.
- */
 static const struct serial8250_config uart_config[] = {
 	[PORT_UNKNOWN] = {
 		.name		= "unknown",
@@ -526,9 +506,6 @@ serial_port_out_sync(struct uart_port *p, int offset, int value)
 	}
 }
 
-/*
- * For the 16C950
- */
 static void serial_icr_write(struct uart_8250_port *up, int offset, int value)
 {
 	serial_out(up, UART_SCR, offset);
@@ -547,9 +524,6 @@ static unsigned int serial_icr_read(struct uart_8250_port *up, int offset)
 	return value;
 }
 
-/*
- * FIFO support.
- */
 static void serial8250_clear_fifos(struct uart_8250_port *p)
 {
 	if (p->capabilities & UART_CAP_FIFO) {
@@ -598,26 +572,6 @@ void serial8250_rpm_put(struct uart_8250_port *p)
 }
 EXPORT_SYMBOL_GPL(serial8250_rpm_put);
 
-/**
- *	serial8250_em485_init() - put uart_8250_port into rs485 emulating
- *	@p:	uart_8250_port port instance
- *
- *	The function is used to start rs485 software emulating on the
- *	&struct uart_8250_port* @p. Namely, RTS is switched before/after
- *	transmission. The function is idempotent, so it is safe to call it
- *	multiple times.
- *
- *	The caller MUST enable interrupt on empty shift register before
- *	calling serial8250_em485_init(). This interrupt is not a part of
- *	8250 standard, but implementation defined.
- *
- *	The function is supposed to be called from .rs485_config callback
- *	or from any other callback protected with p->port.lock spinlock.
- *
- *	See also serial8250_em485_destroy()
- *
- *	Return 0 - success, -errno - otherwise
- */
 int serial8250_em485_init(struct uart_8250_port *p)
 {
 	if (p->em485)
@@ -641,19 +595,6 @@ int serial8250_em485_init(struct uart_8250_port *p)
 }
 EXPORT_SYMBOL_GPL(serial8250_em485_init);
 
-/**
- *	serial8250_em485_destroy() - put uart_8250_port into normal state
- *	@p:	uart_8250_port port instance
- *
- *	The function is used to stop rs485 software emulating on the
- *	&struct uart_8250_port* @p. The function is idempotent, so it is safe to
- *	call it multiple times.
- *
- *	The function is supposed to be called from .rs485_config callback
- *	or from any other callback protected with p->port.lock spinlock.
- *
- *	See also serial8250_em485_init()
- */
 void serial8250_em485_destroy(struct uart_8250_port *p)
 {
 	if (!p->em485)
@@ -667,11 +608,6 @@ void serial8250_em485_destroy(struct uart_8250_port *p)
 }
 EXPORT_SYMBOL_GPL(serial8250_em485_destroy);
 
-/*
- * These two wrappers ensure that enable_runtime_pm_tx() can be called more than
- * once and disable_runtime_pm_tx() will still disable RPM because the fifo is
- * empty and the HW can idle again.
- */
 void serial8250_rpm_get_tx(struct uart_8250_port *p)
 {
 	unsigned char rpm_active;
@@ -701,11 +637,6 @@ void serial8250_rpm_put_tx(struct uart_8250_port *p)
 }
 EXPORT_SYMBOL_GPL(serial8250_rpm_put_tx);
 
-/*
- * IER sleep support.  UARTs which have EFRs need the "extended
- * capability" bit enabled.  Note that on XR16C850s, we need to
- * reset LCR to write to IER.
- */
 static void serial8250_set_sleep(struct uart_8250_port *p, int sleep)
 {
 	unsigned char lcr = 0, efr = 0;
@@ -743,10 +674,6 @@ out:
 }
 
 #ifdef CONFIG_SERIAL_8250_RSA
-/*
- * Attempts to turn on the RSA FIFO.  Returns zero on failure.
- * We set the port uart clock rate if we succeed.
- */
 static int __enable_rsa(struct uart_8250_port *up)
 {
 	unsigned char mode;
@@ -780,12 +707,6 @@ static void enable_rsa(struct uart_8250_port *up)
 	}
 }
 
-/*
- * Attempts to turn off the RSA FIFO.  Returns zero on failure.
- * It is unknown why interrupts were disabled in here.  However,
- * the caller is expected to preserve this behaviour by grabbing
- * the spinlock before calling this function.
- */
 static void disable_rsa(struct uart_8250_port *up)
 {
 	unsigned char mode;
@@ -811,10 +732,6 @@ static void disable_rsa(struct uart_8250_port *up)
 }
 #endif /* CONFIG_SERIAL_8250_RSA */
 
-/*
- * This is a quickie test to see how big the FIFO is.
- * It doesn't work at all the time, more's the pity.
- */
 static int size_fifo(struct uart_8250_port *up)
 {
 	unsigned char old_fcr, old_mcr, old_lcr;
@@ -847,11 +764,6 @@ static int size_fifo(struct uart_8250_port *up)
 	return count;
 }
 
-/*
- * Read UART ID using the divisor method - set DLL and DLM to zero
- * and the revision will be in DLL and device type in DLM.  We
- * preserve the device state across this.
- */
 static unsigned int autoconfig_read_divisor_id(struct uart_8250_port *p)
 {
 	unsigned char old_lcr;
@@ -869,16 +781,6 @@ static unsigned int autoconfig_read_divisor_id(struct uart_8250_port *p)
 	return id;
 }
 
-/*
- * This is a helper routine to autodetect StarTech/Exar/Oxsemi UART's.
- * When this function is called we know it is at least a StarTech
- * 16650 V2, but it might be one of several StarTech UARTs, or one of
- * its clones.  (We treat the broken original StarTech 16650 V1 as a
- * 16550, and why not?  Startech doesn't seem to even acknowledge its
- * existence.)
- *
- * What evil have men's minds wrought...
- */
 static void autoconfig_has_efr(struct uart_8250_port *up)
 {
 	unsigned int id1, id2, id3, rev;
@@ -962,11 +864,6 @@ static void autoconfig_has_efr(struct uart_8250_port *up)
 		up->port.type = PORT_16650V2;
 }
 
-/*
- * We detected a chip without a FIFO.  Only two fall into
- * this category - the original 8250 and the 16450.  The
- * 16450 has a scratch register (accessible with LCR=0)
- */
 static void autoconfig_8250(struct uart_8250_port *up)
 {
 	unsigned char scratch, status1, status2;
@@ -997,12 +894,6 @@ static int broken_efr(struct uart_8250_port *up)
 	return 0;
 }
 
-/*
- * We know that the chip has FIFOs.  Does it have an EFR?  The
- * EFR is located in the same register position as the IIR and
- * we know the top two bits of the IIR are currently set.  The
- * EFR should contain zero.  Try to read the EFR.
- */
 static void autoconfig_16550a(struct uart_8250_port *up)
 {
 	unsigned char status1, status2;
@@ -1192,13 +1083,6 @@ static void autoconfig_16550a(struct uart_8250_port *up)
 	}
 }
 
-/*
- * This routine is called by rs_init() to initialize a specific serial
- * port.  It determines what type of UART chip this serial port is
- * using: 8250, 16450, 16550, 16550A.  The important question is
- * whether or not this UART is a 16550A or not, since this will
- * determine whether or not we can use its FIFO features or not.
- */
 static void autoconfig(struct uart_8250_port *up)
 {
 	unsigned char status1, scratch, scratch2, scratch3;
@@ -1743,11 +1627,6 @@ void serial8250_read_char(struct uart_8250_port *up, unsigned char lsr)
 }
 EXPORT_SYMBOL_GPL(serial8250_read_char);
 
-/*
- * serial8250_rx_chars: processes according to the passed in LSR
- * value, and returns the remaining LSR bits not handled
- * by this Rx routine.
- */
 unsigned char serial8250_rx_chars(struct uart_8250_port *up, unsigned char lsr)
 {
 	struct uart_port *port = &up->port;
@@ -1853,9 +1732,6 @@ static bool handle_rx_dma(struct uart_8250_port *up, unsigned int iir)
 	return up->dma->rx_dma(up);
 }
 
-/*
- * This handles the interrupt from one port.
- */
 int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
 {
 	unsigned char status;
@@ -1898,12 +1774,6 @@ static int serial8250_default_handle_irq(struct uart_port *port)
 	return ret;
 }
 
-/*
- * Newer 16550 compatible parts such as the SC16C650 & Altera 16550 Soft IP
- * have a programmable TX threshold that triggers the THRE interrupt in
- * the IIR register. In this case, the THRE interrupt indicates the FIFO
- * has space available. Load it up with tx_loadsz bytes.
- */
 static int serial8250_tx_threshold_handle_irq(struct uart_port *port)
 {
 	unsigned long flags;
@@ -2016,9 +1886,6 @@ static void serial8250_break_ctl(struct uart_port *port, int break_state)
 	serial8250_rpm_put(up);
 }
 
-/*
- *	Wait for transmitter & holding register to empty
- */
 static void wait_for_xmitr(struct uart_8250_port *up, int bits)
 {
 	unsigned int status, tmout = 10000;
@@ -2051,10 +1918,6 @@ static void wait_for_xmitr(struct uart_8250_port *up, int bits)
 }
 
 #ifdef CONFIG_CONSOLE_POLL
-/*
- * Console polling routines for writing and reading from the uart while
- * in an interrupt or debug context.
- */
 
 static int serial8250_get_poll_char(struct uart_port *port)
 {
@@ -2473,10 +2336,6 @@ static void serial8250_shutdown(struct uart_port *port)
 		serial8250_do_shutdown(port);
 }
 
-/*
- * XR17V35x UARTs have an extra fractional divisor register (DLD)
- * Calculate divisor with extra 4-bit fractional portion
- */
 static unsigned int xr17v35x_get_divisor(struct uart_8250_port *up,
 					 unsigned int baud,
 					 unsigned int *frac)
@@ -2848,9 +2707,6 @@ static unsigned int serial8250_port_size(struct uart_8250_port *pt)
 	return 8 << pt->port.regshift;
 }
 
-/*
- * Resource handling.
- */
 static int serial8250_request_std_resource(struct uart_8250_port *up)
 {
 	unsigned int size = serial8250_port_size(up);
@@ -3204,9 +3060,6 @@ static void serial8250_console_putchar(struct uart_port *port, int ch)
 	serial_port_out(port, UART_TX, ch);
 }
 
-/*
- *	Restore serial console when h/w power-off detected
- */
 static void serial8250_console_restore(struct uart_8250_port *up)
 {
 	struct uart_port *port = &up->port;
@@ -3225,12 +3078,6 @@ static void serial8250_console_restore(struct uart_8250_port *up)
 	serial8250_out_MCR(up, UART_MCR_DTR | UART_MCR_RTS);
 }
 
-/*
- *	Print a string to the serial port trying not to disturb
- *	any possible real use of the port...
- *
- *	The console_lock must be held when we get here.
- */
 void serial8250_console_write(struct uart_8250_port *up, const char *s,
 			      unsigned int count)
 {

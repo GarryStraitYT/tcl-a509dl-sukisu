@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/init.h>		/* For init/exit macros */
@@ -27,11 +24,6 @@
 #include <linux/power_supply.h>
 #include <linux/regulator/driver.h>
 
-/**********************************************************
- *
- *   [I2C Slave Setting]
- *
- *********************************************************/
 
 #define GETARRAYNUM(array) (ARRAY_SIZE(array))
 
@@ -180,11 +172,6 @@ static unsigned int bmt_find_closest_level(const unsigned int *pList,
 }
 
 
-/**********************************************************
- *
- *   [Global Variable]
- *
- *********************************************************/
 unsigned char bq25601_reg[bq25601_REG_NUM] = { 0 };
 
 static DEFINE_MUTEX(bq25601_i2c_access);
@@ -192,11 +179,6 @@ static DEFINE_MUTEX(bq25601_access_lock);
 
 int g_bq25601_hw_exist;
 
-/**********************************************************
- *
- *   [I2C Function For Read/Write bq25601]
- *
- *********************************************************/
 #ifdef CONFIG_MTK_I2C_EXTENSION
 unsigned int bq25601_read_byte(unsigned char cmd,
 			       unsigned char *returnData)
@@ -343,11 +325,6 @@ unsigned int bq25601_write_byte(unsigned char cmd,
 	return ret == xfers ? 1 : -1;
 }
 #endif
-/**********************************************************
- *
- *   [Read / Write Function]
- *
- *********************************************************/
 unsigned int bq25601_read_interface(unsigned char RegNum,
 				    unsigned char *val, unsigned char MASK,
 				    unsigned char SHIFT)
@@ -408,11 +385,6 @@ unsigned int bq25601_reg_config_interface(unsigned char RegNum,
 	return ret;
 }
 
-/**********************************************************
- *
- *   [Internal Function]
- *
- *********************************************************/
 /* CON0---------------------------------------------------- */
 void bq25601_set_en_hiz(unsigned int val)
 {
@@ -877,11 +849,6 @@ void bq25601_set_int_mask(unsigned int val)
 				      );
 }
 
-/**********************************************************
- *
- *   [Internal Function]
- *
- *********************************************************/
 static int bq25601_dump_register(struct charger_device *chg_dev)
 {
 
@@ -902,11 +869,6 @@ static int bq25601_dump_register(struct charger_device *chg_dev)
 }
 
 
-/**********************************************************
- *
- *   [Internal Function]
- *
- *********************************************************/
 static void bq25601_hw_component_detect(void)
 {
 	unsigned int ret = 0;
@@ -1367,11 +1329,6 @@ static int bq25601_driver_probe(struct i2c_client *client,
 	return 0;
 }
 
-/**********************************************************
- *
- *   [platform_driver API]
- *
- *********************************************************/
 unsigned char g_reg_value_bq25601;
 static ssize_t bq25601_access_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)

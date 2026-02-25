@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #define DEBUG 1
 
@@ -183,15 +180,6 @@ void show_irq_handle_info(int output)
 }
 
 #ifdef CONFIG_MTK_IRQ_COUNT_TRACER
-/*
- * If a irq is frequently triggered, it could result in problems.
- * The purpose of this feature is to catch the condition. When the
- * average time interval of a irq is below the threshold, we judge
- * the irq is triggered abnormally and print a message for reference.
- *
- * average time interval =
- *     statistics time / irq count increase during the statistics time
- */
 static struct hrtimer irq_count_timer;
 
 #define MAX_IRQ_NUM 1024

@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * audio_mem_control.h --  Mediatek ADSP dmemory control
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chipeng <Chipeng.chang@mediatek.com>
- */
 
 #ifndef MTK_DSP_MEM_CONTROL_H
 #define MTK_DSP_MEM_CONTROL_H

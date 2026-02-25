@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #define LOG_TAG "ddp_path"
@@ -942,9 +939,5 @@ void ddp_set_spm_mode(enum DDP_SPM_MODE mode, void *handle)
 		DDPDBG("SPM can enter PD mode\n");
 	} else
 		DDPDBG("%s invalid, forbid is %d\n", __func__, mode);
-/*
- *	DDPDBG("DISP_REG_CONFIG_MMSYS_SODI_REQ_MASK 0x%08x\n",
- *		INREG32(DISP_REG_CONFIG_MMSYS_SODI_REQ_MASK));
- */
 }
 

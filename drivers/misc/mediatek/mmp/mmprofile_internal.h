@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __MMPROFILE_INTERNAL_H__
 #define __MMPROFILE_INTERNAL_H__
@@ -96,11 +92,6 @@ struct compat_mmprofile_metalog_t {
 
 #define MMP_IOC_MAGIC 'M'
 
-/* Note: MMP_IOC_DUMPEVENTINFO, arg points to a buffer:
- * sizeof(mmprofile_eventinfo_t)*MMPROFILE_MAX_EVENT_COUNT
- * Note: MMP_IOC_DUMPMETADATA, arg points to a buffer:
- * mmprofile_globals.meta_buffer_size
- */
 #define MMP_IOC_ENABLE _IOW(MMP_IOC_MAGIC, 1, unsigned int)
 #define MMP_IOC_START _IOW(MMP_IOC_MAGIC, 2, unsigned int)
 #define MMP_IOC_TIME _IOR(MMP_IOC_MAGIC, 3, unsigned long long)

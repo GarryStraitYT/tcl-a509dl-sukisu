@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2012 MediaTek Inc.
- */
 
 #ifndef __MT_SEC_HAL_H__
 #define __MT_SEC_HAL_H__

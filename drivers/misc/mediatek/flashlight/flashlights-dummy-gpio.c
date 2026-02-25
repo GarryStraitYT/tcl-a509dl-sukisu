@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -59,9 +56,6 @@ struct dummy_platform_data {
 };
 
 
-/******************************************************************************
- * Pinctrl configuration
- *****************************************************************************/
 static int dummy_pinctrl_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -121,9 +115,6 @@ static int dummy_pinctrl_set(int pin, int state)
 }
 
 
-/******************************************************************************
- * dummy operations
- *****************************************************************************/
 /* flashlight enable function */
 static int dummy_enable(void)
 {
@@ -174,9 +165,6 @@ static int dummy_uninit(void)
 	return dummy_pinctrl_set(pin, state);
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer dummy_timer;
 static unsigned int dummy_timeout_ms;
 
@@ -193,9 +181,6 @@ static enum hrtimer_restart dummy_timer_func(struct hrtimer *timer)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int dummy_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -304,9 +289,6 @@ static struct flashlight_operations dummy_ops = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int dummy_chip_init(void)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.

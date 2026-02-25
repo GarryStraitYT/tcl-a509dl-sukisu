@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author: James Liao <jamesjj.liao@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #ifndef __DRV_CLK_MTK_H
 #define __DRV_CLK_MTK_H
@@ -101,19 +88,11 @@ struct mtk_composite {
 		.mux_flags = _muxflags,					\
 	}
 
-/*
- * In case the rate change propagation to parent clocks is undesirable,
- * this macro allows to specify the clock flags manually.
- */
 #define MUX_GATE_FLAGS(_id, _name, _parents, _reg, _shift, _width,	\
 			_gate, _flags)					\
 		MUX_GATE_FLAGS_2(_id, _name, _parents, _reg,		\
 					_shift, _width, _gate, _flags, 0)
 
-/*
- * Unless necessary, all MUX_GATE clocks propagate rate changes to their
- * parent clock by default.
- */
 #define MUX_GATE(_id, _name, _parents, _reg, _shift, _width, _gate)	\
 	MUX_GATE_FLAGS(_id, _name, _parents, _reg, _shift, _width,	\
 		_gate, CLK_SET_RATE_PARENT)

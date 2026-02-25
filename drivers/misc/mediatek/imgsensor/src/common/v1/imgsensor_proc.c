@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "imgsensor.h"
 #include <linux/fs.h>
@@ -74,10 +71,6 @@ static ssize_t proc_SensorType_write(
 	return count;
 };
 
-/************************************************************************
- * CAMERA_HW_Reg_Debug()
- * Used for sensor register read/write by proc file
- ************************************************************************/
 static ssize_t CAMERA_HW_Reg_Debug(
 	struct file *file,
 	const char *buffer,

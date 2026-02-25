@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef SECMOD_H
 #define SECMOD_H
@@ -22,14 +19,8 @@ struct sec_mod {
 	const struct sec_ops *ops;
 };
 
-/**************************************************************************
- *  EXTERNAL VARIABLE
- **************************************************************************/
 extern const struct sec_ops *sec_get_ops(void);
 extern struct semaphore hacc_sem;
-/**************************************************************************
- *  EXTERNAL FUNCTION
- **************************************************************************/
 extern long sec_core_ioctl(struct file *file,
 			   unsigned int cmd,
 			   unsigned long arg);

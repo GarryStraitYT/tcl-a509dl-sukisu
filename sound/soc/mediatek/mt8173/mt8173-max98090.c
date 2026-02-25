@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mt8173-max98090.c  --  MT8173 MAX98090 ALSA SoC machine driver
- *
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Koro Chen <koro.chen@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <sound/soc.h>

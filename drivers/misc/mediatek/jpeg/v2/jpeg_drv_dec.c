@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifdef JPEG_DEC_DRIVER
 
@@ -124,9 +121,6 @@ void jpeg_drv_dec_start(void)
 }
 
 
-/**
- * Call this function to reset the JPEG decoder.
- */
 /* workaround for jpeg odd read operation at cg gating state */
 void jpeg_drv_dec_verify_state_and_reset(void)
 {

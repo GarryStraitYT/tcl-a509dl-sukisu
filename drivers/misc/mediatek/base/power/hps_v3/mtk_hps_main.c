@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -12,9 +9,6 @@
 #include <linux/regulator/consumer.h>
 #include "mtk_hps_internal.h"
 #include "mtk_hps.h"
-/*
- * static
- */
 #define STATIC
 /* #define STATIC static */
 #ifdef CONFIG_MACH_MT6799
@@ -156,9 +150,6 @@ struct hps_ctxt_struct hps_ctxt = {
 
 DEFINE_PER_CPU(struct hps_cpu_ctxt_struct, hps_percpu_ctxt);
 
-/*
- * hps hps_ctxt_t control interface
- */
 void hps_ctxt_reset_stas_nolock(void)
 {
 	hps_ctxt.up_loads_sum = 0;
@@ -215,9 +206,6 @@ void hps_ctxt_reset_stas(void)
 	mutex_unlock(&hps_ctxt.lock);
 }
 
-/*
- * hps hps_ctxt_t print interface
- */
 void hps_ctxt_print_basic(int toUart)
 {
 	if (toUart) {
@@ -480,9 +468,6 @@ void hps_power_on_vproc2(void)
 		hps_warn("[%s]Vproc2 Status ==> Enable\n", __func__);
 }
 #endif
-/*
- * probe callback
- */
 static int hps_probe(struct platform_device *pdev)
 {
 #ifdef CONFIG_MACH_MT6799
@@ -503,9 +488,6 @@ static int hps_probe(struct platform_device *pdev)
 	return 0;
 }
 
-/*
- * suspend callback
- */
 static int hps_suspend(struct device *dev)
 {
 	int ret = 0;
@@ -524,9 +506,6 @@ suspend_end:
 	return 0;
 }
 
-/*
- * resume callback
- */
 static int hps_resume(struct device *dev)
 {
 	hps_warn("%s\n", __func__);
@@ -545,9 +524,6 @@ resume_end:
 	return 0;
 }
 
-/*
- * freeze callback
- */
 static int hps_freeze(struct device *dev)
 {
 	int cpu;
@@ -581,9 +557,6 @@ freeze_end:
 	return 0;
 }
 
-/*
- * restore callback
- */
 static int hps_restore(struct device *dev)
 {
 	hps_warn("%s\n", __func__);
@@ -606,9 +579,6 @@ restore_end:
 	return 0;
 }
 
-/*
- * module init function
- */
 static int __init hps_init(void)
 {
 	int r = 0;
@@ -650,9 +620,6 @@ static int __init hps_init(void)
 /*module_init(hps_init);*/
 late_initcall(hps_init);
 
-/*
- * module exit function
- */
 static void __exit hps_exit(void)
 {
 	int r = 0;
@@ -667,9 +634,6 @@ static void __exit hps_exit(void)
 }
 module_exit(hps_exit);
 
-/*
- * module parameters
- */
 /* module_param(g_enable, int, 0644); */
 /* module_param(g_enable_dynamic_hps_at_suspend, int, 0644); */
 

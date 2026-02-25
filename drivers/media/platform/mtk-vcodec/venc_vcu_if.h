@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _VENC_VCU_IF_H_
 #define _VENC_VCU_IF_H_
@@ -10,21 +7,6 @@
 #include "mtk_vcodec_drv.h"
 #include "venc_ipi_msg.h"
 
-/*
- * struct venc_vcu_inst - encoder VCU driver instance
- * @wq_hd: wait queue used for vcu cmd trigger then wait vcu interrupt done
- * @signaled: flag used for checking vcu interrupt done
- * @failure: flag to show vcu cmd succeeds or not
- * @bs_size: bitstream size for skip frame case usage
- * @is_key_frm: key frame flag
- * @inst_addr: VCU instance addr
- * @vsi: driver structure allocated by VCU side and shared to AP side for
- *       control and info share
- * @id: the id of inter-processor interrupt
- * @ctx: context for v4l2 layer integration
- * @dev: device for v4l2 layer integration
- * @abort: abort when vpud crashed stop this instance ipi_msg
- */
 struct venc_vcu_inst {
 	wait_queue_head_t wq_hd;
 	int signaled;

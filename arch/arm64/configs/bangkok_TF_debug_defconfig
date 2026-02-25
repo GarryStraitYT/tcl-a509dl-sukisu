@@ -122,7 +122,7 @@ CONFIG_MTK_VIDEOCODEC_DRIVER=y
 CONFIG_MTK_LCM=y
 #CONFIG_CUSTOM_KERNEL_LCM="nt35695_fhd_dsi_vdo_truly_rt5081_hdp nt35695B_fhd_dsi_vdo_auo_rt5081_hdp"
 #begin add by xiongbo.huang for android r on 20200601
-CONFIG_CUSTOM_KERNEL_LCM="bangkok_tdt_ili9881d_hd_dsi_vdo bangkok_coe_gc9702p_hd_dsi_vdo"
+CONFIG_CUSTOM_KERNEL_LCM="bangkok_coe_gh1001_hd_dsi_vdo bangkok_tdt_ili9881d_hd_dsi_vdo bangkok_coe_gc9702p_hd_dsi_vdo bangkok_ykl_xm96120_hd_dsi_vdo"
 #end add by xiongbo.huang for android r on 20200601
 CONFIG_MTK_SYNC=y
 CONFIG_MTK_FB=y
@@ -263,6 +263,8 @@ CONFIG_TOUCHSCREEN_MTK=y
 #CONFIG_TOUCHSCREEN_FT5446=y
 CONFIG_TOUCHSCREEN_MTK_GT1151_BANGKOKTF=y
 CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF=y
+CONFIG_TOUCHSCREEN_MTK_CHSC5XXX_BANGKOKTF=y
+CONFIG_TOUCHSCREEN_MTK_BETTERLIFE_BANGKOKTF=y
 #begin modified by xiongbo.huang for android r on 20200601
 #CONFIG_TOUCHSCREEN_MTK_GT1151=y
 #CONFIG_GT1151_CONFIG="K61_TOUCH_CFG"

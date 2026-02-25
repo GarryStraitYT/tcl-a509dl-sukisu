@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 #ifndef MTK_IOMMU_SMI_H
 #define MTK_IOMMU_SMI_H
 

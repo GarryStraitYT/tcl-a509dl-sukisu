@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -3080,66 +3077,3 @@ MODULE_AUTHOR("ShuFanLee <shufan_lee@richtek.com>");
 MODULE_DESCRIPTION("RT9471 Charger Driver");
 MODULE_VERSION(RT9471_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.11
- * (1) Add RT9471_REG_PUMPEXP to the reg lists
- * (2) Notify CHARGER_DEV_NOTIFY_EOC in rt9471_ieoc_irq_handler()
- *
- * 1.0.10
- * (1) Should not enter CV tracking in sys_min
- * (2) Rearrange the resources alloc and free in driver probing/removing
- * (3) Schedule psy_dwork with 1s delay time when getting chg psy fails
- *
- * 1.0.9
- * (1) Defer getting chg psy to rt9471_inform_psy_work_handler()
- * (2) Move all charger status checking during probing to rt9471_check_chg()
- * (3) Revise wakeup sources
- * (4) Add CONFIG_MTK_EXTERNAL_CHARGER_TYPE_DETECT
- * (5) Add support for AICC/PE10/PE20
- * (6) Add vac_ovp setting
- * (7) Rearrange the functions and remove #if 0 blocks
- * (8) Revise dual charging, including the usage of ceb_gpio
- * (9) Add chip_rev printing
- * (10) Add more charger_dev_notify() notifications
- *
- * 1.0.8
- * (1) Schedule a work to inform psy changed
- * (2) Revise the flow for shutdown and driver removing
- *
- * 1.0.7
- * (1) Revise the flow for entering shipping mode
- *
- * 1.0.6
- * (1) kthread_stop() at failure probing and driver removing
- * (2) disable_irq() at shutdown and driver removing
- * (3) Always inform psy changed if cable unattach
- * (4) Remove suspend_lock
- * (5) Stay awake during bc12_en
- * (6) Update irq_maskall from new datasheet
- * (7) Add the workaround for not leaving battery supply mode
- *
- * 1.0.5
- * (1) Add suspend_lock
- * (2) Add support for RT9470/RT9470D
- * (3) Sync with LK Driver
- * (4) Use IRQ to wait chg_rdy
- * (5) disable_irq()/enable_irq() in suspend()/resume()
- * (6) bc12_en in the kthread
- *
- * 1.0.4
- * (1) Use type u8 for regval in __rt9471_i2c_read_byte()
- *
- * 1.0.3
- * (1) Add shipping mode sys node
- * (2) Keep D+ at 0.6V after DCP got detected
- *
- * 1.0.2
- * (1) Kick WDT in __rt9471_dump_registers()
- *
- * 1.0.1
- * (1) Keep mivr via chg_ops
- *
- * 1.0.0
- * (1) Initial released
- */

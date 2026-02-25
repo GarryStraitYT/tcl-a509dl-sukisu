@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
-/*****************************************************************************
- * camera_fdvt.c - Linux FDVT Device Driver
- *
- * DESCRIPTION:
- *     This file provid the other drivers FDVT relative functions
- *
- *****************************************************************************/
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -515,16 +505,7 @@ void FDVT_basic_config(void)
 	FDVT_WR32(0x0190012C, FDVT_SRC_WD_HT);
 }
 
-/***********************************************************
- * Clock to ms
- ************************************************************/
 
-/*
- *static unsigned long ms_to_jiffies(unsigned long ms)
- *{
- *	return (ms * HZ + 512) >> 10;
- *}
- */
 
 static unsigned long us_to_jiffies(unsigned long us)
 {
@@ -586,9 +567,6 @@ static int mt_fdvt_clk_ctrl(int en)
 	return 0;
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 #if (MTK_SECURE_FD_SUPPORT == 1)
 static inline int FDVT_switchCmdqToSecure(void *handle)
 {
@@ -609,9 +587,6 @@ static inline int FDVT_switchCmdqToSecure(void *handle)
 	return 0;
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 
 static inline int FDVT_switchPortToNonSecure(void)
 {
@@ -630,9 +605,6 @@ static inline int FDVT_switchPortToNonSecure(void)
 	return 0;
 }
 
-/***********************************************************
- * Set FDVT Meta Data
- ************************************************************/
 static int FDVT_SetMetaData(FDVTMetaData *pMetaData)
 {
 	int ret = 0;
@@ -1054,9 +1026,6 @@ static int FDVT_SetRegHW(FDVTRegIO *a_pstCfg)
 	return 0;
 }
 
-/***********************************************************
- *
- ************************************************************/
 static int FDVT_ReadRegHW(FDVTRegIO *a_pstCfg)
 {
 	int ret = 0;
@@ -1285,9 +1254,6 @@ static long FDVT_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 #ifdef CONFIG_COMPAT
 
-/***********************************************************
- *
- ************************************************************/
 
 static int compat_FD_get_register_data(
 		compat_FDVTRegIO __user *data32,
@@ -1545,13 +1511,6 @@ static int FDVT_open(struct inode *inode, struct file *file)
 
 	return 0;
 }
-/*
- *static int FDVT_flush(struct file *file, fl_owner_t id)
- *{
- *	LOG_DBG("[FDVT_DEBUG] FDVT_flush\n");
- *	return 0;
- *}
- */
 static int FDVT_release(struct inode *inode, struct file *file)
 {
 	LOG_DBG("[FDVT_DEBUG]\n");
@@ -1843,12 +1802,6 @@ static struct platform_driver FDVT_driver = {
 	.resume      = FDVT_resume,
 };
 
-/* Device Tree Architecture Don't Use This Struct
- *static struct platform_device FDVT_device = {
- *	.name    = FDVT_DEVNAME,
- *	.id         = 0,
- *};
- */
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void FDVT_early_suspend(struct early_suspend *h)

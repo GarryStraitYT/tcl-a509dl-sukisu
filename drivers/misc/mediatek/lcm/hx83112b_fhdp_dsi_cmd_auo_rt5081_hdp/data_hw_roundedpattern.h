@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _DATA_HW_ROUNDEDPATTERN_H_
 #define _DATA_HW_ROUNDEDPATTERN_H_

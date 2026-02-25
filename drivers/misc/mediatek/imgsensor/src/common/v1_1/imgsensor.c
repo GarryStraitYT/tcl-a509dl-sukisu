@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/platform_device.h>
 #include <linux/delay.h>
@@ -53,9 +50,6 @@ static DEFINE_MUTEX(gimgsensor_open_mutex);
 
 struct IMGSENSOR gimgsensor;
 
-/******************************************************************************
- * Profiling
- ******************************************************************************/
 #define IMGSENSOR_PROF 1
 #if IMGSENSOR_PROF
 void IMGSENSOR_PROFILE_INIT(struct timeval *ptv)
@@ -85,9 +79,6 @@ void IMGSENSOR_PROFILE(struct timeval *ptv, char *tag)
 }
 #endif
 
-/******************************************************************************
- * sensor function adapter
- ******************************************************************************/
 #define IMGSENSOR_FUNCTION_ENTRY()	/*PK_INFO("[%s]:E\n",__FUNCTION__) */
 #define IMGSENSOR_FUNCTION_EXIT()	/*PK_INFO("[%s]:X\n",__FUNCTION__) */
 
@@ -492,9 +483,6 @@ static void imgsensor_init_sensor_list(void)
 	}
 }
 
-/******************************************************************************
- * imgsensor_check_is_alive
- ******************************************************************************/
 static inline int imgsensor_check_is_alive(struct IMGSENSOR_SENSOR *psensor)
 {
 	MINT32 ret = ERROR_NONE;
@@ -533,9 +521,6 @@ static inline int imgsensor_check_is_alive(struct IMGSENSOR_SENSOR *psensor)
 	return err ? -EIO : err;
 }
 
-/******************************************************************************
- * imgsensor_set_driver
- ******************************************************************************/
 int imgsensor_set_driver(struct IMGSENSOR_SENSOR *psensor)
 {
 	int ret = -EIO;
@@ -867,9 +852,6 @@ static inline int adopt_CAMERA_HW_GetInfo2(void *pBuf)
 }
 
 
-/******************************************************************************
- * adopt_CAMERA_HW_Control
- ******************************************************************************/
 static inline int adopt_CAMERA_HW_Control(void *pBuf)
 {
 	int ret = 0;
@@ -893,9 +875,6 @@ static inline int adopt_CAMERA_HW_Control(void *pBuf)
 	return ret;
 }
 
-/******************************************************************************
- * adopt_CAMERA_HW_FeatureControl
- ******************************************************************************/
 static inline int adopt_CAMERA_HW_FeatureControl(void *pBuf)
 {
 	struct ACDK_SENSOR_FEATURECONTROL_STRUCT *pFeatureCtrl;
@@ -1908,9 +1887,6 @@ static long imgsensor_compat_ioctl(struct file *filp,
 }
 #endif
 
-/******************************************************************************
- * imgsensor_ioctl
- ******************************************************************************/
 static long imgsensor_ioctl(
 		struct file *a_pstFile,
 		unsigned int a_u4Command, unsigned long a_u4Param)

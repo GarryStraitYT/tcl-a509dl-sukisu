@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #define LOG_TAG "LCM"
 
@@ -516,11 +513,6 @@ static void *lcm_switch_mode(int mode)
 }
 
 #if (LCM_DSI_CMD_MODE)
-/* partial update restrictions:
- * 1. roi width must be 1080 (full lcm width)
- * 2. vertical start (y) must be multiple of 16
- * 3. vertical height (h) must be multiple of 16
- */
 static void lcm_validate_roi(int *x, int *y, int *width, int *height)
 {
 	unsigned int y1 = *y;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MTK_THERMAL_TIMER_H_
 #define _MTK_THERMAL_TIMER_H_

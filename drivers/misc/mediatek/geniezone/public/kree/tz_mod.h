@@ -1,35 +1,16 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 
 
 #ifndef TZ_MOD_H
 #define TZ_MOD_H
 
 
-/*****************************************************************************
- * MODULE DEFINITION
- *****************************************************************************/
 #define MODULE_NAME "[MTEE_MOD]"
 #define TZ_DEV_NAME "trustzone"
 #define MAJOR_DEV_NUM 197
 
-/*****************************************************************************
- * IOCTL DEFINITION
- *****************************************************************************/
 #define MTEE_IOC_MAGIC 'T'
 #define MTEE_CMD_OPEN_SESSION                                                  \
 	_IOWR(MTEE_IOC_MAGIC, 1, struct kree_session_cmd_param)

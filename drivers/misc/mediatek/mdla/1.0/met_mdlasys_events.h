@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM met_mdlasys_events

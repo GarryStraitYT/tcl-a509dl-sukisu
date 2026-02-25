@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/debugfs.h>
 #include <linux/export.h>
@@ -71,17 +68,6 @@ static void sync_timeline_put(struct sync_timeline *obj)
 	kref_put(&obj->kref, sync_timeline_free);
 }
 
-/**
- * sync_pt_create() - creates a sync pt
- * @parent:	fence's parent sync_timeline
- * @size:	size to allocate for this pt
- * @inc:	value of the fence
- *
- * Creates a new sync_pt as a child of @parent.  @size bytes will be
- * allocated allowing for implementation specific data to be kept after
- * the generic sync_timeline struct. Returns the sync_pt object or
- * NULL in case of error.
- */
 static struct sync_pt *sync_pt_create(struct sync_timeline *obj,
 					  unsigned int value)
 {
@@ -219,14 +205,6 @@ static const struct dma_fence_ops timeline_fence_ops = {
 
 /* ---------------------------------------------------------------- */
 
-/**
- * sync_timeline_signal() - signal a status change on a sync_timeline
- * @obj:	sync_timeline to signal
- * @inc:	num to increment on timeline->value
- *
- * A sync implementation should call this any time one of it's fences
- * has signaled or has an error condition.
- */
 static void sync_timeline_signal(struct sync_timeline *obj, unsigned int inc)
 {
 	struct sync_pt *pt, *next;
@@ -256,13 +234,6 @@ static void sync_timeline_signal(struct sync_timeline *obj, unsigned int inc)
 	spin_unlock_irq(&obj->lock);
 }
 
-/**
- * sync_timeline_create() - creates a sync object
- * @name:	sync_timeline name
- *
- * Creates a new sync_timeline. Returns the sync_timeline object or NULL in
- * case of error.
- */
 static struct sync_timeline *sync_timeline_create(const char *name)
 {
 	struct sync_timeline *obj;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __MODEM_DPMA_H__
 #define __MODEM_DPMA_H__
@@ -16,9 +13,6 @@
 #include "mt-plat/mtk_ccci_common.h"
 #include "ccci_bm.h"
 #include "ccci_hif_internal.h"
-/*
- * hardcode, max queue number should be synced with port array in port_cfg.c
- */
 #ifndef _E1_SB_SW_WORKAROUND_
 #define BAT_CNT_BURST_UPDATE  /* update with pit cnt update */
 #endif
@@ -65,9 +59,6 @@ unsigned int wrt_idx;
 unsigned int buf_len;
 };
 
-/****************************************************************************
- * Structure of DL PIT
- ****************************************************************************/
 struct dpmaifq_normal_pit {
 	unsigned int    packet_type:1; /* 0-payload packet; 1-message packet */
 	unsigned int    c_bit:1;/* 1-1/n; 0-the last one */
@@ -102,9 +93,6 @@ struct dpmaifq_msg_pit {
 	unsigned int    reserved4;
 };
 
-/****************************************************************************
- * Structure of DL BAT
- ****************************************************************************/
 struct dpmaif_bat_t {
 	unsigned int p_buffer_addr;
 	unsigned int buffer_addr_ext:8;
@@ -190,14 +178,6 @@ struct dpmaif_rx_queue {
 	struct ccci_skb_queue skb_list;
 };
 
-/****************************************************************************
- * Structure of UL DRB
- ****************************************************************************
- */
-/*
- * UL unit: WORD == 4bytes, && 1drb == 8bytes,
- * so 1 drb = size_cnt * 2, rd_idx_sw = rd_idx_hw/2.
- */
  #define DPMAIF_UL_DRB_ENTRY_WORD  2 /* (sizeof(dpmaif_drb_pd)/4)*/
 
 struct dpmaif_drb_pd {

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_MT6370_PMU_FLED_H
 #define __LINUX_MT6370_PMU_FLED_H

@@ -1,9 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Houlong Wei <houlong.wei@mediatek.com>
- *
- */
 
 #ifndef _DT_BINDINGS_GCE_MT8173_H
 #define _DT_BINDINGS_GCE_MT8173_H

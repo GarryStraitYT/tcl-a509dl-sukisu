@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef __M4U_V2_EXT_H__
 #define __M4U_V2_EXT_H__
@@ -24,9 +21,6 @@
 #define M4U_FLAGS_SEC_SHAREABLE   (1<<2)  /* the mva will share in SWd */
 /* the allocator will search free mva from user specified.  */
 #define M4U_FLAGS_START_FROM   (1<<3)
-/* ion_alloc have allocated sg_table with m4u_create_sgtable.
- *For va2mva ion case
- */
 #define M4U_FLAGS_SG_READY   (1<<4)
 
 

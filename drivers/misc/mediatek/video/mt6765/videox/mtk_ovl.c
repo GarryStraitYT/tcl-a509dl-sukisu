@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #include <linux/delay.h>
@@ -330,20 +327,6 @@ static void deinit_cmdq_slots(cmdqBackupSlotHandle hSlot)
 	cmdqBackupFreeSlot(hSlot);
 }
 
-/*
- *
-	static int ovl2mem_cmdq_dump(uint64_t engineFlag, int level)
-	{
-		DISPFUNC();
-
-		if (pgcl->dpmgr_handle != NULL)
-			dpmgr_check_status(pgcl->dpmgr_handle);
-		else
-			DISPMSG("ovl2mem dpmgr_handle == NULL\n");
-
-		return 0;
-	}
- */
 int ovl2mem_init(unsigned int session)
 {
 	int ret = -1;

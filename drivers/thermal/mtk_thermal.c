@@ -1,19 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Hanyi Wu <hanyi.wu@mediatek.com>
- *         Sascha Hauer <s.hauer@pengutronix.de>
- *         Dawei Chien <dawei.chien@mediatek.com>
- *         Louis Yu <louis.yu@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -105,13 +89,6 @@
 /* The number of sensing points per bank */
 #define MT8173_NUM_SENSORS_PER_ZONE	4
 
-/*
- * Layout of the fuses providing the calibration data
- * These macros could be used for MT8173, MT2701, and MT2712.
- * MT8173 has 5 sensors and needs 5 VTS calibration data.
- * MT2701 has 3 sensors and needs 3 VTS calibration data.
- * MT2712 has 4 sensors and needs 4 VTS calibration data.
- */
 #define MT8173_CALIB_BUF0_VALID		BIT(0)
 #define MT8173_CALIB_BUF1_ADC_GE(x)	(((x) >> 22) & 0x3ff)
 #define MT8173_CALIB_BUF0_VTS_TS1(x)	(((x) >> 17) & 0x1ff)
@@ -254,19 +231,6 @@ static const int mt7622_msr[MT7622_NUM_SENSORS_PER_ZONE] = { TEMP_MSR0, };
 static const int mt7622_adcpnp[MT7622_NUM_SENSORS_PER_ZONE] = { TEMP_ADCPNP0, };
 static const int mt7622_mux_values[MT7622_NUM_SENSORS] = { 0, };
 
-/**
- * The MT8173 thermal controller has four banks. Each bank can read up to
- * four temperature sensors simultaneously. The MT8173 has a total of 5
- * temperature sensors. We use each bank to measure a certain area of the
- * SoC. Since TS2 is located centrally in the SoC it is influenced by multiple
- * areas, hence is used in different banks.
- *
- * The thermal core only gets the maximum temperature of all banks, so
- * the bank concept wouldn't be necessary here. However, the SVS (Smart
- * Voltage Scaling) unit makes its decisions based on the same bank
- * data, and this indeed needs the temperatures of the individual banks
- * for making better decisions.
- */
 static const struct mtk_thermal_data mt8173_thermal_data = {
 	.auxadc_channel = MT8173_TEMP_AUXADC_CHANNEL,
 	.num_banks = MT8173_NUM_ZONES,
@@ -291,16 +255,6 @@ static const struct mtk_thermal_data mt8173_thermal_data = {
 	.sensor_mux_values = mt8173_mux_values,
 };
 
-/**
- * The MT2701 thermal controller has one bank, which can read up to
- * three temperature sensors simultaneously. The MT2701 has a total of 3
- * temperature sensors.
- *
- * The thermal core only gets the maximum temperature of this one bank,
- * so the bank concept wouldn't be necessary here. However, the SVS (Smart
- * Voltage Scaling) unit makes its decisions based on the same bank
- * data.
- */
 static const struct mtk_thermal_data mt2701_thermal_data = {
 	.auxadc_channel = MT2701_TEMP_AUXADC_CHANNEL,
 	.num_banks = 1,
@@ -316,16 +270,6 @@ static const struct mtk_thermal_data mt2701_thermal_data = {
 	.sensor_mux_values = mt2701_mux_values,
 };
 
-/**
- * The MT2712 thermal controller has one bank, which can read up to
- * four temperature sensors simultaneously. The MT2712 has a total of 4
- * temperature sensors.
- *
- * The thermal core only gets the maximum temperature of this one bank,
- * so the bank concept wouldn't be necessary here. However, the SVS (Smart
- * Voltage Scaling) unit makes its decisions based on the same bank
- * data.
- */
 static const struct mtk_thermal_data mt2712_thermal_data = {
 	.auxadc_channel = MT2712_TEMP_AUXADC_CHANNEL,
 	.num_banks = 1,
@@ -341,10 +285,6 @@ static const struct mtk_thermal_data mt2712_thermal_data = {
 	.sensor_mux_values = mt2712_mux_values,
 };
 
-/*
- * MT7622 have only one sensing point which uses AUXADC Channel 11 for raw data
- * access.
- */
 static const struct mtk_thermal_data mt7622_thermal_data = {
 	.auxadc_channel = MT7622_TEMP_AUXADC_CHANNEL,
 	.num_banks = MT7622_NUM_ZONES,
@@ -360,14 +300,6 @@ static const struct mtk_thermal_data mt7622_thermal_data = {
 	.sensor_mux_values = mt7622_mux_values,
 };
 
-/**
- * raw_to_mcelsius - convert a raw ADC value to mcelsius
- * @mt:		The thermal controller
- * @raw:	raw ADC value
- *
- * This converts the raw ADC value to mcelsius using the SoC specific
- * calibration constants
- */
 static int raw_to_mcelsius(struct mtk_thermal *mt, int sensno, s32 raw)
 {
 	s32 tmp;
@@ -383,13 +315,6 @@ static int raw_to_mcelsius(struct mtk_thermal *mt, int sensno, s32 raw)
 	return mt->degc_cali * 500 - tmp;
 }
 
-/**
- * mtk_thermal_get_bank - get bank
- * @bank:	The bank
- *
- * The bank registers are banked, we have to select a bank in the
- * PTPCORESEL register to access it.
- */
 static void mtk_thermal_get_bank(struct mtk_thermal_bank *bank)
 {
 	struct mtk_thermal *mt = bank->mt;
@@ -403,12 +328,6 @@ static void mtk_thermal_get_bank(struct mtk_thermal_bank *bank)
 	writel(val, mt->thermal_base + PTPCORESEL);
 }
 
-/**
- * mtk_thermal_put_bank - release bank
- * @bank:	The bank
- *
- * release a bank previously taken with mtk_thermal_get_bank,
- */
 static void mtk_thermal_put_bank(struct mtk_thermal_bank *bank)
 {
 	struct mtk_thermal *mt = bank->mt;
@@ -416,13 +335,6 @@ static void mtk_thermal_put_bank(struct mtk_thermal_bank *bank)
 	mutex_unlock(&mt->lock);
 }
 
-/**
- * mtk_thermal_bank_temperature - get the temperature of a bank
- * @bank:	The bank
- *
- * The temperature of a bank is considered the maximum temperature of
- * the sensors associated to the bank.
- */
 static int mtk_thermal_bank_temperature(struct mtk_thermal_bank *bank)
 {
 	struct mtk_thermal *mt = bank->mt;

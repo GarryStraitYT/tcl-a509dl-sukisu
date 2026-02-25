@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -134,10 +131,6 @@ static unsigned int _need_do_esd_check(void)
 	return ret;
 }
 
-/**
- * For Cmd Mode Read LCM Check
- * Config cmdq_handle_config_esd
- */
 int _esd_check_config_handle_cmd(struct cmdqRecStruct *qhandle)
 {
 	int ret = 0; /* 0:success */
@@ -179,11 +172,6 @@ int _esd_check_config_handle_cmd(struct cmdqRecStruct *qhandle)
 	return ret;
 }
 
-/**
- * For Vdo Mode Read LCM Check
- * Config cmdq_handle_config_esd
- * return value: 0:success, 1:fail
- */
 int _esd_check_config_handle_vdo(struct cmdqRecStruct *qhandle)
 {
 	int ret = 0;
@@ -511,11 +499,6 @@ DISPTORY:
 	return ret;
 }
 
-/**
- * ESD CHECK FUNCTION
- * return 1: esd check fail
- * return 0: esd check pass
- */
 int primary_display_esd_check(void)
 {
 	int ret = 0;
@@ -894,9 +877,6 @@ unsigned int need_wait_esd_eof(void)
 
 #if defined(CONFIG_MTK_DUAL_DISPLAY_SUPPORT) && \
 	(CONFIG_MTK_DUAL_DISPLAY_SUPPORT == 2)
-/*********external display dual LCM feature************
- **********esd check*******************************
- */
 static unsigned int extd_need_do_esd_check(void)
 {
 	int ret = 0;

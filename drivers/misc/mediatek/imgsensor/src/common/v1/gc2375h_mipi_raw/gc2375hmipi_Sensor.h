@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     gc2375hmipi_Sensor.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _GC2375HMIPI_SENSOR_H
 #define _GC2375HMIPI_SENSOR_H
 

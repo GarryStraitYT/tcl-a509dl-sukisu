@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -111,12 +108,6 @@ static char g_bind8[20] = { 0 };
 static char g_bind9[20] = { 0 };
 #endif
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5000;
@@ -135,25 +126,6 @@ do {                                    \
 
 #define mtktsbattery_printk(fmt, args...)   \
 pr_debug("[Thermal/TZ/BATTERY]" fmt, ##args)
-/*
- * kernel fopen/fclose
- */
-/*
- *static mm_segment_t oldfs;
- *
- *static void my_close(int fd)
- *{
- *	set_fs(oldfs);
- *	sys_close(fd);
- *}
- *
- *static int my_open(char *fname, int flag)
- *{
- *	oldfs = get_fs();
- *   set_fs(KERNEL_DS);
- *    return sys_open(fname, flag, 0);
- *}
- */
 static int get_hw_battery_temp(void)
 {
 	union power_supply_propval prop;
@@ -374,29 +346,6 @@ static struct thermal_zone_device_ops mtktsbattery_dev_ops = {
 	.get_crit_temp = mtktsbattery_get_crit_temp,
 };
 
-/*
- *static int dis_charge_get_max_state(struct thermal_cooling_device *cdev,
- *				 int *state)
- *{
- *		*state = 1;
- *		return 0;
- *}
- *static int dis_charge_get_cur_state(struct thermal_cooling_device *cdev,
- *				 int *state)
- *{
- *		*state = cl_dev_dis_charge_state;
- *		return 0;
- *}
- *static int dis_charge_set_cur_state(struct thermal_cooling_device *cdev,
- *				 int state)
- *{
- *    cl_dev_dis_charge_state = state;
- *    if(cl_dev_dis_charge_state == 1) {
- *	mtktsbattery_dprintk("[dis_charge_set_cur_state] disable charging\n");
- *    }
- *    return 0;
- *}
- */
 
 static int tsbat_sysrst_get_max_state(
 struct thermal_cooling_device *cdev, unsigned long *state)
@@ -433,14 +382,6 @@ struct thermal_cooling_device *cdev, unsigned long state)
 	return 0;
 }
 
-/*
- *static struct thermal_cooling_device_ops
- * mtktsbattery_cooling_dis_charge_ops = {
- *	.get_max_state = dis_charge_get_max_state,
- *	.get_cur_state = dis_charge_get_cur_state,
- *	.set_cur_state = dis_charge_set_cur_state,
- *};
- */
 static struct thermal_cooling_device_ops mtktsbattery_cooling_sysrst_ops = {
 	.get_max_state = tsbat_sysrst_get_max_state,
 	.get_cur_state = tsbat_sysrst_get_cur_state,
@@ -449,9 +390,6 @@ static struct thermal_cooling_device_ops mtktsbattery_cooling_sysrst_ops = {
 
 
 static int mtktsbattery_read(struct seq_file *m, void *v)
-/* static int mtktsbattery_read(
- * char *buf, char **start, off_t off, int count, int *eof, void *data)
- */
 {
 
 	seq_printf(m,
@@ -493,9 +431,6 @@ static void mtktsbattery_unregister_thermal(void);
 
 static ssize_t mtktsbattery_write(
 struct file *file, const char __user *buffer, size_t count, loff_t *data)
-/* static ssize_t mtktsbattery_write(
- * struct file *file, const char *buffer, int count, void *data)
- */
 {
 	int len = 0, i;
 	struct mtktsbattery_data {

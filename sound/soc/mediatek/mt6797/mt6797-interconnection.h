@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Mediatek MT6797 audio driver interconnection definition
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MT6797_INTERCONNECTION_H_
 #define _MT6797_INTERCONNECTION_H_

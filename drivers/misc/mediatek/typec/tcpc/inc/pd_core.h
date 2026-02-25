@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef PD_CORE_H_
 #define PD_CORE_H_
@@ -61,15 +58,6 @@
 #endif
 
 /* PDO : Power Data Object */
-/*
- * 1. The vSafe5V Fixed Supply Object shall always be the first object.
- * 2. The remaining Fixed Supply Objects,
- *    if present, shall be sent in voltage order; lowest to highest.
- * 3. The Battery Supply Objects,
- *    if present shall be sent in Minimum Voltage order; lowest to highest.
- * 4. The Variable Supply (non battery) Objects,
- *    if present, shall be sent in Minimum Voltage order; lowest to highest.
- */
 #define PDO_TYPE_FIXED    (0 << 30)
 #define PDO_TYPE_BATTERY  (1 << 30)
 #define PDO_TYPE_VARIABLE (2 << 30)
@@ -283,23 +271,7 @@
 		((data_size) | (req << 10) | \
 		 ((chunk_nr) << 11) | (chunked << 15))
 
-/*
- * VDO : Vendor Defined Message Object
- * VDM object is minimum of VDM header + 6 additional data objects.
- */
 
-/*
- * VDM header
- * ----------
- * <31:16>  :: SVID
- * <15>     :: VDM type ( 1b == structured, 0b == unstructured )
- * <14:13>  :: Structured VDM version (can only be 00 == 1.0 currently)
- * <12:11>  :: reserved
- * <10:8>   :: object position (1-7 valid ... used for enter/exit mode only)
- * <7:6>    :: command type (SVDM only?)
- * <5>      :: reserved (SVDM), command type (UVDM)
- * <4:0>    :: command
- */
 
 #define VDO(vid, type, custom)				\
 	(((vid) << 16) |				\
@@ -342,19 +314,6 @@
 #define PD_VDO_CMD(vdo)  ((vdo) & 0x1f)
 #define PD_VDO_CMDT(vdo) (((vdo) >> 6) & 0x3)
 
-/*
- * SVDM Identity request -> response
- *
- * Request is simply properly formatted SVDM header
- *
- * Response is 4 data objects:
- * [0] :: SVDM header
- * [1] :: Identitiy header
- * [2] :: Cert Stat VDO
- * [3] :: Product VDO
- * [4] :: Cable / AMA VDO
- *
- */
 
 #define VDO_INDEX_HDR     0
 #define VDO_INDEX_IDH     1
@@ -364,17 +323,6 @@
 #define VDO_INDEX_AMA     4
 #define VDO_I(name) VDO_INDEX_##name
 
-/*
- * SVDM Identity Header
- * --------------------
- * <31>     :: data capable as a USB host
- * <30>     :: data capable as a USB device
- * <29:27>  :: product type for UFP/Cable
- * <26>     :: modal operation supported (1b == yes)
- * <25:23>  :: product type for DFP
- * <22:16>  :: SBZ
- * <15:0>   :: USB-IF assigned VID for this cable vendor
- */
 
 #define IDH_PTYPE_UNDEF  0
 #define IDH_PTYPE_HUB    1
@@ -404,44 +352,13 @@
 
 #define PD_IDH_MODAL_SUPPORT	(1<<26)
 
-/*
- * Cert Stat VDO
- * -------------
- * <31:20> : SBZ
- * <19:0>  : USB-IF assigned TID for this cable
- */
 #define VDO_CSTAT(tid)    ((tid) & 0xfffff)
 #define PD_CSTAT_TID(vdo) ((vdo) & 0xfffff)
 
-/*
- * Product VDO
- * -----------
- * <31:16> : USB Product ID
- * <15:0>  : USB bcdDevice
- */
 #define VDO_PRODUCT(pid, bcd) (((pid) & 0xffff) << 16 | ((bcd) & 0xffff))
 #define PD_PRODUCT_BCD(vdo) ((vdo) & 0xffff)
 #define PD_PRODUCT_PID(vdo) (((vdo) >> 16) & 0xffff)
 
-/*
- * Cable VDO
- * ---------
- * <31:28> :: Cable HW version
- * <27:24> :: Cable FW version
- * <23:20> :: SBZ
- * <19:18> :: type-C to Type-A/B/C (00b == A, 01 == B, 10 == C)
- * <17>    :: Type-C to Plug/Receptacle (0b == plug, 1b == receptacle)
- * <16:13> :: cable latency (0001 == <10ns(~1m length))
- * <12:11> :: cable termination type (11b == both ends active VCONN req)
- * <10>    :: SSTX1 Directionality support (0b == fixed, 1b == cfgable)
- * <9>     :: SSTX2 Directionality support
- * <8>     :: SSRX1 Directionality support
- * <7>     :: SSRX2 Directionality support
- * <6:5>   :: Vbus current handling capability
- * <4>     :: Vbus through cable (0b == no, 1b == yes)
- * <3>     :: SOP" controller present? (0b == no, 1b == yes)
- * <2:0>   :: USB SS Signaling support
- */
 #define CABLE_ATYPE 0
 #define CABLE_BTYPE 1
 #define CABLE_CTYPE 2
@@ -463,21 +380,6 @@
 
 #define PD_VDO_CABLE_CURR(x)	(((x) >> 5) & 0x03)
 
-/*
- * AMA VDO
- * ---------
- * <31:28> :: Cable HW version
- * <27:24> :: Cable FW version
- * <23:12> :: SBZ
- * <11>    :: SSTX1 Directionality support (0b == fixed, 1b == cfgable)
- * <10>    :: SSTX2 Directionality support
- * <9>     :: SSRX1 Directionality support
- * <8>     :: SSRX2 Directionality support
- * <7:5>   :: Vconn power
- * <4>     :: Vconn power required
- * <3>     :: Vbus power required
- * <2:0>   :: USB SS Signaling support
- */
 #define VDO_AMA(hw, fw, tx1d, tx2d, rx1d, rx2d, vcpwr, vcr, vbr, usbss) \
 	(((hw) & 0x7) << 28 | ((fw) & 0x7) << 24			\
 	 | (tx1d) << 11 | (tx2d) << 10 | (rx1d) << 9 | (rx2d) << 8	\
@@ -499,30 +401,10 @@
 #define AMA_USBSS_U31_GEN2 2
 #define AMA_USBSS_BBONLY   3
 
-/*
- * SVDM Discover SVIDs request -> response
- *
- * Request is properly formatted VDM Header with discover SVIDs command.
- * Response is a set of SVIDs of all all supported SVIDs with all zero's to
- * mark the end of SVIDs.  If more than 12 SVIDs are supported command SHOULD be
- * repeated.
- */
 #define VDO_SVID(svid0, svid1) (((svid0) & 0xffff) << 16 | ((svid1) & 0xffff))
 #define PD_VDO_SVID_SVID0(vdo) ((vdo) >> 16)
 #define PD_VDO_SVID_SVID1(vdo) ((vdo) & 0xffff)
 
-/*
- * DisplayPort modes capabilities
- * -------------------------------
- * <31:24> : SBZ
- * <23:16> : UFP_D pin assignment supported
- * <15:8>  : DFP_D pin assignment supported
- * <7>     : USB 2.0 signaling (0b=yes, 1b=no)
- * <6>     : Plug | Receptacle (0b == plug, 1b == receptacle)
- * <5:2>   : xxx1: Supports DPv1.3, xx1x Supports USB Gen 2 signaling
- *           Other bits are reserved.
- * <1:0>   : signal direction ( 00b=rsv, 01b=sink, 10b=src 11b=both )
- */
 #define VDO_MODE_DP(snkp, srcp, usb, gdr, sign, sdir)			\
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
 	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
@@ -564,20 +446,6 @@
 #define PD_DP_UFP_D_PIN_CAPS(x)	(MODE_DP_RECEPT(x) ? \
 		MODE_DP_PIN_UFP(x) : MODE_DP_PIN_DFP(x))
 
-/*
- * DisplayPort Status VDO
- * ----------------------
- * <31:9> : SBZ
- * <8>    : IRQ_HPD : 1 == irq arrived since last message otherwise 0.
- * <7>    : HPD state : 0 = HPD_LOW, 1 == HPD_HIGH
- * <6>    : Exit DP Alt mode: 0 == maintain, 1 == exit
- * <5>    : USB config : 0 == maintain current, 1 == switch to USB from DP
- * <4>    : Multi-function preference : 0 == no pref, 1 == MF preferred.
- * <3>    : enabled : is DPout on/off.
- * <2>    : power low : 0 == normal or LPM disabled, 1 == DP disabled for LPM
- * <1:0>  : connect status : 00b ==  no (DFP|UFP)_D is connected or disabled.
- *          01b == DFP_D connected, 10b == UFP_D connected, 11b == both.
- */
 
 #define VDO_DP_STATUS(irq, lvl, amode, usbc, mf, en, lp, conn)		\
 	(((irq) & 1) << 8 | ((lvl) & 1) << 7 | ((amode) & 1) << 6	\
@@ -611,17 +479,6 @@
 #define HPD_USTREAM_DEBOUNCE_IRQ (250)
 #define HPD_DSTREAM_DEBOUNCE_IRQ (750)  /* between 500-1000us */
 
-/*
- * DisplayPort Configure VDO
- * -------------------------
- * <31:24> : SBZ
- * <23:16> : SBZ
- * <15:8>  : Pin assignment requested.  Choose one from mode caps.
- * <7:6>   : SBZ
- * <5:2>   : signalling : 1h == DP v1.3, 2h == Gen 2
- *           Oh is only for USB, remaining values are reserved
- * <1:0>   : cfg : 00 == USB, 01 == DFP_D, 10 == UFP_D, 11 == reserved
- */
 
 #define DP_CONFIG_USB				0
 #define DP_CONFIG_DFP_D				1
@@ -649,11 +506,6 @@
 #define DP_PIN_ASSIGN_SUPPORT_E		(1 << 4)
 #define DP_PIN_ASSIGN_SUPPORT_F		(1 << 5)
 
-/*
- * Get the pin assignment mask
- * for backward compatibility, if it is null,
- * get the former sink pin assignment we used to be in <23:16>.
- */
 
 #define PD_DP_CFG_PIN(x) (((x) >> 8) & 0xff)
 

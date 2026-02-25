@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _AUTOK_DVFS_H_
 #define _AUTOK_DVFS_H_
@@ -32,9 +29,6 @@ enum AUTOK_VCORE {
 /* Enable later@Peter */
 /* #define SDIO_HW_DVFS_CONDITIONAL */
 
-/**********************************************************
- * Function Declaration                                   *
- **********************************************************/
 extern int sdio_autok_res_exist(struct msdc_host *host);
 extern int sdio_autok_res_apply(struct msdc_host *host, int vcore);
 extern int sdio_autok_res_save(struct msdc_host *host, int vcore, u8 *res);

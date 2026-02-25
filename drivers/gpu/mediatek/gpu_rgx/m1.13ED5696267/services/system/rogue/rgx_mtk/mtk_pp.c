@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #if defined(MTK_DEBUG_PROC_PRINT)
 
@@ -19,9 +16,6 @@
 
 #include "mtk_pp.h"
 
-/* AEE not ready yet
- * #define ENABLE_AEE_WHEN_LOCKUP
- */
 
 #if defined(ENABLE_AEE_WHEN_LOCKUP)
 #include <linux/workqueue.h>

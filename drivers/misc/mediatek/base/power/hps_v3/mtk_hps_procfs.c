@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -188,24 +185,9 @@ static ssize_t hps_proc_uint_write_with_lock_reset(struct file *file,
 
 #define PROC_ENTRY(name)	{__stringify(name), &hps_##name##_proc_fops}
 
-/*
- * procfs callback - state series
- *     - init_state
- *     - state
- */
 PROC_FOPS_RO_UINT(init_state, hps_ctxt.init_state);
 PROC_FOPS_RO_UINT(state, hps_ctxt.state);
 
-/*
- * procfs callback - enabled series
- *     - enabled
- *     - suspend_enabled
- *     - cur_dump_enabled
- *     - stats_dump_enabled
- *     - heavy_task_enabled
- *     - big_task_enabled
- *     - idle_det_enabled
- */
 PROC_FOPS_RW_UINT(enabled, hps_ctxt.enabled,
 	hps_proc_uint_write_with_lock_reset);
 PROC_FOPS_RW_UINT(eas_enabled, hps_ctxt.eas_enabled,
@@ -223,20 +205,6 @@ PROC_FOPS_RW_UINT(cur_dump_enabled, hps_ctxt.cur_dump_enabled,
 PROC_FOPS_RW_UINT(stats_dump_enabled, hps_ctxt.stats_dump_enabled,
 	hps_proc_uint_write_with_lock);
 
-/*
- * procfs callback - algo config series
- *     - up_threshold
- *     - up_times
- *     - down_threshold
- *     - down_times
- *     - input_boost_enabled
- *     - input_boost_cpu_num
- *     - rush_boost_enabled
- *     - rush_boost_threshold
- *     - rush_boost_times
- *     - tlp_times
- *     - idle_threshold
- */
 PROC_FOPS_RW_UINT(up_threshold, hps_ctxt.up_threshold,
 	hps_proc_uint_write_with_lock_reset);
 PROC_FOPS_RW_UINT(up_times, hps_ctxt.up_times,
@@ -262,11 +230,6 @@ PROC_FOPS_RW_UINT(power_mode, hps_ctxt.power_mode,
 PROC_FOPS_RW_UINT(idle_threshold, hps_ctxt.idle_threshold,
 	hps_proc_uint_write_with_lock_reset);
 
-/*
- * procfs callback - algo bound series
- *     - little_num_base_perf_serv
- *     - big_num_base_perf_serv
- */
 static int hps_pwrseq_proc_show(struct seq_file *m, void *v)
 {
 	int i = 0;
@@ -470,11 +433,6 @@ static ssize_t hps_num_base_perf_serv_proc_write(struct file *file,
 
 PROC_FOPS_RW(num_base_perf_serv);
 
-/*
- * procfs callback - algo bound series
- *     - little_num_limit_thermal
- *     - big_num_limit_thermal
- */
 static int hps_num_limit_thermal_proc_show(struct seq_file *m, void *v)
 {
 	if (hps_ctxt.is_hmp || hps_ctxt.is_amp)
@@ -560,11 +518,6 @@ static ssize_t hps_num_limit_thermal_proc_write(struct file *file,
 
 PROC_FOPS_RW(num_limit_thermal);
 
-/*
- * procfs callback - algo bound series
- *     - little_num_limit_low_battery
- *     - big_num_limit_low_battery
- */
 static int hps_num_limit_low_battery_proc_show(struct seq_file *m, void *v)
 {
 	if (hps_ctxt.is_hmp || hps_ctxt.is_amp)
@@ -654,11 +607,6 @@ static ssize_t hps_num_limit_low_battery_proc_write(struct file *file,
 
 PROC_FOPS_RW(num_limit_low_battery);
 
-/*
- * procfs callback - algo bound series
- *     - little_num_limit_ultra_power_saving
- *     - big_num_limit_ultra_power_saving
- */
 static int hps_num_limit_ultra_power_saving_proc_show(struct seq_file *m,
 	void *v)
 {
@@ -759,11 +707,6 @@ little_num_limit_ultra_power_saving, big_num_limit_ultra_power_saving);
 
 PROC_FOPS_RW(num_limit_ultra_power_saving);
 
-/*
- * procfs callback - algo bound series
- *     - little_num_limit_power_serv
- *     - big_num_limit_power_serv
- */
 static int hps_num_limit_power_serv_proc_show(struct seq_file *m, void *v)
 {
 	if (hps_ctxt.is_hmp || hps_ctxt.is_amp)
@@ -855,9 +798,6 @@ static ssize_t hps_num_limit_power_serv_proc_write(struct file *file,
 
 PROC_FOPS_RW(num_limit_power_serv);
 
-/*
- * init
- */
 int hps_procfs_init(void)
 {
 	/* struct proc_dir_entry *entry = NULL; */

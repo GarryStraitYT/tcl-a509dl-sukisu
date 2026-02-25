@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LAYER_STRATEGY_EX__
 #define __LAYER_STRATEGY_EX__

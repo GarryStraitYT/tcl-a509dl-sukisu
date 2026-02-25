@@ -1,23 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: owen.chen <owen.chen@mediatek.com>
- */
 
-/*
- * @file    mtk-srclken-bridge.c
- * @brief   Bridge Driver for SRCLKEN RC Control
- *
- */
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 
 #include <mtk-srclken-bridge.h>
 
-/*******************************************************************************
- * Bridging from platform -> srclken.ko
- ******************************************************************************/
 static struct srclken_bridge bridge;
 
 void srclken_export_platform_bridge_register(struct srclken_bridge *cb)

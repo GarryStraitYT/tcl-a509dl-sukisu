@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT6769_VPU_HW_H_
 #define _MT6769_VPU_HW_H_
@@ -84,38 +81,6 @@ struct vpu_dvfs_opps {
 };
 
 
-/*
- * The VPU program is stored in EMMC Partitions, and the little kernel will
- * load it to DDR. There are three partitions for different purpose, and little
- * kernel will merge them to contiguous physical memory. The buffer layout in
- * DDR is as follows:
- *
- * Using the layout, VPU driver could map these binary data
- * to the specific mva for VPU booting.
- *
- *  [offset]                              [mapping mva]
- *  0x00000000  +-----------------------+  0x50000000
- *              |  Reset vector of VPU  |
- *              |  code        [512KB]  |
- *  0x00080000  +-----------------------+  0x60000000
- *              |  Main Program         |
- *              |              [1.5MB]  |
- *  0x00200000  +-----------------------+  0x60180000
- *              |  Reserved for algo    |
- *              |  instruction [12.5MB] |
- *  0x00E80000  +-----------------------+  0x6E000000
- *              |  Main Program IMEM    |
- *              |              [256KM]  |
- *  0x00EC0000  +-----------------------+  no mva
- *              |  Merged image header  |
- *              |              [256KB]  |
- *              +-----------------------+
- *
- * The last part of buffer, named "merged image header", will put a array of
- * struct vpu_image_header, whose size is 3. All VPU driver needs to know is
- * algo's offset for algo loading.
- *
- */
 struct vpu_image_header {
 	uint32_t version;
 	uint32_t build_date;
@@ -130,128 +95,27 @@ struct vpu_image_header {
 };
 
 
-/*
- * VPU driver uses the spare register to exchange data with VPU program
- * (VPU code). The below tables show the usage of spare register:
- *
- * Command: GET_ALGO_INFO
- *  +-----------------+--------------------------------------------+-----------+
- *  | Field           | Description                                | Filled By |
- *  +-----------------+--------------------------------------------+-----------+
- *  |FLD_XTENSA_INFO1 | 0x82(GET_ALGO_INFO)                        | Driver    |
- *  |FLD_XTENSA_INFO5 | num of ports                               | VPU Code  |
- *  |FLD_XTENSA_INFO6 | pointer to the array of struct port        | Driver    |
- *  |FLD_XTENSA_INFO7 | [info] pointer to property buffer          | Driver    |
- *  |FLD_XTENSA_INFO8 | [info] size of property buffer(1024)       | Driver    |
- *  |FLD_XTENSA_INFO9 | [info] num of property description         | VPU Code  |
- *  |FLD_XTENSA_INFO10| [info] pointer to the array of struct desc | Driver    |
- *  |FLD_XTENSA_INFO11| [sett] num of property description         | VPU Code  |
- *  |FLD_XTENSA_INFO12| [sett] pointer to the array of struct desc | Driver    |
- *  +-----------------+--------------------------------------------+-----------+
- *
- * Command: DO_LOADER
- *  +-----------------+---------------------------------------+-----------+
- *  | Field           | Description                           | Filled By |
- *  +-----------------+---------------------------------------+-----------+
- *  |FLD_XTENSA_INFO1 | 0x01(DO_LOADER)                       | Driver    |
- *  |FLD_XTENSA_INFO12| pointer to the algo's start-address   | Driver    |
- *  |FLD_XTENSA_INFO13| size of the algo                      | Driver    |
- *  |FLD_XTENSA_INFO14| function entry point (optional)       | Driver    |
- *  |FLD_XTENSA_INFO15| VPU frequency (KHz)                   | Driver    |
- *  |FLD_XTENSA_INFO16| VPU IF frequency (KHz)                | Driver    |
- *  +-----------------+---------------------------------------+-----------+
- *
- * Command: DO_D2D
- *  +-----------------+---------------------------------------+-----------+
- *  | Field           | Description                           | Filled By |
- *  +-----------------+---------------------------------------+-----------+
- *  |FLD_XTENSA_INFO1 | 0x22(DO_D2D)                          | Driver    |
- *  |FLD_XTENSA_INFO12| num of buffers                        | Driver    |
- *  |FLD_XTENSA_INFO13| pointer to the array of struct buffer | Driver    |
- *  |FLD_XTENSA_INFO14| pointer to setting buffer             | Driver    |
- *  |FLD_XTENSA_INFO15| size of setting buffer                | Driver    |
- *  +-----------------+---------------------------------------+-----------+
- *
- * Command: GET_SWVER
- *  +-----------------+---------------------------------------+-----------+
- *  | Field           | Description                           | Filled By |
- *  +-----------------+---------------------------------------+-----------+
- *  |FLD_XTENSA_INFO1 | 0x40(GET_SWVER)                       | Driver    |
- *  |FLD_XTENSA_INFO20| Software version                      | VPU Code  |
- *  +-----------------+---------------------------------------+-----------+
- *
- *  Command: SET_DEBUG
- *  +-----------------+---------------------------------------+-----------+
- *  | Field           | Description                           | Filled By |
- *  +-----------------+---------------------------------------+-----------+
- *  |FLD_XTENSA_INFO1 | 0x40(SET_DEG)                         | Driver    |
- *  |FLD_XTENSA_INFO21| mva of log buffer                     | Driver    |
- *  |FLD_XTENSA_INFO22| length of log buffer                  | Driver    |
- *  |FLD_XTENSA_INFO23| system time in us                     | Driver    |
- *  +-----------------+---------------------------------------+-----------+
- */
 
 
-/**
- * vpu_hw_boot_sequence - do booting sequence
- * @core:	core index of device
- */
 int vpu_hw_boot_sequence(int core);
 
-/**
- * vpu_set_debug - set log buffer and size to VPU
- */
 int vpu_hw_set_debug(int core);
 
-/**
- * vpu_hw_enable_jtag - start dsp debug via jtag
- */
 int vpu_hw_enable_jtag(bool enabled);
 
-/**
- * vpu_hw_enque_request - do DRAM-to-DRAM processing, and it will block
- *                        until done.
- * @core:	core index of device
- * @req:        the pointer to request
- */
 int vpu_hw_enque_request(int core, struct vpu_request *req);
 
-/**
- * vpu_hw_processing_request - do whole processing for enque request, including
- *                             check algo, load algo, run d2d.
- * @core:	core index of device
- * @req:        the pointer to request
- */
 int vpu_hw_processing_request(int core, struct vpu_request *req);
 
 
-/**
- * vpu_thermal_en_throttle_cb - for thermal callback, do vcore or freq control.
- * @vcore_opp:	upper bound for vcore opp
- * @vpu_opp:		upper bound for dsp freq
- */
 int32_t vpu_thermal_en_throttle_cb(uint8_t vcore_opp, uint8_t vpu_opp);
 
-/**
- * vpu_thermal_dis_throttle_cb - for thermal callback, disable throttle.
- */
 int32_t vpu_thermal_dis_throttle_cb(void);
 
-/**
- * vpu_dump_debug_stack - for vpu timeout debug.
- */
 void vpu_dump_debug_stack(int core, int size);
 
-/**
- * vpu_dump_code_segment - for vpu timeout debug, dump code segment in algo
- *                         execution area.
- */
 void vpu_dump_code_segment(int core);
 
-/**
- * vpu_dump_algo_segment - for vpu timeout debug, dump source algo segment
- *                         from bin file.
- */
 void vpu_dump_algo_segment(int core, int algo_id, int size);
 
 
@@ -262,27 +126,6 @@ struct vpu_shared_memory *vpu_get_kernel_lib(int core);
 struct vpu_shared_memory *vpu_get_work_buf(int core);
 unsigned long vpu_get_ctrl_base(int core);
 
-/**
- * Working buffer's offset
- *
- *  [offset]
- *  0x00000000  +-----------------------+
- *              |  Command Buffer       |
- *              |              [8KB]    |
- *  0x00002000  +-----------------------+
- *              |  Log Buffer           |
- *              |              [8KB]    |
- *              +-----------------------+
- *
- * the first 16 bytes of log buffer:
- *   @tail_addr: the mva of log end, which always points to '\0'
- *
- *   +-----------+----------------------+
- *   |   0 ~ 3   |      4 ~ 15          |
- *   +-----------+----------------------+
- *   |{tail_addr}|    {reserved}        |
- *   +-----------+----------------------+
- */
 #define VPU_OFFSET_COMMAND           (0x00000000)
 #define VPU_OFFSET_LOG               (0x00002000)
 #define VPU_SIZE_LOG_BUF             (0x00010000)

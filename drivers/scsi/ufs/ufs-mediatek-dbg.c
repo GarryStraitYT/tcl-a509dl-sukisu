@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Authors:
- *	Stanley Chu <stanley.chu@mediatek.com>
- */
 #include <linux/atomic.h>
 #include <linux/device.h>
 #include <linux/module.h>
@@ -21,12 +16,6 @@
 #define MAX_CMD_HIST_ENTRY_CNT (500)
 #define UFS_AEE_BUFFER_SIZE (100 * 1024)
 
-/*
- * Currently only global variables are used.
- *
- * For scalability, may introduce multiple history
- * instances bound to each device in the future.
- */
 static bool cmd_hist_initialized;
 static bool cmd_hist_enabled;
 static spinlock_t cmd_hist_lock;
@@ -355,9 +344,6 @@ out_unlock:
 	spin_unlock_irqrestore(&cmd_hist_lock, flags);
 }
 
-/**
- * Data structures to store tracepoints information
- */
 struct tracepoints_table {
 	const char *name;
 	void *func;
@@ -376,10 +362,6 @@ static struct tracepoints_table interests[] = {
 	for (i = 0; i < sizeof(interests) / sizeof(struct tracepoints_table); \
 	i++)
 
-/**
- * Find the struct tracepoint* associated with a given tracepoint
- * name.
- */
 static void lookup_tracepoints(struct tracepoint *tp, void *ignore)
 {
 	int i;

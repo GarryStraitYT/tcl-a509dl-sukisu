@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef __MTK_HPS_INTERNAL_H__
 #define __MTK_HPS_INTERNAL_H__
@@ -17,9 +14,6 @@
 #include <linux/arm-smccc.h>
 #include <linux/soc/mediatek/mtk_sip_svc.h>
 
-/*
- * CONFIG - compile time
- */
 #ifdef CONFIG_MACH_MT6799
 #define CPU_BUCK_CTRL   (1)
 #else
@@ -41,9 +35,6 @@
 #define CPU_DMIPS_BIG_LITTLE_DIFF	(70)
 #define ROOT_CLUSTER_FROM_PPM		(1)
 
-/*
- * CONFIG - runtime
- */
 #define DEF_CPU_UP_THRESHOLD		(95)
 #define DEF_CPU_UP_TIMES		(4)
 #define DEF_ROOT_CPU_DOWN_TIMES		(8)
@@ -77,9 +68,6 @@
 #define HPS_HRT_DBG_MS			(5000)
 #define HPS_BIG_CLUSTER_ID		(2)
 
-/*
- * LOG
- */
 #define hps_emerg(fmt, args...)             pr_notice("[HPS] " fmt, ##args)
 #define hps_alert(fmt, args...)             pr_notice("[HPS] " fmt, ##args)
 #define hps_crit(fmt, args...)              pr_notice("[HPS] " fmt, ##args)
@@ -95,9 +83,6 @@
 #define hps_isr_info(fmt, args...)          hps_debug(fmt, ##args)
 #endif
 
-/*
- * REG ACCESS
- */
 #define hps_read(addr)                      __raw_readl(IOMEM(addr))
 #define hps_write(addr, val)                mt_reg_sync_writel(val, addr)
 
@@ -107,14 +92,6 @@
 /* #define ARCH_TYPE_big_LITTLE                1 */
 /* #define ARCH_TYPE_LITTLE_LITTLE             2 */
 
-/*
- * debug
- */
-/*
- * #define STEP_BY_STEP_DEBUG
- *	hps_debug("@@@### file:%s, func:%s, line:%d ###@@@\n",
- *	__FILE__, __func__, __LINE__)
- */
 
 enum hps_init_state_e {
 	INIT_STATE_NOT_READY = 0,

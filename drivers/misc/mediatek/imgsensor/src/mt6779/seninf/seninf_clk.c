@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/clk.h>
 
@@ -135,9 +132,6 @@ static inline void seninf_clk_check(struct SENINF_CLK *pclk)
 		WARN_ON(IS_ERR(pclk->mclk_sel[i]));
 }
 
-/**********************************************************
- *Common Clock Framework (CCF)
- **********************************************************/
 enum SENINF_RETURN seninf_clk_init(struct SENINF_CLK *pclk)
 {
 	int i;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 
 #ifndef __MODEM_REG_BASE_H__
@@ -123,12 +120,6 @@
 #define MD_SRAM_PD_PSMCUSYS_SRAM_BASE	(0x200D0000)
 #define MD_SRAM_PD_PSMCUSYS_SRAM_LEN	(0xB00)
 
-/*
- * ============================================================
- *  Modem 3 part
- * ============================================================
- * need modify, haow
- */
 #define MD3_BOOT_VECTOR 0x30190000
 #define MD3_BOOT_VECTOR_KEY 0x3019379C
 #define MD3_BOOT_VECTOR_EN 0x30195488

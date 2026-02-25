@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __SPMTWAM_H__
 #define __SPMTWAM_H__
@@ -47,22 +44,8 @@ struct spmtwam_result {
 	u32 value[4];
 };
 
-/* callback function return result stored in 'result', which also contains
- * corresponding spmtwam configs
- */
 typedef void (*spmtwam_handler_t)(struct spmtwam_result *result);
 
-/* spmtwam enable/disable api:
- * parameters:
- *		enable  - true: start twam monitor, false: stop monitor
- *		cfg     - configs to setup spmtwam
- *		handler - register callback function to receive results
- * return value:
- *      0       - success
- *      -EINVAL - invalid parameter(s)
- *      -EAGAIN - resource temporarily unavailable, already enabled ?
- *      -ENODEV - no such device or driver is not initialized.
- */
 int spmtwam_monitor(bool enable, struct spmtwam_cfg *cfg,
 	spmtwam_handler_t handler);
 

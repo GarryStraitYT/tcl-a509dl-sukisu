@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -263,9 +260,6 @@ static char *mt6779_pwr_ctrl_str[PW_MAX_COUNT] = {
 	[PW_MP0_CPU7_WFI_EN] = "mp0_cpu7_wfi_en",
 };
 
-/**************************************
- * xxx_ctrl_show Function
- **************************************/
 /* code gen by spm_pwr_ctrl_atf.pl, need struct pwr_ctrl */
 static ssize_t mt6779_show_pwr_ctrl(int id, char *buf, size_t buf_sz)
 {
@@ -1029,9 +1023,6 @@ static ssize_t mt6779_show_pwr_ctrl(int id, char *buf, size_t buf_sz)
 	return mSize;
 }
 
-/**************************************
- * xxx_ctrl_store Function
- **************************************/
 /* code gen by spm_pwr_ctrl_atf.pl, need struct pwr_ctrl */
 static ssize_t mt6779_store_pwr_ctrl(int id,	const char *buf, size_t count)
 {
@@ -1825,9 +1816,6 @@ static ssize_t idle_ctrl_store(struct kobject *kobj,
 				     buf, count);
 }
 
-/**************************************
- * Init Function
- **************************************/
 DEFINE_ATTR_RW(suspend_ctrl);
 DEFINE_ATTR_RW(idle_ctrl);
 

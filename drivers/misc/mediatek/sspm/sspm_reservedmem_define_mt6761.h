@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _SSPM_RESERVEDMEM_DEFINE_H_
 #define _SSPM_RESERVEDMEM_DEFINE_H_
@@ -10,9 +7,6 @@
 #define _SSPM_INTERNAL_
 
 #ifdef _SSPM_INTERNAL_
-/* The total size of sspm_reserve_mblock should less equal than
- * reserve-memory-sspm_share of device tree
- */
 static struct sspm_reserve_mblock mt6761_sspm_reserve_mblock[NUMS_MEM_ID] = {
 	{
 		.num = SSPM_MEM_ID,

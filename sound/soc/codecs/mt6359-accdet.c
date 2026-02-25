@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author: Argus Lin <argus.lin@mediatek.com>
- */
 
 #include <linux/of_gpio.h>
 #include <linux/of.h>
@@ -165,10 +161,6 @@ static atomic_t accdet_first;
 #define ACCDET_INIT_WAIT_TIMER (10 * HZ)
 static struct timer_list accdet_init_timer;
 static void delay_init_timerhandler(struct timer_list *t);
-/* micbias_timer: disable micbias if no accdet irq after eint,
- * timeout: 6 seconds
- * timerHandler: dis_micbias_timerhandler()
- */
 #define MICBIAS_DISABLE_TIMER (6 * HZ)
 static struct timer_list micbias_timer;
 static void dis_micbias_timerhandler(struct timer_list *t);
@@ -752,9 +744,6 @@ static void accdet_get_efuse(void)
 	if (accdet->auxadc_offset > 128)
 		accdet->auxadc_offset -= 256;
 	accdet->auxadc_offset = (accdet->auxadc_offset >> 1);
-/* all of moisture_vdd/moisture_offset0/eint is  2'complement,
- * we need to transfer it
- */
 	/* moisture vdd efuse offset */
 	ret = nvmem_device_read(accdet->accdet_efuse, 105*2, 2, &efuseval);
 	accdet->moisture_vdd_offset =

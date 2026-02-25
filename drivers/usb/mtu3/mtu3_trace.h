@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM mtu3

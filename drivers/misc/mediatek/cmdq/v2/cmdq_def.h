@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 #ifndef __CMDQ_DEF_H__
 #define __CMDQ_DEF_H__
 
@@ -314,15 +311,6 @@ struct cmdqReadAddressStruct {
 	cmdqU32Ptr_t values;
 };
 
-/*
- * Secure address metadata:
- * According to handle type, translate handle and replace (_d)th instruciton to
- *     1. sec_addr = hadnle_sec_base_addr(baseHandle) + offset(_b)
- *     2. sec_mva = mva( hadnle_sec_base_addr(baseHandle) + offset(_b) )
- *     3. secure world normal mva = map(baseHandle)
- *        . pass normal mva to parameter baseHandle
- *        . use case: OVL reads from secure and normal buffers at the same time)
- */
 enum CMDQ_SEC_ADDR_METADATA_TYPE {
 	CMDQ_SAM_H_2_PA = 0,	/* sec handle to sec PA */
 	CMDQ_SAM_H_2_MVA = 1,	/* sec handle to sec MVA */
@@ -452,9 +440,6 @@ enum CMDQ_CAP_BITS {
 };
 
 
-/**
- * reply struct for cmdq_sec_cancel_error_task
- */
 
 struct cmdqSecCancelTaskResultStruct {
 	/* [OUT] */

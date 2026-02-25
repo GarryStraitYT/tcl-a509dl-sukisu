@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __CCCI_IPC_TASK_ID_H__
 #define __CCCI_IPC_TASK_ID_H__

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -2301,12 +2298,6 @@ static int mt6360_parse_dt(struct mt6360_chip *chip, struct device *dev,
 	return 0;
 }
 
-/*
- * In some platform pr_info may spend too much time on printing debug message.
- * So we use this function to test the printk performance.
- * If your platform cannot not pass this check function, please config
- * PD_DBG_INFO, this will provide the threaded debug message for you.
- */
 #if TCPC_ENABLE_ANYMSG
 static void check_printk_performance(void)
 {
@@ -2758,16 +2749,3 @@ MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("MT6360 TCPC Driver");
 MODULE_VERSION(MT6360_DRV_VERSION);
 
-/**** Release Note ****
- * 2.0.3_MTK
- *	(1) Single Rp as Attatched.SRC for Ellisys TD.4.9.4
- *
- * 2.0.2_MTK
- *	(1) Add vendor defined irq handler
- *	(2) Remove init_cc_param
- *	(3) Add shield protection WD
- *	(4) Add update/set/clr bit
- *
- * 2.0.1_MTK
- *	First released PD3.0 Driver on MTK platform
- */

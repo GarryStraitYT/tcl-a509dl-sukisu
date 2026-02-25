@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include "cmdq_core.h"
 #include "cmdq_virtual.h"
@@ -2439,14 +2436,6 @@ static void cmdq_core_auto_release_task(struct TaskStruct *pTask)
 	CMDQ_MSG("<--TASK: Auto release task structure end\n");
 }
 
-/**
- * Re-fetch thread's command buffer
- * Usage:
- *     If SW motifies command buffer content after SW configed command to GCE,
- *     SW should notify GCE to re-fetch command in
- *	order to ensure inconsistent command buffer content
- *     between DRAM and GCE's SRAM.
- */
 void cmdq_core_invalidate_hw_fetched_buffer(int32_t thread)
 {
 	/* Setting HW thread PC will invoke that */
@@ -2724,12 +2713,6 @@ static void cmdq_core_insert_backup_instr(struct TaskStruct *pTask,
 	/* CMDQ_ERR("test %d\n", __LINE__); */
 }
 
-/**
- * Insert instruction to back secure threads' cookie count to normal world
- * Return:
- *     < 0, return the error code
- *     >=0, okay case, return number of bytes for inserting instruction
- */
 #ifdef CMDQ_SECURE_PATH_NORMAL_IRQ
 static int32_t cmdq_core_insert_backup_cookie_instr(
 	struct TaskStruct *pTask, int32_t thread)
@@ -2788,12 +2771,6 @@ static int32_t cmdq_core_insert_backup_cookie_instr(
 }
 #endif	/* CMDQ_SECURE_PATH_NORMAL_IRQ */
 
-/**
- * Insert instruction to backup secure threads' cookie and IRQ to normal world
- * Return:
- *     < 0, return the error code
- *     >=0, okay case, return number of bytes for inserting instruction
- */
 #ifdef CMDQ_SECURE_PATH_HW_LOCK
 static int32_t cmdq_core_insert_secure_IRQ_instr(
 	struct TaskStruct *pTask, int32_t thread)
@@ -4036,18 +4013,6 @@ static int32_t cmdq_core_can_start_to_acquire_HW_thread_unlocked(
 	return status;
 }
 
-/**
- * check if engine conflict when thread dispatch
- * Parameter:
- *     engineFlag: [IN] engine flag
- *	   forceLog: [IN] print debug log
- *     is_secure: [IN] secure path
- *     *pThreadOut:
- *         [IN] prefer thread. please pass CMDQ_INVALID_THREAD if no prefere
- *         [OUT] dispatch thread result
- * Return:
- *     0 for success; else the error code is returned
- */
 
 static bool cmdq_core_check_engine_conflict_unlocked(
 	const uint64_t engineFlag,
@@ -7054,15 +7019,6 @@ static struct TaskStruct *cmdq_core_search_task_by_pc(
 	return pTask;
 }
 
-/* Implementation of wait task done
- * Return:
- *     wait time of wait_event_timeout() kernel API
- *     . =0, for timeout elapsed,
- *     . >0, remain jiffies if condition passed
- *
- * Note process will go to sleep with state TASK_UNINTERRUPTIBLE until
- * the condition[task done] passed or timeout happened.
- */
 static int32_t cmdq_core_wait_task_done_with_timeout_impl(
 	struct TaskStruct *pTask, int32_t thread)
 {

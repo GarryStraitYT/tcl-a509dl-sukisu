@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -33,12 +30,6 @@ void __attribute__((weak)) idle_refcnt_dec(void) {}
 bool __attribute__((weak)) mtk_spm_arch_type_get(void) { return false; }
 void __attribute__((weak)) mtk_spm_arch_type_set(bool type) {}
 
-/* mtk_dpidle_is_active() for pmic_throttling_dlpt
- *   return 0 : entering dpidle recently ( > 1s)
- *                      => normal mode(dlpt 10s)
- *   return 1 : entering dpidle recently (<= 1s)
- *                      => light-loading mode(dlpt 20s)
- */
 #define DPIDLE_ACTIVE_TIME		(1)
 struct timeval pre_dpidle_time;
 bool mtk_dpidle_is_active(void)

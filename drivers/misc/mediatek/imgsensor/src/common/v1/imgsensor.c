@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "imgsensor_cfg_table.h"
 #include <linux/platform_device.h>
@@ -89,9 +86,6 @@ char CamOTPB_module_name[256];
 char CamOTPF_module_name[256];
 //end 20200902 add by liujunting for bangkok-tf
 
-/************************************************************************
- * Profiling
- ************************************************************************/
 #define IMGSENSOR_PROF 1
 #if IMGSENSOR_PROF
 void IMGSENSOR_PROFILE_INIT(struct timeval *ptv)
@@ -116,9 +110,6 @@ void IMGSENSOR_PROFILE_INIT(struct timeval *ptv) {}
 void IMGSENSOR_PROFILE(struct timeval *ptv, char *tag) {}
 #endif
 
-/************************************************************************
- * sensor function adapter
- ************************************************************************/
 #define IMGSENSOR_FUNCTION_ENTRY()    /*PK_DBG("[%s]:E\n",__FUNCTION__)*/
 #define IMGSENSOR_FUNCTION_EXIT()     /*PK_DBG("[%s]:X\n",__FUNCTION__)*/
 struct IMGSENSOR_SENSOR *
@@ -436,9 +427,6 @@ imgsensor_sensor_close(struct IMGSENSOR_SENSOR *psensor)
 	return ret ? -EIO : ret;
 }
 
-/************************************************************************
- * imgsensor_check_is_alive
- ************************************************************************/
 static inline int imgsensor_check_is_alive(struct IMGSENSOR_SENSOR *psensor)
 {
 	struct IMGSENSOR_SENSOR_INST  *psensor_inst = &psensor->inst;
@@ -519,9 +507,6 @@ static inline int imgsensor_check_is_alive(struct IMGSENSOR_SENSOR *psensor)
 	return err ? -EIO:err;
 }
 
-/************************************************************************
- * imgsensor_set_driver
- ************************************************************************/
 int imgsensor_set_driver(struct IMGSENSOR_SENSOR *psensor)
 {
 	u32 drv_idx = 0;
@@ -654,9 +639,6 @@ int imgsensor_set_driver(struct IMGSENSOR_SENSOR *psensor)
 	return ret;
 }
 
-/************************************************************************
- * adopt_CAMERA_HW_GetInfo
- ************************************************************************/
 static inline int adopt_CAMERA_HW_GetInfo(void *pBuf)
 {
 	struct IMGSENSOR_GET_CONFIG_INFO_STRUCT *pSensorGetInfo;
@@ -1228,9 +1210,6 @@ IMGSENSOR_GET_INFO_RETURN:
 	return ret;
 }   /* adopt_CAMERA_HW_GetInfo() */
 
-/************************************************************************
- * adopt_CAMERA_HW_Control
- ************************************************************************/
 static inline int adopt_CAMERA_HW_Control(void *pBuf)
 {
 	int ret = 0;
@@ -1395,9 +1374,6 @@ static inline int check_length_of_para(
 	return ret;
 } /* adopt_CAMERA_HW_Control */
 
-/************************************************************************
- * adopt_CAMERA_HW_FeatureControl
- ************************************************************************/
 static inline int adopt_CAMERA_HW_FeatureControl(void *pBuf)
 {
 	struct ACDK_SENSOR_FEATURECONTROL_STRUCT *pFeatureCtrl;
@@ -2584,9 +2560,6 @@ imgsensor_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 }
 #endif
 
-/************************************************************************
- * imgsensor_ioctl
- ************************************************************************/
 static long imgsensor_ioctl(
 	struct file *a_pstFile,
 	unsigned int a_u4Command,
@@ -2999,9 +2972,6 @@ static int imgsensor_resume(struct platform_device *pdev)
 	return 0;
 }
 
-/*
- * platform driver
- */
 
 #ifdef CONFIG_OF
 static const struct of_device_id gimgsensor_of_device_id[] = {
@@ -3024,9 +2994,6 @@ static struct platform_driver gimgsensor_platform_driver = {
 	}
 };
 
-/*
- * imgsensor_init()
- */
 static int __init imgsensor_init(void)
 {
 	PK_DBG("[camerahw_probe] start\n");
@@ -3054,9 +3021,6 @@ static int __init imgsensor_init(void)
 	return 0;
 }
 
-/*
- * imgsensor_exit()
- */
 static void __exit imgsensor_exit(void)
 {
 #ifdef IMGSENSOR_DFS_CTRL_ENABLE

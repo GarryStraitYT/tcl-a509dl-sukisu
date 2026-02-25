@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -40,11 +37,6 @@ MODULE_LICENSE("GPL");
 
 
 /*for USB-IF OTG test*/
-/*
- * when this func is called in EM, it will reset the USB hw.
- * and tester should not connet the uut to PC or connect a A-cable to it
- * macro for USB-IF for OTG driver
- */
 #define OTG_CMD_E_ENABLE_VBUS       0x00
 #define OTG_CMD_E_ENABLE_SRP        0x01
 #define OTG_CMD_E_START_DET_SRP     0x02

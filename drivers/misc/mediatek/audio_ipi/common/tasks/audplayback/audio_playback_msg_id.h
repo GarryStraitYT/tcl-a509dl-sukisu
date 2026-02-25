@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef AUDIO_PLAYBACK_MSG_ID_H
 #define AUDIO_PLAYBACK_MSG_ID_H

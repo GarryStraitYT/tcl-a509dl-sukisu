@@ -48,6 +48,9 @@
 #define CONFIG_GTP_AUTO_UPDATE 		1
 #define CONFIG_GTP_HEADER_FW_UPDATE 	1
 #define CONFIG_GTP_DRIVER_SEND_CFG	1
+//begin add by bo_liu for 11022639
+#define CONFIG_GTP_POWER_CTRL_SLEEP     1
+//end add by bo_liu for 11022639
 
 #ifdef CONFIG_MTK_I2C_EXTENSION
 #define TPD_SUPPORT_I2C_DMA         1	/* if gt9l, better enable it if hardware platform supported*/

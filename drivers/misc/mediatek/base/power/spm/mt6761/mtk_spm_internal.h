@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_SPM_INTERNAL_H__
 #define __MTK_SPM_INTERNAL_H__
@@ -27,23 +24,14 @@
 
 
 
-/********************************************************************
- * dpidle/sodi3/sodi default feature enable/disable
- *******************************************************************/
 #define MTK_IDLE_FEATURE_ENABLE_DPIDLE  (1)
 #define MTK_IDLE_FEATURE_ENABLE_SODI    (1)
 #define MTK_IDLE_FEATURE_ENABLE_SODI3   (1)
 
 
-/**************************************
- * Config and Parameter
- **************************************/
 #define LOG_BUF_SIZE        256
 #define SPM_WAKE_PERIOD     600 /* sec */
 
-/**************************************
- * Define and Declare
- **************************************/
 #define PCM_TIMER_RAMP_BASE_DPIDLE          80          /* 80/32000 = 2.5 ms */
 #define PCM_TIMER_RAMP_BASE_SUSPEND_50MS    0xA0
 #define PCM_TIMER_RAMP_BASE_SUSPEND_SHORT   0x7D000     /* 16sec */
@@ -158,25 +146,16 @@ struct spm_lp_scen {
 	struct wake_status *wakestatus;
 };
 
-/***********************************************************
- * mtk_spm.c
- ***********************************************************/
 void spm_pm_stay_awake(int sec);
 int spm_load_firmware_status(void);
 
 
-/***********************************************************
- * mtk_spm_irq.c
- ***********************************************************/
 
 int mtk_spm_irq_register(unsigned int spm_irq_0);
 void mtk_spm_irq_backup(void);
 void mtk_spm_irq_restore(void);
 
 
-/***********************************************************
- * mtk_spm_internal.c
- ***********************************************************/
 
 long spm_get_current_time_ms(void);
 void rekick_vcorefs_scenario(void); /* FIXME: To be removed */
@@ -189,9 +168,6 @@ unsigned int __spm_output_wake_reason(
 	const struct wake_status *wakesta, bool suspend, const char *scenario);
 unsigned int __spm_get_wake_period(int pwake_time, unsigned int last_wr);
 
-/***********************************************************
- * mtk_spm_twam.c
- ***********************************************************/
  /* SPM_IRQ_MASK */
 #define ISRM_TWAM       (1U << 2)
 #define ISRM_PCM_RETURN (1U << 3)
@@ -232,9 +208,6 @@ void spm_twam_config_channel(struct twam_cfg *cfg, bool speed_mode,
 bool spm_twam_met_enable(void);
 void spm_twam_set_idle_select(unsigned int sel);
 
-/***********************************************************
- * mtk_spm_dram.c
- ***********************************************************/
 struct ddrphy_golden_cfg {
 	u32 base;
 	u32 offset;
@@ -254,9 +227,6 @@ int spm_get_spmfw_idx(void);
 void spm_do_dram_config_check(void);
 
 
-/***********************************************************
- * mtk_spm_power.c
- ***********************************************************/
 
 void mtk_idle_power_pre_process(int idle_type, unsigned int op_cond);
 void mtk_idle_power_pre_process_async_wait(int idle_type, unsigned int op_cond);
@@ -265,9 +235,6 @@ void mtk_idle_power_post_process_async_wait(int idle_type,
 	unsigned int op_cond);
 
 
-/***********************************************************
- * mtk_spm_idle.c
- ***********************************************************/
 
 /* call dormant/atf driver for idle scenario */
 extern int mtk_idle_trigger_wfi(
@@ -281,9 +248,6 @@ extern void mtk_idle_post_process_by_chip(int idle_type, int cpu,
 
 /* get sleep dpidle last wake reason */
 extern unsigned int get_slp_dp_last_wr(void);
-/***********************************************************
- * mtk_idle_cond_check.c
- ***********************************************************/
 
 /* append idle block info to input logbuf */
 extern int mtk_idle_cond_append_info(
@@ -305,16 +269,10 @@ extern bool mtk_idle_cond_vcore_lp_mode(int idle_type);
 void mtk_idle_cond_update_mask(
 	int idle_type, unsigned int reg, unsigned int mask);
 
-/***********************************************************
- * mtk_spm_vcorefs.c
- ***********************************************************/
 int spm_dvfs_flag_init(int dvfsrc_en);
 void spm_go_to_vcorefs(int spm_flags);
 void spm_vcorefs_init(void);
 int is_spm_enabled(void);
-/***********************************************************
- * mtk_spm_fs.c
- ***********************************************************/
 extern struct spm_lp_scen __spm_suspend;
 
 

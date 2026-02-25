@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __MODEM_CD_H__
 #define __MODEM_CD_H__
@@ -20,11 +17,6 @@
 #include "ccci_hif_internal.h"
 #include "modem_sys.h"
 #include "ccci_cldma_plat.h"
-/*
- * hardcode, max queue number should be synced with port array in port_cfg.c
- * and macros in ccci_core.h following number should sync with MAX_TXQ/RXQ_NUM
- * in ccci_core.h and bitmask in modem_cldma.c
- */
 #define CLDMA_TXQ_NUM 4
 #define CLDMA_RXQ_NUM 1
 #define NET_TXQ_NUM 4
@@ -39,14 +31,6 @@
 
 #define CLDMA_AP_MTU_SIZE	(NET_RX_BUF)	/*sync with runtime data*/
 
-/*
- * CLDMA feature options:
- * CLDMA_NO_TX_IRQ: mask all TX interrupts, collect TX_DONE skb
- * when get Rx interrupt or Tx busy.
- * ENABLE_CLDMA_TIMER: use a timer to detect TX packet sent or not.
- * not usable if TX interrupts are masked.
- * CLDMA_NET_TX_BD: use BD to support scatter/gather IO for net device
- */
 /* #define CLDMA_NO_TX_IRQ */
 #ifndef CLDMA_NO_TX_IRQ
 /* #define ENABLE_CLDMA_TIMER */
@@ -86,13 +70,6 @@ enum CLDMA_RING_TYPE {
 
 struct md_cd_queue;
 
-/*
- * In a ideal design, all read/write pointers should be member of cldma_ring,
- * and they will complete a ring buffer object with buffer itself
- * and Tx/Rx funcitions. but this will change too much of the original
- * code and we have to drop it. so here the cldma_ring is quite light and
- * most of ring buffer opertions are still in queue struct.
- */
 struct cldma_ring {
 	struct list_head gpd_ring;	/* ring of struct cldma_request */
 	int length;		/* number of struct cldma_request */

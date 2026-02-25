@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
-/*
- * DW9814AF voice coil motor driver
- *
- *
- */
 #include <linux/delay.h>
 #include <linux/fs.h>
 #include <linux/i2c.h>

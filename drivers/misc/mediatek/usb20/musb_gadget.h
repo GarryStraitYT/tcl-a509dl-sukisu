@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef __MUSB_GADGET_H
 #define __MUSB_GADGET_H
@@ -34,9 +31,6 @@ extern struct usb_request
 extern void musb_free_request(struct usb_ep *ep, struct usb_request *req);
 
 
-/*
- * struct musb_ep - peripheral side view of endpoint rx or tx side
- */
 struct musb_ep {
 	/* stuff towards the head is basically write-once. */
 	struct usb_ep end_point;

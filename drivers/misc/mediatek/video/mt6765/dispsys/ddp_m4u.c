@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "ddp_m4u.h"
 #include "ddp_dump.h"
@@ -19,9 +16,6 @@
 #endif
 
 
-/* display m4u port / display module mapping table
- * -- by chip
- */
 #define DISP_PAGE_MASK 0xfffL
 static struct module_to_m4u_port_t module_to_m4u_port_mapping[] = {
 	{DISP_MODULE_OVL0, 0, DISP_M4U_PORT_DISP_OVL0},

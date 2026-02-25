@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -19,9 +16,6 @@
 #include "mtk_spm_internal.h"
 #include "mtk_spm_resource_req.h"
 
-/***********************************************************
- * Local definitions
- ***********************************************************/
 
 static void __iomem *infrasys_base;    /* INFRA_REG, INFRA_SW_CG_x_STA */
 static void __iomem *mmsys_base;       /* MM_REG, DISP_CG_CON_x */
@@ -63,13 +57,7 @@ static void __iomem *apmixedsys_base;  /* APMIXEDSYS */
 #define PWRSTA_BIT_INFRA    (1U << 6)
 #define PWRSTA_BIT_ALL		(0xffffffff)
 
-/***********************************************************
- * Functions for external modules
- ***********************************************************/
 
-/***********************************************************
- * Check clkmux registers
- ***********************************************************/
 #define NF_CLKMUX_COND_SET          9 /* NF_CLKMUX_PASS_CRITERIA + 1 */
 #define CLK_CFG(id) TOPCK_REG((id != (CLKMUX_MEM/4) ? 0x20+id*0x10 : 0x640))
 #define IDLE_VCORE_CHECK_FOR_LP_MODE        0
@@ -98,9 +86,6 @@ static bool check_clkmux_pdn(unsigned int clkmux_id)
 	return false;
 }
 
-/***********************************************************
- * Check cg idle condition for dp/sodi/sodi3
- ***********************************************************/
 /* Local definitions */
 struct idle_cond_info {
 	/* check SPM_PWR_STATUS for bit definition */
@@ -215,9 +200,6 @@ static unsigned int idle_block_mask_resource
 static unsigned int idle_value[NR_CG_GRPS];
 
 /* FIX ME*/
-/***********************************************************
- * Check pll idle condition
- ***********************************************************/
 
 #define PLL_UNIVPLL APMIXEDSYS(0x240)
 #define PLL_MFGPLL  APMIXEDSYS(0x250)
@@ -1418,14 +1400,6 @@ bool mtk_idle_cond_check(int idle_type)
 	return ret;
 }
 
-/***********************************************************
- * Clock mux check for vcore low power mode
- *
- * Check clkmux condition
- *   1. Only in deepidle/SODI3
- *   2. After mtk_idle_notifier_call_chain()
- *       - To ensure other subsystem controls its clkmux well
- ***********************************************************/
 bool mtk_idle_cond_vcore_lp_mode(int idle_type)
 {
 	bool op_cond = false;
@@ -1472,9 +1446,6 @@ unsigned int mtk_idle_cond_vcore_ulposc_state(void)
 }
 
 
-/***********************************************************
- * Fundamental build up functions
- ***********************************************************/
 static void get_cg_addrs(void)
 {
 	/* Assign cg address to idle_cg_info */

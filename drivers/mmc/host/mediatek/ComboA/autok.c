@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -276,9 +273,6 @@ const struct AUTOK_PARAM_INFO autok_param_info[] = {
 	{{0, 1}, "SDC_RX_ENHANCE"},
 };
 
-/**********************************************************
- * AutoK Basic Interface Implenment                       *
- **********************************************************/
 static int autok_sdio_device_rx_set(struct msdc_host *host,
 unsigned int func_num, unsigned int base_addr,
 unsigned int *reg_value, unsigned int r_w_dirc,
@@ -2056,25 +2050,6 @@ static int autok_ds_dly_sel(struct AUTOK_SCAN_RES_NEW *pInfo,
 	return max_pass_win;
 }
 
-/*************************************************************************
- * FUNCTION
- *  autok_adjust_param
- *
- * DESCRIPTION
- *  This function for auto-K, adjust msdc parameter
- *
- * PARAMETERS
- *    host: msdc host manipulator pointer
- *    param: enum of msdc parameter
- *    value: value of msdc parameter
- *    rw: AUTOK_READ/AUTOK_WRITE
- *
- * RETURN VALUES
- *    error code: 0 success,
- *               -1 parameter input error
- *               -2 read/write fail
- *               -3 else error
- *************************************************************************/
 static int autok_adjust_param(struct msdc_host *host,
 	enum AUTOK_PARAM param, u32 *value, int rw)
 {
@@ -2918,11 +2893,6 @@ void autok_tuning_parameter_init(struct msdc_host *host, u8 *res)
 	ret = autok_param_apply(host, res);
 }
 
-/*******************************************************
- * Function: autok_adjust_paddly                       *
- * Param : value - delay cnt from 0 to 63              *
- *         pad_sel - 0 for cmd pad and 1 for data pad  *
- *******************************************************/
 #define CMD_PAD_RDLY 0
 #define DAT_PAD_RDLY 1
 #define DS_PAD_RDLY 2
@@ -3126,9 +3096,6 @@ static void msdc_autok_version_apply(unsigned char *autok_tune_res)
 	autok_tune_res[AUTOK_VER3] = (AUTOK_VERSION >> 24) & 0xff;
 }
 
-/*******************************************************
- * Exectue tuning IF Implenment                        *
- *******************************************************/
 static int autok_write_param(struct msdc_host *host,
 	enum AUTOK_PARAM param, u32 value)
 {

@@ -1,12 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/**
- * @file    mt_hotplug_strategy_internal.h
- * @brief   hotplug strategy(hps) - internal header file
- */
 
 #ifndef __MT_HOTPLUG_STRATEGY_INTERNAL_H__
 #define __MT_HOTPLUG_STRATEGY_INTERNAL_H__
@@ -20,9 +13,6 @@ extern "C" {
 
 #include <mt_hotplug_strategy_platform.h>	/* platform defines */
 
-/*
- * LOG
- */
 #define hps_err(fmt, args...)		pr_notice("[HPS] " fmt, ##args)
 #define hps_warn(fmt, args...)		pr_notice("[HPS] " fmt, ##args)
 
@@ -209,9 +199,6 @@ DECLARE_PER_CPU(struct hps_cpu_ctxt_struct, hps_percpu_ctxt);
 #define log_alog2(fmt, args...)	log_if(HPS_LOG_ALGO2, fmt, ##args)
 #define log_tmr(fmt, args...)	log_if(HPS_LOG_TMR, fmt, ##args)
 
-/*
- * mt_hotplug_strategy_main.c
- */
 extern void hps_ctxt_reset_stas_nolock(void);
 extern void hps_ctxt_reset_stas(void);
 extern void hps_ctxt_print_basic(int toUart);
@@ -222,9 +209,6 @@ extern void hps_ctxt_print_algo_stats_up(int toUart);
 extern void hps_ctxt_print_algo_stats_down(int toUart);
 extern void hps_ctxt_print_algo_stats_tlp(int toUart);
 
-/*
- * mt_hotplug_strategy_core.c
- */
 extern int hps_core_init(void);
 extern int hps_core_deinit(void);
 extern int hps_task_start(void);
@@ -232,20 +216,11 @@ extern void hps_task_stop(void);
 extern void hps_task_wakeup_nolock(void);
 extern void hps_task_wakeup(void);
 
-/*
- * mt_hotplug_strategy_algo.c
- */
 extern void hps_algo_hmp(void);
 extern void hps_algo_smp(void);
 
-/*
- * mt_hotplug_strategy_procfs.c
- */
 extern int hps_procfs_init(void);
 
-/*
- * mt_hotplug_strategy_cpu.c
- */
 #define num_possible_little_cpus()	cpumask_weight(&hps_ctxt.little_cpumask)
 #define num_possible_big_cpus()		cpumask_weight(&hps_ctxt.big_cpumask)
 

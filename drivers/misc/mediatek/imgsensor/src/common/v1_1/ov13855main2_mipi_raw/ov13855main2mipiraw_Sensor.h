@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     OV13855main2mipiraw_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _OV13855MAIN2MIPIRAW_SENSOR_H
 #define _OV13855MAIN2MIPIRAW_SENSOR_H
 

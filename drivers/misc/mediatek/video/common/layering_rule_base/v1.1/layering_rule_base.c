@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -202,13 +199,6 @@ static inline bool is_extended_over_limit(int ext_cnt)
 	return false;
 }
 
-/**
- * check if continuous ext layers is overlapped with each other
- * also need to check the below nearest phy layer
- * which these ext layers will be attached to
- * 1. check all ext layers, if overlapped with any one, change it to phy layer
- * 2. if more than 1 ext layer exist, need to check the phy layer
- */
 static int is_continuous_ext_layer_overlap(struct layer_config *configs,
 					   int curr)
 {
@@ -1107,10 +1097,6 @@ static bool has_hrt_limit(struct disp_layer_info *disp_info, int disp_idx)
 	return true;
 }
 
-/**
- * Return the HRT layer weight.
- * If the layer_info is NULL, return GLES layer weight.
- */
 static int get_layer_weight(int disp_idx, struct layer_config *layer_info)
 {
 	int bpp, weight;
@@ -1173,10 +1159,6 @@ static int _calc_hrt_num(struct disp_layer_info *disp_info, int disp,
 	 */
 	overlap_l_bound = l_rule_ops->get_hrt_bound(0, 0) * HRT_UINT_BOUND_BPP;
 
-/**
- * 2.Add each layer info to layer list and sort it by yoffset.
- * Also add up each layer overlap weight.
- */
 	layer_idx = -1;
 	ovl_cnt = get_phy_ovl_layer_cnt(disp_info, disp);
 	layer_map = l_rule_ops->get_mapping_table(DISP_HW_LAYER_TB,
@@ -1237,10 +1219,6 @@ static int _calc_hrt_num(struct disp_layer_info *disp_info, int disp,
 	sum_overlap_w += HRT_ROUND_CORNER_WEIGHT;
 #endif
 
-/**
- * 3.Calculate the HRT bound if the total layer weight over the lower bound
- * or has secondary display.
- */
 	if (sum_overlap_w > overlap_l_bound ||
 		has_hrt_limit(disp_info, HRT_SECONDARY) ||
 		force_scan_y || hrt_show_flag == 1) {
@@ -1308,10 +1286,6 @@ static int calc_hrt_num(struct disp_layer_info *disp_info)
 
 	emi_hrt_level = get_hrt_level(sum_overlap_w, false);
 
-/**
- * The larb bound always meet the limit for HRT_LEVEL2 in 8+4 ovl architecture.
- * So calculate larb bound only for HRT_LEVEL2.
- */
 	disp_info->hrt_num = emi_hrt_level;
 #ifdef HRT_DEBUG_LEVEL1
 	DISPMSG("EMI hrt lv2:%d,overlap_w:%d\n", emi_hrt_level, sum_overlap_w);
@@ -1341,10 +1315,6 @@ static int calc_hrt_num(struct disp_layer_info *disp_info)
 	return disp_info->hrt_num;
 }
 
-/**
- * dispatch which one layer could be ext layer
- *
- */
 static int ext_layer_grouping(struct disp_layer_info *disp_info)
 {
 	int cont_ext_layer_cnt = 0, ext_idx = 0;
@@ -1774,10 +1744,6 @@ int layering_rule_start(struct disp_layer_info *disp_info_user,
 #endif
 	l_rule_info->disp_path = HRT_PATH_UNKNOWN;
 
-/**
- * 1.Pre-distribution
- *
- */
 	l_rule_info->dal_enable = is_DAL_Enabled();
 
 	if (l_rule_ops->rollback_to_gpu_by_hw_limitation)
@@ -1805,19 +1771,8 @@ int layering_rule_start(struct disp_layer_info *disp_info_user,
 	ret = filter_by_ovl_cnt(&layering_info);
 
 
-/**
- * 2.Overlapping
- * Calculate overlap number of available input layers.
- * If the overlap number is out of bound, then decrease
- * the number of available layers to overlap number.
- */
 	calc_hrt_num(&layering_info);
 
-/**
- * 3.Dispatching
- * Fill layer id for each input layers.
- * All the gles layers set as same layer id.
- */
 
 	if (l_rule_ops->rollback_all_to_GPU_for_idle != NULL &&
 		l_rule_ops->rollback_all_to_GPU_for_idle()) {

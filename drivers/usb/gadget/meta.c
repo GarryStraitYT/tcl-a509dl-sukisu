@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MTK FASTMETA Gadget Driver for Android
- *
- * Copyright (c) 2008 Google, Inc.
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Mike Lockwood <lockwood@android.com>
- *         Benoit Goby <benoit@android.com>
- */
 
 #include <linux/init.h>
 #include <linux/module.h>

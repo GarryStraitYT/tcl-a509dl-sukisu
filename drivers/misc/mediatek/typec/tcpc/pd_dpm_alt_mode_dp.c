@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 
@@ -27,10 +24,6 @@
 #define DP_SELECT_CONNECTED(b)		((b == DPSTS_DFP_D_CONNECTED) ? \
 		DPSTS_UFP_D_CONNECTED : DPSTS_DFP_D_CONNECTED)
 
-/*
- * If we support ufp_d & dfp_d both, we should choose another role.
- * If we don't support both, check dp_connected valid or not
- */
 static inline bool dp_update_dp_connected_one(struct pd_port *pd_port,
 			uint32_t dp_connected, uint32_t dp_local_connected)
 {
@@ -48,9 +41,6 @@ static inline bool dp_update_dp_connected_one(struct pd_port *pd_port,
 	return valid_connected;
 }
 
-/*
- * If we support ufp_d & dfp_d both, we should decide to use which role.
- */
 
 static inline bool dp_update_dp_connected_both(struct pd_port *pd_port,
 			uint32_t dp_connected, uint32_t dp_local_connected)

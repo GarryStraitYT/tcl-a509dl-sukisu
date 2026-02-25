@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 enum MD_REG_ID {
 	MD_REG_AP_MDSRC_REQ = 0,
 	MD_REG_PC_MONITOR,

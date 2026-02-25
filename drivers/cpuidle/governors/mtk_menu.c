@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/cpuidle.h>
@@ -101,15 +98,6 @@ static bool is_screen_on(void)
 	return result;
 }
 
-/*
- * Please note when changing the tuning values:
- * If (MAX_INTERESTING-1) * RESOLUTION > UINT_MAX, the result of
- * a scaling operation multiplication may overflow on 32 bit platforms.
- * In that case, #define RESOLUTION as ULL to get 64 bit result:
- * #define RESOLUTION 1024ULL
- *
- * The default values do not overflow.
- */
 #define BUCKETS 12
 #define INTERVAL_SHIFT 3
 #define INTERVALS (1UL << INTERVAL_SHIFT)
@@ -121,85 +109,6 @@ static bool is_screen_on(void)
 #define USE_TYPICAL_INTERVAL
 #define USE_INTERACTIVITY_REQ
 
-/*
- * Concepts and ideas behind the menu governor
- *
- * For the menu governor, there are 3 decision factors for picking a C
- * state:
- * 1) Energy break even point
- * 2) Performance impact
- * 3) Latency tolerance (from pmqos infrastructure)
- * These these three factors are treated independently.
- *
- * Energy break even point
- * -----------------------
- * C state entry and exit have an energy cost, and a certain amount of time in
- * the  C state is required to actually break even on this cost. CPUIDLE
- * provides us this duration in the "target_residency" field. So all that we
- * need is a good prediction of how long we'll be idle. Like the traditional
- * menu governor, we start with the actual known "next timer event" time.
- *
- * Since there are other source of wakeups (interrupts for example) than
- * the next timer event, this estimation is rather optimistic. To get a
- * more realistic estimate, a correction factor is applied to the estimate,
- * that is based on historic behavior. For example, if in the past the actual
- * duration always was 50% of the next timer tick, the correction factor will
- * be 0.5.
- *
- * menu uses a running average for this correction factor, however it uses a
- * set of factors, not just a single factor. This stems from the realization
- * that the ratio is dependent on the order of magnitude of the expected
- * duration; if we expect 500 milliseconds of idle time the likelihood of
- * getting an interrupt very early is much higher than if we expect 50 micro
- * seconds of idle time. A second independent factor that has big impact on
- * the actual factor is if there is (disk) IO outstanding or not.
- * (as a special twist, we consider every sleep longer than 50 milliseconds
- * as perfect; there are no power gains for sleeping longer than this)
- *
- * For these two reasons we keep an array of 12 independent factors, that gets
- * indexed based on the magnitude of the expected duration as well as the
- * "is IO outstanding" property.
- *
- * Repeatable-interval-detector
- * ----------------------------
- * There are some cases where "next timer" is a completely unusable predictor:
- * Those cases where the interval is fixed, for example due to hardware
- * interrupt mitigation, but also due to fixed transfer rate devices such as
- * mice.
- * For this, we use a different predictor: We track the duration of the last 8
- * intervals and if the stand deviation of these 8 intervals is below a
- * threshold value, we use the average of these intervals as prediction.
- *
- * Limiting Performance Impact
- * ---------------------------
- * C states, especially those with large exit latencies, can have a real
- * noticeable impact on workloads, which is not acceptable for most sysadmins,
- * and in addition, less performance has a power price of its own.
- *
- * As a general rule of thumb, menu assumes that the following heuristic
- * holds:
- *     The busier the system, the less impact of C states is acceptable
- *
- * This rule-of-thumb is implemented using a performance-multiplier:
- * If the exit latency times the performance multiplier is longer than
- * the predicted duration, the C state is not considered a candidate
- * for selection due to a too high performance impact. So the higher
- * this multiplier is, the longer we need to be idle to pick a deep C
- * state, and thus the less likely a busy CPU will hit such a deep
- * C state.
- *
- * Two factors are used in determing this multiplier:
- * a value of 10 is added for each point of "per cpu load average" we have.
- * a value of 5 points is added for each process that is waiting for
- * IO on this CPU.
- * (these values are experimentally determined)
- *
- * The load average factor gives a longer term (few seconds) input to the
- * decision, while the iowait value gives a cpu local instantanious input.
- * The iowait factor may look low, but realize that this is also already
- * represented in the system load average.
- *
- */
 
 struct menu_device {
 	int		last_state_idx;
@@ -250,13 +159,6 @@ static inline int which_bucket(unsigned int duration,
 	return bucket + 5;
 }
 
-/*
- * Return a multiplier for the exit latency that is intended
- * to take performance requirements into account.
- * The more performance critical we estimate the system
- * to be, the higher this multiplier, and thus the higher
- * the barrier to go to an expensive C state.
- */
 static inline int performance_multiplier(unsigned long nr_iowaiters,
 				unsigned long load)
 {
@@ -282,12 +184,6 @@ static DEFINE_PER_CPU(struct menu_device, menu_devices);
 static void menu_update(struct cpuidle_driver *drv, struct cpuidle_device *dev);
 
 #ifdef USE_TYPICAL_INTERVAL
-/*
- * Try detecting repeating patterns by keeping track of the last 8
- * intervals, and checking if the standard deviation of that set
- * of points is below a threshold. If it is... then use the
- * average of these 8 points as the estimated value.
- */
 static unsigned int get_typical_interval(struct menu_device *data)
 {
 	int i, divisor;
@@ -370,12 +266,6 @@ again:
 }
 #endif
 
-/**
- * menu_select - selects the next idle state to enter
- * @drv: cpuidle driver containing state data
- * @dev: the CPU
- * @stop_tick: indication on whether or not to stop the tick
- */
 static int menu_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		       bool *stop_tick)
 {
@@ -553,14 +443,6 @@ static int menu_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	return data->last_state_idx;
 }
 
-/**
- * menu_reflect - records that data structures need update
- * @dev: the CPU
- * @index: the index of actual entered state
- *
- * NOTE: it's important to be fast here because this operation will add to
- *       the overall exit latency.
- */
 static void menu_reflect(struct cpuidle_device *dev, int index)
 {
 	struct menu_device *data = this_cpu_ptr(&menu_devices);
@@ -573,11 +455,6 @@ static void menu_reflect(struct cpuidle_device *dev, int index)
 	mcdi_heart_beat_log_dump();
 }
 
-/**
- * menu_update - attempts to guess what happened after entry
- * @drv: cpuidle driver containing state data
- * @dev: the CPU
- */
 static void menu_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 {
 	struct menu_device *data = this_cpu_ptr(&menu_devices);
@@ -657,11 +534,6 @@ static void menu_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 		data->interval_ptr = 0;
 }
 
-/**
- * menu_enable_device - scans a CPU's states and does setup
- * @drv: cpuidle driver
- * @dev: the CPU
- */
 static int menu_enable_device(struct cpuidle_driver *drv,
 				struct cpuidle_device *dev)
 {
@@ -702,9 +574,6 @@ static struct cpuidle_governor menu_governor = {
 	.reflect =	menu_reflect,
 };
 
-/**
- * init_menu - initializes the governor
- */
 static int __init init_menu(void)
 {
 	unsigned long flags = 0;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -28,10 +25,6 @@
 #define MD_EX_PAGE_NUM  (6)
 
 
-/*
- *  Note : Moidy this size will affect dhl frame size in this page
- *  Minimum : 352B to reserve 256B for header frame
- */
 #define MD_HW_PAGE_SIZE (512)
 
 /* replace with HW page */

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #ifndef _GZ_TRACE_MODULE_H_
@@ -64,24 +61,6 @@ static noinline void tracing_mark_write(char *fmt, ...)
 	preempt_enable();\
 } while (0)
 
-/* How to,
- * use for in the same process
- * no need add "\n"
- * you can find time slot in systrace by keyword GZ_XXXX
- * GZ_TRUSTY_TRACE_BEGIN("%s", __func__);
- * GZ_TRUSTY_TRACE_END();
-
- * use for async case
- * no need add "\n"
- * you can find time slot in systrace by keyword GZ_XXXX
- * GZ_TRUSTY_ASYNC_TRACE_BEGIN(atomic_read(&tctx->kick_cookie), "ToKick");
- * GZ_TRUSTY_ASYNC_TRACE_END(atomic_read(&tctx->kick_cookie), "ToKick");
- * atomic_inc(&tctx->kick_cookie);
- *
- * use for add news
- * can't find info in systrace UI, only find in raw data
- * GZ_TRUSTY_TRACE_CNT(100, "my_std_call32");
- */
 #else
 
 #define GZ_TRUSTY_TRACE_BEGIN(fmt, args...) do { \

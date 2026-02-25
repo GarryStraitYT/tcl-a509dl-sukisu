@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Eason Yen <eason.yen@mediatek.com>
- */
 
 #ifndef _MT_6779_AFE_COMMON_H_
 #define _MT_6779_AFE_COMMON_H_

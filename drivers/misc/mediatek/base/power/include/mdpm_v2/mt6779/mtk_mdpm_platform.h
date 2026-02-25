@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef _MTK_MDPM_PLATFORM_H_
 #define _MTK_MDPM_PLATFORM_H_

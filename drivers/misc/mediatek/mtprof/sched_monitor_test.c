@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/proc_fs.h>
 #include <linux/uaccess.h>

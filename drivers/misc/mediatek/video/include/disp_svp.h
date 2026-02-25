@@ -1,13 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
-/**
- * NOTICE:
- * MUST BE consistent with bionic/libc/kernel/common/linux/disp_svp.h
- */
 #ifndef __DISP_SVP_H
 #define __DISP_SVP_H
 

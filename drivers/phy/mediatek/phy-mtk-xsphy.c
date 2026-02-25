@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MediaTek USB3.1 gen2 xsphy Driver
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- *
- */
 
 #include <dt-bindings/phy/phy.h>
 #include <linux/clk.h>

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Samuel Hsieh <samuel.hsieh@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/platform_device.h>
@@ -72,9 +68,6 @@ void exec_low_battery_callback(unsigned int thd)
 	}
 }
 
-/*****************************************************************************
- * low battery protect UT
- ******************************************************************************/
 static ssize_t low_battery_protect_ut_show(
 		struct device *dev, struct device_attribute *attr,
 		char *buf)
@@ -119,9 +112,6 @@ static ssize_t low_battery_protect_ut_store(
 
 static DEVICE_ATTR_RW(low_battery_protect_ut);
 
-/*****************************************************************************
- * low battery protect stop
- ******************************************************************************/
 static ssize_t low_battery_protect_stop_show(
 		struct device *dev, struct device_attribute *attr,
 		char *buf)
@@ -155,9 +145,6 @@ static ssize_t low_battery_protect_stop_store(struct device *dev,
 
 static DEVICE_ATTR_RW(low_battery_protect_stop);
 
-/*****************************************************************************
- * low battery protect level
- ******************************************************************************/
 static ssize_t low_battery_protect_level_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {

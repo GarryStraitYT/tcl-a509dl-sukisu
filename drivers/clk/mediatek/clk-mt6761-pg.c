@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Owen Chen <owen.chen@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
@@ -63,9 +59,6 @@ while (0)
 
 void __attribute__((weak)) mtk_wcn_cmb_stub_clock_fail_dump(void) {}
 
-/*
- * MTCMOS
- */
 
 #define STA_POWER_DOWN	0
 #define STA_POWER_ON	1
@@ -136,9 +129,6 @@ static void __iomem *conn_base;/* connsys */
 #define SRAM_CKISO			(0x1 << 5)
 #define SRAM_ISOINT_B			(0x1 << 6)
 
-/**************************************
- * for non-CPU MTCMOS
- **************************************/
 #define POWERON_CONFIG_EN		SPM_REG(0x0000)
 #define SPM_POWER_ON_VAL0		SPM_REG(0x0004)
 #define SPM_POWER_ON_VAL1		SPM_REG(0x0008)
@@ -477,12 +467,6 @@ enum dbg_id {
 static int DBG_ID;
 static int DBG_STA;
 static int DBG_STEP;
-/*
- * ram console data0 define
- * [31:24] : DBG_ID
- * [23:20] : DBG_STA
- * [7:0] : DBG_STEP
- */
 static void ram_console_update(void)
 {
 	struct pg_callbacks *pgcb;
@@ -2585,9 +2569,6 @@ static int disable_subsys(enum subsys_id id, enum mtcmos_op action)
 	return r;
 }
 
-/*
- * power_gate
- */
 
 #define CLK_NUM	10
 struct mt_power_gate {
@@ -2981,9 +2962,6 @@ fail:
 	return ret;
 }
 
-/*
- * device tree support
- */
 
 /* TODO: remove this function */
 static struct clk_onecell_data *alloc_clk_data(unsigned int clk_num)

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _FPSGO_MINI_TOP_H_
 #define _FPSGO_MINI_TOP_H_

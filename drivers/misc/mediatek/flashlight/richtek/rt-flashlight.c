@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -264,19 +261,6 @@ static const struct attribute_group *flashlight_groups[] = {
 
 
 
-/**
- * flashlight_device_register - create and register a new object of
- *   flashlight_device class.
- * @name: the name of the new object(must be the same as the name of the
- *   respective framebuffer device).
- * @parent: a pointer to the parent device
- * @devdata: an optional pointer to be stored for private driver use. The
- *   methods may retrieve it by using flashlight_get_data(flashlight_dev).
- * @ops: the flashlight operations structure.
- *
- * Creates and registers new flashlight device. Returns either an
- * ERR_PTR() or a pointer to the newly allocated device.
- */
 struct flashlight_device *flashlight_device_register(const char *name,
 		struct device *parent, void *devdata,
 		const struct flashlight_ops *ops,
@@ -311,12 +295,6 @@ struct flashlight_device *flashlight_device_register(const char *name,
 }
 EXPORT_SYMBOL(flashlight_device_register);
 
-/**
- * flashlight_device_unregister - unregisters a flashlight device object.
- * @flashlight_dev: the flashlight device object to be unregistered and freed.
- *
- * Unregisters a previously registered via flashlight_device_register object.
- */
 void flashlight_device_unregister(struct flashlight_device *flashlight_dev)
 {
 	if (!flashlight_dev)

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef _MTK_MDPM_PLATFORM_H_
 #define _MTK_MDPM_PLATFORM_H_
@@ -88,9 +85,6 @@ enum share_mem_mapping {	/* each of 4 byte */
 	SHARE_MEM_BLOCK_NUM
 };
 
-/*
- * MD1 Section level (can't more than SECTION_VALUE)
- */
 /* Each section has only 5 bits. The range is from 0 to 31 */
 
 //Samuel: move to platform
@@ -148,9 +142,6 @@ enum md1_section_level_tbl_c2k {
 	VAL_MD1_C2K_SECTION_6 = 0
 };
 
-/*
- * MD1 Scenario power
- */
 
 enum md1_scenario_max_pwr_tbl {
 	MAX_PW_STANDBY = 1,
@@ -172,9 +163,6 @@ enum md1_scenario_avg_pwr_tbl {
 	AVG_PW_4G_DL_2CC = 258
 };
 
-/*
- * MD1 PA power
- */
 
 enum md1_pa_max_pwr_tbl_2g {
 	MAX_PW_MD1_PA_2G_SECTION_1 = 480,
@@ -266,9 +254,6 @@ enum md1_avg_pa_pwr_tbl_c2k {
 	AVG_PW_MD1_PA_C2K_SECTION_6 = 233
 };
 
-/*
- * MD1 RF power
- */
 enum md1_max_rf_pwr_tbl_2g {
 	MAX_PW_MD1_RF_2G_SECTION_1 = 51,
 	MAX_PW_MD1_RF_2G_SECTION_2 = 51,

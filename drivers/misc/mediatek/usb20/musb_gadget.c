@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/list.h>
@@ -37,47 +34,6 @@
 
 /* #define RX_DMA_MODE1 1 */
 
-/* MUSB PERIPHERAL status 3-mar-2006:
- *
- * - EP0 seems solid.  It passes both USBCV and usbtest control cases.
- *   Minor glitches:
- *
- *     + remote wakeup to Linux hosts work, but saw USBCV failures;
- *       in one test run (operator error?)
- *     + endpoint halt tests -- in both usbtest and usbcv -- seem
- *       to break when dma is enabled ... is something wrongly
- *       clearing SENDSTALL?
- *
- * - Mass storage behaved ok when last tested.  Network traffic patterns
- *   (with lots of short transfers etc) need retesting; they turn up the
- *   worst cases of the DMA, since short packets are typical but are not
- *   required.
- *
- * - TX/IN
- *     + both pio and dma behave in with network and g_zero tests
- *     + no cppi throughput issues other than no-hw-queueing
- *     + failed with FLAT_REG (DaVinci)
- *     + seems to behave with double buffering, PIO -and- CPPI
- *     + with gadgetfs + AIO, requests got lost?
- *
- * - RX/OUT
- *     + both pio and dma behave in with network and g_zero tests
- *     + dma is slow in typical case (short_not_ok is clear)
- *     + double buffering ok with PIO
- *     + double buffering *FAILS* with CPPI, wrong data bytes sometimes
- *     + request lossage observed with gadgetfs
- *
- * - ISO not tested ... might work, but only weakly isochronous
- *
- * - Gadget driver disabling of softconnect during bind() is ignored; so
- *   drivers can't hold off host requests until userspace is ready.
- *   (Workaround:  they can turn it off later.)
- *
- * - PORTABILITY (assumes PIO works):
- *     + DaVinci, basically works with cppi dma
- *     + OMAP 2430, ditto with mentor dma
- *     + TUSB 6010, platform-specific dma in the works
- */
 
 /* ----------------------------------------------------------------------- */
 
@@ -172,13 +128,6 @@ unmap_dma_buffer(struct musb_request *request, struct musb *musb)
 	request->map_state = UN_MAPPED;
 }
 
-/*
- * Immediately complete a request.
- *
- * @param request the request to complete
- * @param status the status to complete the request with
- * Context: controller locked, IRQs blocked.
- */
 void musb_g_giveback(struct musb_ep *ep,
 		     struct usb_request *request,
 		     int status) __releases(ep->musb->lock)
@@ -225,10 +174,6 @@ lock:
 
 /* ----------------------------------------------------------------------- */
 
-/*
- * Abort requests queued to an endpoint using the status. Synchronous.
- * caller locked controller and blocked irqs, and selected this ep.
- */
 static void nuke(struct musb_ep *ep, const int status)
 {
 	/*struct musb           *musb = ep->musb; */
@@ -282,10 +227,6 @@ static void nuke(struct musb_ep *ep, const int status)
 
 /* Data transfers - pure PIO, pure DMA, or mixed mode */
 
-/*
- * This assumes the separate CPPI engine is responding to DMA requests
- * from the usb core ... sequenced a bit differently from mentor dma.
- */
 
 static inline int max_ep_writesize(struct musb *musb, struct musb_ep *ep)
 {
@@ -296,42 +237,7 @@ static inline int max_ep_writesize(struct musb *musb, struct musb_ep *ep)
 }
 
 
-/* Peripheral tx (IN) using Mentor DMA works as follows:
- *	Only mode 0 is used for transfers <= wPktSize,
- *	mode 1 is used for larger transfers,
- *
- *	One of the following happens:
- *	- Host sends IN token which causes an endpoint interrupt
- *		-> TxAvail
- *			-> if DMA is currently busy, exit.
- *			-> if queue is non-empty, txstate().
- *	- Request is queued by the gadget driver.
- *		-> if queue was previously empty, txstate()
- *
- *	txstate()
- *		-> start
- *		  /\	-> setup DMA
- *		  |     (data is transferred to the FIFO, then sent out when
- *		  |	IN token(s) are recd from Host.
- *		  |		-> DMA interrupt on completion
- *		  |		   calls TxAvail.
- *		  |		      -> stop DMA, ~DMAENAB,
- *		  |		      -> set TxPktRdy for last short pkt or zlp
- *		  |		      -> Complete Request
- *		  |		      -> Continue next request (call txstate)
- *		  |___________________________________|
- *
- * Non-Mentor DMA engines can of course work differently, such as by
- * upleveling from irq-per-packet to irq-per-buffer.
- */
 
-/*
- * An endpoint is transmitting data. This can be called either from
- * the IRQ routine or from ep.queue() to kickstart a request on an
- * endpoint.
- *
- * Context: controller locked, IRQs blocked, endpoint selected
- */
 static void txstate(struct musb *musb, struct musb_request *req)
 {
 	u8 epnum = req->epnum;
@@ -454,10 +360,6 @@ static void txstate(struct musb *musb, struct musb_request *req)
 
 }
 
-/*
- * FIFO state update (e.g. data ready).
- * Called from IRQ,  with controller locked.
- */
 void musb_g_tx(struct musb *musb, u8 epnum)
 {
 	u16 csr;
@@ -609,37 +511,8 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 /* ------------------------------------------------------------ */
 
 
-/* Peripheral rx (OUT) using Mentor DMA works as follows:
- *	- Only mode 0 is used.
- *
- *	- Request is queued by the gadget class driver.
- *		-> if queue was previously empty, rxstate()
- *
- *	- Host sends OUT token which causes an endpoint interrupt
- *	  /\      -> RxReady
- *	  |	      -> if request queued, call rxstate
- *	  |		/\	-> setup DMA
- *	  |		|	     -> DMA interrupt on completion
- *	  |		|		-> RxReady
- *	  |		|		      -> stop DMA
- *	  |		|		      -> ack the read
- *	  |		|		      -> if data recd = max expected
- *	  |		|				by the request, or host
- *	  |		|				sent a short packet,
- *	  |		|				complete the request,
- *	  |		|				and start the next one.
- *	  |		|_____________________________________|
- *	  |					 else just wait for the host
- *	  |					    to send the next OUT token.
- *	  |__________________________________________________|
- *
- * Non-Mentor DMA engines can of course work differently.
- */
 
 
-/*
- * Context: controller locked, IRQs blocked, endpoint selected
- */
 static void rxstate(struct musb *musb, struct musb_request *req)
 {
 	const u8 epnum = req->epnum;
@@ -894,9 +767,6 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 		musb_g_giveback(musb_ep, request, 0);
 }
 
-/*
- * Data ready for a request; called from IRQ
- */
 void musb_g_rx(struct musb *musb, u8 epnum)
 {
 	u16 csr;
@@ -1092,14 +962,6 @@ exit:
 	rxstate(musb, req);
 }
 
-/*
- * at the safe mode,
- * ACM IN-BULK-> Double Buffer,
- * OUT-BULK-> Signle Buffer,
- * IN-INT-> Signle Buffer
- * ADB IN-BULK-> Signle Buffer,
- * OUT-BULK-> Signle Buffer
- */
 
 static int is_db_ok(struct musb *musb, struct musb_ep *musb_ep)
 {
@@ -1577,9 +1439,6 @@ fail:
 	return status;
 }
 
-/*
- * Disable an endpoint flushing all requests queued.
- */
 static int musb_gadget_disable(struct usb_ep *ep)
 {
 	unsigned long flags;
@@ -1635,10 +1494,6 @@ static int musb_gadget_disable(struct usb_ep *ep)
 	return status;
 }
 
-/*
- * Allocate a request for an endpoint.
- * Reused by ep0 code.
- */
 struct usb_request *musb_alloc_request(struct usb_ep *ep, gfp_t gfp_flags)
 {
 	struct musb_ep *musb_ep = to_musb_ep(ep);
@@ -1656,10 +1511,6 @@ struct usb_request *musb_alloc_request(struct usb_ep *ep, gfp_t gfp_flags)
 	return &request->request;
 }
 
-/*
- * Free a request
- * Reused by ep0 code.
- */
 void musb_free_request(struct usb_ep *ep, struct usb_request *req)
 {
 	kfree(to_musb_request(req));
@@ -1674,9 +1525,6 @@ struct free_record {
 	dma_addr_t dma;
 };
 
-/*
- * Context: controller locked, IRQs blocked.
- */
 void musb_ep_restart(struct musb *musb, struct musb_request *req)
 {
 #ifdef CONFIG_MTK_MUSB_QMU_SUPPORT
@@ -1909,12 +1757,6 @@ done:
 	return status;
 }
 
-/*
- * Set or clear the halt bit of an endpoint. A halted enpoint won't tx/rx any
- * data but will queue requests.
- *
- * exported to ep0 code
- */
 static int musb_gadget_set_halt(struct usb_ep *ep, int value)
 {
 	struct musb_ep *musb_ep = to_musb_ep(ep);
@@ -1997,9 +1839,6 @@ done:
 	return status;
 }
 
-/*
- * Sets the halt feature with the clear requests ignored
- */
 static int musb_gadget_set_wedge(struct usb_ep *ep)
 {
 	struct musb_ep *musb_ep = to_musb_ep(ep);
@@ -2414,10 +2253,6 @@ static const struct usb_gadget_ops musb_gadget_operations = {
 
 /* Registration */
 
-/* Only this registration code "knows" the rule (from USB standards)
- * about there being only one external upstream port.  It assumes
- * all peripheral ports are external...
- */
 static void init_peripheral_ep
 			(struct musb *musb,
 			struct musb_ep *ep,
@@ -2471,10 +2306,6 @@ static void init_peripheral_ep
 		ep->end_point.caps.dir_out = true;
 }
 
-/*
- * Initialize the endpoints exposed to peripheral drivers, with backlinks
- * to the rest of the driver state.
- */
 static inline void musb_g_init_endpoints(struct musb *musb)
 {
 	u8 epnum;
@@ -2504,9 +2335,6 @@ static inline void musb_g_init_endpoints(struct musb *musb)
 	}
 }
 
-/* called once during driver setup to initialize and link into
- * the driver model; memory is zeroed.
- */
 int musb_gadget_setup(struct musb *musb)
 {
 	int status;
@@ -2555,17 +2383,6 @@ void musb_gadget_cleanup(struct musb *musb)
 	usb_del_gadget_udc(&musb->g);
 }
 
-/*
- * Register the gadget driver. Used by gadget drivers when
- * registering themselves with the controller.
- *
- * -EINVAL something went wrong (not driver)
- * -EBUSY another gadget is already using the controller
- * -ENOMEM no memory to perform the operation
- *
- * @param driver the gadget driver
- * @return <0 if error, 0 if everything is fine
- */
 static int musb_gadget_start
 			(struct usb_gadget *g, struct usb_gadget_driver *driver)
 {
@@ -2664,12 +2481,6 @@ static void stop_activity(struct musb *musb)
 }
 #endif
 
-/*
- * Unregister the gadget driver. Used by gadget drivers when
- * unregistering themselves from the controller.
- *
- * @param driver the gadget driver to unregister
- */
 static int musb_gadget_stop(struct usb_gadget *g)
 {
 	struct musb *musb = gadget_to_musb(g);

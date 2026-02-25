@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     GC2365mipi_Sensor.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor header file
- *
- ****************************************************************************/
 #define IMAGE_NO_MIRROR
 /* #define IMAGE_H_MIRROR */
 /* #define IMAGE_V_MIRROR */

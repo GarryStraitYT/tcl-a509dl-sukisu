@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _SCP_POWER_MONITOR_H_
 #define _SCP_POWER_MONITOR_H_

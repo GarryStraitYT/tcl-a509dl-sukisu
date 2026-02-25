@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/device.h>
@@ -42,9 +39,6 @@
 #include <mmdvfs_pmqos.h>
 #endif
 
-/* Measure the kernel performance
- * #define __MFB_KERNEL_PERFORMANCE_MEASURE__
- */
 #ifdef __MFB_KERNEL_PERFORMANCE_MEASURE__
 #include <linux/met_drv.h>
 #include <linux/mtk_ftrace.h>
@@ -108,15 +102,9 @@ struct MFB_CLK_STRUCT mfb_clk;
 #define log_ast(format, args...)    pr_debug(MyTag format, ##args)
 
 
-/**************************************************************
- *
- **************************************************************/
 /* #define MFB_WR32(addr, data)    iowrite32(data, addr) */
 #define MFB_WR32(addr, data)    writel(data, addr)
 #define MFB_RD32(addr)          readl(addr)
-/**************************************************************
- *
- **************************************************************/
 /* dynamic log level */
 #define MFB_DBG_DBGLOG              (0x00000001)
 #define MFB_DBG_INFLOG              (0x00000002)
@@ -125,9 +113,6 @@ struct MFB_CLK_STRUCT mfb_clk;
 #define MFB_DBG_WRITE_REG           (0x00000010)
 #define MFB_DBG_TASKLET             (0x00000020)
 
-/*
- *   IRQ signal mask
- */
 
 #define INT_ST_MASK_MFB     ( \
 			MFB_INT_ST)
@@ -277,9 +262,6 @@ static struct MFB_CONFIG_STRUCT g_MfbEnqueReq_Struct;
 static struct MFB_CONFIG_STRUCT g_MfbDequeReq_Struct;
 
 
-/**************************************************************
- *
- **************************************************************/
 struct  MFB_USER_INFO_STRUCT {
 	pid_t Pid;
 	pid_t Tid;
@@ -290,9 +272,6 @@ enum MFB_PROCESS_ID_ENUM {
 	MFB_PROCESS_ID_AMOUNT
 };
 
-/**************************************************************
- *
- **************************************************************/
 struct MFB_IRQ_INFO_STRUCT {
 	unsigned int Status[MFB_IRQ_TYPE_AMOUNT];
 	signed int MfbIrqCnt;
@@ -343,12 +322,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[MFB_IRQ_TYPE_AMOUNT];
 
-/*
- *   for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *   limited:
- *   each log must shorter than 512 bytes
- *  total log length in each irq/logtype can't over 1024 bytes
- */
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {\
 	char *ptr; \
 	char *pDes;\
@@ -901,25 +874,16 @@ static struct SV_LOG_STR gSvLog[MFB_IRQ_TYPE_AMOUNT];
 #define UNP_CONT_C_REG                         (ISP_MFB_BASE + 0x834)
 
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int MFB_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int MFB_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int MFB_GetIRQState(
 	unsigned int type,
 	unsigned int userNumber,
@@ -968,9 +932,6 @@ static inline unsigned int MFB_GetIRQState(
 }
 
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int MFB_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
@@ -2057,9 +2018,6 @@ static bool Check_MFB_Is_Busy(void)
 #endif
 
 
-/*
- *
- */
 static signed int MFB_DumpReg(void)
 {
 	signed int Ret = 0;
@@ -2521,9 +2479,6 @@ static inline void MFB_Disable_Unprepare_ccf_clock(void)
 }
 #endif
 
-/**************************************************************
- *
- **************************************************************/
 static void MFB_EnableClock(bool En)
 {
 #if defined(EP_NO_CLKMGR)
@@ -2574,9 +2529,6 @@ static void MFB_EnableClock(bool En)
 	}
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline void MFB_Reset(void)
 {
 	log_dbg("- E.\n");
@@ -2856,9 +2808,6 @@ EXIT:
 }
 
 
-/**************************************************************
- *
- **************************************************************/
 static long MFB_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
 	signed int Ret = 0;
@@ -3452,9 +3401,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/**************************************************************
- *
- **************************************************************/
 
 static int compat_get_MFB_enque_req_data(
 	compat_MFB_Request __user *data32,
@@ -3602,9 +3548,6 @@ static long MFB_ioctl_compat(
 
 #endif
 
-/*************************************************************
- *
- **************************************************************/
 static signed int MFB_open(struct inode *pInode, struct file *pFile)
 {
 	signed int Ret = 0;
@@ -3703,9 +3646,6 @@ EXIT:
 
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int MFB_release(struct inode *pInode, struct file *pFile)
 {
 	struct MFB_USER_INFO_STRUCT *pUserInfo;
@@ -3754,9 +3694,6 @@ EXIT:
 	return 0;
 }
 
-/**************************************************************
- *
- **************************************************************/
 
 static dev_t MFBDevNo;
 static struct cdev *pMFBCharDrv;
@@ -3774,9 +3711,6 @@ static const struct file_operations MFBFileOper = {
 #endif
 };
 
-/**************************************************************
- *
- **************************************************************/
 static inline void MFB_UnregCharDev(void)
 {
 	log_dbg("- E.\n");
@@ -3790,9 +3724,6 @@ static inline void MFB_UnregCharDev(void)
 	unregister_chrdev_region(MFBDevNo, 1);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline signed int MFB_RegCharDev(void)
 {
 	signed int Ret = 0;
@@ -3832,9 +3763,6 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int MFB_probe(struct platform_device *pDev)
 {
 	signed int Ret = 0;
@@ -4028,9 +3956,6 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- * Called when the device is being detached from the driver
- **************************************************************/
 static signed int MFB_remove(struct platform_device *pDev)
 {
 	/*struct resource *pRes;*/
@@ -4058,9 +3983,6 @@ static signed int MFB_remove(struct platform_device *pDev)
 	return 0;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int bMFB_Suspend;
 
 static signed int MFB_suspend(
@@ -4080,9 +4002,6 @@ static signed int MFB_suspend(
 	return 0;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int MFB_resume(struct platform_device *pDev)
 {
 	/*log_dbg("bMFB_Suspend(%d).\n", bMFB_Suspend);*/
@@ -4165,9 +4084,6 @@ const struct dev_pm_ops MFB_pm_ops = {
 };
 
 
-/**************************************************************
- *
- **************************************************************/
 static struct platform_driver MFBDriver = {
 	.probe = MFB_probe,
 	.remove = MFB_remove,
@@ -4185,9 +4101,6 @@ static struct platform_driver MFBDriver = {
 	}
 };
 
-/**************************************************************
- *
- ***************************************************************/
 
 int32_t MFB_ClockOnCallback(uint64_t engineFlag)
 {
@@ -4290,9 +4203,6 @@ static signed int __init MFB_Init(void)
 	return Ret;
 }
 
-/**************************************************************
- *
- ***************************************************************/
 static void __exit MFB_Exit(void)
 {
 	/*int i;*/
@@ -4315,9 +4225,6 @@ static void __exit MFB_Exit(void)
 }
 
 
-/**************************************************************
- *
- ***************************************************************/
 void MFB_ScheduleWork(struct work_struct *data)
 {
 	if (MFB_DBG_DBGLOG & MFBInfo.DebugMask)
@@ -4418,9 +4325,6 @@ static void ISP_TaskletFunc_MFB(unsigned long data)
 }
 
 
-/**************************************************************
- *
- ***************************************************************/
 module_init(MFB_Init);
 module_exit(MFB_Exit);
 MODULE_DESCRIPTION("Camera MFB driver");

@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018 MediaTek Inc.
 
-/*
- * Bluetooth support for MediaTek serial devices
- *
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #include <asm/unaligned.h>
 #include <linux/atomic.h>

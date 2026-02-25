@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -72,23 +69,6 @@ static struct dciMessage_t *rpmb_gp_dci;
 
 #endif
 
-/*
- * Dummy definition for MAX_RPMB_TRANSFER_BLK.
- *
- * For UFS RPMB driver, MAX_RPMB_TRANSFER_BLK will be always
- * used however it will NOT be defined in projects w/o Security
- * OS. Thus we add a dummy definition here to avoid build errors.
- *
- * For eMMC RPMB driver, MAX_RPMB_TRANSFER_BLK will be used
- * only if RPMB_MULTI_BLOCK_ACCESS is defined. thus
- * build error will not happen on projects w/o Security OS.
- *
- * NOTE: This dummy definition shall be located after
- *       #include "drrpmb_Api.h" and
- *       #include "rpmb-mtk.h"
- *       since MAX_RPMB_TRANSFER_BLK will be defined in those
- *       header files if security OS is enabled.
- */
 #ifndef MAX_RPMB_TRANSFER_BLK
 #define MAX_RPMB_TRANSFER_BLK (1)
 #endif
@@ -136,18 +116,6 @@ struct task_struct *rpmb_gp_Dci_th;
 static struct cdev rpmb_dev;
 static struct class *mtk_rpmb_class;
 
-/*
- * This is an alternative way to get mmc_card strcuture from mmc_host which set
- * from msdc driver with this callback function.
- * The strength is we don't have to extern msdc_host_host global variable,
- * extern global is very bad...
- * The weakness is every platform driver needs to add this callback to give
- * rpmb driver the mmc_host structure and then we could know card.
- *
- * Finally, I decide to ignore its strength, because the weakness is more
- * important.
- * If every projects have to add this callback, the operation is complicated.
- */
 
 #ifdef EMMC_RPMB_SET_HOST
 struct mmc_host *emmc_rpmb_host;
@@ -230,9 +198,6 @@ int rpmb_cal_hmac(struct rpmb_frame *frame, int blk_cnt, u8 *key, u8 *key_mac)
 }
 #endif
 
-/*
- * CHECK THIS!!! Copy from block.c mmc_blk_data structure.
- */
 struct emmc_rpmb_blk_data {
 	spinlock_t lock;
 	struct device	*parent;
@@ -293,11 +258,6 @@ static void rpmb_dump_frame(u8 *data_frame)
 	MSG(DBG_INFO, "type, frame[511] = 0x%x\n", data_frame[511]);
 }
 
-/*
- * CHECK THIS!!! Copy from block.c mmc_blk_part_switch.
- * Since it is static inline function, we cannot extern to use it.
- * For syncing block data, this is the only way.
- */
 int emmc_rpmb_switch(struct mmc_card *card, struct emmc_rpmb_blk_data *md)
 {
 	int ret;
@@ -551,12 +511,6 @@ error:
 	return ret;
 }
 
-/* ****************************************************************************
- *
- * Following are internal APIs. Stand-alone driver without TEE.
- *
- *
- ******************************************************************************/
 int emmc_rpmb_req_set_key(struct mmc_card *card, u8 *key)
 {
 	struct emmc_rpmb_req rpmb_req;
@@ -2077,9 +2031,6 @@ int ut_rpmb_req_write_data(struct mmc_card *card,
 EXPORT_SYMBOL(ut_rpmb_req_write_data);
 #endif /* CONFIG_MICROTRUST_TEE_SUPPORT */
 
-/*
- * End of above.
- */
 
 
 #ifdef CONFIG_TRUSTONIC_TEE_SUPPORT

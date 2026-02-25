@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -133,11 +129,6 @@ static void __exit emicen_drv_exit(void)
 module_init(emicen_drv_init);
 module_exit(emicen_drv_exit);
 
-/*
- * mtk_emicen_get_ch_cnt - get the channel count
- *
- * Returns the channel count
- */
 unsigned int mtk_emicen_get_ch_cnt(void)
 {
 	struct emicen_dev_t *emicen_dev_ptr;
@@ -152,11 +143,6 @@ unsigned int mtk_emicen_get_ch_cnt(void)
 }
 EXPORT_SYMBOL(mtk_emicen_get_ch_cnt);
 
-/*
- * mtk_emicen_get_rk_cnt - get the rank count
- *
- * Returns the rank count
- */
 unsigned int mtk_emicen_get_rk_cnt(void)
 {
 	struct emicen_dev_t *emicen_dev_ptr;
@@ -171,12 +157,6 @@ unsigned int mtk_emicen_get_rk_cnt(void)
 }
 EXPORT_SYMBOL(mtk_emicen_get_rk_cnt);
 
-/*
- * mtk_emicen_get_rk_size - get the rank size of target rank
- * @rk_id:	the id of target rank
- *
- * Returns the rank size of target rank
- */
 unsigned int mtk_emicen_get_rk_size(unsigned int rk_id)
 {
 	struct emicen_dev_t *emicen_dev_ptr;
@@ -194,10 +174,6 @@ unsigned int mtk_emicen_get_rk_size(unsigned int rk_id)
 }
 EXPORT_SYMBOL(mtk_emicen_get_rk_size);
 
-/*
- * mtk_emidbg_dump - dump emi full status to atf log
- *
- */
 void mtk_emidbg_dump(void)
 {
 	unsigned long spinlock_save_flags;

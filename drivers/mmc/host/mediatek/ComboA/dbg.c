@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -256,12 +253,6 @@ static int dbg_host_cnt;
 
 static unsigned int print_cpu_test = UINT_MAX;
 
-/*
- * type 0: cmd; type 1: rsp; type 3: dma end
- * when type 3: arg 0: no data crc error; arg 1: data crc error
- * @cpu, current CPU ID
- * @reserved, userd for softirq dump "data_active_reqs"
- */
 inline void __dbg_add_host_log(struct mmc_host *mmc, int type,
 			int cmd, int arg, int cpu, unsigned long reserved)
 {
@@ -1239,9 +1230,6 @@ static u8 wData_sd[200] = {
 	0x10, 0x10, 0x10, 0xef, 0xef, 0x10, 0xef, 0xef,
 };
 
-/*
- * @read, bit0: 1:read/0:write; bit1: 0:compare/1:not compare
- */
 static int multi_rw_compare_core(int host_num, int read, uint address,
 	uint type, uint compare)
 {
@@ -1507,9 +1495,6 @@ static uint smp_address_on_sd[MAX_THREAD_NUM_FOR_SMP] = {
 	0x6b0000,
 };
 
-/* cause the system run on the emmc storage,
- * so do not to access the first 2GB region
- */
 static uint smp_address_on_mmc[MAX_THREAD_NUM_FOR_SMP] = {
 	0x402000,
 	0x410000,
@@ -1541,10 +1526,6 @@ struct write_read_data {
 };
 
 static struct write_read_data wr_data[HOST_MAX_NUM][MAX_THREAD_NUM_FOR_SMP];
-/* 2012-03-25
- * the SMP thread function
- * do read after write the memory card, and bit by bit comparison
- */
 
 struct task_struct *rw_thread;
 
@@ -1567,14 +1548,6 @@ static int write_read_thread(void *ptr)
 	return 0;
 }
 
-/*
- * 2012-03-25
- * function:         do SMP test on all MSDC hosts
- * thread_num:       number of thread to be triggerred on this host.
- * count:            times you want to do read after writein each thread.
- * multi_address:    whether do read/write the same/different address of
- *                       the memory card in each thread.
- */
 static int smp_test_on_hosts(struct seq_file *m, int thread_num,
 		int host_id, int count, int multi_address)
 {
@@ -1803,9 +1776,6 @@ static int msdc_help_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * data: bit0~4:id, bit4~7: mode
- */
 static int rwThread(void *data)
 {
 	int error, i = 0;

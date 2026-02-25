@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -537,10 +534,6 @@ void debug_print_power_mode_check(enum mtkfb_power_mode prev,
 			  power_mode_str(primary_display_check_power_mode()));
 }
 
-/**
- * use MAX_SCHEDULE_TIMEOUT to wait forever
- * NOTES: primary_path_lock should NOT be held when call this func !!!!!!!!
- */
 #define __primary_display_wait_state(condition, timeout) \
 	wait_event_timeout(display_state_wait_queue, condition, timeout)
 
@@ -1274,16 +1267,6 @@ enum DISP_MODULE_ENUM _get_dst_module_by_lcm(struct disp_lcm_handle *plcm)
 	return DISP_MODULE_UNKNOWN;
 }
 
-/**
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 1.wait idle:           N         N       Y        Y
- * 2.lcm update:          N         Y       N        Y
- * 3.path start:       idle->Y      Y    idle->Y     Y
- * 4.path trigger:     idle->Y      Y    idle->Y     Y
- * 5.mutex enable:        N         N    idle->Y     Y
- * 6.set cmdq dirty:      N         Y       N        N
- * 7.flush cmdq:          Y         Y       N        N
- */
 int _should_wait_path_idle(void)
 {
 	/*
@@ -4135,27 +4118,34 @@ int primary_display_init(char *lcm_name, unsigned int lcm_fps,
 				   lcm_param->corner_pattern_lt_addr,
 				   lcm_param->corner_pattern_tp_size);
 
-			rc_va_addr = vmalloc(lcm_param->corner_pattern_tp_size);
-			if (!rc_va_addr)
-				DISP_PR_ERR("[RC]: vmalloc failed! line\n");
-
-			memcpy(rc_va_addr,
-				lcm_param->corner_pattern_lt_addr,
-				lcm_param->corner_pattern_tp_size);
-
 			ion_handle = disp_ion_alloc(ion_client,
-				ION_HEAP_MULTIMEDIA_MAP_MVA_MASK,
-				(unsigned long)rc_va_addr,
+				ION_HEAP_MULTIMEDIA_MASK,
+				0,
 				lcm_param->corner_pattern_tp_size);
 
-			if (!ion_handle)
-				DISP_PR_ERR("allocate buffer fail\n");
+			if (!ion_handle) {
+				_DISP_PRINT_FENCE_OR_ERR(1,
+					"allocate RC buffer fail\n");
+				ret = 1;
+				goto lcm_corner_out;
+			}
+
+			rc_va_addr = ion_map_kernel(ion_client, ion_handle);
+			if (IS_ERR(rc_va_addr))
+				_DISP_PRINT_FENCE_OR_ERR(1,
+					"[RC]: vmalloc failed! line\n");
+			else
+				memcpy(rc_va_addr,
+					lcm_param->corner_pattern_lt_addr,
+					lcm_param->corner_pattern_tp_size);
+
+			ion_unmap_kernel(ion_client, ion_handle);
 
 			disp_ion_get_mva(ion_client, ion_handle,
 				&top_mva, DISP_M4U_PORT_DISP_POSTMASK);
 			disp_ion_cache_flush(ion_client, ion_handle,
 				ION_CACHE_INVALID_BY_RANGE);
-
+lcm_corner_out:
 			if (ret)
 				DISP_PR_ERR("[RC]:Fail to cach sync\n");
 		}
@@ -5911,10 +5901,6 @@ int primary_display_trigger(int blocking, void *callback, int need_merge)
 	return ret;
 }
 
-/**
- * the function will trigger dc and wake up dc thread for merge status;
- * decouple_trigger thread->trigger mirror->decouple_update_rdma_config_thread
- */
 static int decouple_trigger_worker_thread(void *data)
 {
 	struct sched_param param = { .sched_priority = 94 };
@@ -6063,10 +6049,6 @@ static enum DISP_HELPER_OPT opt_backup_name[OPT_BACKUP_NUM] = {
 static int opt_backup_value[OPT_BACKUP_NUM];
 static unsigned int idlemgr_flag_backup;
 
-/**
- * svp_inited: make sure the opt_backup &
- * restore_opt functions be used in pairs.
- */
 static int svp_inited;
 
 /* in SVP, keep path in DL */
@@ -6115,14 +6097,6 @@ static int disp_leave_svp(enum SVP_STATE state)
 	return 0;
 }
 
-/**
- * non-sec   -> sec         -> sec    -> sec    -> non-sec(sum:0)
- * SVP_NORMAL   SVP_IN_POINT   SVP_SEC   SVP_SEC   SVP_2_NORMAL
- *              enter_svp
- * -> non-sec(sum:1) -> non-sec(sum:2) -> non-sec(sum:3) -> non-sec
- *    SVP_2_NORMAL      SVP_2_NORMAL      SVP_EXIT_POINT    SVP_NORMAL
- *                                        leave_svp
- */
 static int setup_disp_sec(struct disp_ddp_path_config *data_config,
 			  struct cmdqRecStruct *cmdq_handle, int is_locked)
 {
@@ -8799,17 +8773,16 @@ static int _screen_cap_by_cpu(unsigned int mva, enum UNIFIED_COLOR_FMT ufmt,
 #endif
 
 int primary_display_capture_framebuffer_ovl(unsigned long pbuf,
+					    unsigned int buf_sz,
 					    enum UNIFIED_COLOR_FMT ufmt)
 {
 	int ret = 0;
 	struct ion_client *ion_display_client = NULL;
 	struct ion_handle *ion_display_handle = NULL;
 	unsigned int mva = 0;
-	unsigned int w_xres = primary_display_get_width();
-	unsigned int h_yres = primary_display_get_height();
-	unsigned int pixel_byte = primary_display_get_bpp() / 8;
-	int buffer_size = h_yres * w_xres * pixel_byte;
+	int buffer_size = buf_sz;
 	enum DISP_MODULE_ENUM after_eng = DISP_MODULE_OVL0;
+	void *frame_va = NULL;
 #if defined(CONFIG_MTK_ION)
 	int tmp;
 #endif
@@ -8833,8 +8806,8 @@ int primary_display_capture_framebuffer_ovl(unsigned long pbuf,
 	}
 
 	ion_display_handle = disp_ion_alloc(ion_display_client,
-					    ION_HEAP_MULTIMEDIA_MAP_MVA_MASK,
-					    pbuf, buffer_size);
+					    ION_HEAP_MULTIMEDIA_MASK,
+					    0, buffer_size);
 	if (!ion_display_handle) {
 		DISPMSG("primary capture:Fail to allocate buffer\n");
 		ret = -1;
@@ -8859,6 +8832,15 @@ int primary_display_capture_framebuffer_ovl(unsigned long pbuf,
 
 	disp_ion_cache_flush(ion_display_client, ion_display_handle,
 			     ION_CACHE_INVALID_BY_RANGE);
+
+	frame_va = ion_map_kernel(ion_display_client, ion_display_handle);
+	if (IS_ERR(frame_va)) {
+		_DISP_PRINT_FENCE_OR_ERR(1, "%s #%d map err:%lx\n",
+					 (unsigned long)frame_va);
+		goto out;
+	}
+	memcpy(pbuf, frame_va, buffer_size);
+	ion_unmap_kernel(ion_display_client, ion_display_handle);
 
 out:
 	if (ion_display_client)
@@ -9358,10 +9340,6 @@ done:
 	return ret;
 }
 
-/***********************************************************************
- * Below code is for Efuse test in Android Load.
- * include TE, ROI and Resolution.
- ***********************************************************************/
 /* extern void DSI_ForceConfig(int forceconfig);	*/
 /* extern int DSI_set_roi(int x,int y);			*/
 /* extern int DSI_check_roi(void);			*/
@@ -9688,11 +9666,6 @@ void restart_smart_ovl_nolock(void)
 static enum DISP_POWER_STATE tui_power_stat_backup;
 static int tui_session_mode_backup;
 
-/*
- * Now the normal display vsync is DDP_IRQ_RDMA0_DONE in vdo mode, but when
- * enter TUI, we must protect the rdma0, then, should switch it to the
- * DDP_IRQ_DSI0_FRAME_DONE.
- */
 int display_vsync_switch_to_dsi(unsigned int flg)
 {
 	if (!primary_display_is_video_mode())

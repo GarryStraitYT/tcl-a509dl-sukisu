@@ -1,12 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- *  boot logger: drivers/misc/mtprof/bootprof
- * interface: /proc/bootprof
- */
 #ifndef _BOOTPROF_H_
 #define _BOOTPROF_H_
 

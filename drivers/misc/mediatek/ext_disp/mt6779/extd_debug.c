@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #if (defined(CONFIG_MTK_HDMI_SUPPORT)) ||	\
 	(defined(CONFIG_MTK_DUAL_DISPLAY_SUPPORT) &&	\

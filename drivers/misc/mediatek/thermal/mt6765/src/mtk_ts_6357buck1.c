@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -24,21 +21,11 @@
 #include <linux/mfd/mt6397/core.h>/* PMIC MFD core header */
 #include <linux/regmap.h>
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static DEFINE_SEMAPHORE(sem_mutex);
 static int isTimerCancelled;
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2
- *&& curr_temp < polling_trip_temp1, use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5000;
@@ -69,10 +56,6 @@ static char g_bind8[20] = { 0 };
 static char g_bind9[20] = { 0 };
 
 static long mt6357tsbuck1_cur_temp;
-/*
- *static long int mt6357tsbuck1_start_temp;
- *static long int mt6357tsbuck1_end_temp;
- */
 /*=============================================================*/
 
 static int mt6357tsbuck1_get_temp(struct thermal_zone_device *thermal, int *t)

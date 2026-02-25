@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/tcpci_event.h"
@@ -38,9 +35,6 @@ DECL_PE_STATE_TRANSITION(PD_TIMER_PS_HARD_RESET) = {
 };
 DECL_PE_STATE_REACTION(PD_TIMER_PS_HARD_RESET);
 
-/*
- * [BLOCK] Porcess Ctrl MSG
- */
 
 static inline bool pd_process_ctrl_msg_good_crc(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -174,9 +168,6 @@ static inline bool pd_process_ctrl_msg(
 	return pd_process_protocol_error(pd_port, pd_event);
 }
 
-/*
- * [BLOCK] Porcess Data MSG
- */
 
 static inline bool pd_process_data_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -220,9 +211,6 @@ static inline bool pd_process_data_msg(
 	return pd_process_protocol_error(pd_port, pd_event);
 }
 
-/*
- * [BLOCK] Porcess Extend MSG
- */
 #ifdef CONFIG_USB_PD_REV30
 
 static inline bool pd_process_ext_msg(
@@ -256,9 +244,6 @@ static inline bool pd_process_ext_msg(
 
 #endif	/* CONFIG_USB_PD_REV30 */
 
-/*
- * [BLOCK] Porcess DPM MSG
- */
 
 static inline bool pd_process_dpm_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -280,9 +265,6 @@ static inline bool pd_process_dpm_msg(
 	}
 }
 
-/*
- * [BLOCK] Porcess HW MSG
- */
 
 static inline bool pd_process_hw_msg_vbus_present(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -350,9 +332,6 @@ static inline bool pd_process_hw_msg(
 	};
 }
 
-/*
- * [BLOCK] Porcess PE MSG
- */
 
 static inline bool pd_process_pe_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -371,9 +350,6 @@ static inline bool pd_process_pe_msg(
 	}
 }
 
-/*
- * [BLOCK] Porcess Timer MSG
- */
 static inline bool pd_process_timer_msg_source_start(
 	struct pd_port *pd_port, struct pd_event *pd_event)
 {
@@ -497,9 +473,6 @@ static inline bool pd_process_timer_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Process Policy Engine's SRC Message
- */
 
 bool pd_process_event_src(struct pd_port *pd_port, struct pd_event *pd_event)
 {

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __IMGSENSOR_PWR_CTRL_H__
 #define __IMGSENSOR_PWR_CTRL_H__

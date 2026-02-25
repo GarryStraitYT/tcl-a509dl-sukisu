@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _VDEC_IPI_MSG_H_
 #define _VDEC_IPI_MSG_H_
@@ -11,16 +8,6 @@
 #define DEC_MAX_FB_NUM              VIDEO_MAX_FRAME
 #define DEC_MAX_BS_NUM              VIDEO_MAX_FRAME
 
-/**
- * enum vdec_src_chg_type - decoder src change type
- * @VDEC_NO_CHANGE      : no change
- * @VDEC_RES_CHANGE     : resolution change
- * @VDEC_REALLOC_MV_BUF : realloc mv buf
- * @VDEC_HW_NOT_SUPPORT : hw not support
- * @VDEC_NEED_MORE_OUTPUT_BUF: bs need more fm buffer to decode
- *          kernel should send the same bs buffer again with new fm buffer
- * @VDEC_CROP_CHANGED: notification to update frame crop info
- */
 enum vdec_src_chg_type {
 	VDEC_NO_CHANGE              = (0 << 0),
 	VDEC_RES_CHANGE             = (1 << 0),
@@ -40,11 +27,6 @@ enum vdec_ipi_msg_status {
 	VDEC_IPI_MSG_STATUS_DMA_FAIL    = -5,
 };
 
-/**
- * enum vdec_ipi_msgid - message id between AP and VCU
- * @AP_IPIMSG_XXX       : AP to VCU cmd message id
- * @VCU_IPIMSG_XXX_ACK  : VCU ack AP cmd message id
- */
 enum vdec_ipi_msgid {
 	AP_IPIMSG_DEC_INIT = 0xA000,
 	AP_IPIMSG_DEC_START = 0xA001,
@@ -71,21 +53,6 @@ enum vdec_ipi_msgid {
 	VCU_IPIMSG_DEC_UNLOCK_LAT = 0xC006
 };
 
-/* For GET_PARAM_DISP_FRAME_BUFFER and GET_PARAM_FREE_FRAME_BUFFER,
- * the caller does not own the returned buffer. The buffer will not be
- *                              released before vdec_if_deinit.
- * GET_PARAM_DISP_FRAME_BUFFER  : get next displayable frame buffer,
- *                              struct vdec_fb**
- * GET_PARAM_FREE_FRAME_BUFFER  : get non-referenced framebuffer, vdec_fb**
- * GET_PARAM_PIC_INFO           : get picture info, struct vdec_pic_info*
- * GET_PARAM_CROP_INFO          : get crop info, struct v4l2_crop*
- * GET_PARAM_DPB_SIZE           : get dpb size, __s32*
- * GET_PARAM_FRAME_INTERVAL     : get frame interval info*
- * GET_PARAM_ERRORMB_MAP        : get error mocroblock when decode error*
- * GET_PARAM_CAPABILITY_SUPPORTED_FORMATS: get codec supported format capability
- * GET_PARAM_CAPABILITY_FRAME_SIZES:
- *                       get codec supported frame size & alignment info
- */
 enum vdec_get_param_type {
 	GET_PARAM_DISP_FRAME_BUFFER,
 	GET_PARAM_FREE_FRAME_BUFFER,
@@ -106,18 +73,6 @@ enum vdec_get_param_type {
 	GET_PARAM_INPUT_DRIVEN
 };
 
-/*
- * enum vdec_set_param_type -
- *                  The type of set parameter used in vdec_if_set_param()
- * (VCU related: If you change the order, you must also update the VCU codes.)
- * SET_PARAM_DECODE_MODE: set decoder mode
- * SET_PARAM_FRAME_SIZE: set container frame size
- * SET_PARAM_SET_FIXED_MAX_OUTPUT_BUFFER: set fixed maximum buffer size
- * SET_PARAM_UFO_MODE: set UFO mode
- * SET_PARAM_CRC_PATH: set CRC path used for UT
- * SET_PARAM_GOLDEN_PATH: set Golden YUV path used for UT
- * SET_PARAM_FB_NUM_PLANES                      : frame buffer plane count
- */
 enum vdec_set_param_type {
 	SET_PARAM_DECODE_MODE,
 	SET_PARAM_FRAME_SIZE,
@@ -132,22 +87,11 @@ enum vdec_set_param_type {
 	SET_PARAM_TOTAL_FRAME_BUFQ_COUNT
 };
 
-/**
- * struct vdec_ap_ipi_cmd - generic AP to VCU ipi command format
- * @msg_id      : vdec_ipi_msgid
- * @vcu_inst_addr       : VCU decoder instance address
- */
 struct vdec_ap_ipi_cmd {
 	__u32 msg_id;
 	__u32 vcu_inst_addr;
 };
 
-/**
- * struct vdec_vcu_ipi_ack - generic VCU to AP ipi command format
- * @msg_id      : vdec_ipi_msgid
- * @status      : VCU exeuction result
- * @ap_inst_addr        : AP video decoder instance address
- */
 struct vdec_vcu_ipi_ack {
 	__u32 msg_id;
 	__s32 status;
@@ -161,12 +105,6 @@ struct vdec_vcu_ipi_ack {
 #endif
 };
 
-/**
- * struct vdec_ap_ipi_init - for AP_IPIMSG_DEC_INIT
- * @msg_id      : AP_IPIMSG_DEC_INIT
- * @reserved    : Reserved field
- * @ap_inst_addr        : AP video decoder instance address
- */
 struct vdec_ap_ipi_init {
 	__u32 msg_id;
 	__u32 reserved;
@@ -180,13 +118,6 @@ struct vdec_ap_ipi_init {
 #endif
 };
 
-/**
- * struct vdec_vcu_ipi_init_ack - for VCU_IPIMSG_DEC_INIT_ACK
- * @msg_id        : VCU_IPIMSG_DEC_INIT_ACK
- * @status        : VCU exeuction result
- * @ap_inst_addr        : AP vcodec_vcu_inst instance address
- * @vcu_inst_addr : VCU decoder instance address
- */
 struct vdec_vcu_ipi_init_ack {
 	__u32 msg_id;
 	__s32 status;
@@ -201,14 +132,6 @@ struct vdec_vcu_ipi_init_ack {
 	__u32 vcu_inst_addr;
 };
 
-/**
- * struct vdec_ap_ipi_dec_start - for AP_IPIMSG_DEC_START
- * @msg_id      : AP_IPIMSG_DEC_START
- * @vcu_inst_addr       : VCU decoder instance address
- * @data        : Header info
- * @reserved    : Reserved field
- * @ack msg use vdec_vcu_ipi_ack
- */
 struct vdec_ap_ipi_dec_start {
 	__u32 msg_id;
 	__u32 vcu_inst_addr;
@@ -216,13 +139,6 @@ struct vdec_ap_ipi_dec_start {
 	__u32 reserved;
 };
 
-/**
- * struct vdec_ap_ipi_set_param - for AP_IPIMSG_DEC_SET_PARAM
- * @msg_id        : AP_IPIMSG_DEC_SET_PARAM
- * @vcu_inst_addr : VCU decoder instance address
- * @id            : set param  type
- * @data          : param data
- */
 struct vdec_ap_ipi_set_param {
 	__u32 msg_id;
 	__u32 vcu_inst_addr;
@@ -230,12 +146,6 @@ struct vdec_ap_ipi_set_param {
 	__u32 data[8];
 };
 
-/**
- * struct vdec_ap_ipi_query_cap - for AP_IPIMSG_DEC_QUERY_CAP
- * @msg_id        : AP_IPIMSG_DEC_QUERY_CAP
- * @id      : query capability type
- * @vdec_inst     : AP query data address
- */
 struct vdec_ap_ipi_query_cap {
 	__u32 msg_id;
 	__u32 id;
@@ -254,13 +164,6 @@ struct vdec_ap_ipi_query_cap {
 #endif
 };
 
-/**
- * struct vdec_vcu_ipi_query_cap_ack - for VCU_IPIMSG_DEC_QUERY_CAP_ACK
- * @msg_id      : VCU_IPIMSG_DEC_QUERY_CAP_ACK
- * @status      : VCU exeuction result
- * @ap_data_addr   : AP query data address
- * @vcu_data_addr  : VCU query data address
- */
 struct vdec_vcu_ipi_query_cap_ack {
 	__u32 msg_id;
 	__s32 status;
@@ -282,15 +185,6 @@ struct vdec_vcu_ipi_query_cap_ack {
 	__u32 vcu_data_addr;
 };
 
-/*
- * struct vdec_ipi_fb - decoder frame buffer information
- * @vdec_fb_va  : virtual address of struct vdec_fb
- * @y_fb_dma    : dma address of Y frame buffer
- * @c_fb_dma    : dma address of C frame buffer
- * @poc         : picture order count of frame buffer
- * @timestamp : timestamp of frame buffer
- * @reserved    : for 8 bytes alignment
- */
 struct vdec_ipi_fb {
 	__u64 vdec_fb_va;
 	__u64 y_fb_dma;
@@ -300,13 +194,6 @@ struct vdec_ipi_fb {
 	__u32 reserved;
 };
 
-/**
- * struct ring_bs_list - ring bitstream buffer list
- * @vdec_bs_va_list   : bitstream buffer arrary
- * @read_idx  : read index
- * @write_idx : write index
- * @count     : buffer count in list
- */
 struct ring_bs_list {
 	__u64 vdec_bs_va_list[DEC_MAX_BS_NUM];
 	__u32 read_idx;
@@ -315,13 +202,6 @@ struct ring_bs_list {
 	__u32 reserved;
 };
 
-/**
- * struct ring_fb_list - ring frame buffer list
- * @fb_list   : frame buffer arrary
- * @read_idx  : read index
- * @write_idx : write index
- * @count     : buffer count in list
- */
 struct ring_fb_list {
 	struct vdec_ipi_fb fb_list[DEC_MAX_FB_NUM];
 	__u32 read_idx;
@@ -330,21 +210,6 @@ struct ring_fb_list {
 	__u32 reserved;
 };
 
-/**
- * struct vdec_vsi - shared memory for decode information exchange
- *                        between VCU and Host.
- *                        The memory is allocated by VCU and mapping to Host
- *                        in vcu_dec_init()
- * @ppl_buf_dma : HW working buffer ppl dma address
- * @mv_buf_dma  : HW working buffer mv dma address
- * @list_free   : free frame buffer ring list
- * @list_disp   : display frame buffer ring list
- * @dec         : decode information
- * @pic         : picture information
- * @crop        : crop information
- * @video_formats        : codec supported format info
- * @vdec_framesizes    : codec supported resolution info
- */
 struct vdec_vsi {
 	struct ring_bs_list list_free_bs;
 	struct ring_fb_list list_free;

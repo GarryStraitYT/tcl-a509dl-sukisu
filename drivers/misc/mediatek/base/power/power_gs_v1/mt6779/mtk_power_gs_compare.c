@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #include "mtk_power_gs.h"
 #include "mtk_power_gs_array.h"

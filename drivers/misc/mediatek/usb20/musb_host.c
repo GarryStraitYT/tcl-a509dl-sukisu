@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -19,54 +16,8 @@
 #include "musb_host.h"
 #include "musb_qmu.h"
 
-/* MUSB HOST status 22-mar-2006
- *
- * - There's still lots of partial code duplication for fault paths, so
- *   they aren't handled as consistently as they need to be.
- *
- * - PIO mostly behaved when last tested.
- *     + including ep0, with all usbtest cases 9, 10
- *     + usbtest 14 (ep0out) doesn't seem to run at all
- *     + double buffered OUT/TX endpoints saw stalls(!) with certain usbtest
- *       configurations, but otherwise double buffering passes basic tests.
- *     + for 2.6.N, for N > ~10, needs API changes for hcd framework.
- *
- * - DMA (CPPI) ... partially behaves, not currently recommended
- *     + about 1/15 the speed of typical EHCI implementations (PCI)
- *     + RX, all too often reqpkt seems to misbehave after tx
- *     + TX, no known issues (other than evident silicon issue)
- *
- * - DMA (Mentor/OMAP) ...has at least toggle update problems
- *
- * - [23-feb-2009] minimal traffic scheduling to avoid bulk RX packet
- *   starvation ... nothing yet for TX, interrupt, or bulk.
- *
- * - Not tested with HNP, but some SRP paths seem to behave.
- *
- * NOTE 24-August-2006:
- *
- * - Bulk traffic finally uses both sides of hardware ep1, freeing up an
- *   extra endpoint for periodic use enabling hub + keybd + mouse.  That
- *   mostly works, except that with "usbnet" it's easy to trigger cases
- *   with "ping" where RX loses.  (a) ping to davinci, even "ping -f",
- *   fine; but (b) ping _from_ davinci, even "ping -c 1", ICMP RX loses
- *   although ARP RX wins.  (That test was done with a full speed link.)
- */
 
 
-/*
- * NOTE on endpoint usage:
- *
- * CONTROL transfers all go through ep0.  BULK ones go through dedicated IN
- * and OUT endpoints ... hardware is dedicated for those "async" queue(s).
- * (Yes, bulk _could_ use more of the endpoints than that, and would even
- * benefit from it.)
- *
- * INTERUPPT and ISOCHRONOUS transfers are scheduled to the other endpoints.
- * So far that scheduling is both dumb and optimistic:  the endpoint will be
- * "claimed" until its software queue is no longer refilled.  No multiplexing
- * of transfers between endpoints, or anything clever.
- */
 
 static struct usb_host_endpoint pre_hep;
 static u8 dynamic_fifo_total_slot = 15;
@@ -317,9 +268,6 @@ static void musb_ep_program(struct musb *musb, u8 epnum,
 			    struct urb *urb, int is_out
 			    , u8 *buf, u32 offset, u32 len);
 
-/*
- * Clear TX fifo. Needed to avoid BABBLE errors.
- */
 static void musb_h_tx_flush_fifo(struct musb_hw_ep *ep)
 {
 	void __iomem *epio = ep->regs;
@@ -368,10 +316,6 @@ static void musb_h_ep0_flush_fifo(struct musb_hw_ep *ep)
 	musb_writew(epio, MUSB_TXCSR, 0);
 }
 
-/*
- * Start transmit. Caller is responsible for locking shared resources.
- * musb must be locked.
- */
 void wait_tx_done(u8 epnum, unsigned int timeout_ns)
 {
 	u16 txcsr;
@@ -464,12 +408,6 @@ static struct musb_qh *musb_ep_get_qh(struct musb_hw_ep *ep, int is_in)
 	return is_in ? ep->in_qh : ep->out_qh;
 }
 
-/*
- * Start the URB at the front of an endpoint's queue
- * end must be claimed from the caller.
- *
- * Context: controller locked, irqs blocked
- */
 static void musb_start_urb(struct musb *musb, int is_in, struct musb_qh *qh)
 {
 	u16 frame;
@@ -669,13 +607,6 @@ static inline void
 	}
 }
 
-/*
- * Advance this hardware endpoint's queue, completing the specified URB and
- * advancing to either the next URB queued to that qh, or else invalidating
- * that qh and advancing to the next qh scheduled after the current one.
- *
- * Context: caller owns controller lock, IRQs are blocked
- */
 #ifdef CONFIG_MTK_MUSB_QMU_SUPPORT
 void musb_advance_schedule(struct musb *musb
 	, struct urb *urb, struct musb_hw_ep *hw_ep, int is_in)
@@ -845,9 +776,6 @@ u16 musb_h_flush_rxfifo(struct musb_hw_ep *hw_ep, u16 csr)
 	return musb_readw(hw_ep->regs, MUSB_RXCSR);
 }
 
-/*
- * PIO RX for a packet (or part of it).
- */
 static bool musb_host_packet_rx
 		(struct musb *musb, struct urb *urb, u8 epnum, u8 iso_err)
 {
@@ -938,14 +866,6 @@ static bool musb_host_packet_rx
 	return done;
 }
 
-/* we don't always need to reinit a given side of an endpoint...
- * when we do, use tx/rx reinit routine and then construct a new CSR
- * to address data toggle, NYET, and DMA or PIO.
- *
- * it's possible that driver bugs (especially for DMA) or aborting a
- * transfer might have left the endpoint busier than it should be.
- * the busy/not-empty tests are basically paranoia.
- */
 static void musb_rx_reinit
 		(struct musb *musb, struct musb_qh *qh, struct musb_hw_ep *ep)
 {
@@ -1110,10 +1030,6 @@ static bool musb_tx_dma_program(struct dma_controller *dma,
 	return true;
 }
 
-/*
- * Program an HDRC endpoint as per the given URB
- * Context: irqs blocked, controller lock held
- */
 static void musb_ep_program(struct musb *musb, u8 epnum,
 		    struct urb *urb, int is_out, u8 *buf, u32 offset, u32 len)
 {
@@ -1536,9 +1452,6 @@ finish:
 	}
 }
 
-/* Schedule next QH from musb->in_bulk/out_bulk and move the current qh to
- * the end; avoids starvation for other endpoints.
- */
 static void musb_bulk_nak_timeout
 			(struct musb *musb, struct musb_hw_ep *ep, int is_in)
 {
@@ -1604,10 +1517,6 @@ static void musb_bulk_nak_timeout
 	}
 }
 
-/*
- * Service the default endpoint (ep0) as host.
- * Return true until it's time to start the status stage.
- */
 static bool musb_h_ep0_continue(struct musb *musb, u16 len, struct urb *urb)
 {
 	bool more = false;
@@ -1678,12 +1587,6 @@ static bool musb_h_ep0_continue(struct musb *musb, u16 len, struct urb *urb)
 	return more;
 }
 
-/*
- * Handle default endpoint interrupt as host. Only called in IRQ time
- * from musb_interrupt().
- *
- * called with controller irqlocked
- */
 irqreturn_t musb_h_ep0_irq(struct musb *musb)
 {
 	struct urb *urb;
@@ -1805,17 +1708,6 @@ done:
 	return retval;
 }
 
-/* Host side TX (OUT) using Mentor DMA works as follows:
- *	submit_urb ->
- *		- if queue was empty, Program Endpoint
- *		- ... which starts DMA to fifo in mode 1 or 0
- *
- *	DMA Isr (transfer complete) -> TxAvail()
- *		- Stop DMA (~DmaEnab)	(<--- Alert ... currently happens
- *					only in musb_cleanup_urb)
- *		- TxPktRdy has to be set in mode 0 or for
- *			short packets in mode 1.
- */
 
 
 
@@ -2105,46 +1997,8 @@ void musb_host_tx(struct musb *musb, u8 epnum)
 }
 
 
-/* Host side RX (IN) using Mentor DMA works as follows:
- *	submit_urb ->
- *		- if queue was empty, ProgramEndpoint
- *		- first IN token is sent out (by setting ReqPkt)
- *	LinuxIsr -> RxReady()
- *	/\	=> first packet is received
- *	|	- Set in mode 0 (DmaEnab, ~ReqPkt)
- *	|		-> DMA Isr (transfer complete) -> RxReady()
- *	|		    - Ack receive (~RxPktRdy), turn off DMA (~DmaEnab)
- *	|		    - if urb not complete, send next IN token (ReqPkt)
- *	|			   |		else complete urb.
- *	|			   |
- *	---------------------------
- *
- * Nuances of mode 1:
- *	For short packets, no ack (+RxPktRdy) is sent automatically
- *	(even if AutoClear is ON)
- *	For full packets, ack (~RxPktRdy) and next IN token (+ReqPkt) is sent
- *	automatically => major problem, as collecting the next packet becomes
- *	difficult. Hence mode 1 is not used.
- *
- * REVISIT
- *	All we care about at this driver level is that
- *       (a) all URBs terminate with REQPKT cleared and fifo(s) empty;
- *       (b) termination conditions are: short RX, or buffer full;
- *       (c) fault modes include
- *           - iff URB_SHORT_NOT_OK, short RX status is -EREMOTEIO.
- *             (and that endpoint's dma queue stops immediately)
- *           - overflow (full, PLUS more bytes in the terminal packet)
- *
- *	So for example, usb-storage sets URB_SHORT_NOT_OK, and would
- *	thus be a great candidate for using mode 1 ... for all but the
- *	last packet of one URB's transfer.
- */
 
 
-/*
- * Service an RX interrupt for the given IN endpoint; docs cover bulk, iso,
- * and high-bandwidth IN transfer cases.
- */
 void musb_host_rx(struct musb *musb, u8 epnum)
 {
 	struct urb *urb = NULL;
@@ -2311,12 +2165,6 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 		xfer_len = dma->actual_len;
 
 /* ALPS00798316, Enable DMA RxMode1 */
-/* DBG(7, "urb->actual_length = %d, xfer_len = %d,
- * urb->transfer_buffer_length = %d,
- * dma->actual_len=%d, qh->maxpacket = %d\n",
- * urb->actual_length, xfer_len, urb->transfer_buffer_length,
- * dma->actual_len, qh->maxpacket);
- */
 #ifdef NEVER
 /* ALPS00798316, Enable DMA RxMode1 */
 		val &= ~(MUSB_RXCSR_DMAENAB
@@ -2453,22 +2301,6 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 			}
 #endif
 
-/* Disadvantage of using mode 1:
- *	It's basically usable only for mass storage class; essentially all
- *	other protocols also terminate transfers on short packets.
- *
- * Details:
- *	An extra IN token is sent at the end of the transfer (due to AUTOREQ)
- *	If you try to use mode 1 for (transfer_buffer_length - 512), and try
- *	to use the extra IN token to grab the last packet using mode 0, then
- *	the problem is that you cannot be sure when the device will send the
- *	last packet and RxPktRdy set. Sometimes the packet is recd too soon
- *	such that it gets lost when RxCSR is re-set at the end of the mode 1
- *	transfer, while sometimes it is recd just a little late so that if you
- *	try to configure for mode 0 soon after the mode 1 transfer is
- *	completed, you will find rxcount 0. Okay, so you might think why not
- *	wait for an interrupt when the pkt is recd. Well, you won't get any!
- */
 
 			val = musb_readw(epio, MUSB_RXCSR);
 			val &= ~MUSB_RXCSR_H_REQPKT;
@@ -2571,23 +2403,6 @@ finish:
 	}
 }
 #ifdef CONFIG_MTK_MUSB_QMU_SUPPORT
-/*
- *	X:	isoc_ep_end_idx
-	Y:	MAX_QMU_EP
-	Z:	musb->nr_endpoints - 1
-
-	<-----------(X)---------(Y)---------(Z)>
-
-	((EP_GROUP_A))
-	<--isoc ep-->((EP_GROUP_B))
-	<-----------qmu ep------->((EP_GROUP_C))
-	<---------------all ep----------------->
-
-	EP_GROUP_A : QMU EP and GPD# a lot (for ISOC)
-	EP_GROUP_B : QMU EP and GPD# normal
-	EP_GROUP_C : non-QMU EP
-*
-*/
 
 enum {
 	EP_GROUP_A,
@@ -2666,11 +2481,6 @@ static int
 }
 #endif
 
-/* schedule nodes correspond to peripheral endpoints, like an OHCI QH.
- * the software schedule associates multiple such nodes with a given
- * host side hardware endpoint + direction; scheduling may activate
- * that hardware endpoint.
- */
 static int musb_schedule(struct musb *musb, struct musb_qh *qh, int is_in)
 {
 	int idle = 0;
@@ -3000,11 +2810,6 @@ done:
 }
 
 
-/*
- * abort a transfer that's at the head of a hardware queue.
- * called with controller locked, irqs blocked
- * that hardware queue advances to the next transfer, unless prevented
- */
 static int musb_cleanup_urb(struct urb *urb, struct musb_qh *qh)
 {
 	struct musb_hw_ep *ep = qh->hw_ep;

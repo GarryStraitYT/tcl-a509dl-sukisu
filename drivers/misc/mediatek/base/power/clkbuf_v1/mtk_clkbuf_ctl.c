@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
-/*
- * @file    mtk_clk_buf_ctl.c
- * @brief   Driver for clock buffer control
- *
- */
 
 #include <linux/module.h>
 #include <linux/of_device.h>
@@ -97,10 +89,6 @@ void clk_buf_get_swctrl_status(enum CLK_BUF_SWCTRL_STATUS_T *status)
 		return;
 }
 
-/*
- * Let caller get driving current setting of RF clock buffer
- * Caller: ccci & ccci will send it to modem
- */
 void clk_buf_get_rf_drv_curr(void *rf_drv_curr)
 {
 	if (!is_clkbuf_initiated)

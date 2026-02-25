@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2014-2015 MediaTek Inc.
- * Author: Chaotian.Jing <chaotian.jing@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/module.h>
 #include <linux/clk.h>
@@ -1185,10 +1172,6 @@ static bool msdc_cmd_done(struct msdc_host *host, int events,
 	return true;
 }
 
-/* It is the core layer's responsibility to ensure card status
- * is correct before issue a request. but host design do below
- * checks recommended.
- */
 static inline bool msdc_cmd_is_ready(struct msdc_host *host,
 		struct mmc_request *mrq, struct mmc_command *cmd)
 {
@@ -2220,10 +2203,6 @@ skip_fall:
 	return final_delay == 0xff ? -EIO : 0;
 }
 
-/*
- * MSDC IP which supports data tune + async fifo can do CMD/DAT tune
- * together, which can save the tuning time.
- */
 static int msdc_tune_together(struct mmc_host *mmc, u32 opcode)
 {
 	struct msdc_host *host = mmc_priv(mmc);

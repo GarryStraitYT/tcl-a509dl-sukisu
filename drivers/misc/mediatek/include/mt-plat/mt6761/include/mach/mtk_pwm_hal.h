@@ -1,15 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT_PWM_HAL_H__
 #define __MT_PWM_HAL_H__
 #include <linux/types.h>
 #include <mt-plat/sync_write.h>
-/**********************************
- * Global enum data
- */
 /******************* Register Manipulations*****************/
 #define INREG32(reg)          __raw_readl((void *)reg)
 #define OUTREG32(reg, val)      mt_reg_sync_writel(val, (void *)reg)

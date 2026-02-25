@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     IMX338mipi_Sensor.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _IMX350MIPI_SENSOR_H
 #define _IMX350MIPI_SENSOR_H
 

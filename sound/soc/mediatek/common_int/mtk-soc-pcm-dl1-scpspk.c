@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_scpspk.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio dl1 scp spk
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "audio_ipi_client_spkprotect.h"
 #include "audio_spkprotect_msg_id.h"
@@ -103,9 +70,6 @@ static int SpkIrq_mode = Soc_Aud_IRQ_MCU_MODE_IRQ7_MCU_MODE;
 atomic_t stop_send_ipi_flag = ATOMIC_INIT(0);
 atomic_t scp_reset_done = ATOMIC_INIT(1);
 
-/*
- *    function implementation
- */
 static int mtk_dl1spk_probe(struct platform_device *pdev);
 static int mtk_pcm_dl1spk_close(struct snd_pcm_substream *substream);
 static int mtk_afe_dl1spk_component_probe(struct snd_soc_component *component);

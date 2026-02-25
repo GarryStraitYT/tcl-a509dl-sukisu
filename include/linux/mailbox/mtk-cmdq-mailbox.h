@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __MTK_CMDQ_MAILBOX_H__
 #define __MTK_CMDQ_MAILBOX_H__
@@ -35,25 +32,6 @@
 #define CMDQ_WFE_WAIT_VALUE		0x1
 #define CMDQ_EVENT_MAX			0x3FF
 
-/*
- * CMDQ_CODE_MASK:
- *   set write mask
- *   format: op mask
- * CMDQ_CODE_WRITE:
- *   write value into target register
- *   format: op subsys address value
- * CMDQ_CODE_JUMP:
- *   jump by offset
- *   format: op offset
- * CMDQ_CODE_WFE:
- *   wait for event and clear
- *   it is just clear if no wait
- *   format: [wait]  op event update:1 to_wait:1 wait:1
- *           [clear] op event update:1 to_wait:0 wait:0
- * CMDQ_CODE_EOC:
- *   end of command
- *   format: op irq_flag
- */
 enum cmdq_code {
 	CMDQ_CODE_READ  = 0x01,
 	CMDQ_CODE_MASK = 0x02,

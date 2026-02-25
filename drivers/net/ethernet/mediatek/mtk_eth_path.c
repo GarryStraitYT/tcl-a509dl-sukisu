@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sean Wang <sean.wang@mediatek.com>
- */
 
 #include <linux/phy.h>
 #include <linux/regmap.h>

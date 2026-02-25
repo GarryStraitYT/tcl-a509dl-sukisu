@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MediaTek PCIe host controller driver.
- *
- * Copyright (c) 2017 MediaTek Inc.
- * Author: Ryder Lee <ryder.lee@mediatek.com>
- *	   Honghui Zhang <honghui.zhang@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -132,13 +125,6 @@
 
 struct mtk_pcie_port;
 
-/**
- * struct mtk_pcie_soc - differentiate between host generations
- * @need_fix_class_id: whether this host's class ID needed to be fixed or not
- * @ops: pointer to configuration access functions
- * @startup: pointer to controller setting functions
- * @setup_irq: pointer to initialize IRQ functions
- */
 struct mtk_pcie_soc {
 	bool need_fix_class_id;
 	struct pci_ops *ops;
@@ -146,30 +132,6 @@ struct mtk_pcie_soc {
 	int (*setup_irq)(struct mtk_pcie_port *port, struct device_node *node);
 };
 
-/**
- * struct mtk_pcie_port - PCIe port information
- * @base: IO mapped register base
- * @list: port list
- * @pcie: pointer to PCIe host info
- * @reset: pointer to port reset control
- * @sys_ck: pointer to transaction/data link layer clock
- * @ahb_ck: pointer to AHB slave interface operating clock for CSR access
- *          and RC initiated MMIO access
- * @axi_ck: pointer to application layer MMIO channel operating clock
- * @aux_ck: pointer to pe2_mac_bridge and pe2_mac_core operating clock
- *          when pcie_mac_ck/pcie_pipe_ck is turned off
- * @obff_ck: pointer to OBFF functional block operating clock
- * @pipe_ck: pointer to LTSSM and PHY/MAC layer operating clock
- * @phy: pointer to PHY control block
- * @lane: lane count
- * @slot: port slot
- * @irq: GIC irq
- * @irq_domain: legacy INTx IRQ domain
- * @inner_domain: inner IRQ domain
- * @msi_domain: MSI IRQ domain
- * @lock: protect the msi_irq_in_use bitmap
- * @msi_irq_in_use: bit map for assigned MSI IRQ
- */
 struct mtk_pcie_port {
 	void __iomem *base;
 	struct list_head list;
@@ -192,19 +154,6 @@ struct mtk_pcie_port {
 	DECLARE_BITMAP(msi_irq_in_use, MTK_MSI_IRQS_NUM);
 };
 
-/**
- * struct mtk_pcie - PCIe host information
- * @dev: pointer to PCIe device
- * @base: IO mapped register base
- * @free_ck: free-run reference clock
- * @io: IO resource
- * @pio: PIO resource
- * @mem: non-prefetchable memory resource
- * @busn: bus range
- * @offset: IO / Memory offset
- * @ports: pointer to PCIe port information
- * @soc: pointer to SoC-dependent operations
- */
 struct mtk_pcie {
 	struct device *dev;
 	void __iomem *base;

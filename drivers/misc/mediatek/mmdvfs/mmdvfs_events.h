@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM mmdvfs_events

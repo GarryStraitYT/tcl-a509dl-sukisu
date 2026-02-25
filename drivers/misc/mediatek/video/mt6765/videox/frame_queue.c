@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 /* #include <../drivers/staging/android/sw_sync.h> */
 #include <linux/slab.h>

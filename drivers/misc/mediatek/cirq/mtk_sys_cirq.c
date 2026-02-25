@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -49,17 +46,11 @@ static struct cirq_events cirq_all_events;
 static unsigned int already_cloned;
 #endif
 
-/*
- *Define Data Structure
- */
 struct mt_cirq_driver {
 	struct platform_driver driver;
 	const struct platform_device_id *id_table;
 };
 
-/*
- * Define Global Variable
- */
 static struct mt_cirq_driver mt_cirq_drv = {
 	.driver = {
 		.driver = {
@@ -75,14 +66,6 @@ static unsigned long cirq_clone_flush_check_val;
 static unsigned long cirq_pattern_clone_flush_check_val;
 static unsigned long cirq_pattern_list;
 
-/*
- * mt_cirq_get_mask: Get the specified SYS_CIRQ mask
- * @cirq_num: the SYS_CIRQ number to get
- * @return:
- *    1: this cirq is masked
- *    0: this cirq is umasked
- *    -1: cirq num is out of range
- */
 static int mt_cirq_get_mask(unsigned int cirq_num)
 {
 	unsigned int st;
@@ -103,14 +86,8 @@ static int mt_cirq_get_mask_vec(int i)
 	return readl(i*4 + CIRQ_MASK_BASE);
 }
 
-/*
- * mt_cirq_mask_all: Mask all interrupts on SYS_CIRQ.
- */
 
 
-/*
- * mt_cirq_ack_all: Ack all the interrupt on SYS_CIRQ
- */
 void mt_cirq_ack_all(void)
 {
 	u32 ack_vec, pend_vec, mask_vec;
@@ -145,9 +122,6 @@ void mt_cirq_mask_all(void)
 	mb();
 }
 
-/*
- * mt_cirq_unmask_all: Unmask all interrupts on SYS_CIRQ.
- */
 void mt_cirq_unmask_all(void)
 {
 	unsigned int i;
@@ -158,13 +132,6 @@ void mt_cirq_unmask_all(void)
 	mb();
 }
 
-/*
- * mt_cirq_mask: Mask the specified SYS_CIRQ.
- * @cirq_num: the SYS_CIRQ number to mask
- * @return:
- *    0: mask success
- *   -1: cirq num is out of range
- */
 static int mt_cirq_mask(unsigned int cirq_num)
 {
 	unsigned int bit = 1 << (cirq_num % 32);
@@ -179,13 +146,6 @@ static int mt_cirq_mask(unsigned int cirq_num)
 	return 0;
 }
 
-/*
- * mt_cirq_unmask: Unmask the specified SYS_CIRQ.
- * @cirq_num: the SYS_CIRQ number to unmask
- * @return:
- *    0: umask success
- *   -1: cirq num is out of range
- */
 static int mt_cirq_unmask(unsigned int cirq_num)
 {
 	unsigned int bit = 1 << (cirq_num % 32);
@@ -200,14 +160,6 @@ static int mt_cirq_unmask(unsigned int cirq_num)
 	return 0;
 }
 
-/*
- * mt_cirq_get_sens: Get the specified SYS_CIRQ sensitivity
- * @cirq_num: the SYS_CIRQ number to get
- * @return:
- *    1: this cirq is MT_LEVEL_SENSITIVE
- *    0: this cirq is MT_EDGE_SENSITIVE
- *   -1: cirq num is out of range
- */
 static int mt_cirq_get_sens(unsigned int cirq_num)
 {
 	unsigned int st;
@@ -223,14 +175,6 @@ static int mt_cirq_get_sens(unsigned int cirq_num)
 	return !!(st & bit);
 }
 
-/*
- * mt_cirq_set_sens: Set the sensitivity for the specified SYS_CIRQ number.
- * @cirq_num: the SYS_CIRQ number to set
- * @sens: sensitivity to set
- * @return:
- *    0: set sens success
- *   -1: cirq num is out of range
- */
 static int mt_cirq_set_sens(unsigned int cirq_num, unsigned int sens)
 {
 	void __iomem *base;
@@ -256,14 +200,6 @@ static int mt_cirq_set_sens(unsigned int cirq_num, unsigned int sens)
 	return 0;
 }
 
-/*
- * mt_cirq_get_pol: Get the specified SYS_CIRQ polarity
- * @cirq_num: the SYS_CIRQ number to get
- * @return:
- *    1: this cirq is MT_CIRQ_POL_POS
- *    0: this cirq is MT_CIRQ_POL_NEG
- *   -1: cirq num is out of range
- */
 static int mt_cirq_get_pol(unsigned int cirq_num)
 {
 	unsigned int st;
@@ -279,14 +215,6 @@ static int mt_cirq_get_pol(unsigned int cirq_num)
 	return !!(st & bit);
 }
 
-/*
- * mt_cirq_set_pol: Set the polarity for the specified SYS_CIRQ number.
- * @cirq_num: the SYS_CIRQ number to set
- * @pol: polarity to set
- * @return:
- *    0: set pol success
- *   -1: cirq num is out of range
- */
 static int mt_cirq_set_pol(unsigned int cirq_num, unsigned int pol)
 {
 	void __iomem *base;
@@ -311,11 +239,6 @@ static int mt_cirq_set_pol(unsigned int cirq_num, unsigned int pol)
 	return 0;
 }
 
-/*
- * CIRQ register, which is under infra power down domain,
- * will be corrupted after exiting suspend/resume flow.
- * Due to the HW change, so we need reset the cirq by SW.
- */
 void mt_cirq_sw_reset(void)
 {
 	unsigned int st;
@@ -328,9 +251,6 @@ void mt_cirq_sw_reset(void)
 }
 EXPORT_SYMBOL(mt_cirq_sw_reset);
 
-/*
- * mt_cirq_enable: Enable SYS_CIRQ
- */
 void mt_cirq_enable(void)
 {
 	unsigned int st;
@@ -348,13 +268,6 @@ EXPORT_SYMBOL(mt_cirq_enable);
 
 
 #ifndef CONFIG_FAST_CIRQ_CLONE_FLUSH
-/*
- * mt_cirq_get_pending: Get the specified SYS_CIRQ pending
- * @cirq_num: the SYS_CIRQ number to get
- * @return:
- *    1: this cirq is pending
- *    0: this cirq is not pending
- */
 static bool mt_cirq_get_pending(unsigned int cirq_num)
 {
 	unsigned int st;
@@ -372,9 +285,6 @@ static bool mt_cirq_get_pending(unsigned int cirq_num)
 }
 #endif
 
-/*
- * mt_cirq_disable: Disable SYS_CIRQ
- */
 void mt_cirq_disable(void)
 {
 	unsigned int st;
@@ -386,9 +296,6 @@ void mt_cirq_disable(void)
 EXPORT_SYMBOL(mt_cirq_disable);
 
 
-/*
- * mt_cirq_disable: Flush interrupt from SYS_CIRQ to GIC
- */
 void mt_cirq_flush(void)
 {
 #ifdef LATENCY_CHECK
@@ -496,9 +403,6 @@ void mt_cirq_flush(void)
 }
 EXPORT_SYMBOL(mt_cirq_flush);
 
-/*
- * mt_cirq_clone_pol: Copy the polarity setting from GIC to SYS_CIRQ
- */
 void mt_cirq_clone_pol(void)
 {
 	unsigned int cirq_num, irq_num;
@@ -521,9 +425,6 @@ void mt_cirq_clone_pol(void)
 	}
 }
 
-/*
- * mt_cirq_clone_sens: Copy the sensitivity setting from GIC to SYS_CIRQ
- */
 void mt_cirq_clone_sens(void)
 {
 	unsigned int cirq_num, irq_num;
@@ -548,9 +449,6 @@ void mt_cirq_clone_sens(void)
 	}
 }
 
-/*
- * mt_cirq_clone_mask: Copy the mask setting from GIC to SYS_CIRQ
- */
 void mt_cirq_clone_mask(void)
 {
 	unsigned int cirq_num, irq_num;
@@ -818,9 +716,6 @@ static void cirq_fast_sw_flush(void)
 #endif
 
 
-/*
- * mt_cirq_clone_gic: Copy the setting from GIC to SYS_CIRQ
- */
 void mt_cirq_clone_gic(void)
 {
 #ifdef LATENCY_CHECK
@@ -844,9 +739,6 @@ EXPORT_SYMBOL(mt_cirq_clone_gic);
 
 
 #if defined(LDVT)
-/*
- * cirq_dvt_show: To show usage.
- */
 static ssize_t cirq_dvt_show(struct device_driver *driver, char *buf)
 {
 	const char *list = "1.regs\n2.tests\n3.disable\n";
@@ -854,9 +746,6 @@ static ssize_t cirq_dvt_show(struct device_driver *driver, char *buf)
 	return snprintf(buf, PAGE_SIZE, list);
 }
 
-/*
- * mci_dvt_store: To select mci test case.
- */
 static ssize_t cirq_dvt_store(struct device_driver *driver, const char *buf,
 			      size_t count)
 {
@@ -887,10 +776,6 @@ static ssize_t cirq_dvt_store(struct device_driver *driver, const char *buf,
 DRIVER_ATTR_RW(cirq_dvt);
 #endif
 
-/*
- * cirq_clone_flush_check_show:
- * To show if we do cirq clone/flush value's check.
- */
 static ssize_t cirq_clone_flush_check_show(struct device_driver *driver,
 					   char *buf)
 {
@@ -898,10 +783,6 @@ static ssize_t cirq_clone_flush_check_show(struct device_driver *driver,
 			cirq_clone_flush_check_val);
 }
 
-/*
- * cirq_clone_flush_check_store:
- * set 1 if we need to enable clone/flush value's check
- */
 static ssize_t cirq_clone_flush_check_store(struct device_driver *driver,
 					    const char *buf, size_t count)
 {
@@ -916,10 +797,6 @@ static ssize_t cirq_clone_flush_check_store(struct device_driver *driver,
 
 DRIVER_ATTR_RW(cirq_clone_flush_check);
 
-/*
- * cirq_pattern_clone_flush_check_show:
- * To show if we do need to do pattern test.
- */
 static ssize_t cirq_pattern_clone_flush_check_show(struct device_driver *driver,
 						   char *buf)
 {
@@ -927,9 +804,6 @@ static ssize_t cirq_pattern_clone_flush_check_show(struct device_driver *driver,
 			cirq_pattern_clone_flush_check_val);
 }
 
-/*
- * cirq_pattern_clone_flush_check_show:  set 1 if we need to do pattern test.
- */
 static ssize_t cirq_pattern_clone_flush_check_store(struct device_driver
 						    *driver, const char *buf,
 						    size_t count)
@@ -945,18 +819,11 @@ static ssize_t cirq_pattern_clone_flush_check_store(struct device_driver
 
 DRIVER_ATTR_RW(cirq_pattern_clone_flush_check);
 
-/*
- * cirq_pattern_clone_flush_check_show:
- * To show if we do need to do pattern test.
- */
 static ssize_t cirq_pattern_list_show(struct device_driver *driver, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%ld\n", cirq_pattern_list);
 }
 
-/*
- * cirq_pattern_clone_flush_check_show:  set 1 if we need to do pattern test.
- */
 static ssize_t cirq_pattern_list_store(struct device_driver *driver,
 				       const char *buf, size_t count)
 {
@@ -1107,9 +974,6 @@ int mt_cirq_test(void)
 }
 #endif
 
-/*
- * cirq_irq_handler: SYS_CIRQ interrupt service routine.
- */
 static irqreturn_t cirq_irq_handler(int irq, void *dev_id)
 {
 	pr_debug("[CIRQ] CIRQ_Handler\n");
@@ -1119,10 +983,6 @@ static irqreturn_t cirq_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-/*
- * mt_cirq_init: SYS_CIRQ init function
- * always return 0
- */
 int __init mt_cirq_init(void)
 {
 	int ret;

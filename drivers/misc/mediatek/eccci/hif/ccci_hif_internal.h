@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __CCCI_HIF_INTERNAL_H__
 #define __CCCI_HIF_INTERNAL_H__
@@ -145,11 +142,6 @@ static inline void ccci_reset_seq_num(struct ccci_hif_traffic *traffic_info)
 		sizeof(traffic_info->seq_nums[IN]));
 }
 
-/*
- * as one channel can only use one hardware queue,
- * so it's safe we call this function in hardware
- * queue's lock protection
- */
 static inline void ccci_md_inc_tx_seq_num(unsigned char md_id,
 	struct ccci_hif_traffic *traffic_info,
 	struct ccci_header *ccci_h)

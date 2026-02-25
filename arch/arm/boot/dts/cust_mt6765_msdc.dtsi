@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- *
- */
 
-/**********************************************
- *MSDC DTSI File
- *******************************************/
 &msdc0 {
 	index = /bits/ 8 <0>;
 	clk_src = /bits/ 8 <MSDC0_CLKSRC_400MHZ>;

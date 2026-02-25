@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Ryder Lee <ryder.lee@mediatek.com>
- */
 
 /dts-v1/;
 #include <dt-bindings/input/input.h>

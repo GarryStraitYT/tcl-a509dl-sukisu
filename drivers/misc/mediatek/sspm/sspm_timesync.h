@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _SSPM_TIMESYNC_H_
 #define _SSPM_TIMESYNC_H_
@@ -16,10 +13,6 @@
 #define SSPM_TS_MBOX                      SHAREMBOX_NO_MCDI
 #define SSPM_TS_MBOX_OFFSET_BASE          SHAREMBOX_OFFSET_TIMESTAMP
 
-/*
- * Shared MBOX: AP write, SSPM read
- * Unit for each offset: 4 bytes
- */
 
 #define SSPM_TS_MBOX_TICK_H               (SSPM_TS_MBOX_OFFSET_BASE + 0)
 #define SSPM_TS_MBOX_TICK_L               (SSPM_TS_MBOX_OFFSET_BASE + 1)

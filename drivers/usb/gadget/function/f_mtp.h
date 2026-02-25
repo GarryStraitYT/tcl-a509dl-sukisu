@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #include <linux/ioctl.h>
 #include <linux/types.h>
@@ -36,15 +33,9 @@ struct mtp_event {
 
 /* Sends the specified file range to the host */
 #define MTP_SEND_FILE              _IOW('M', 0, struct mtp_file_range)
-/* Receives data from the host and writes it to a file.
- * The file is created if it does not exist.
- */
 #define MTP_RECEIVE_FILE           _IOW('M', 1, struct mtp_file_range)
 /* Sends an event to the host via the interrupt endpoint */
 #define MTP_SEND_EVENT             _IOW('M', 3, struct mtp_event)
-/* Sends the specified file range to the host,
- * with a 12 byte MTP data packet header at the beginning.
- */
 #define MTP_SEND_FILE_WITH_HEADER  _IOW('M', 4, struct mtp_file_range)
 
 #ifdef CONFIG_COMPAT

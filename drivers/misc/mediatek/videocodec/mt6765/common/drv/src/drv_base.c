@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/sched.h>
 #include <linux/dma-mapping.h>
@@ -23,9 +20,6 @@ unsigned int gu4LockEncHWCount;	/* spinlock : LockEncHWCountLock */
 unsigned int gu4DecISRCount;	/* spinlock : DecISRCountLock */
 unsigned int gu4EncISRCount;	/* spinlock : EncISRCountLock */
 
-/*
- * Search HWLockSlot by TID
- */
 int search_slot_byTID(unsigned long ulpa, unsigned int curr_tid)
 {
 	int i;
@@ -47,9 +41,6 @@ int search_slot_byTID(unsigned long ulpa, unsigned int curr_tid)
 }
 
 
-/*
- * Search HWLockSlot by handle
- */
 int search_slot_byHdl(unsigned long ulpa, unsigned long handle)
 {
 	int i;
@@ -75,9 +66,6 @@ int search_slot_byHdl(unsigned long ulpa, unsigned long handle)
 	return -1;
 }
 
-/*
- * Set current HWLockSlot
- */
 struct VAL_VCODEC_OAL_HW_CONTEXT_T *set_slot(unsigned long ulpa,
 						unsigned int tid)
 {
@@ -128,9 +116,6 @@ struct VAL_VCODEC_OAL_HW_CONTEXT_T *set_slot(unsigned long ulpa,
 	return &hw_ctx[0];
 }
 
-/*
- * Set HWLockSlot tid
- */
 struct VAL_VCODEC_OAL_HW_CONTEXT_T
 	*set_slot_TID(struct VAL_VCODEC_THREAD_ID_T a_prVcodecThreadID,
 	unsigned int *a_prIndex)
@@ -210,9 +195,6 @@ struct VAL_VCODEC_OAL_HW_CONTEXT_T
 }
 
 
-/*
- * free HWLockSlot
- */
 struct VAL_VCODEC_OAL_HW_CONTEXT_T *free_slot(unsigned long ulpa)
 {
 	int i;
@@ -243,9 +225,6 @@ struct VAL_VCODEC_OAL_HW_CONTEXT_T *free_slot(unsigned long ulpa)
 }
 
 
-/*
- * Add non cache memory to list
- */
 void add_ncmem(unsigned long a_ulKVA,
 			    unsigned long a_ulKPA,
 			    unsigned long a_ulSize,
@@ -296,9 +275,6 @@ void add_ncmem(unsigned long a_ulKVA,
 }
 
 
-/*
- * Free non cache memory from list
- */
 void free_ncmem(unsigned long a_ulKVA, unsigned long a_ulKPA)
 {
 	unsigned int u4I = 0;
@@ -340,9 +316,6 @@ void free_ncmem(unsigned long a_ulKVA, unsigned long a_ulKPA)
 
 
 #define FFREE_LOG "idx=\%d,tid=\%d,KVA=0x\%lx,KPA=0x\%lx,Size=\%lu"
-/*
- * Force free non cache memory of a tid
- */
 void ffree_ncmem(unsigned int a_u4Tid)
 {
 	unsigned int u4I = 0;
@@ -395,9 +368,6 @@ void ffree_ncmem(unsigned int a_u4Tid)
 }
 
 
-/*
- * Search non cache memory by KPA
- */
 unsigned long search_ncmem_byKPA(unsigned long a_ulKPA)
 {
 	unsigned int u4I = 0;

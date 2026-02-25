@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
-/**************************************************************
- * camera_dip.c - MT6799 Linux DIP Device Driver
- *
- * DESCRIPTION:
- *     This file provid the other drivers DIP relative functions
- *
- **************************************************************/
 /* MET: define to enable MET*/
 
 #include <linux/types.h>
@@ -156,15 +146,9 @@ pr_info(MyTag "[%s] " format, __func__, ##args)
 pr_debug(MyTag "[%s] " format, __func__, ##args)
 
 bool g_DIP_PMState;
-/**************************************************************
- *
- **************************************************************/
 /* #define DIP_WR32(addr, data)    iowrite32(data, addr) */
 #define DIP_WR32(addr, data)    mt_reg_sync_writel(data, addr)
 #define DIP_RD32(addr)                  ioread32((void *)addr)
-/**************************************************************
- *
- **************************************************************/
 /* dynamic log level */
 #define DIP_DBG_INT                 (0x00000001)
 #define DIP_DBG_READ_REG            (0x00000004)
@@ -179,9 +163,6 @@ bool g_DIP_PMState;
 #define DIP_DBG_INT_3               (0x00000800)
 #define DIP_DBG_HW_DON              (0x00001000)
 #define DIP_DBG_ION_CTRL            (0x00002000)
-/**************************************************************
- *
- **************************************************************/
 #define DUMP_GCE_TPIPE  0
 
 static irqreturn_t DIP_Irq_DIP_A(signed int  Irq, void *DeviceId);
@@ -211,10 +192,6 @@ const struct ISR_TABLE DIP_IRQ_CB_TBL[DIP_IRQ_TYPE_AMOUNT] = {
 	{DIP_Irq_DIP_A,     0,  "dip"}
 };
 
-/*
- * Note!!! The order and member of .compatible must be the same with that in
- *  "DIP_DEV_NODE_ENUM" in camera_dip.h
- */
 static const struct of_device_id dip_of_ids[] = {
 	{ .compatible = "mediatek,imgsys", },
 	{ .compatible = "mediatek,dip", },
@@ -354,9 +331,6 @@ const struct Dip_Init_Array DIP_INIT_ARY[DIP_INIT_ARRAY_COUNT] = {
 	{0x88C, 0x00400040},
 	{0x890, 0x00280028}
 };
-/**************************************************************
- *
- **************************************************************/
 typedef void (*tasklet_cb)(unsigned long);
 struct Tasklet_table {
 	tasklet_cb tkt_cb;
@@ -542,9 +516,6 @@ static  spinlock_t      SpinLockRegScen;
 static  spinlock_t      SpinLock_UserKey;
 
 
-/**************************************************************
- *
- **************************************************************/
 /* internal data */
 /* pointer to the kmalloc'd area, rounded up to a page boundary */
 static int *pTbl_RTBuf[DIP_IRQ_TYPE_AMOUNT];
@@ -560,17 +531,11 @@ static unsigned int g_u4DipCnt;
 
 int DIP_pr_detect_count;
 
-/**************************************************************
- *
- **************************************************************/
 struct DIP_USER_INFO_STRUCT {
 	pid_t   Pid;
 	pid_t   Tid;
 };
 
-/**************************************************************
- *
- **************************************************************/
 #define DIP_BUF_SIZE            (4096)
 #define DIP_BUF_SIZE_WRITE      1024
 #define DIP_BUF_WRITE_AMOUNT    6
@@ -593,9 +558,6 @@ struct DIP_BUF_INFO_STRUCT {
 };
 
 
-/**************************************************************
- *
- **************************************************************/
 #define DIP_ISR_MAX_NUM 32
 #define INT_ERR_WARN_TIMER_THREAS 1000
 #define INT_ERR_WARN_MAX_TIME 1
@@ -707,12 +669,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[DIP_IRQ_TYPE_AMOUNT];
 
-/**
- *   for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *   limited:
- *   each log must shorter than 512 bytes
- *   total log length in each irq/logtype can't over 1024 bytes
- */
 #define IRQ_LOG_KEEPER_T(sec, usec) {\
 		ktime_t time;           \
 		time = ktime_get();     \
@@ -882,25 +838,16 @@ pr_debug(IRQTag fmt,  ##args)
 #define IMGSYS_REG_CG_SET               (DIP_IMGSYS_CONFIG_BASE + 0x4)
 #define IMGSYS_REG_CG_CLR               (DIP_IMGSYS_CONFIG_BASE + 0x8)
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DIP_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DIP_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DIP_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
@@ -2177,9 +2124,6 @@ static inline void Disable_Unprepare_ccf_clock(void)
 
 #endif
 
-/**************************************************************
- *
- **************************************************************/
 static void DIP_EnableClock(bool En)
 {
 #if defined(EP_NO_CLKMGR)
@@ -2243,9 +2187,6 @@ static void DIP_EnableClock(bool En)
 
 
 
-/**************************************************************
- *
- **************************************************************/
 static inline void DIP_Reset(signed int module)
 {
 	/*    unsigned int Reg;*/
@@ -2269,9 +2210,6 @@ static inline void DIP_Reset(signed int module)
 	}
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_ReadReg(struct DIP_REG_IO_STRUCT *pRegIo)
 {
 	unsigned int i;
@@ -2340,9 +2278,6 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 #ifdef AEE_DUMP_BY_USING_ION_MEMORY
 static signed int dip_allocbuf(struct dip_imem_memory *pMemInfo)
 {
@@ -2413,9 +2348,6 @@ dip_allocbuf_exit:
 	return ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static void dip_freebuf(struct dip_imem_memory *pMemInfo)
 {
 	struct ion_handle *handle;
@@ -2434,9 +2366,6 @@ static void dip_freebuf(struct dip_imem_memory *pMemInfo)
 }
 #endif
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_DumpBuffer
 	(struct DIP_DUMP_BUFFER_STRUCT *pDumpBufStruct)
 {
@@ -2605,9 +2534,6 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_SetMemInfo
 	(struct DIP_MEM_INFO_STRUCT *pMemInfoStruct)
 {
@@ -2642,17 +2568,11 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 
 /*  */
 /* isr dbg log , sw isr response counter , +1 when sw receive 1 sof isr. */
 int DIP_Vsync_cnt[2] = {0, 0};
 
-/**************************************************************
- * update current idnex to working frame
- **************************************************************/
 static signed int DIP_P2_BufQue_Update_ListCIdx
 	(enum DIP_P2_BUFQUE_PROPERTY property,
 	enum DIP_P2_BUFQUE_LIST_TAG listTag)
@@ -2758,9 +2678,6 @@ static signed int DIP_P2_BufQue_Update_ListCIdx
 	}
 	return ret;
 }
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_P2_BufQue_Erase
 	(enum DIP_P2_BUFQUE_PROPERTY property,
 	enum DIP_P2_BUFQUE_LIST_TAG listTag,
@@ -2884,9 +2801,6 @@ static signed int DIP_P2_BufQue_Erase
 	return ret;
 }
 
-/**************************************************************
- * get first matched element idnex
- **************************************************************/
 static signed int DIP_P2_BufQue_GetMatchIdx
 	(struct  DIP_P2_BUFQUE_STRUCT param,
 	enum DIP_P2_BUFQUE_MATCH_TYPE matchType,
@@ -3094,9 +3008,6 @@ static signed int DIP_P2_BufQue_GetMatchIdx
 	return idx;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DIP_P2_BufQue_WaitEventState(
 	struct DIP_P2_BUFQUE_STRUCT param,
 	enum DIP_P2_BUFQUE_MATCH_TYPE type,
@@ -3177,9 +3088,6 @@ static inline unsigned int DIP_P2_BufQue_WaitEventState(
 }
 
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_P2_BufQue_CTRL_FUNC(
 	struct DIP_P2_BUFQUE_STRUCT param)
 {
@@ -3652,9 +3560,6 @@ static signed int DIP_P2_BufQue_CTRL_FUNC(
 	return ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_FLUSH_IRQ(struct DIP_WAIT_IRQ_STRUCT *irqinfo)
 {
 	unsigned long flags;
@@ -3689,9 +3594,6 @@ static signed int DIP_FLUSH_IRQ(struct DIP_WAIT_IRQ_STRUCT *irqinfo)
 }
 
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_WaitIrq(struct DIP_WAIT_IRQ_STRUCT *WaitIrq)
 {
 
@@ -3700,9 +3602,6 @@ static signed int DIP_WaitIrq(struct DIP_WAIT_IRQ_STRUCT *WaitIrq)
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static long DIP_ioctl(
 	struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
@@ -3982,9 +3881,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/**************************************************************
- *
- **************************************************************/
 static int compat_get_dip_read_register_data(
 	struct compat_DIP_REG_IO_STRUCT __user *data32,
 	struct DIP_REG_IO_STRUCT __user *data)
@@ -4159,9 +4055,6 @@ static long DIP_ioctl_compat(
 
 #endif
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_open(
 	struct inode *pInode, struct file *pFile)
 {
@@ -4378,9 +4271,6 @@ EXIT:
 
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_release(
 	struct inode *pInode, struct file *pFile)
 {
@@ -4527,9 +4417,6 @@ EXIT:
 }
 
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_mmap(
 	struct file *pFile, struct vm_area_struct *pVma)
 {
@@ -4576,9 +4463,6 @@ static signed int DIP_mmap(
 	return 0;
 }
 
-/**************************************************************
- *
- **************************************************************/
 
 static dev_t IspDevNo;
 static struct cdev *pIspCharDrv;
@@ -4596,9 +4480,6 @@ static const struct file_operations IspFileOper = {
 #endif
 };
 
-/**************************************************************
- *
- **************************************************************/
 static inline void DIP_UnregCharDev(void)
 {
 	LOG_DBG("- E.");
@@ -4612,9 +4493,6 @@ static inline void DIP_UnregCharDev(void)
 	unregister_chrdev_region(IspDevNo, 1);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline signed int DIP_RegCharDev(void)
 {
 	signed int Ret = 0;
@@ -4655,9 +4533,6 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_probe(struct platform_device *pDev)
 {
 	signed int Ret = 0;
@@ -4902,9 +4777,6 @@ EXIT:
 	return Ret;
 }
 
-/**************************************************************
- * Called when the device is being detached from the driver
- **************************************************************/
 static signed int DIP_remove(struct platform_device *pDev)
 {
 	/*    struct resource *pRes;*/
@@ -4982,9 +4854,6 @@ static signed int DIP_suspend(
 	return 0;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static signed int DIP_resume(struct platform_device *pDev)
 {
 	unsigned int i = 0;
@@ -5062,9 +4931,6 @@ const struct dev_pm_ops DIP_pm_ops = {
 };
 
 
-/**************************************************************
- *
- **************************************************************/
 static struct platform_driver DipDriver = {
 	.probe   = DIP_probe,
 	.remove  = DIP_remove,
@@ -5082,9 +4948,6 @@ static struct platform_driver DipDriver = {
 	}
 };
 
-/**************************************************************
- *
- **************************************************************/
 static int dip_p2_ke_dump_read(struct seq_file *m, void *v)
 {
 #ifdef AEE_DUMP_REDUCE_MEMORY
@@ -5177,9 +5040,6 @@ static const struct file_operations dip_p2_ke_dump_proc_fops = {
 	.release = single_release,
 };
 
-/**************************************************************
- *
- **************************************************************/
 static int dip_p2_dump_read(struct seq_file *m, void *v)
 {
 #ifdef AEE_DUMP_REDUCE_MEMORY
@@ -5293,9 +5153,6 @@ static const struct file_operations dip_p2_dump_proc_fops = {
 	.read = seq_read,
 	.release = single_release,
 };
-/**************************************************************
- *
- **************************************************************/
 static int dip_dump_read(struct seq_file *m, void *v)
 {
 
@@ -5371,9 +5228,6 @@ static const struct file_operations dip_dump_proc_fops = {
 	.read = seq_read,
 	.release = single_release,
 };
-/**************************************************************
- *
- **************************************************************/
 /*#ifdef CONFIG_MTK_IOMMU_V2*/
 /*enum mtk_iommu_callback_ret_t ISP_M4U_TranslationFault_callback(int port,*/
 /*	unsigned int mva, void *data)*/
@@ -5631,9 +5485,6 @@ static signed int __init DIP_Init(void)
 	return Ret;
 }
 
-/**************************************************************
- *
- **************************************************************/
 static void __exit DIP_Exit(void)
 {
 	int i, j;
@@ -5925,9 +5776,6 @@ irqreturn_t DIP_Irq_DIP_A(signed int  Irq, void *DeviceId)
 
 }
 
-/**************************************************************
- *
- **************************************************************/
 
 #if (DIP_BOTTOMHALF_WORKQ == 1)
 static void DIP_BH_Workqueue(struct work_struct *pWork)
@@ -5940,9 +5788,6 @@ static void DIP_BH_Workqueue(struct work_struct *pWork)
 }
 #endif
 
-/**************************************************************
- *
- **************************************************************/
 module_init(DIP_Init);
 module_exit(DIP_Exit);
 MODULE_DESCRIPTION("Camera DIP driver");

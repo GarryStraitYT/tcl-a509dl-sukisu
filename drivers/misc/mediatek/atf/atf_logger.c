@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/arm-smccc.h> /* for Kernel Native SMC API */
 #include <linux/module.h>

@@ -1,22 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_qmu.c - Queue Management Unit driver for device controller
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
-/*
- * Queue Management Unit (QMU) is designed to unload SW effort
- * to serve DMA interrupts.
- * By preparing General Purpose Descriptor (GPD) and Buffer Descriptor (BD),
- * SW links data buffers and triggers QMU to send / receive data to
- * host / from device at a time.
- * And now only GPD is supported.
- *
- * For more detailed information, please refer to QMU Programming Guide
- */
 
 #include <linux/dmapool.h>
 #include <linux/iopoll.h>
@@ -405,11 +388,6 @@ void mtu3_qmu_flush(struct mtu3_ep *mep)
 	reset_gpd_list(mep);
 }
 
-/*
- * QMU can't transfer zero length packet directly (a hardware limit
- * on old SoCs), so when needs to send ZLP, we intentionally trigger
- * a length error interrupt, and in the ISR sends a ZLP by BMU.
- */
 static void qmu_tx_zlp_error_handler(struct mtu3 *mtu, u8 epnum)
 {
 	struct mtu3_ep *mep = mtu->in_eps + epnum;
@@ -454,13 +432,6 @@ static void qmu_tx_zlp_error_handler(struct mtu3 *mtu, u8 epnum)
 	mtu3_qmu_resume(mep);
 }
 
-/*
- * NOTE: request list maybe is already empty as following case:
- * queue_tx --> qmu_interrupt(clear interrupt pending, schedule tasklet)-->
- * queue_tx --> process_tasklet(meanwhile, the second one is transferred,
- * tasklet process both of them)-->qmu_interrupt for second one.
- * To avoid upper case, put qmu_done_tx in ISR directly to process it.
- */
 static void qmu_done_tx(struct mtu3 *mtu, u8 epnum)
 {
 	struct mtu3_ep *mep = mtu->in_eps + epnum;

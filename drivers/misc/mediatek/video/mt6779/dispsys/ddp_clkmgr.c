@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/of.h>
 #include <linux/of_address.h>
@@ -25,15 +22,6 @@
 #define clk_setl(addr, val)  writel(clk_readl(addr) | (val), addr)
 #define clk_clrl(addr, val)  writel(clk_readl(addr) & ~(val), addr)
 
-/**
- * display clk table
- * -- by chip
- *	struct clk *pclk;
- *	const char *clk_name;
- *	int refcnt;
- *	unsigned int belong_to: bit 0: main display, bit 1: externel display
- *	enum DISP_MODULE_ENUM module_id;
- */
 static struct ddp_clk ddp_clks[MAX_DISP_CLK_CNT] = {
 	/* top clk */
 	[CLK_MM_MTCMOS] = {
@@ -355,12 +343,6 @@ void ddp_clk_top_clk_switch(bool on)
 	}
 }
 
-/**
- * ddp_main_modules_clk_on
- *
- * success: ret = 0
- * error: ret = -1
- */
 int ddp_main_modules_clk_on(void)
 {
 	unsigned int i = 0;
@@ -477,12 +459,6 @@ int ddp_ovl2mem_modules_clk_on(void)
 	return ret;
 }
 
-/**
- * ddp_main_modules_clk_on
- *
- * success: ret = 0
- * error: ret = -1
- */
 int ddp_main_modules_clk_off(void)
 {
 	unsigned int i = 0;

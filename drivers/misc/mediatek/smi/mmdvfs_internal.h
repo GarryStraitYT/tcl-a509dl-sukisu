@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef __MMDVFS_INTERNAL_H__
 #define __MMDVFS_INTERNAL_H__

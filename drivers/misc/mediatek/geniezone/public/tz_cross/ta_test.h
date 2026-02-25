@@ -1,23 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
-
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 
 
-/* An example test TA implementation.
- */
+
 
 #ifndef __TRUSTZONE_TA_TEST__
 #define __TRUSTZONE_TA_TEST__
@@ -25,9 +10,6 @@
 #define TZ_TA_TEST_UUID "0d5fe516-821d-11e2-bdb4-d485645c4310"
 
 /* Data Structure for Test TA */
-/* You should define data structure used both in REE/TEE here
- * N/A for Test TA
- */
 
 /* Command for Test TA */
 #define TZCMD_TEST_ADD 0

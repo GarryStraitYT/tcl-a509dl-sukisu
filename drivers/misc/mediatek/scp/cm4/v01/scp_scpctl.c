@@ -1,20 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/device.h>       /* needed by device_* */
 #include "scp_ipi.h"
 #include "scp_scpctl.h"
 
-/*
- * A device node to send commands to scp wit unified interface
- * @magic:	should be 666
- * @type:	a class for different types of commands
- * @op:		the operation specified in a command type
- * @return:	0 if success, -EINVAL if wrong value of number
- *		of parameters
- */
 static ssize_t scpctl_store(struct device *kobj
 		, struct device_attribute *attr, const char *buf, size_t n)
 {

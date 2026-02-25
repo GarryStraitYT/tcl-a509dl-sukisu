@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mtk_osc_pcm_i2s2_adc2.c
- *
- * Project:
- * --------
- *   Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio i2s2 to adc2 capture
- *
- * Author:
- * -------
- *
- *
- *----------------------------------------------------------------------------
- *
- *
- ****************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include <linux/dma-mapping.h>
 #include <sound/pcm_params.h>
@@ -54,9 +21,6 @@ static struct snd_dma_buffer *Adc2_Capture_dma_buf;
 static unsigned int mPlaybackDramState;
 static struct device *mDev;
 
-/*
- *    function implementation
- */
 
 static void StartAudioI2S2ADC2Hardware(struct snd_pcm_substream *substream);
 static void StopAudioI2S2adc2Hardware(struct snd_pcm_substream *substream);

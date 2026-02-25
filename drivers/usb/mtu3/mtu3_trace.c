@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #define CREATE_TRACE_POINTS
 #include "mtu3_trace.h"

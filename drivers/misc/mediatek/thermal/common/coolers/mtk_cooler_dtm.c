@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -34,10 +31,6 @@
 #include "mdla_dvfs.h"
 #endif
 #endif
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 #if defined(THERMAL_VPU_SUPPORT)
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
@@ -64,20 +57,10 @@ unsigned int static_mdla_power_limit = 0x7FFFFFFF;
 static struct apthermolmt_user ap_dtm;
 static char *ap_dtm_log = "ap_dtm";
 
-/*=============================================================
- *Local function prototype
- *=============================================================
- */
 static void set_static_cpu_power_limit(unsigned int limit);
 static void set_static_gpu_power_limit(unsigned int limit);
 
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 
-/*=============================================================
- */
 static void set_static_cpu_power_limit(unsigned int limit)
 {
 	prv_stc_cpu_pwr_lim = static_cpu_power_limit;
@@ -515,13 +498,6 @@ static int __init mtk_cooler_dtm_init(void)
 #if defined(THERMAL_MDLA_SUPPORT)
 	thermal_mdla_init();
 #endif
-/*
- *	if (err) {
- *		tscpu_printk(
- *				"tscpu_register_DVFS_hotplug_cooler fail\n");
- *		return err;
- *	}
- */
 	tscpu_dprintk("%s end\n", __func__);
 	return 0;
 }

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -596,9 +593,6 @@ bool mtk_get_vsync_offset_debug_status(unsigned int *pui32DebugStatus)
 EXPORT_SYMBOL(mtk_get_vsync_offset_debug_status);
 
 /* -------------------------------------------------------------------------- */
-/*
- *	Get policy given targfet GPU freq in KHz
- */
 unsigned int (*mtk_get_gpu_dvfs_cal_freq_fp)(void) = NULL;
 EXPORT_SYMBOL(mtk_get_gpu_dvfs_cal_freq_fp);
 
@@ -617,17 +611,6 @@ EXPORT_SYMBOL(mtk_get_gpu_dvfs_cal_freq);
 
 //-----------------------------------------------------------------------------
 
-/*
- * Enable MFG performance monitor
- *
- * @brief
- * Enable MFG performance monitor for MET usage
- * Default MFG performance monitor is off
- * Each platform needs to implement corresponding function
- *
- * @param[in] enable: true for enable, false for disable
- * return 0 if change successfully or fail for other return values
- */
 
 bool (*mtk_enable_gpu_perf_monitor_fp)(bool enable) = NULL;
 EXPORT_SYMBOL(mtk_enable_gpu_perf_monitor_fp);

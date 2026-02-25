@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM met_touch
@@ -10,9 +7,6 @@
 #define __TRACE_MET_FTRACE_TOUCH_H__
 
 #include <linux/tracepoint.h>
-/*
- * Tracepoint for MET_touch
- */
 TRACE_EVENT(MET_touch,
 
 		TP_PROTO(char *touch_type, long tsec, long tusec,

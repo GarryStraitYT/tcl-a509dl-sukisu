@@ -1,11 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2014-2018 MediaTek Inc.
- *
- * Author: Maoguang Meng <maoguang.meng@mediatek.com>
- *	   Sean Wang <sean.wang@mediatek.com>
- *
- */
 #ifndef __MTK_EINT_H
 #define __MTK_EINT_H
 

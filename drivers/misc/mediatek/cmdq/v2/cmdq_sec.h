@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __CMDQ_SEC_H__
 #define __CMDQ_SEC_H__
@@ -21,17 +18,11 @@
 #endif
 #endif
 
-/**
- * error code for CMDQ
- */
 
 #define CMDQ_ERR_NULL_SEC_CTX_HANDLE (6000)
 #define CMDQ_ERR_SEC_CTX_SETUP (6001)
 #define CMDQ_ERR_SEC_CTX_TEARDOWN (6002)
 
-/**
- * inter-world communication state
- */
 enum CMDQ_IWC_STATE_ENUM {
 	IWC_INIT = 0,
 	IWC_MOBICORE_OPENED = 1,
@@ -44,10 +35,6 @@ enum CMDQ_IWC_STATE_ENUM {
 };
 
 
-/**
- * CMDQ secure context struct
- * note it is not global data, each process has its own CMDQ sec context
- */
 struct cmdqSecContextStruct {
 	struct list_head listEntry;
 
@@ -79,30 +66,12 @@ struct cmdqSecContextStruct {
 
 int32_t cmdq_sec_init_allocate_resource_thread(void *data);
 
-/**
- * Create and destroy non-cachable shared memory,
- * used to share data for CMDQ driver between NWd and SWd
- *
- * Be careful that we should not disvlose
- * any information about secure buffer address of
- */
 int32_t cmdq_sec_create_shared_memory(
 	struct cmdqSecSharedMemoryStruct **pHandle,
 	const uint32_t size);
 int32_t cmdq_sec_destroy_shared_memory(
 	struct cmdqSecSharedMemoryStruct *handle);
 
-/**
- * Callback to fill message buffer for secure task
- *
- * Params:
- *     init32_t command id
- *     void*	pornter of TaskStruct
- *     int32_t  CMDQ HW thread id
- *     void*    the inter-world communication buffer
- * Return:
- *     >=0 for success;
- */
 #ifndef CONFIG_MTK_CMDQ_TAB
 typedef int32_t(*CmdqSecFillIwcCB) (int32_t, void *, int32_t, void *);
 #else
@@ -112,11 +81,6 @@ typedef int32_t(*CmdqSecFillIwcCB) (struct iwcCmdqMessage_t *_pIwc,
 #endif
 
 
-/**
- * Entry secure world to handle secure path jobs
- * .submit task
- * .cancel error task
- */
 
 int32_t cmdq_sec_exec_task_async_unlocked(
 	struct TaskStruct *pTask, int32_t thread);
@@ -126,9 +90,6 @@ int32_t cmdq_sec_cancel_error_task_unlocked(
 int32_t cmdq_sec_allocate_path_resource_unlocked(bool throwAEE);
 
 
-/**
- * secure path control
- */
 void cmdq_sec_lock_secure_path(void);
 void cmdq_sec_unlock_secure_path(void);
 

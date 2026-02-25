@@ -1,23 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: owen.chen <owen.chen@mediatek.com>
- */
 
-/*
- * @file    mtk-clkbuf-bridge.c
- * @brief   Bridge Driver for Clock Buffer Control
- *
- */
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 
 #include <mtk-clkbuf-bridge.h>
 
-/*******************************************************************************
- * Bridging from platform -> clkbuf.ko
- ******************************************************************************/
 static struct clk_buf_bridge bridge;
 
 void clk_buf_export_platform_bridge_register(struct clk_buf_bridge *cb)

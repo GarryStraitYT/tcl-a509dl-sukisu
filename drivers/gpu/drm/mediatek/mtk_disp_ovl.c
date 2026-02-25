@@ -1,15 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <drm/drmP.h>
 #include <linux/clk.h>
@@ -60,11 +48,6 @@ struct mtk_disp_ovl_data {
 	bool fmt_rgb565_is_0;
 };
 
-/**
- * struct mtk_disp_ovl - DISP_OVL driver structure
- * @ddp_comp - structure containing type enum and hardware resources
- * @crtc - associated crtc to report vblank events to
- */
 struct mtk_disp_ovl {
 	struct mtk_ddp_comp		ddp_comp;
 	struct drm_crtc			*crtc;

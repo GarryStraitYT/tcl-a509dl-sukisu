@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Eason Yen <eason.yen@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
@@ -16,11 +12,6 @@
 #include "../../codecs/mt6359.h"
 #include "../common/mtk-sp-spk-amp.h"
 
-/*
- * if need additional control for the ext spk amp that is connected
- * after Lineout Buffer / HP Buffer on the codec, put the control in
- * mt6779_mt6359_spk_amp_event()
- */
 #define EXT_SPK_AMP_W_NAME "Ext_Speaker_Amp"
 
 static const char *const mt6779_spk_type_str[] = {MTK_SPK_NOT_SMARTPA_STR,
@@ -113,10 +104,6 @@ static const struct snd_kcontrol_new mt6779_mt6359_controls[] = {
 		     mt6779_spk_i2s_in_type_get, NULL),
 };
 
-/*
- * define mtk_spk_i2s_mck node in dts when need mclk,
- * BE i2s need assign snd_soc_ops = mt6779_mt6359_i2s_ops
- */
 static int mt6779_mt6359_i2s_hw_params(struct snd_pcm_substream *substream,
 				       struct snd_pcm_hw_params *params)
 {

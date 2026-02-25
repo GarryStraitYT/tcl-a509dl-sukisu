@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "memory-ssmr: " fmt
 
@@ -422,18 +419,6 @@ static int change_page_range(pte_t *ptep, pgtable_t token, unsigned long addr,
 	set_pte(ptep, pte);
 	return 0;
 }
-/*
- * Unmapping memory region kernel mapping
- * SSMR protect memory region with EMI MPU. While protecting, memory prefetch
- * will access memory region and trigger warning.
- * To avoid false alarm of protection, We unmap kernel mapping while protecting
- *
- * @start: start address
- * @size: memory region size
- * @map: 1 for mapping, 0 for unmapping.
- *
- * @return: success return 0, failed return -1;
- */
 static int set_memory_mapping(unsigned long start, phys_addr_t size, int map)
 {
 	struct page_change_data data;

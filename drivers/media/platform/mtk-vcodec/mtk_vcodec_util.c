@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/module.h>
@@ -21,9 +18,6 @@ EXPORT_SYMBOL(mtk_vcodec_dbg);
 bool mtk_vcodec_perf;
 EXPORT_SYMBOL(mtk_vcodec_perf);
 
-/* The log level of v4l2 encoder or decoder driver.
- * That is, files under mtk-vcodec/.
- */
 int mtk_v4l2_dbg_level;
 EXPORT_SYMBOL(mtk_v4l2_dbg_level);
 

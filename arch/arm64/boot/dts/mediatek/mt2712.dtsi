@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <dt-bindings/clock/mt2712-clk.h>
 #include <dt-bindings/gpio/gpio.h>

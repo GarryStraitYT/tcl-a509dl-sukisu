@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #define DEBUG 1
 
@@ -76,10 +73,6 @@ static void mt_bio_ctx_count_usage(struct mt_bio_context *ctx,
 	__u64 start, __u64 end);
 static uint64_t mt_bio_get_period_busy(struct mt_bio_context *ctx);
 
-/* queue id:
- * 0=internal storage (emmc:mmcqd0/exe_cq),
- * 1=external storage (t-card:mmcqd1)
- */
 static int get_qid_by_name(const char *str)
 {
 	if (strncmp(str, REQ_EXECQ, strlen(REQ_EXECQ)) == 0)
@@ -685,10 +678,6 @@ void mt_biolog_cqhci_check(void)
 	mt_biolog_cmdq_check();
 }
 
-/*
- * parameter "host" needed due to req->host
- * doesn't initial when enter here
- */
 void mt_biolog_cqhci_queue_task(struct mmc_host *host,
 	unsigned int task_id, struct mmc_request *req)
 {
@@ -909,11 +898,6 @@ void mt_biolog_mmcqd_req_end(struct mmc_data *data, bool ext_sd)
 	mt_bio_init_task(tsk);
 }
 
-/*
- * snprintf may return a value of size or "more" to indicate
- * that the output was truncated, thus be careful of "more"
- * case.
- */
 #define SPREAD_PRINTF(buff, size, evt, fmt, args...) \
 	do { \
 		if (buff && size && *(size)) { \

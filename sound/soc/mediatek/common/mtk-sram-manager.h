@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Kai Chieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MTK_SRAM_MANAGER_H_
 #define _MTK_SRAM_MANAGER_H_

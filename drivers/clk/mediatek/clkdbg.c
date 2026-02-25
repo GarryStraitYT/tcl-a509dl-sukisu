@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "[clkdbg] " fmt
 
@@ -1170,9 +1167,6 @@ static int clkdbg_clr_flag(struct seq_file *s, void *v)
 
 #if CLKDBG_PM_DOMAIN
 
-/*
- * pm_domain support
- */
 
 static struct generic_pm_domain **get_all_genpd(void)
 {
@@ -1629,9 +1623,6 @@ static int clkdbg_pwr_off(struct seq_file *s, void *v)
 	return genpd_op("power_off", s);
 }
 
-/*
- * clkdbg reg_pdrv/runeg_pdrv support
- */
 
 static int clkdbg_probe(struct platform_device *pdev)
 {
@@ -1821,9 +1812,6 @@ void unreg_pdrv(const char *pdname)
 }
 EXPORT_SYMBOL(unreg_pdrv);
 
-/*
- * Suspend / resume handler
- */
 
 #include <linux/suspend.h>
 #include <linux/syscore_ops.h>
@@ -2192,9 +2180,6 @@ static const struct file_operations clkdbg_fops = {
 	.release	= single_release,
 };
 
-/*
- * init functions
- */
 
 static int __init clkdbg_debug_init(void)
 {

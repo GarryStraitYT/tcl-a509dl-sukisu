@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
@@ -22,9 +19,6 @@ static const char h264_filler_marker[] = {0x0, 0x0, 0x0, 0x1, 0xc};
 #define H264_FILLER_MARKER_SIZE ARRAY_SIZE(h264_filler_marker)
 #define VENC_PIC_BITSTREAM_BYTE_CNT 0x0098
 
-/**
- * enum venc_h264_vpu_work_buf - h264 encoder buffer index
- */
 enum venc_h264_vpu_work_buf {
 	VENC_H264_VPU_WORK_BUF_RC_INFO,
 	VENC_H264_VPU_WORK_BUF_RC_CODE,
@@ -38,35 +32,12 @@ enum venc_h264_vpu_work_buf {
 	VENC_H264_VPU_WORK_BUF_MAX,
 };
 
-/**
- * enum venc_h264_bs_mode - for bs_mode argument in h264_enc_vpu_encode
- */
 enum venc_h264_bs_mode {
 	H264_BS_MODE_SPS,
 	H264_BS_MODE_PPS,
 	H264_BS_MODE_FRAME,
 };
 
-/*
- * struct venc_h264_vpu_config - Structure for h264 encoder configuration
- *                               AP-W/R : AP is writer/reader on this item
- *                               VPU-W/R: VPU is write/reader on this item
- * @input_fourcc: input fourcc
- * @bitrate: target bitrate (in bps)
- * @pic_w: picture width. Picture size is visible stream resolution, in pixels,
- *         to be used for display purposes; must be smaller or equal to buffer
- *         size.
- * @pic_h: picture height
- * @buf_w: buffer width. Buffer size is stream resolution in pixels aligned to
- *         hardware requirements.
- * @buf_h: buffer height
- * @gop_size: group of picture size (idr frame)
- * @intra_period: intra frame period
- * @framerate: frame rate in fps
- * @profile: as specified in standard
- * @level: as specified in standard
- * @wfd: WFD mode 1:on, 0:off
- */
 struct venc_h264_vpu_config {
 	u32 input_fourcc;
 	u32 bitrate;
@@ -82,54 +53,17 @@ struct venc_h264_vpu_config {
 	u32 wfd;
 };
 
-/*
- * struct venc_h264_vpu_buf - Structure for buffer information
- *                            AP-W/R : AP is writer/reader on this item
- *                            VPU-W/R: VPU is write/reader on this item
- * @iova: IO virtual address
- * @vpua: VPU side memory addr which is used by RC_CODE
- * @size: buffer size (in bytes)
- */
 struct venc_h264_vpu_buf {
 	u32 iova;
 	u32 vpua;
 	u32 size;
 };
 
-/*
- * struct venc_h264_vsi - Structure for VPU driver control and info share
- *                        AP-W/R : AP is writer/reader on this item
- *                        VPU-W/R: VPU is write/reader on this item
- * This structure is allocated in VPU side and shared to AP side.
- * @config: h264 encoder configuration
- * @work_bufs: working buffer information in VPU side
- * The work_bufs here is for storing the 'size' info shared to AP side.
- * The similar item in struct venc_h264_inst is for memory allocation
- * in AP side. The AP driver will copy the 'size' from here to the one in
- * struct mtk_vcodec_mem, then invoke mtk_vcodec_mem_alloc to allocate
- * the buffer. After that, bypass the 'dma_addr' to the 'iova' field here for
- * register setting in VPU side.
- */
 struct venc_h264_vsi {
 	struct venc_h264_vpu_config config;
 	struct venc_h264_vpu_buf work_bufs[VENC_H264_VPU_WORK_BUF_MAX];
 };
 
-/*
- * struct venc_h264_inst - h264 encoder AP driver instance
- * @hw_base: h264 encoder hardware register base
- * @work_bufs: working buffer
- * @pps_buf: buffer to store the pps bitstream
- * @work_buf_allocated: working buffer allocated flag
- * @frm_cnt: encoded frame count
- * @prepend_hdr: when the v4l2 layer send VENC_SET_PARAM_PREPEND_HEADER cmd
- *  through h264_enc_set_param interface, it will set this flag and prepend the
- *  sps/pps in h264_enc_encode function.
- * @vpu_inst: VPU instance to exchange information between AP and VPU
- * @vsi: driver structure allocated by VPU side and shared to AP side for
- *       control and info share
- * @ctx: context for v4l2 layer integration
- */
 struct venc_h264_inst {
 	void __iomem *hw_base;
 	struct mtk_vcodec_mem work_bufs[VENC_H264_VPU_WORK_BUF_MAX];

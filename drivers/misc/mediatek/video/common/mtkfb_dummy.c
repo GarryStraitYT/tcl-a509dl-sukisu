@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 /*#include <generated/autoconf.h>*/
 #include <linux/module.h>
@@ -94,11 +91,6 @@ unsigned int DISP_GetVRamSizeBoot(void)
 	return 0x01800000;
 }
 
-/*
- * ---------------------------------------------------------------------------
- * fbdev framework callbacks and the ioctl interface
- * ---------------------------------------------------------------------------
- */
 /* Called each time the mtkfb device is opened */
 static int mtkfb_open(struct fb_info *info, int user)
 {
@@ -112,10 +104,6 @@ static int mtkfb_release(struct fb_info *info, int user)
 	return 0;
 }
 
-/* Store a single color palette entry into a pseudo palette or the hardware
- * palette if one is available. For now we support only 16bpp and thus store
- * the entry only to the pseudo palette.
- */
 static int mtkfb_setcolreg(u_int regno, u_int red, u_int green,
 			   u_int blue, u_int transp, struct fb_info *info)
 {
@@ -156,9 +144,6 @@ exit:
 }
 
 
-/* Set fb_info.fix fields and also updates fbdev.
- * When calling this fb_info.var must be set up already.
- */
 static void set_fb_fix(struct mtkfb_device *fbdev)
 {
 	struct fb_info *fbi = fbdev->fb_info;
@@ -202,9 +187,6 @@ static void set_fb_fix(struct mtkfb_device *fbdev)
 }
 
 
-/* Switch to a new mode. The parameters for it has been check already by
- * mtkfb_check_var.
- */
 static int mtkfb_set_par(struct fb_info *fbi)
 {
 	struct mtkfb_device *fbdev = (struct mtkfb_device *)fbi->par;
@@ -225,9 +207,6 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 }
 
 
-/* Check values in var, try to adjust them in case of out of bound values if
- * possible, or return error.
- */
 static int mtkfb_check_var(struct fb_var_screeninfo *var, struct fb_info *fbi)
 {
 	unsigned int bpp;
@@ -357,9 +336,6 @@ static int mtkfb_pan_display_proxy(struct fb_var_screeninfo *var,
 	return mtkfb_pan_display_impl(var, info);
 }
 
-/* Callback table for the frame buffer framework. Some of these pointers
- * will be changed according to the current setting of fb_info->accel_flags.
- */
 static struct fb_ops mtkfb_ops = {
 	.owner = THIS_MODULE,
 	.fb_open = mtkfb_open,
@@ -376,14 +352,6 @@ static struct fb_ops mtkfb_ops = {
 };
 
 
-/*
- * ---------------------------------------------------------------------------
- * LDM callbacks
- * ---------------------------------------------------------------------------
- */
-/* Initialize system fb_info object and set the default video mode.
- * The frame buffer memory already allocated by lcddma_init
- */
 static int mtkfb_fbinfo_init(struct fb_info *info)
 {
 	struct mtkfb_device *fbdev = (struct mtkfb_device *)info->par;
@@ -444,9 +412,6 @@ static void mtkfb_fbinfo_cleanup(struct mtkfb_device *fbdev)
 	fb_dealloc_cmap(&fbdev->fb_info->cmap);
 }
 
-/* Free driver resources. Can be called to rollback an aborted initialization
- * sequence.
- */
 static void mtkfb_free_resources(struct mtkfb_device *fbdev, int state)
 {
 	int r = 0;

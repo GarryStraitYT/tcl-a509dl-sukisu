@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <crypto/algapi.h>
 #include <linux/mmc/host.h>
@@ -68,20 +65,6 @@ static u8 mmc_crypto_cap_find(void *mmc_p,
 	return -EINVAL;
 }
 
-/**
- * mmc_crypto_cfg_entry_write_key - Write a key into a crypto_cfg_entry
- *
- *	Writes the key with the appropriate format - for AES_XTS,
- *	the first half of the key is copied as is, the second half is
- *	copied with an offset halfway into the cfg->crypto_key array.
- *	For the other supported crypto algs, the key is just copied.
- *
- * @cfg: The crypto config to write to
- * @key: The key to write
- * @cap: The crypto capability (which specifies the crypto alg and key size)
- *
- * Returns 0 on success, or -EINVAL
- */
 static int mmc_crypto_cfg_entry_write_key(union swcqhci_crypto_cfg_entry *cfg,
 					     const u8 *key,
 					     union swcqhci_crypto_cap_entry cap)
@@ -186,13 +169,6 @@ static const struct keyslot_mgmt_ll_ops swcq_ksm_ops = {
 	.keyslot_evict		= mmc_crypto_keyslot_evict,
 };
 
-/**
- * mmc_init_crypto_spec - Read crypto capabilities, init crypto fields in host
- * @host: Per adapter instance
- *
- * Returns 0 on success. Returns -ENODEV if such capabilities don't exist, and
- * -ENOMEM upon OOM.
- */
 static int mmc_init_crypto_spec(struct mmc_host *host,
 		const struct keyslot_mgmt_ll_ops *ksm_ops)
 {

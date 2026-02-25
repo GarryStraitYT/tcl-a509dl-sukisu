@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef PSEUDO_M4U_SEC_H
 #define PSEUDO_M4U_SEC_H

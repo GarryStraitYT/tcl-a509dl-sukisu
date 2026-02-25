@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __HWMSENSOR_H__
 #define __HWMSENSOR_H__
@@ -424,9 +421,6 @@ struct compat_batch_trans_data {
 #define SENSOR_ENABLE 0X02
 #define SENSOR_GET_DATA 0X04
 
-/**
- * status of each sensor
- */
 
 #define SENSOR_STATUS_UNRELIABLE 0
 #define SENSOR_STATUS_ACCURACY_LOW 1

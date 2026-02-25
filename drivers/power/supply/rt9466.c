@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Andrew-sh.Cheng <andrew-sh.cheng@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -156,12 +152,6 @@ enum rt9466_adc_sel {
 	RT9466_ADC_MAX,
 };
 
-/*
- * Unit for each ADC parameter
- * 0 stands for reserved
- * For TS_BAT, the real unit is 0.25.
- * Here we use 25, please remember to divide 100 while showing the value
- */
 static const int rt9466_adc_unit[RT9466_ADC_MAX] = {
 	0,
 	RT9466_ADC_UNIT_VBUS_DIV5,
@@ -2630,10 +2620,6 @@ out:
 	return rt9466_device_write(info->client, 0x70, 1, &exit_hid);
 }
 
-/*
- * This function is used in shutdown function
- * Use i2c smbus directly
- */
 static int rt9466_sw_reset(struct rt9466_info *info)
 {
 	int ret = 0;
@@ -3374,85 +3360,3 @@ MODULE_AUTHOR("ShuFanLee <shufan_lee@richtek.com>");
 MODULE_DESCRIPTION("RT9466 Charger Driver");
 MODULE_VERSION(RT9466_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.13
- * (1) Revise enable_auto_sensing function, set auto sensing bit when enable
-	it, otherwise clear it.
- * (2) Add shipping_mode_store node, and add adc_access_lock to avoid
-	conflicting access with adc measurement.
- * (3) Add safety_check ops, trigger ieoc event, when ibat < ieoc for 3 times.
- * (4) Add workaround for vsys overshoot
- * (5) Add ichg workaround
- * (6) Check tchg 3 times if it >= 120 degrees
- *
- * 1.0.12
- * (1) Fix type error of enable_auto_sensing in sw_reset
- * (2) Check HZ mode for get_tchg
- * (3) Add is_chip_enabled ops
- *
- * 1.0.11
- * (1) Add do event interface for polling mode
- * (2) Enable IRQ_RZE at the end of irq handler
- * (3) Remove IRQ related registers from reg_addr
- * (4) Do ilim select in WQ and register charger class in probe
- * (5) Move irq_mask to info structure
- *
- * 1.0.10
- * (1) Filter out not changed irq state
- * (2) Not to use CHG_IRQ3
- * (3) Set irq to wake up system
- * (4) Add IEOC inaccuracy workaround
- * (5) Move init setting & sw workaround to work queue
- * (6) Add en_irq_pulse & en_jeita property in dtsi
- * (7) Dump ctrl1&2 in dump register
- * (8) Remove set ichg to 512mA in reset_pep20
- * (9) Release set_ieoc/enable_te interface
- * (10) Disable spk mode in pep20_reest
- * (11) For secondary chg, enter shipping mode before shdn
- * (12) Workaround to keep Ichg >= 900mA
- * (13) Add workaround to adjust slow rate for OTG
- *
- * 1.0.9
- * (1) Prevent backboot
- * (2) Set secondary chg to HZ in plug out callback
- * (3) Add CEB pin control for secondary charger
- * (4) After PE pattern -> Enable skip mode
- *     Disable skip mode -> Start PE pattern
- *
- * 1.0.8
- * (1) Modify init sequence for init_irq
- * (2) Add enable_cable_drop_com, is_charging_enabled, get_min_ichg OPS
- * (3) Set secondary chg to HZ if it is not in charging mode
- *
- * 1.0.7
- * (1) Modify IBAT/IBUS ADC's coefficient
- * (2) Add interrupt-names in dts property to represent those evts that need to
- *     be unmasked
- * (3) Add IRQ handlers to handle each irq event separately
- * (4) Use dev_xxx instead of pr_xxx
- * (5) Modify some naming(bat_voreg -> cv, iin_vth -> aicl_vth) and remove some
- *     unnecessary code
- *
- * 1.0.6
- * (1) Adapt to GM30
- * (2) Modify irq init value
- *
- * 1.0.5
- * (1) Disable all irq in irq_init
- * (2) Modify rt9466_is_hw_exist, check vendor id and revision id separately
- *
- * 1.0.4
- * (1) Not to unmask the plug-in/out related IRQs in irq_init
- * PWR_RDYM/CHG_MIVRM/CHG_AICRM
- * VBUSOVM
- * TS_BAT_HOTM/TS_BAT_WARMM/TS_BAT_COOLM/TS_BAT_COLDM
- * CHG_OTPM/CHG_RVPM/CHG_ADPBADM/CHG_STATCM/CHG_FAULTM/TS_STATCM
- * IEOCM/TERMM/SSFINISHM/SSFINISHM/AICLMeasM
- * BST_BATUVM/PUMPX_DONEM/ADC_DONEM
- *
- * 1.0.3
- * (1) Copy default dts value before parsing dts
- * (2) Release rt_charger_sw_reset interface
- * (3) Add chip revision E4 (0x84)
- */

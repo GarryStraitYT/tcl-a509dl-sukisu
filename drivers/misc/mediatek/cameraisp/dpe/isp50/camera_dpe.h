@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_DPE_H
 #define _MT_DPE_H
@@ -14,9 +11,6 @@
 #include <linux/compat.h>
 #endif
 
-/*
- *   enforce kernel log enable
- */
 #define KERNEL_LOG		/* enable debug log flag if defined */
 
 #define _SUPPORT_MAX_DPE_FRAME_REQUEST_ 6
@@ -24,9 +18,6 @@
 
 
 #define SIG_ERESTARTSYS 512	/* ERESTARTSYS */
-/*
- *
- */
 #define DPE_DEV_MAJOR_NUMBER    302
 
 #define DPE_MAGIC               'd'
@@ -35,9 +26,6 @@
 
 #define DPE_BASE_HW             0x1B100000
 
-/*This macro is for setting irq status represnted
- * by a local variable,DPEInfo.IrqInfo.Status[DPE_IRQ_TYPE_INT_DPE_ST]
- */
 #define DPE_INT_ST              (1UL<<31)
 
 struct DPE_REG_STRUCT {
@@ -51,9 +39,6 @@ struct DPE_REG_IO_STRUCT {
 	unsigned int Count;	/* count */
 };
 
-/*
- *   interrupt clear type
- */
 enum DPE_IRQ_CLEAR_ENUM {
 	DPE_IRQ_CLEAR_NONE,	/* non-clear wait, clear after wait */
 	DPE_IRQ_CLEAR_WAIT,	/* clear wait, clear before and after wait */
@@ -64,11 +49,6 @@ enum DPE_IRQ_CLEAR_ENUM {
 };
 
 
-/*
- *   module's interrupt , each module should have its own isr.
- *   note:
- *	mapping to isr table,ISR_TABLE when using no device tree
- */
 enum DPE_IRQ_TYPE_ENUM {
 	DPE_IRQ_TYPE_INT_DVP_ST,	/* DVP */
 	DPE_IRQ_TYPE_INT_DVS_ST,	/* DVS */
@@ -307,9 +287,6 @@ struct DPE_Config {
 	unsigned int	DPE_MODE;
 };
 
-/*
- *
- */
 enum DPE_CMD_ENUM {
 	DPE_CMD_RESET,		/* Reset */
 	DPE_CMD_DUMP_REG,	/* Dump DPE Register */

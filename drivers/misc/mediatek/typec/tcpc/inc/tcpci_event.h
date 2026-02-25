@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef TCPC_EVENT_BUF_H_INCLUDED
 #define TCPC_EVENT_BUF_H_INCLUDED

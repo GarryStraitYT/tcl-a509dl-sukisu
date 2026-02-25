@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #ifdef CONFIG_MTK_CLKMGR
 #include <mach/mt_clkmgr.h>

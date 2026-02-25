@@ -1,16 +1,3 @@
-/*   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; version 2 of the License
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   Copyright (C) 2009-2016 John Crispin <blogic@openwrt.org>
- *   Copyright (C) 2009-2016 Felix Fietkau <nbd@openwrt.org>
- *   Copyright (C) 2013-2016 Michael Lee <igvtee@gmail.com>
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -102,11 +89,6 @@ static u32 mtk_reg_r32(struct mtk_eth *eth, enum mtk_reg reg)
 	return mtk_r32(eth, mtk_reg_table[reg]);
 }
 
-/* these bits are also exposed via the reset-controller API. however the switch
- * and FE need to be brought out of reset in the exakt same moemtn and the
- * reset-controller api does not provide this feature yet. Do the reset manually
- * until we fixed the reset-controller api to be able to do this
- */
 void mtk_reset(struct mtk_eth *eth, u32 reset_bits)
 {
 	u32 val;

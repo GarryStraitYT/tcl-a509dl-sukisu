@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 #ifndef __PORT_NET_H__
 #define __PORT_NET_H__
 #include "ccmni.h"

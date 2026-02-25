@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef LINUX_LEDS_FLASHLIGHT_H
 #define LINUX_LEDS_FLASHLIGHT_H
@@ -105,33 +102,9 @@ extern int flashlight_set_mode(
 			struct flashlight_device *flashlight_dev, int mode);
 
 extern int flashlight_strobe(struct flashlight_device *flashlight_dev);
-/* flashlight_is_ready(struct flashlight_device *flashlight_dev)
- *
- * description : use this to make sure the flashlight is really ready or not
- * return : 0 means not ready, 1 means ready, otherwise, reutrn negative value,
- *	    for the negative value, see definitions in errno.h
- */
 extern int flashlight_is_ready(struct flashlight_device *flashlight_dev);
 
-/* flashlight_charge_event_cb(void *data, int remains)
- * description :
- *   callback function of flashlight charging progress
- * arguments :
- *  @data : data pass by flashlight_strobe_charge()
- *  @remains : remained time to full chargerd, unit : ms ; 0 means ready
- * return : 0 means succeess, otherwise see definitions in errno.h
- */
 
-/* flashlight_strobe_charge(
- *			struct flashlight_device *flashlight_dev,
- *                      flashlight_charge_event_cb cb, void *data, int start)
- * description :
- * flashlight start / stop  charging
- * @flashlight_dev : flashlight devices
- * @flashlight_charge_event_cb : callback function to report progress
- * @data : bypass to callback function
- * @start : 1 means start; 0 means stop
- */
 extern int flashlight_strobe_charge(struct flashlight_device *flashlight_dev,
 			flashlight_charge_event_cb cb, void *data, int start);
 

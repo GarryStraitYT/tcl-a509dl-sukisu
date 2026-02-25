@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -35,9 +32,6 @@
 /* FIXME: IT with vcorefs ? */
 void __attribute__((weak)) dvfsrc_md_scenario_update(bool suspend) {}
 
-/********************************************************************
- * dp/so3/so pcm_flags and pcm_flags1
- *******************************************************************/
 
 static unsigned int idle_pcm_flags[NR_IDLE_TYPES] = {
 	[IDLE_TYPE_DP] =
@@ -91,9 +85,6 @@ static unsigned int idle_pcm_flags1[NR_IDLE_TYPES] = {
 };
 
 
-/********************************************************************
- * dp/so3/so pwrctrl variables
- *******************************************************************/
 
 struct pwr_ctrl pwrctrl_dp;
 struct pwr_ctrl pwrctrl_so3;
@@ -116,9 +107,6 @@ static void mtk_idle_gs_dump(int idle_type)
 	#endif
 }
 
-/********************************************************************
- * dp/so3/so trigger wfi
- *******************************************************************/
 
 static void print_ftrace_tag(int idle_type, int cpu, int enter)
 {
@@ -193,9 +181,6 @@ int mtk_idle_trigger_wfi(int idle_type, unsigned int idle_flag, int cpu)
 }
 
 
-/********************************************************************
- * dp/so3/so setup/cleanup pcm
- *******************************************************************/
 
 static int smc_id[NR_IDLE_TYPES] = {
 	[IDLE_TYPE_DP] = MTK_SIP_KERNEL_SPM_DPIDLE_ARGS,
@@ -237,9 +222,6 @@ static void spm_idle_pcm_setup_after_wfi(
 }
 
 
-/********************************************************************
- * dp/so3/so main flow by chip
- *******************************************************************/
 
 static unsigned int slp_dp_timer_val;
 static unsigned int slp_dp_wake_src;
@@ -403,9 +385,6 @@ unsigned int get_slp_dp_last_wr(void)
 {
 	return slp_dp_last_wr;
 }
-/********************************************************************
- * mtk idle output log
- *******************************************************************/
 #define IDLE_TIMER_OUT_CRITERIA (32)    /* 1 ms (32k/sec)*/
 #define IDLE_PRINT_LOG_DURATION (5000)  /* 5 seconds */
 

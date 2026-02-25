@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -178,11 +175,6 @@ enum mt6370_adc_sel {
 	MT6370_ADC_MAX,
 };
 
-/* Unit for each ADC parameter
- * 0 stands for reserved
- * For TS_BAT/TS_BUS, the real unit is 0.25.
- * Here we use 25, please remember to divide 100 while showing the value
- */
 static const int mt6370_adc_unit[MT6370_ADC_MAX] = {
 	0,
 	MT6370_ADC_UNIT_VBUS_DIV5,
@@ -3428,110 +3420,3 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek MT6370 PMU Charger");
 MODULE_VERSION(MT6370_PMU_CHARGER_DRV_VERSION);
 
-/*
- * Release Note
- * 1.1.12_MTK
- * (1) Enable charger before sending PE+/PE+20 pattern
- * (2) Select to use reg AICR as input limit -> disable HW limit
- *
- * 1.1.11_MTK
- * (1) Fix get_adc lock unbalance issue
- * (2) Add a flag to check enable status of bc12
- *
- * 1.1.10_MTK
- * (1) Add ext usb switch control
- * (2) Add MT6370_APPLE_SAMSUNG_TA_SUPPORT config
- * (3) Remove some debug log and unncessary code
- *
- * 1.1.9_MTK
- * (1) Use polling mode for ADC done and PE+
- * (2) Return immediately if usb is plugged out while waiting CDP
- *
- * 1.1.8_MTK
- * (1) Read CHG_STAT in dump register
- * (2) Read ZCV before disabling it and add ZCV ops
- * (3) Add AEE log for ADC hang issue
- *
- * 1.1.7_MTK
- * (1) Add a adc flag for adc_done IRQ
- * (2) Not waitting ssfinish IRQ after enabling OTG
- * (3) Add debug information for ADC
- * (4) For degug, read ADC data even if conversation failed
- * (5) Trigger any ADC before disabling ZCV
- *
- * 1.1.6_MTK
- * (1) Read USB STATUS(0x27) instead of device type(0x22)
- *     to check charger type
- * (2) Show CV value in dump_register
- * (3) If PE20/30 is connected, do not run AICL
- * (4) Disable MIVR IRQ -> enable direct charge
- *     Enable MIVR IRQ -> disable direct charge
- *
- * 1.1.5_MTK
- * (1) Modify probe sequence
- * (2) Change ADC log from ratelimited to normal one for debug
- * (3) Polling ADC_START after receiving ADC_DONE irq
- * (4) Disable ZCV in probe function
- * (5) Plug out -> enable ILIM_EN
- *     Plug in -> sleep 1200ms -> disable ILIM_EN
- *
- * 1.1.4_MTK
- * (1) Add IEOC workaround
- *
- * 1.1.3_MTK
- * (1) Enable safety timer, rechg, vbusov, eoc IRQs
- *     and notify charger manager if event happens
- * (2) Modify IBAT/IBUS ADC's coefficient
- * (3) Change dev_dbg to dev_dbg_ratelimited
- *
- * 1.1.2_MTK
- * (1) Enable charger in plug in callback
- * (2) Enable power path -> Enable MIVR IRQ,
- *     Disable MIVR IRQ -> Disable power path
- * (3) Change "PrimarySWCHG" to "primary_chg"
- *     Change "load_switch" to "primary_load_switch"
- * (4) Check ADC_START bit if ADC_DONE IRQ timeout
- *
- * 1.1.1_MTK
- * (1) Shorten enable to en
- * (2) Enable WDT for charging/OTG mode, disable WDT when no cable plugged in
- * (3) Use dev_ series instead pr_ series to dump log
- * (4) Do AICL in a workqueue after receiving MIVR IRQ
- *
- * 1.1.0_MTK
- * (1) Add a load switch device to support PE30
- *
- * 1.0.9_MTK
- * (1) Report charger online to charger type detection
- * (2) Use MIVR to enable/disable power path
- * (3) Release PE+20 efficiency table interface
- * (4) For ovpctrl_uvp, read uvp status to decide it is plug-in or plug-out
- *
- * 1.0.8_MTK
- * (1) Release mt6370_enable_discharge interface
- *     discharge/OTG is controlled by PD
- *
- * 1.0.7_MTK
- * (1) Adapt to GM30
- *
- * 1.0.6_MTK
- * (1) Use wait queue instead of mdelay for waiting interrupt event
- *
- * 1.0.5_MTK
- * (1) Modify USB charger type detecion flow
- * Follow notifier from TypeC if CONFIG_TCPC_CLASS is defined
- * (2) Add WDT timeout interrupt and kick watchdog in irq handler
- *
- * 1.0.4_MTK
- * (1) Add USB charger type detection
- *
- * 1.0.3_MTK
- * (1) Remove reset chip operation in probe function
- *
- * 1.0.2_MTK
- * (1) For normal boot, set IPREC to 850mA to prevent Isys drop
- * (2) Modify naming rules of functions
- *
- * 1.0.0_MTK
- * (1) Initial Release
- */

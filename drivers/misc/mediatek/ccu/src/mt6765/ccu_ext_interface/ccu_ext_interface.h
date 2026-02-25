@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __CCU_INTERFACE__
 #define __CCU_INTERFACE__
@@ -10,9 +7,6 @@
 
 extern MBOOL sec_vsync_pushed;
 
-/********************************************************************
- * Task definition
- ********************************************************************/
 enum ccu_msg_id {
 		/*Receive by CCU */
 		/*CCU Task*/
@@ -76,34 +70,19 @@ struct ccu_msg_t { /*16bytes*/
 		enum ccu_tg_info tg_info;
 };
 
-/********************************************************************
- * Special isr task (execute in isr)
- ********************************************************************/
 #define ISR_SP_TASK_SHUTDOWN 0x000000FF
 #define ISR_SP_TASK_TRG_I2C_DONE 0x000000C1
 #define ISR_SP_TASK_RST_I2C_DONE 0x000000B9
 
-/********************************************************************
- * Special ap isr task (execute in apmcu_isr)
- ********************************************************************/
 #define APISR_SP_TASK_TRIGGER_I2C 0x000000A1
 #define APISR_SP_TASK_RESET_I2C   0x000000A2
 
-/********************************************************************
- * Error code definition
- ********************************************************************/
 #define CCU_ERROR_NO               (0)
 #define CCU_ERROR_QUEUE_FULL       (1)
 
-/********************************************************************
- * Status definition
- ********************************************************************/
 #define CCU_STATUS_INIT_DONE              0xffff0000
 #define CCU_STATUS_INIT_DONE_2            0xffff00a5
 
-/********************************************************************
- * Direct-link source definition
- ********************************************************************/
 #define AE_STREAM_DL_SRC_AAO  0x00000000
 #define AE_STREAM_DL_SRC_PSO  0x00000001
 

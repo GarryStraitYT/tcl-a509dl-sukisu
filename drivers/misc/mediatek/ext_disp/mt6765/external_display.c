@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -169,23 +166,7 @@ int ext_disp_manual_unlock(void)
 	return 0;
 }
 
-/*
- * trigger operation:    VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 1.wait idle:         N         N        Y        Y
- * 2.lcm update:        N         Y        N        Y
- * 3.path start:       idle->Y    Y       idle->Y   Y
- * 4.path trigger:     idle->Y    Y       idle->Y   Y
- * 5.mutex enable:      N         N       idle->Y   Y
- * 6.set cmdq dirty:    N         Y        N        N
- * 7.flush cmdq:        Y         Y        N        N
- * 8.reset cmdq:        Y         Y        N        N
- * 9.cmdq insert token: Y         Y        N        N
- */
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- *	1.wait idle:	     N         N        Y        Y
- */
 static int _should_wait_path_idle(void)
 {
 	if (ext_disp_cmdq_enabled())
@@ -194,9 +175,6 @@ static int _should_wait_path_idle(void)
 		return dpmgr_path_is_busy(pgc->dpmgr_handle);
 }
 
-/* trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 3.path start:      idle->Y   Y        idle->Y  Y
- */
 static int _should_start_path(void)
 {
 	if (ext_disp_is_video_mode())
@@ -205,10 +183,6 @@ static int _should_start_path(void)
 		return 1;
 }
 
-/* trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 4. path trigger:    idle->Y   Y        idle->Y  Y
- * 5. mutex enable:    N         N        idle->Y  Y
- */
 static int _should_trigger_path(void)
 {
 	if (ext_disp_is_video_mode())
@@ -219,9 +193,6 @@ static int _should_trigger_path(void)
 		return 1;
 }
 
-/* trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 6. set cmdq dirty: N         Y        N        N
- */
 static int _should_set_cmdq_dirty(void)
 {
 	if (ext_disp_cmdq_enabled() && (ext_disp_is_video_mode() == 0))
@@ -230,39 +201,21 @@ static int _should_set_cmdq_dirty(void)
 		return 0;
 }
 
-/* trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 7. flush cmdq:     Y         Y        N        N
- */
 static int _should_flush_cmdq_config_handle(void)
 {
 	return ext_disp_cmdq_enabled() ? 1 : 0;
 }
 
-/* trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 8. reset cmdq:     Y         Y        N        N
- */
 static int _should_reset_cmdq_config_handle(void)
 {
 	return ext_disp_cmdq_enabled() ? 1 : 0;
 }
 
-/* trigger operation:       VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 9. cmdq insert token:   Y         Y        N        N
- */
 static int _should_insert_wait_frame_done_token(void)
 {
 	return ext_disp_cmdq_enabled() ? 1 : 0;
 }
 
-/*
- * static int _should_trigger_interface(void)
- * {
- *	if (pgc->mode == EXTD_DECOUPLE_MODE)
- *		return 0;
- *	else
- *		return 1;
- * }
- */
 static int _should_config_ovl_input(void)
 {
 	if (ext_disp_mode == EXTD_SINGLE_LAYER_MODE
@@ -272,20 +225,6 @@ static int _should_config_ovl_input(void)
 		return 1;
 }
 
-/*
- *
-	static int _is_dsc_enable(unsigned int session)
-	{
-		int ret = 0;
-
-		if (DISP_SESSION_DEV(session) == DEV_LCM)
-			ret = extd_lcm_params.dsi.dsc_enable;
-		else
-			ret = extd_lcm_params.dpi.dsc_enable;
-
-		return ret;
-	}
- */
 
 static int _build_path_direct_link(unsigned int session)
 {
@@ -844,20 +783,6 @@ static void deinit_cmdq_slots(cmdqBackupSlotHandle hSlot)
 	cmdqBackupFreeSlot(hSlot);
 }
 
-/*
- *
-	static int ext_disp_cmdq_dump(uint64_t engineFlag, int level)
-	{
-		EXTDFUNC();
-
-		if (pgc->dpmgr_handle != NULL)
-			ext_disp_diagnose();
-		else
-			EXTDMSG("external display dpmgr_handle == NULL\n");
-
-		return 0;
-	}
-*/
 static int ext_disp_init_hdmi(unsigned int session)
 {
 	struct disp_ddp_path_config *data_config = NULL;
@@ -2291,9 +2216,6 @@ enum EXTD_POWER_STATE ext_disp_set_state(enum EXTD_POWER_STATE new_state)
 	return old_state;
 }
 
-/* use MAX_SCHEDULE_TIMEOUT to wait for ever
- * NOTES: _ext_disp_path_lock should NOT be held when call this func !!!!!!!!
- */
 #define __ext_disp_wait_state(condition, timeout) \
 	wait_event_timeout(ext_disp_state_wait_queue, condition, timeout)
 

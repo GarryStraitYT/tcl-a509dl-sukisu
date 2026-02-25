@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 #ifndef _MTK_USB_BOOST_H
 #define _MTK_USB_BOOST_H
 

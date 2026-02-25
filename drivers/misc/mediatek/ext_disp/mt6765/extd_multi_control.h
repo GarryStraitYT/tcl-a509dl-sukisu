@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __EXTD_MULTI_CONTROL_H__
 #define __EXTD_MULTI_CONTROL_H__

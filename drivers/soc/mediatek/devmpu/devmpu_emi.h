@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __DEVMPU_EMI_H__
 #define __DEVMPU_EMI_H__

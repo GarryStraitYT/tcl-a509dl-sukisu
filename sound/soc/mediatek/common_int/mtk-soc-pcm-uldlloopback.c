@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   uldlloopback.c
- *
- * Project:
- * --------
- *   MT6595  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio uldlloopback
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -49,9 +16,6 @@
 #include "mtk-soc-pcm-platform.h"
 #include <linux/dma-mapping.h>
 
-/*
- *    function implementation
- */
 
 static int m_input_use_single_ch;
 static int m_input_use_lch;

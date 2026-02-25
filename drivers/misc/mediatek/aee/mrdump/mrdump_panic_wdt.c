@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/arm-smccc.h>
 #include <linux/compiler.h>
@@ -47,9 +44,6 @@
 #define MAX_EXCEPTION_FRAME	16
 #define LOG_BUFFER_SIZE	512
 
-/* AEE_MTK_CPU_NUMS may not eaqual to real cpu numbers,
- * alloc buffer at initialization
- */
 static char wdt_log_buf[WDT_LOG_DEFAULT_SIZE];
 static int wdt_percpu_preempt_cnt[AEE_MTK_CPU_NUMS];
 static unsigned long

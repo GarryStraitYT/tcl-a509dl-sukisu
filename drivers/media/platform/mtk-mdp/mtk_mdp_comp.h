@@ -1,27 +1,7 @@
-/*
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #ifndef __MTK_MDP_COMP_H__
 #define __MTK_MDP_COMP_H__
 
-/**
- * enum mtk_mdp_comp_type - the MDP component
- * @MTK_MDP_RDMA:	Read DMA
- * @MTK_MDP_RSZ:	Riszer
- * @MTK_MDP_WDMA:	Write DMA
- * @MTK_MDP_WROT:	Write DMA with rotation
- */
 enum mtk_mdp_comp_type {
 	MTK_MDP_RDMA,
 	MTK_MDP_RSZ,
@@ -42,14 +22,6 @@ enum mtk_mdp_comp_id {
 	MTK_MDP_COMP_ID_MAX,
 };
 
-/**
- * struct mtk_mdp_comp - the MDP's function component data
- * @dev_node:	component device node
- * @clk:	clocks required for component
- * @regs:	Mapped address of component registers.
- * @type:	component type
- * @id:		component ID
- */
 struct mtk_mdp_comp {
 	struct device_node	*dev_node;
 	struct clk		*clk[2];

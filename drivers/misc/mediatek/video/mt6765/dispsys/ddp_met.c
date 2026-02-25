@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "MET"
 
@@ -44,15 +41,6 @@ static struct ovl_info_s {
 };
 #endif
 
-/**
- * check if it's decouple mode
- *
- * mutex_id  |  decouple  |  direct-link
- * -------------------------------------
- * OVL_Path  |      1     |       0
- * RDMA_Path |      0     |       X
- *
- */
 int dpp_disp_is_decouple(void)
 {
 	if (ddp_is_moudule_in_mutex(0, DISP_MODULE_OVL0) ||
@@ -62,13 +50,6 @@ int dpp_disp_is_decouple(void)
 		return 1;
 }
 
-/**
- * Represent to LCM display refresh rate
- * Primary Display:  map to RDMA0 sof/eof ISR, for all display mode
- * External Display: map to RDMA1 sof/eof ISR, for all display mode
- * NOTICE:
- *		for WFD, nothing we can do here
- */
 static void ddp_disp_refresh_tag_start(unsigned int index)
 {
 #if defined(CONFIG_MTK_MET)
@@ -159,9 +140,6 @@ static void ddp_disp_refresh_tag_end(unsigned int index)
 #endif
 }
 
-/**
- * Represent to OVL0/0VL1 each layer's refresh rate
- */
 static void ddp_inout_info_tag(unsigned int index)
 {
 

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __LC89821x_STMV__
 #define	__LC89821x_STMV__

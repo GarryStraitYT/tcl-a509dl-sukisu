@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _KD_IMGSENSOR_DATA_H
 #define _KD_IMGSENSOR_DATA_H
@@ -17,9 +14,6 @@
 #include <linux/compat.h>
 #endif
 
-/*************************************************
- *
- **************************************************/
 /* In KERNEL mode,SHOULD be sync with mediatype.h */
 /* CHECK before remove or modify */
 /* #undef BOOL */
@@ -33,9 +27,6 @@
 #define MINT32 signed int
 #endif
 
-/************************************************************************
- *
- ************************************************************************/
 /*  */
 /* msdk_isp_exp.h */
 /*  */
@@ -123,9 +114,6 @@ enum ACDK_CAMERA_OPERATION_MODE_ENUM {
 };
 
 
-/************************************************************************
- *
- ************************************************************************/
 
 /*  */
 #define MAX_NUM_OF_SUPPORT_SENSOR 32
@@ -978,9 +966,6 @@ struct IMGSENSOR_GPIO_STRUCT {
 	enum SENSOR_PHY_TYPE_ENUM SensroInterfaceType;
 	enum INDATA_FORMAT_ENUM SensorIndataformat;
 };
-/************************************************************************
- *
- ************************************************************************/
 
 #define MAXIMUM_NVRAM_CAMERA_SENSOR_FILE_SIZE_KERNEL       4096
 
@@ -1143,9 +1128,6 @@ struct COMPAT_ACDK_SENSOR_PRESOLUTION_STRUCT {
 #endif
 
 
-/************************************************************************
- *
- ************************************************************************/
 /*  */
 /* adoption to winmo driver files */
 /*  */
@@ -1182,27 +1164,7 @@ struct COMPAT_ACDK_SENSOR_PRESOLUTION_STRUCT {
 #define MSDK_SENSOR_DBG_IMGSENSOR_INFO_STRUCT \
 		struct ACDK_SENSOR_DBG_IMGSENSOR_STRUCT
 
-/* MSDK_SCENARIO_ID_ENUM => ACDK_SCENARIO_ID_ENUM
- * #define MSDK_SCENARIO_ID_CAMERA_PREVIEW  \
- *		ACDK_SCENARIO_ID_CAMERA_PREVIEW
- * #define MSDK_SCENARIO_ID_VIDEO_PREVIEW \
- *		ACDK_SCENARIO_ID_VIDEO_PREVIEW
- * #define MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG \
- *		ACDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG
- */
 #define MSDK_SENSOR_OPERATION_MODE_VIDEO ACDK_SENSOR_OPERATION_MODE_VIDEO
-/* #define MSDK_SCENARIO_ID_CAMERA_ZSD \
- *	ACDK_SCENARIO_ID_CAMERA_ZSD
- * #define MSDK_SCENARIO_ID_CAMERA_3D_PREVIEW \
- *	ACDK_SCENARIO_ID_CAMERA_3D_PREVIEW
- * #define MSDK_SCENARIO_ID_CAMERA_3D_CAPTURE \
- *	ACDK_SCENARIO_ID_CAMERA_3D_CAPTURE
- * #define MSDK_SCENARIO_ID_CAMERA_3D_VIDEO \
- *	ACDK_SCENARIO_ID_CAMERA_3D_VIDEO
- */
-/************************************************************************
- *
- ************************************************************************/
 struct MULTI_SENSOR_FUNCTION_STRUCT {
 	MUINT32 (*SensorOpen)(void);
 	MUINT32 (*SensorGetInfo)(MUINT32 *pScenarioId[2],

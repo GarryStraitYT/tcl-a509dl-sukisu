@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "DSI"
 
@@ -621,15 +618,6 @@ void DSI_clk_HS_mode(enum DISP_MODULE_ENUM module, struct cmdqRecStruct *cmdq,
 	}
 }
 
-/**
- * DSI_enter_ULPS
- *
- * 1. disable DSI high-speed clock
- * 2. Data lane enter ultra-low power mode
- * 3. Clock lane enter ultra-low power mode
- * 4. wait DSI sleepin irq (timeout interval ?)
- * 5. clear lane_num
- */
 void DSI_enter_ULPS(enum DISP_MODULE_ENUM module)
 {
 	int i = 0, module_num;
@@ -678,15 +666,6 @@ void DSI_enter_ULPS(enum DISP_MODULE_ENUM module)
 	}
 }
 
-/**
- * DSI_exit_ULPS
- *
- * 1. set DSI sleep out mode
- * 2. set wakeup prd according to current MIPI frequency
- * 3. recovery lane number
- * 4. sleep out start
- * 4. wait DSI sleepout irq (timeout interval ?)
- */
 void DSI_exit_ULPS(enum DISP_MODULE_ENUM module)
 {
 	int i = 0, module_num;
@@ -2120,8 +2099,6 @@ static void _DSI_PHY_clk_setting(enum DISP_MODULE_ENUM module,
 
 }
 
-/* DSI_MIPI_clk_change
- */
 void DSI_MIPI_clk_change(enum DISP_MODULE_ENUM module, void *cmdq, int clk)
 {
 	unsigned int chg_status = 0;
@@ -2446,11 +2423,6 @@ int mipi_clk_change_by_data_rate(int en, int mipi_data_rate)
 	return 0;
 }
 
-/**
- * DSI_PHY_clk_switch
- *
- * mipi init / deinit flow
- */
 
 void DSI_CPHY_clk_switch(enum DISP_MODULE_ENUM module, struct cmdqRecStruct *cmdq, int on)
 {
@@ -2598,11 +2570,6 @@ void DSI_DPHY_clk_switch(enum DISP_MODULE_ENUM module,
 	}
 }
 
-/**
- * DSI_PHY_clk_switch
- *
- * mipi init / deinit flow
- */
 void DSI_PHY_clk_switch(enum DISP_MODULE_ENUM module,
 	struct cmdqRecStruct *cmdq, int on)
 {
@@ -5250,19 +5217,6 @@ void ddp_dsi_update_partial(enum DISP_MODULE_ENUM module, void *cmdq,
 		roi->width, roi->height);
 }
 
-/**
- * _dsi_basic_irq_enable
- *
- * 1. CMD_DONE
- * 2. TE_READY
- * 3. VM_DONE
- * 4. VM_CMD_DONE
- * 5. RD_RDY(enable when read)
- * 6. SLEEPOUT(enable when poweron)
- * 7. SLEEPIN(enable when poweroff)
- * 8. FRAME_DONE(not enable)
- * 9. INP_UNFINISH_IRQ
- */
 static void _dsi_basic_irq_enable(enum DISP_MODULE_ENUM module, void *cmdq)
 {
 	int i = 0;
@@ -5343,12 +5297,6 @@ static void _dsi_basic_irq_enable(enum DISP_MODULE_ENUM module, void *cmdq)
 		DSI_REG[i]->DSI_INTEN, BUFFER_UNDERRUN_INT_EN, 1);
 }
 
-/**
- * config dsi driver:
- * 1._dsi_context get info
- * 2.power init(dsi analogy)
- * 3.dsi irq setting
- */
 int ddp_dsi_config(enum DISP_MODULE_ENUM module,
 	struct disp_ddp_path_config *config, void *cmdq)
 {
@@ -5440,12 +5388,6 @@ int dsi_enable_irq(enum DISP_MODULE_ENUM module, void *handle,
 }
 
 
-/**
- * start dsi driver:
- * 1.shadow regs setting
- * 2.power init(dsi analogy)
- * 3.dsi irq setting
- */
 int _ddp_dsi_start_dual(enum DISP_MODULE_ENUM module, void *cmdq)
 {
 	int g_lcm_x = disp_helper_get_option(DISP_OPT_FAKE_LCM_X);
@@ -5465,12 +5407,6 @@ int _ddp_dsi_start_dual(enum DISP_MODULE_ENUM module, void *cmdq)
 	return 0;
 }
 
-/**
- * start dsi driver:
- * 1.shadow regs setting
- * 2.send roi
- * 3.dsi
- */
 int ddp_dsi_start(enum DISP_MODULE_ENUM module, void *cmdq)
 {
 	int i = 0;
@@ -5496,15 +5432,6 @@ int ddp_dsi_start(enum DISP_MODULE_ENUM module, void *cmdq)
 	return 0;
 }
 
-/**
- * stop dual dsi means:
- * 1.wait frame done/command done(duan_en must = 0)
- * 2.set to command mode
- * 3.dual_en = 0
- * 3.hs clk disable
- *
- * timeout = 1s(fps = 1)
- */
 static int _ddp_dsi_stop_dual(enum DISP_MODULE_ENUM module,
 	void *cmdq_handle)
 {
@@ -5603,14 +5530,6 @@ static int dsi_stop_vdo_mode(enum DISP_MODULE_ENUM module,
 	return 0;
 }
 
-/**
- * stop dsi means:
- * 1.wait frame done/command done
- * 2.set to command mode
- * 3.hs clk disable
- *
- * timeout = 1s(fps = 1)
- */
 int ddp_dsi_stop(enum DISP_MODULE_ENUM module, void *cmdq_handle)
 {
 	int i = 0;
@@ -6086,21 +6005,6 @@ unsigned int _is_power_on_status(enum DISP_MODULE_ENUM module)
 	return 0;
 }
 
-/**
- * ddp_dsi_power_on
- *
- * 1.mipi 26m cg
- * 2.mipi init
- * 3.dsi cg
- * 4.dsi exit ulps
- * 5._set_power_on_status
- *
- * 1.mipi 26m cg
- * 2.dsi cg
- * 3._set_power_on_status
- *
- * important: mipi init -> dsi init
- */
 int ddp_dsi_power_on(enum DISP_MODULE_ENUM module, void *cmdq_handle)
 {
 	DISPFUNC();
@@ -6125,17 +6029,6 @@ int ddp_dsi_power_on(enum DISP_MODULE_ENUM module, void *cmdq_handle)
 	return DSI_STATUS_OK;
 }
 
-/**
- * ddp_dsi_power_off
- *
- * 1.enter dsi ulps
- * 2.dsi clk gating
- * 3.mipi deinit
- * 4.mipi 26m cg
- * 5._set_power_on_status
- *
- * important: dsi deinit->mipi deinit
- */
 int ddp_dsi_power_off(enum DISP_MODULE_ENUM module, void *cmdq_handle)
 {
 	uint i = 0;

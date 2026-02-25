@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- *
- */
 
 #include <dt-bindings/phy/phy.h>
 #include <linux/clk.h>
@@ -367,17 +362,6 @@ void cover_val_to_str(u32 val, u8 width, char *str)
 	}
 }
 
-/*
- * loopback_test: default test pattern
- *   readl(U3D_PHYD_PIPE0) &
- *     ~(0x01<<30)) | 0x01<<30,
- *     ~(0x01<<28)) | 0x00<<28,
- *     ~(0x03<<26)) | 0x01<<26,
- *     ~(0x03<<24)) | 0x00<<24,
- *     ~(0x01<<22)) | 0x00<<22,
- *     ~(0x01<<21)) | 0x00<<21,
- *     ~(0x01<<20)) | 0x01<<20.
- */
 #define U3P_U3_PHYD_PIPE0_CLR_PATTERN	0x5f700000
 #define U3P_U3_PHYD_PIPE0_SET_PATTERN	0x44100000
 

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/sched/clock.h>
 
@@ -713,15 +710,6 @@ static s32 cmdq_append_command_pkt(struct cmdq_pkt *pkt, enum cmdq_code code,
 	return 0;
 }
 
-/*
- * centralize the write/polling/read command for APB and GPR handle
- * this function must be called inside cmdq_append_command
- * because we ignore buffer and pre-fetch check here.
- * Parameter:
- *     same as cmdq_append_command
- * Return:
- *     same as cmdq_append_command
- */
 static s32 cmdq_append_wpr_command(
 	struct cmdqRecStruct *handle, enum cmdq_code code,
 	u32 arg_a, u32 arg_b, u32 arg_a_type, u32 arg_b_type)
@@ -825,15 +813,6 @@ static s32 cmdq_append_wpr_command(
 	return 0;
 }
 
-/**
- * centralize the read_s & write_s command for APB and GPR handle
- * this function must be called inside cmdq_append_command
- * because we ignore buffer and pre-fetch check here.
- * Parameter:
- *     same as cmdq_append_command
- * Return:
- *     same as cmdq_append_command
- */
 static s32 cmdq_append_rw_s_command(struct cmdqRecStruct *handle,
 	enum cmdq_code code, u32 arg_a, u32 arg_b, u32 arg_a_type,
 	u32 arg_b_type)
@@ -2049,9 +2028,6 @@ s32 cmdq_cpu_write_mem(cmdqBackupSlotHandle h_backup_slot, u32 slot_index,
 #endif				/* CMDQ_GPR_SUPPORT */
 }
 
-/* Free allocated backup slot. DO NOT free them before corresponding
- * task finishes. Becareful on AsyncFlush use cases.
- */
 s32 cmdq_free_mem(cmdqBackupSlotHandle h_backup_slot)
 {
 #ifdef CMDQ_GPR_SUPPORT
@@ -2062,12 +2038,6 @@ s32 cmdq_free_mem(cmdqBackupSlotHandle h_backup_slot)
 #endif				/* CMDQ_GPR_SUPPORT */
 }
 
-/* Insert instructions to backup given 32-bit HW register
- * to a backup slot.
- * You can use cmdq_cpu_read_mem() to retrieve the result
- * AFTER cmdq_task_flush() returns, or INSIDE the callback of
- * cmdq_task_flush_async_callback().
- */
 s32 cmdq_op_read_reg_to_mem(struct cmdqRecStruct *handle,
 	cmdqBackupSlotHandle h_backup_slot, u32 slot_index, u32 addr)
 {

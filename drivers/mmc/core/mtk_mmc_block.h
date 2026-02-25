@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef _MT_MMC_BLOCK_H
 #define _MT_MMC_BLOCK_H

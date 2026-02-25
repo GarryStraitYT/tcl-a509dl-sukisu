@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/tcpci_event.h"
@@ -16,9 +13,6 @@ DECL_PE_STATE_TRANSITION(PD_DPM_MSG_ACK) = {
 };
 DECL_PE_STATE_REACTION(PD_DPM_MSG_ACK);
 
-/*
- * [BLOCK] Porcess PD Ctrl MSG
- */
 
 static inline bool pd_process_ctrl_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -49,9 +43,6 @@ static inline bool pd_process_ctrl_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess DPM MSG
- */
 
 static inline bool pd_process_dpm_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -70,9 +61,6 @@ static inline bool pd_process_dpm_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess Timer MSG
- */
 
 static inline bool pd_process_timer_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -93,9 +81,6 @@ static inline bool pd_process_timer_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Process Policy Engine's VCS Message
- */
 
 bool pd_process_event_vcs(struct pd_port *pd_port, struct pd_event *pd_event)
 {

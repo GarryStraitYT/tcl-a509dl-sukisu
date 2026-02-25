@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -61,10 +58,6 @@ get_image_sensor_state(void)
 	return -1;
 }
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 
 static struct sock *daemo_nl_sk;
 static void ta_nl_send_to_user(
@@ -78,15 +71,7 @@ struct DCTM_T thermal_dctm_t;
 static struct tad_nl_msg_t tad_ret_msg;
 static unsigned int g_ta_status;
 static int g_ta_counter;
-/*=============================================================
- *Local function prototype
- *=============================================================
- */
 
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 #define NETLINK_TAD 27
 /*=============================================================*/
 

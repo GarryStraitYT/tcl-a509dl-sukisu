@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef __MTK_CLK_BUF_BRIDGE_H__
 #define __MTK_CLK_BUF_BRIDGE_H__
 
@@ -43,9 +40,6 @@ enum {
 	BBLPM_EXT = (1 << XO_EXT),
 };
 
-/*******************************************************************************
- * Bridging from platform -> clkbuf.ko
- ******************************************************************************/
 typedef u8 (*clk_buf_bridge_get_xo_ctrl_cb)(enum xo_id);
 typedef int (*clk_buf_bridge_get_enter_bblpm_cond_cb)(u32 *bblpm_cond);
 typedef int (*clk_buf_bridge_set_xo_ctrl_cb)(enum clk_buf_id, bool);

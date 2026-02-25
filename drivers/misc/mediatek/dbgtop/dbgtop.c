@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -119,9 +116,6 @@ dbgtop_config_store:
 
 static DRIVER_ATTR_RW(dbgtop_config);
 
-/*
- * emi_ctrl_init: module init function.
- */
 static int __init mtk_dbgtop_init(void)
 {
 	int ret;
@@ -139,9 +133,6 @@ static int __init mtk_dbgtop_init(void)
 	return 0;
 }
 
-/*
- * mtk_dbgtop_exit: module exit function.
- */
 static void __exit mtk_dbgtop_exit(void)
 {
 }

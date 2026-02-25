@@ -1,32 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/****************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_spkprotect_common.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio playback
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *---------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
 #include "mtk-auddrv-scp-spkprotect-common.h"
 #include <linux/compat.h>

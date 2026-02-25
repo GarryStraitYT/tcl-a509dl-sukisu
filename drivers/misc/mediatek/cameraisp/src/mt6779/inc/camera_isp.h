@@ -1,17 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT_ISP_H
 #define _MT_ISP_H
 
 #include <linux/ioctl.h>
 
-/**
- * boot-T timestamp is supported or not.
- * undef: not supported
- */
 #define TS_BOOT_T
 
 #ifndef CONFIG_OF
@@ -19,16 +12,10 @@ extern void mt_irq_set_sens(unsigned int irq, unsigned int sens);
 extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
 #endif
 
-/**
- * enforce kernel log enable
- */
 #define KERNEL_LOG
 #define ISR_LOG_ON
 
 #define SIG_ERESTARTSYS 512
-/*******************************************************************************
- *
- ******************************************************************************/
 #define ISP_DEV_MAJOR_NUMBER    251
 #define ISP_MAGIC               'k'
 
@@ -73,28 +60,13 @@ enum ISP_DEV_NODE_ENUM {
 };
 
 /* defined if want to support multiple dequne and enque or camera 3.0 */
-/**
- * support multiple deque and enque if defined.
- * note: still en/de que 1 buffer each time only
- * e.g:
- * deque();
- * deque();
- * enque();
- * enque();
- */
 /* #define _rtbc_buf_que_2_0_ */
-/**
- * frame status
- */
 enum CAM_FrameST {
 	CAM_FST_NORMAL             = 0,
 	CAM_FST_DROP_FRAME         = 1,
 	CAM_FST_LAST_WORKING_FRAME = 2,
 };
 
-/**
- * interrupt clear type
- */
 enum ISP_IRQ_CLEAR_ENUM {
 	ISP_IRQ_CLEAR_NONE,   /* non-clear wait, clear after wait */
 	ISP_IRQ_CLEAR_WAIT,   /* clear wait, clear before and after wait */
@@ -102,11 +74,6 @@ enum ISP_IRQ_CLEAR_ENUM {
 	ISP_IRQ_CLEAR_ALL     /* clear all status */
 };
 
-/**
- * module's interrupt , each module should have its own isr.
- * note:
- * mapping to isr table,ISR_TABLE when using no device tree
- */
 enum ISP_IRQ_TYPE_ENUM {
 	ISP_IRQ_TYPE_INT_CAM_A_ST,
 	ISP_IRQ_TYPE_INT_CAM_B_ST,
@@ -575,9 +542,6 @@ struct ISP_RAW_INT_STATUS {
 	unsigned int ispInt5Err;
 };
 
-/*******************************************************************************
- * pass1 real time buffer control use cq0c
- ******************************************************************************/
 
 #define _rtbc_use_cq0c_
 
@@ -604,13 +568,7 @@ struct compat_ISP_REF_CNT_CTRL_STRUCT {
 #endif
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
-/*******************************************************************************
- *
- ******************************************************************************/
 enum ISP_CMD_ENUM {
 	ISP_CMD_RESET_BY_HWMODULE,
 	ISP_CMD_READ_REG,     /* Read register from driver */

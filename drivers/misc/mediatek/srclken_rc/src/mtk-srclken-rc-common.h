@@ -1,13 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/**
- * @file    mtk-srclken-rc-common.h
- * @brief   Driver for subys request resource control
- *
- */
 #ifndef __MTK_SRCLKEN_RC_COMMON_H__
 #define __MTK_SRCLKEN_RC_COMMON_H__
 

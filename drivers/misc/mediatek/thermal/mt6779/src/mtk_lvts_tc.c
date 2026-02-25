@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 /* #define DEBUG 1 */
 #include <linux/version.h>
@@ -43,33 +40,7 @@
 #define __MT_MTK_LVTS_TC_C__
 
 #include <mt-plat/mtk_devinfo.h>
-/*=============================================================
- * Local variable definition
- *=============================================================
- */
 /* chip dependent */
-/*
- * TO-DO: I assume AHB bus frequecy is 78MHz.
- * Please confirm it.
- */
-/*
- * struct lvts_thermal_controller_speed {
- *  unsigned int tempMonCtl1;//0x0804
- *  unsigned int tempMonCtl2;//0x0808
- *  unsigned int tempAhbPoll;//no use
- * };
- */
-/*
- * PTP#	module		LVTS Plan
- * 0	MCU_LITTLE	LVTS2-0, 1, 2
- * 1	MCU_BIG		LVTS1-0, 1
- * 2	MCU_CCI		LVTS2-0, 1, 2
- * 3	MFG (GPU)	LVTS3-1
- * 4	MDLA		LVTS4-0
- * 5	VPU		LVTS4-1
- * 6	TOP		LVTS4-1; LVTS3-0,1
- * A, B	MD		LVTS9-0
- */
 struct lvts_thermal_controller lvts_tscpu_g_tc[LVTS_CONTROLLER_NUM] = {
 	[0] = {
 		.ts = {L_TS_LVTS1_0, L_TS_LVTS1_1},
@@ -160,18 +131,7 @@ static unsigned int g_lvts_controller_value_e[LVTS_CONTROLLER_NUM]
 
 #if LVTS_VALID_DATA_TIME_PROFILING
 unsigned long long int SODI3_count, noValid_count;
-/* If isTempValid is 0, it means no valid temperature data
- * between two SODI3 entry points.
- */
 int isTempValid;
-/* latency_array
- * {a, b}
- * a: a time threshold in milliseconds. if it is -1, it means others.
- * b: the number of valid temperature latencies from a phone enters SODI3 to
- *    to a phone gets a valid temperature of any sensor.
- *    It is possible a phone enters SODI3 several times without a valid
- *    temperature data.
- */
 #define NUM_TIME_TH (16)
 static unsigned int latency_array[NUM_TIME_TH][2] = {
 	{100, 0},
@@ -206,18 +166,10 @@ int diff_error_count;
 #define LVTS_COEFF_B_X_1000			 (204650) // 204.65
 #endif
 
-/*=============================================================
- * Local function declartation
- *=============================================================
- */
 static unsigned int  lvts_temp_to_raw(int ret, enum lvts_sensor_enum ts_name);
 
 static void lvts_set_tc_trigger_hw_protect(
 		int temperature, int temperature2, int tc_num);
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 	void __attribute__ ((weak))
 mt_ptp_lock(unsigned long *flags)
 {
@@ -975,10 +927,6 @@ static void lvts_thermal_reset_and_initial(int tc_num)
 		readl(LVTSMSRCTL0_0 + offset));
 }
 
-/*
- * temperature2 to set the middle threshold for interrupting CPU.
- * -275000 to disable it.
- */
 static void lvts_set_tc_trigger_hw_protect(
 int temperature, int temperature2, int tc_num)
 {
@@ -1227,16 +1175,6 @@ void lvts_thermal_pause_all_periodoc_temp_sensing(void)
 	}
 }
 
-/*
- * lvts_thermal_check_all_sensing_point_idle -
- * Check if all sensing points are idle
- * Return: 0 if all sensing points are idle
- *         an error code if one of them is busy
- * error code[31:16]: an index of LVTS thermal controller
- * error code[2]: bit 10 of LVTSMSRCTL1
- * error code[1]: bit 7 of LVTSMSRCTL1
- * error code[0]: bit 0 of LVTSMSRCTL1
- */
 int lvts_thermal_check_all_sensing_point_idle(void)
 {
 	int i, temp, offset, error_code;
@@ -1378,9 +1316,6 @@ static void lvts_tscpu_thermal_enable_all_periodoc_sensing_point(int tc_num)
 		tc_num, lvts_tscpu_g_tc[tc_num].ts_number);
 }
 
-/*
- * disable ALL periodoc temperature sensing point
- */
 void lvts_thermal_disable_all_periodoc_temp_sensing(void)
 {
 	int i = 0, offset;

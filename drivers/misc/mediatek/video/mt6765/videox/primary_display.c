@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -91,7 +88,6 @@
 #ifdef MTK_FB_MMDVFS_SUPPORT
 #include <linux/soc/mediatek/mtk-pm-qos.h>
 #endif
-#include "disp_pm_qos.h"
 
 #define MMSYS_CLK_LOW (0)
 #define MMSYS_CLK_HIGH (1)
@@ -550,9 +546,6 @@ void debug_print_power_mode_check(enum mtkfb_power_mode prev,
 		  power_mode_to_string(primary_display_check_power_mode()));
 }
 
-/* use MAX_SCHEDULE_TIMEOUT to wait for ever
- * NOTES: primary_path_lock should NOT be held when call this func !!!!!!!!
- */
 #define __primary_display_wait_state(condition, timeout) \
 	wait_event_timeout(display_state_wait_queue, condition, timeout)
 
@@ -1135,17 +1128,6 @@ enum DISP_MODULE_ENUM _get_dst_module_by_lcm(struct disp_lcm_handle *plcm)
 }
 
 
-/****************************************************************
- *trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 1.wait idle:           N         N       Y        Y
- * 2.lcm update:          N         Y       N        Y
- * 3.path start:       idle->Y      Y    idle->Y     Y
- * 4.path trigger:     idle->Y      Y    idle->Y     Y
- * 5.mutex enable:        N         N    idle->Y     Y
- * 6.set cmdq dirty:      N         Y       N        N
- * 7.flush cmdq:          Y         Y       N        N
- ****************************************************************
- */
 
 int _should_wait_path_idle(void)
 {
@@ -1865,14 +1847,9 @@ static void directlink_path_add_memory(struct WDMA_CONFIG_STRUCT *p_wdma,
 	active_cfg = primary_display_get_current_cfg_id();
 #endif
 #ifdef MTK_FB_MMDVFS_SUPPORT
-#ifdef CONFIG_HIGH_FRAME_RATE
-	prim_disp_request_hrt_bw(dvfs_last_ovl_req,
-		DDP_SCENARIO_PRIMARY_ALL, __func__, active_cfg);
-#else
 	primary_display_request_dvfs_perf(MMDVFS_SCEN_DISP,
 		HRT_LEVEL_NUM - 1,
 		layering_rule_get_mm_freq_table(HRT_OPP_LEVEL_LEVEL0));
-#endif
 #endif
 	/* configure config thread */
 	_cmdq_insert_wait_frame_done_token_mira(cmdq_handle);
@@ -2041,9 +2018,6 @@ static int _DL_switch_to_DC_fast(int block)
 	struct disp_ddp_path_config *data_config_dc = NULL;
 	unsigned int mva;
 	struct ddp_io_golden_setting_arg gset_arg;
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	int active_cfg = 0;
-#endif
 
 	if ((primary_is_sec() == 1)) {
 		init_sec_buf();
@@ -2132,15 +2106,11 @@ static int _DL_switch_to_DC_fast(int block)
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_switch_mode,
 		MMPROFILE_FLAG_PULSE, 2, 0);
 
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	active_cfg = primary_display_get_current_cfg_id();
-#endif
 	/* Switch to lower gear */
 #ifdef MTK_FB_MMDVFS_SUPPORT
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	prim_disp_request_hrt_bw(2,
-		DDP_SCENARIO_PRIMARY_RDMA0_COLOR0_DISP,
-		__func__, active_cfg);
+	primary_display_request_dvfs_perf(
+		MMDVFS_SCEN_DISP, HRT_LEVEL_LEVEL1, 0);
 #else
 	primary_display_request_dvfs_perf(
 		MMDVFS_SCEN_DISP, HRT_LEVEL_LEVEL0, 0);
@@ -2311,15 +2281,11 @@ static int _DC_switch_to_DL_fast(int block)
 #endif
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	/* switch back to last request gear */
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	prim_disp_request_hrt_bw(dvfs_last_ovl_req,
-			DDP_SCENARIO_PRIMARY_DISP, __func__, active_cfg);
-#else
 	primary_display_request_dvfs_perf(
 		MMDVFS_SCEN_DISP, dvfs_last_ovl_req,
 		ovl_throughput_freq_req);
 #endif
-#endif
+
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_switch_mode,
 		MMPROFILE_FLAG_PULSE, 1, 1);
 
@@ -3367,7 +3333,6 @@ static int _ovl_fence_release_callback(unsigned long userdata)
 
 	mmprofile_log_ex(ddp_mmp_get_events()->session_release,
 		MMPROFILE_FLAG_START, 1, userdata);
-
 	/* check overlap layer */
 	cmdqBackupReadSlot(pgc->subtractor_when_free, 0, &real_hrt_level);
 	real_hrt_level >>= 16;
@@ -3387,19 +3352,12 @@ static int _ovl_fence_release_callback(unsigned long userdata)
 #endif
 
 #ifdef MTK_FB_MMDVFS_SUPPORT
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	if ((real_hrt_level >= dvfs_last_ovl_req) &&
-		(!primary_display_is_decouple_mode()))
-		prim_disp_request_hrt_bw(dvfs_last_ovl_req,
-			DDP_SCENARIO_PRIMARY_DISP,
-			__func__, config_id);
-#else
 	if ((real_hrt_level >= dvfs_last_ovl_req) &&
 	    (!primary_display_is_decouple_mode()))
 		primary_display_request_dvfs_perf(MMDVFS_SCEN_DISP,
 			dvfs_last_ovl_req, ovl_throughput_freq_req);
 #endif
-#endif
+
 	_primary_path_unlock(__func__);
 
 	/* check last ovl status: should be idle when config */
@@ -3464,13 +3422,6 @@ static int _ovl_fence_release_callback(unsigned long userdata)
 	hrt_bw_sync_idx(hrt_idx);
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	/* update bandwidth */
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	primary_fps_ctx_get_fps(&in_fps, &stable);
-	if (!primary_display_is_video_mode())
-		out_fps = in_fps;
-	disp_pm_qos_set_ovl_bw(in_fps, out_fps, &bandwidth);
-	disp_pm_qos_update_bw(bandwidth);
-#else
 	primary_fps_ctx_get_fps(&in_fps, &stable);
 	if (!primary_display_is_video_mode())
 		out_fps = in_fps;
@@ -3483,7 +3434,7 @@ static int _ovl_fence_release_callback(unsigned long userdata)
 			MMPROFILE_FLAG_END,
 			!primary_display_is_decouple_mode(), bandwidth);
 #endif
-#endif
+
 	mmprofile_log_ex(ddp_mmp_get_events()->session_release,
 		MMPROFILE_FLAG_END, 1, userdata);
 	return ret;
@@ -4814,10 +4765,6 @@ int primary_display_suspend(void)
 		set_enterulps(1);
 
 #ifdef MTK_FB_MMDVFS_SUPPORT
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	disp_pm_qos_set_default_bw(&bandwidth);
-	disp_pm_qos_update_bw(bandwidth);
-#else
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_pm_qos,
 			MMPROFILE_FLAG_START,
 			!primary_display_is_decouple_mode(), 0);
@@ -4825,7 +4772,6 @@ int primary_display_suspend(void)
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_pm_qos,
 			MMPROFILE_FLAG_END,
 			!primary_display_is_decouple_mode(), 0);
-#endif
 #endif
 	DISPCHECK("[POWER]dpmanager path power off[end]\n");
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_suspend,
@@ -4861,13 +4807,8 @@ done:
 	ddp_clk_check();
 	/* set MMDVFS to default, do not prevent it from stepping into ULPM */
 #ifdef MTK_FB_MMDVFS_SUPPORT
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	prim_disp_request_hrt_bw(HRT_BW_UNREQ,
-			DDP_SCENARIO_PRIMARY_DISP, __func__, active_cfg);
-#else
 	primary_display_request_dvfs_perf(MMDVFS_SCEN_DISP,
 		HRT_LEVEL_DEFAULT, 0);
-#endif
 #endif
 	return ret;
 }
@@ -5249,10 +5190,6 @@ int primary_display_resume(void)
 
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	/* update bandwidth */
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	disp_pm_qos_set_ovl_bw(in_fps, out_fps, &bandwidth);
-	disp_pm_qos_update_bw(bandwidth);
-#else
 	disp_get_ovl_bandwidth(in_fps, out_fps, &bandwidth);
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_pm_qos,
 			MMPROFILE_FLAG_START,
@@ -5261,7 +5198,6 @@ int primary_display_resume(void)
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_pm_qos,
 			MMPROFILE_FLAG_END,
 			!primary_display_is_decouple_mode(), bandwidth);
-#endif
 #endif
 	/*
 	 * (in suspend) when we stop trigger loop
@@ -5530,10 +5466,6 @@ int primary_display_trigger(int blocking, void *callback, int need_merge)
 	return ret;
 }
 
-/*
- * the function will trigger dc and wake up dc thread for merge status;
- * decouple_trigger thread->trigger mirror->decouple_update_rdma_config_thread
- */
 static int decouple_trigger_worker_thread(void *data)
 {
 	struct sched_param param = {.sched_priority = 94 };
@@ -5688,9 +5620,6 @@ static unsigned int idlemgr_flag_backup;
 
 static int svp_inited;
 
-/* svp_inited: make sure the opt_backup &
- * restore_opt functions be used in pairs.
- */
 static int disp_enter_svp(enum SVP_STATE state)
 {
 	int i;
@@ -6533,21 +6462,6 @@ static int _config_ovl_input(struct disp_frame_cfg_t *cfg,
 	}
 
 #ifdef MTK_FB_MMDVFS_SUPPORT
-#ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	if (primary_display_is_decouple_mode())
-		prim_disp_request_hrt_bw(2,
-			DDP_SCENARIO_PRIMARY_RDMA0_COLOR0_DISP,
-			__func__, cfg->active_config);
-	else {
-		if ((overlap_num - dvfs_last_ovl_req) > 0)
-			prim_disp_request_hrt_bw(overlap_num,
-				DDP_SCENARIO_PRIMARY_DISP,
-				__func__, cfg->active_config);
-		dvfs_last_ovl_req = overlap_num;
-	}
-
-	hrt_level = overlap_num;
-#else
 	/* Adjust MM DVFS by ovl YUV throughput */
 	_ovl_yuv_throughput_freq_request(cfg);
 
@@ -6582,7 +6496,7 @@ static int _config_ovl_input(struct disp_frame_cfg_t *cfg,
 		screen_logger_add_message("HRT", MESSAGE_REPLACE, msg);
 	}
 #endif
-#endif
+
 	if (disp_helper_get_option(
 			DISP_OPT_DYNAMIC_SWITCH_MMSYSCLK)) {
 		if (bypass) {
@@ -8529,75 +8443,6 @@ static int _screen_cap_by_cpu(unsigned int mva, enum UNIFIED_COLOR_FMT ufmt,
 	return 0;
 }
 
-int primary_display_capture_framebuffer_ovl(unsigned long pbuf,
-	enum UNIFIED_COLOR_FMT ufmt)
-{
-	int ret = 0;
-	struct ion_client *ion_display_client = NULL;
-	struct ion_handle *ion_display_handle = NULL;
-	unsigned long mva = 0;
-	unsigned int w_xres = primary_display_get_width();
-	unsigned int h_yres = primary_display_get_height();
-	unsigned int pixel_byte = primary_display_get_bpp() / 8;
-	int buffer_size = h_yres * w_xres * pixel_byte;
-	enum DISP_MODULE_ENUM after_eng = DISP_MODULE_OVL0;
-	int tmp;
-
-	DISPMSG("primary capture: begin\n");
-
-	disp_sw_mutex_lock(&(pgc->capture_lock));
-
-	if (primary_display_is_sleepd()) {
-		memset((void *)pbuf, 0, buffer_size);
-		DISPMSG("primary capture: Fail black End\n");
-		goto out;
-	}
-
-	ion_display_client = disp_ion_create("disp_cap_ovl");
-	if (ion_display_client == NULL) {
-		DISPMSG("primary capture:Fail to create ion\n");
-		ret = -1;
-		goto out;
-	}
-
-	ion_display_handle = disp_ion_alloc(ion_display_client,
-					    ION_HEAP_MULTIMEDIA_MAP_MVA_MASK,
-					    pbuf, buffer_size);
-	if (!ion_display_handle) {
-		DISPMSG("primary capture:Fail to allocate buffer\n");
-		ret = -1;
-		goto out;
-	}
-
-	disp_ion_get_mva(ion_display_client, ion_display_handle,
-		&mva, DISP_M4U_PORT_DISP_WDMA0);
-	disp_ion_cache_flush(ion_display_client, ion_display_handle,
-			     ION_CACHE_FLUSH_BY_RANGE);
-
-	tmp = disp_helper_get_option(DISP_OPT_SCREEN_CAP_FROM_DITHER);
-	if (tmp == 0)
-		after_eng = DISP_MODULE_OVL0;
-
-	if (primary_display_cmdq_enabled())
-		_screen_cap_by_cmdq((unsigned int)mva, ufmt, after_eng);
-	else
-		_screen_cap_by_cpu((unsigned int)mva, ufmt, after_eng);
-
-	disp_ion_cache_flush(ion_display_client, ion_display_handle,
-		ION_CACHE_FLUSH_BY_RANGE);
-
-out:
-	if (ion_display_client)
-		disp_ion_free_handle(ion_display_client, ion_display_handle);
-
-	if (ion_display_client)
-		disp_ion_destroy(ion_display_client);
-
-	disp_sw_mutex_unlock(&(pgc->capture_lock));
-	DISPMSG("primary capture: end\n");
-	return ret;
-}
-
 int primary_display_capture_framebuffer(unsigned long pbuf)
 {
 	unsigned int fb_layer_id = primary_display_get_option("FB_LAYER");
@@ -9099,10 +8944,6 @@ done:
 	return ret;
 }
 
-/*****************************************************************************
- * Below code is for Efuse test in Android Load.
- * include TE, ROI and Resolution.
- *****************************************************************************/
 /* extern void DSI_ForceConfig(int forceconfig);	*/
 /* extern int DSI_set_roi(int x,int y);			*/
 /* extern int DSI_check_roi(void);			*/
@@ -9415,11 +9256,6 @@ static enum DISP_POWER_STATE tui_power_stat_backup;
 static int tui_session_mode_backup;
 static struct DDP_MODULE_DRIVER *ddp_module_backup;
 
-/*
- * Now the normal display vsync is DDP_IRQ_RDMA0_DONE in vdo mode, but when
- * enter TUI, we must protect the rdma0, then, should switch it to the
- * DDP_IRQ_DSI0_FRAME_DONE.
- */
 int display_vsync_switch_to_dsi(unsigned int flg)
 {
 	if (!primary_display_is_video_mode())

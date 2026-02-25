@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #define PFX "CAM_CAL"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__
 
@@ -31,11 +28,6 @@
 static DEFINE_SPINLOCK(g_spinLock);
 static struct i2c_client *g_pstI2CclientG;
 
-/************************************************************
- * I2C read function (Custom)
- * Customer's driver can put on here
- * Below is an example
- ************************************************************/
  #define PAGE_SIZE_ 256
 static int iReadRegI2C(u8 *a_pSendData, u16 a_sizeSendData,
 		u8 *a_pRecvData, u16 a_sizeRecvData, u16 i2cId)

@@ -1,19 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/******************************************************************************
- * cam_regs.h - MT6758 cam registers
- *
- * DESCRIPTION:
- *     This file provide register addresses and chip dependency infos in CAMSYS.
- *
- ******************************************************************************/
 
-/**
- *    CAM interrupt status
- */
 /* normal siganl */
 #define VS_INT_ST       (1L<<0)
 #define TG_INT1_ST      (1L<<1)
@@ -93,9 +80,6 @@ enum{
 	_YUVO_R1_EN_   = (1L<<5)
 } ENUM_DMA2_EN;
 
-/**
- *    CAMSV_DMA_SOFT_RSTSTAT
- */
 #define IMGO_SOFT_RST_STAT        (1L<<0)
 #define RRZO_SOFT_RST_STAT        (1L<<1)
 #define AAO_SOFT_RST_STAT         (1L<<2)
@@ -107,9 +91,6 @@ enum{
 #define CACI_SOFT_RST_STAT        (1L<<17)
 #define LSCI_SOFT_RST_STAT        (1L<<18)
 
-/**
- *    CAM DMA done status
- */
 #define IMGO_DONE_ST        (1L<<0)
 #define LTMSO_R1_DONE_ST    (1L<<1)
 #define RRZO_DONE_ST        (1L<<2)
@@ -143,9 +124,6 @@ enum{
 #define UFDI_R2_DONE_ST     (1L<<30)
 #define LSCI_DONE_ST        (1L<<31)
 
-/**
- *    CAMSV interrupt status
- */
 /* normal signal */
 #define SV_VS1_ST           (1L<<0)
 #define SV_TG_ST1           (1L<<1)
@@ -160,9 +138,6 @@ enum{
 #define SV_IMGO_ERR         (1L<<16)
 #define SV_IMGO_OVERRUN     (1L<<17)
 
-/**
- *    IRQ signal mask
- */
 #define INT_ST_MASK_CAM     (                  \
 			      VS_INT_ST       |\
 			      TG_INT1_ST      |\
@@ -171,9 +146,6 @@ enum{
 			      HW_PASS1_DON_ST |\
 			      SOF_INT_ST      |\
 			      SW_PASS1_DON_ST)
-/**
- *    dma done mask
- */
 #define DMA_ST_MASK_CAM     (              \
 			     IMGO_DONE_ST |\
 			     UFEO_DONE_ST |\
@@ -187,9 +159,6 @@ enum{
 			     LSCI_DONE_ST |\
 			     PDO_DONE_ST)
 
-/**
- *    IRQ Warning Mask
- */
 #define INT_ST_MASK_CAM_WARN    (                 \
 				 PDO_ERR_ST      |\
 				 UFGO_ERR_ST     |\
@@ -204,9 +173,6 @@ enum{
 				 LCSO_ERR_ST)
 
 #define INT_ST_MASK_CAM_WARN_2 0
-/**
- *    IRQ Error Mask
- */
 #define INT_ST_MASK_CAM_ERR     (                 \
 				 TG_ERR_ST       |\
 				 TG_GBERR_ST     |\
@@ -216,9 +182,6 @@ enum{
 				 DMA_ERR_ST)
 
 
-/**
- *    IRQ signal mask
- */
 #define INT_ST_MASK_CAMSV       (                    \
 				 SV_VS1_ST          |\
 				 SV_TG_ST1          |\
@@ -227,18 +190,12 @@ enum{
 				 SV_SOF_INT_ST      |\
 				 SV_HW_PASS1_DON_ST |\
 				 SV_SW_PASS1_DON_ST)
-/**
- *    IRQ Error Mask
- */
 #define INT_ST_MASK_CAMSV_ERR   (                   \
 				 SV_TG_ERR         |\
 				 SV_TG_GBERR       |\
 				 SV_IMGO_ERR       |\
 				 SV_IMGO_OVERRUN)
 
-/**
- *    DMA CAMSV IMGO/UFO done mask
- */
 #define DMA_ST_MASK_CAMSV_IMGO_OR_UFO     (              \
 			     IMGO_SOFT_RST_STAT |\
 			     UFEO_SOFT_RST_STAT)

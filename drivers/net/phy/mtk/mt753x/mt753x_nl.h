@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Sirui Zhao <Sirui.Zhao@mediatek.com>
- */
 
 #ifndef _MT753X_NL_H_
 #define _MT753X_NL_H_

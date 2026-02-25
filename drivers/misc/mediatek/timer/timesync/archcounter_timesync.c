@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <asm/arch_timer.h>

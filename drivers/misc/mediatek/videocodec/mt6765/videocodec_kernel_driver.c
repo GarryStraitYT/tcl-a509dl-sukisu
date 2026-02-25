@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -186,18 +183,6 @@ static unsigned int is_entering_suspend;
 #define INFO_REGION     0x1000
 
 
-/* #define VENC_IRQ_STATUS_addr        (VENC_BASE + 0x05C)
- *#define VENC_IRQ_ACK_addr           (VENC_BASE + 0x060)
- *#define VENC_MP4_IRQ_ACK_addr       (VENC_BASE + 0x678)
- *#define VENC_MP4_IRQ_STATUS_addr    (VENC_BASE + 0x67C)
- *#define VENC_ZERO_COEF_COUNT_addr   (VENC_BASE + 0x688)
- *#define VENC_BYTE_COUNT_addr        (VENC_BASE + 0x680)
- *#define VENC_MP4_IRQ_ENABLE_addr    (VENC_BASE + 0x668)
-
-
- *#define VENC_MP4_STATUS_addr        (VENC_BASE + 0x664)
- *#define VENC_MP4_MVQP_STATUS_addr   (VENC_BASE + 0x6E4)
- */
 
 
 #define VENC_IRQ_STATUS_SPS         0x1
@@ -209,9 +194,6 @@ static unsigned int is_entering_suspend;
 
 
 /* VDEC virtual base address */
-/*#define VDEC_MISC_BASE  (VDEC_BASE + 0x0000)
- *#define VDEC_VLD_BASE   (VDEC_BASE + 0x1000)
- */
 
 #define DRAM_DONE_POLLING_LIMIT 20000
 
@@ -273,29 +255,6 @@ void *mt_vdec_base_get(void)
 	return (void *)KVA_VDEC_BASE;
 }
 EXPORT_SYMBOL(mt_vdec_base_get);
-/* void vdec_log_status(void)
- *{
- *	unsigned int u4DataStatusMain = 0;
- *	unsigned int i = 0;
- *
- *	for (i = 45; i < 72; i++) {
- *		if (i == 45 || i == 46 || i == 52 || i == 58 ||
- *			i == 59 || i == 61 || i == 62 || i == 63 ||
- *			i == 71) {
- *			u4DataStatusMain = VDO_HW_READ(KVA_VDEC_VLD_BASE+(i*4));
- *			pr_info("[VCODEC][DUMP] "
- *				"VLD_%d = %x\n", i, u4DataStatusMain);
- *		}
- *	}
- *
- *	for (i = 66; i < 80; i++) {
- *		u4DataStatusMain = VDO_HW_READ(KVA_VDEC_MISC_BASE+(i*4));
- *		pr_info("[VCODEC][DUMP] "
- *				"MISC_%d = %x\n", i, u4DataStatusMain);
- *	}
- *
- *}
- */
 
 /* TODO: Check register for shared vdec/venc */
 void vdec_polling_status(void)
@@ -1781,17 +1740,6 @@ static long vcodec_set_frame_info(unsigned long arg)
 		return -EFAULT;
 	}
 
-/* TODO check user
- *	mutex_lock(&VDecHWLock);
- *	if (grVcodecDecHWLock.pvHandle !=
- *	(VAL_VOID_T *)pmem_user_v2p_video((VAL_ULONG_T)rFrameInfo.handle)) {
- *
- *	MODULE_MFV_LOGD("[ERROR] VCODEC_SET_FRAME_INFO, vdec not locked");
- *		mutex_unlock(&VDecHWLock);
- *		return -EFAULT;
- *	}
- *	mutex_unlock(&VDecHWLock);
- */
 	if (rFrameInfo.driver_type == VAL_DRIVER_TYPE_H264_DEC ||
 		rFrameInfo.driver_type == VAL_DRIVER_TYPE_HEVC_DEC ||
 		rFrameInfo.driver_type == VAL_DRIVER_TYPE_MP4_DEC ||
@@ -1909,11 +1857,6 @@ static long vcodec_unlocked_ioctl(struct file *file, unsigned int cmd,
 	int temp_nr_cpu_ids;
 	char rIncLogCount;
 
-/*
- *	VCODEC_DRV_CMD_QUEUE_T rDrvCmdQueue;
- *	P_VCODEC_DRV_CMD_T cmd_queue = VAL_NULL;
- *	unsigned int u4Size, uValue, nCount;
- */
 
 	switch (cmd) {
 	case VCODEC_SET_THREAD_ID:
@@ -2998,12 +2941,6 @@ static struct dev_pm_domain mt_venc_pm_domain = {
 #endif
 
 #if USE_WAKELOCK == 0
-/**
- * Suspend callbacks after user space processes are frozen
- * Since user space processes are frozen, there is no need and cannot hold same
- * mutex that protects lock owner while checking status.
- * If video codec hardware is still active now, must not aenter suspend.
- **/
 static int vcodec_suspend(struct platform_device *pDev, pm_message_t state)
 {
 	if (CodecHWLock.pvHandle != 0) {
@@ -3020,15 +2957,6 @@ static int vcodec_resume(struct platform_device *pDev)
 	return 0;
 }
 
-/**
- * Suspend notifiers before user space processes are frozen.
- * User space driver can still complete decoding/encoding of current frame.
- * Change state to is_entering_suspend to stop further tasks but allow current
- * frame to complete (LOCKHW, WAITISR, UNLOCKHW).
- * Since there is no critical section proection, it is possible for a new task
- * to start after changing to is_entering_suspend state. This case will be
- * handled by suspend callback vcodec_suspend.
- **/
 static int vcodec_suspend_notifier(struct notifier_block *nb,
 					unsigned long action, void *data)
 {
@@ -3521,10 +3449,6 @@ static void __exit vcodec_driver_exit(void)
 	cdev_del(vcodec_cdev2);
 #endif
 	/* [TODO] iounmap the following? */
-/*
- *	iounmap((void *)KVA_VENC_IRQ_STATUS_ADDR);
- *	iounmap((void *)KVA_VENC_IRQ_ACK_ADDR);
- */
 
 	free_irq(VENC_IRQ_ID, NULL);
 	free_irq(VDEC_IRQ_ID, NULL);

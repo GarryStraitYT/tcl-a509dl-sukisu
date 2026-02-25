@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -204,9 +200,6 @@ static int emi_probe(struct platform_device *pdev)
 	return 0;
 }
 
-/*
- * emi_ctrl_init: module init function.
- */
 static int __init emi_ctrl_init(void)
 {
 	int ret;
@@ -249,9 +242,6 @@ static int __init emi_ctrl_init(void)
 	return 0;
 }
 
-/*
- * emi_ctrl_exit: module exit function.
- */
 static void __exit emi_ctrl_exit(void)
 {
 }

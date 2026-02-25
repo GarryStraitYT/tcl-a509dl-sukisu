@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -554,9 +551,6 @@ static ssize_t tracker_last_status_store
 
 static DRIVER_ATTR_RW(tracker_last_status);
 
-/*
- * driver initialization entry point
- */
 static int __init systracker_init(void)
 {
 	int err = 0;
@@ -587,9 +581,6 @@ static int __init systracker_init(void)
 	return 0;
 }
 
-/*
- * driver exit point
- */
 static void __exit systracker_exit(void)
 {
 }

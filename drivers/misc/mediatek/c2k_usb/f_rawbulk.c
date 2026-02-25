@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #define DRIVER_AUTHOR   "jlguo <jlguo@via-telecom.com>"
 #define DRIVER_DESC     "Rawbulk Gadget - transport data from CP to Gadget"

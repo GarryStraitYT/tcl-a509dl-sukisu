@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * drivers/staging/android/mtk_ion/ion_dummy_driver.c
- *
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/err.h>
 #include <linux/platform_device.h>

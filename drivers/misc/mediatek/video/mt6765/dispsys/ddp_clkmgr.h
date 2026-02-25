@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
-  * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __DDP_CLK_MGR_H__
 #define __DDP_CLK_MGR_H__
@@ -11,9 +8,6 @@
 #include <linux/clk.h>
 
 
-/* display clk id
- * -- by chip
- */
 enum DDP_CLK_ID {
 	/* top clk */
 	CLK_MM_MTCMOS = 0,

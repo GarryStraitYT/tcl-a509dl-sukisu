@@ -1,27 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *   ov5645mipi_Sensor.c
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 Source code of Sensor driver
- *
- *
- *------------------------------------------------------------------------------
- * Upper this line, this part is controlled by CC/CQ. DO NOT MODIFY!!
- *============================================================================
- ****************************************************************************/
 
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
@@ -47,15 +25,6 @@
 #define LOG_2 LOG_INF(\
 	"preview 1280*960@30fps,448Mbps/lane; capture 5M@15fps,672Mbps/lane\n")
 /*******************************   Modify end    *****************************/
-/* #define LOG_INF(format, args...)\
- *    xlog_printk(ANDROID_LOG_INFO   , PFX, "[%s] " format, __FUNCTION__, ##args
- */
-/* #define LOGE(format, args...)\
- *    xlog_printk(ANDROID_LOG_ERROR, PFX, "[%s] " format, __FUNCTION__, ##args)
- */
-/* #define LOG_INF(format, args...)\
- *    pr_debug(PFX "[%s] " format, __func__, ##args)
- */
 #define LOG_INF(format, args...)\
 	pr_debug(PFX "[%s] " format, __func__, ##args)
 #define USE_STREAM 1
@@ -5871,22 +5840,6 @@ static void write_shutter(kal_uint32 shutter)
 	LOG_INF("Exit! shutter =%d, framelength =%d\n",
 	shutter, imgsensor.frame_length);
 }
-/*************************************************************************
- * FUNCTION
- *	set_shutter
- *
- * DESCRIPTION
- *	This function set e-shutter of sensor to change exposure time.
- *
- * PARAMETERS
- *	iShutter : exposured lines
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static void set_shutter(kal_uint16 shutter)
 {
 	unsigned long flags;

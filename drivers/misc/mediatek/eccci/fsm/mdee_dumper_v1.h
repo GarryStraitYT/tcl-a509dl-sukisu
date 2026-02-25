@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __MDEE_DUMPER_V1_H__
 #define __MDEE_DUMPER_V1_H__

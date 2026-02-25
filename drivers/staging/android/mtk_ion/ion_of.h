@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * drivers/staging/android/mtk_ion/ion_of.h
- *
- * Copyright (c) 2019 MediaTek Inc.
- * Author Andrew Andrianov <andrew@ncrmnt.org>
- */
 
 #ifndef _ION_OF_H
 #define _ION_OF_H

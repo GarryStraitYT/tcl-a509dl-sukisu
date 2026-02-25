@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef __MTK_STATIC_POWER_H__
 #define __MTK_STATIC_POWER_H__
@@ -41,15 +38,6 @@
 #include "mtk_static_power_mt6779.h"
 #endif
 
-/*
- * @argument
- * dev: the enum of MT_SPOWER_xxx
- * voltage: the operating voltage, mV.
- * degree: the Tj. (degree C)
- * @return
- *  -1, means sptab is not yet ready.
- *  other value: the mW of leakage value.
- */
 extern int mt_spower_get_leakage(int dev, unsigned int voltage, int degree);
 extern int mt_spower_get_efuse_lkg(int dev);
 

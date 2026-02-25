@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author Terry Chang <terry.chang@mediatek.com>
- */
 #include <linux/atomic.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define PFX "S5K3L8"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__
@@ -354,22 +351,6 @@ static void set_max_framerate(UINT16 framerate, kal_bool min_framelength_en)
 	set_dummy();
 }	/*	set_max_framerate  */
 
-/*************************************************************************
- * FUNCTION
- *	set_shutter
- *
- * DESCRIPTION
- *	This function set e-shutter of sensor to change exposure time.
- *
- * PARAMETERS
- *	iShutter : exposured lines
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static void set_shutter(kal_uint16 shutter)
 {
 	unsigned long flags;
@@ -475,22 +456,6 @@ static kal_uint16 gain2reg(const kal_uint16 gain)
 	return reg_gain;
 }
 
-/*************************************************************************
- * FUNCTION
- *	set_gain
- *
- * DESCRIPTION
- *	This function is to set global gain to sensor.
- *
- * PARAMETERS
- *	iGain : sensor global gain(base: 0x40)
- *
- * RETURNS
- *	the actually gain set to sensor.
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint16 set_gain(kal_uint16 gain)
 {
 	kal_uint16 reg_gain;
@@ -555,17 +520,6 @@ static void set_mirror_flip(kal_uint8 image_mirror)
 {
 	pr_info("image_mirror = %d\n", image_mirror);
 
-/********************************************************
- *
- *   0x3820[2] ISP Vertical flip
- *   0x3820[1] Sensor Vertical flip
- *
- *   0x3821[2] ISP Horizontal mirror
- *   0x3821[1] Sensor Horizontal mirror
- *
- *   ISP and Sensor flip or mirror register bit should be the same!!
- *
- ********************************************************/
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.mirror = image_mirror;
 	spin_unlock(&imgsensor_drv_lock);
@@ -588,22 +542,6 @@ static void set_mirror_flip(kal_uint8 image_mirror)
 
 }
 
-/*************************************************************************
- *	 FUNCTION
- *	night_mode
- *
- *	 DESCRIPTION
- *	This function night mode of sensor.
- *
- *	 PARAMETERS
- *	bEnable: KAL_TRUE -> enable night mode, otherwise, disable night mode
- *
- *	 RETURNS
- *	None
- *
- *	 GLOBALS AFFECTED
- *
- *************************************************************************/
 static void night_mode(kal_bool enable)
 {
 /*No Need to implement this function*/
@@ -1425,22 +1363,6 @@ static kal_uint32 return_sensor_id(void)
 		read_cmos_sensor_byte(0x0001));
 }
 
-/*************************************************************************
- *	FUNCTION
- *	get_imgsensor_id
- *
- *	DESCRIPTION
- *	This function get the sensor ID
- *
- *	PARAMETERS
- *	*sensorID : return the sensor ID
- *
- *	RETURNS
- *	None
- *
- *	GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 {
 	kal_uint8 i = 0;
@@ -1473,22 +1395,6 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 }
 
 
-/*************************************************************************
- *	 FUNCTION
- *	open
- *
- *	DESCRIPTION
- *	This function initialize the registers of CMOS sensor
- *
- *	PARAMETERS
- *	None
- *
- *	 RETURNS
- *	None
- *
- *	 GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 open(void)
 {
 	kal_uint8 i = 0;
@@ -1540,22 +1446,6 @@ static kal_uint32 open(void)
 	return ERROR_NONE;
 }   /*  open  */
 
-/*************************************************************************
- *	FUNCTION
- *	close
- *
- * DESCRIPTION
- *
- *
- * PARAMETERS
- *	None
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 close(void)
 {
 	pr_info("E\n");
@@ -1566,25 +1456,6 @@ static kal_uint32 close(void)
 }	/*	close  */
 
 
-/*************************************************************************
- *	FUNCTION
- *	preview
- *
- *	DESCRIPTION
- *	This function start the sensor preview.
- *
- *	PRAMETERS
- *	*image_window : address pointer of pixel numbers in one
- * period of HSYNC
- *	*sensor_config_data : address pointer of line numbers
- *in one period of VSYNC
- *
- *	RETURNS
- *	None
- *
- *	GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 			MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
@@ -1613,21 +1484,6 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 	return ERROR_NONE;
 }	/*	preview   */
 
-/*************************************************************************
- *	FUNCTION
- *	capture
- *
- *	DESCRIPTION
- *	This function setup the CMOS sensor in capture MY_OUTPUT mode
- *
- *	PARAMETERS
- *
- *	RETURNS
- *	None
- *
- *	GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 capture(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 			MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
@@ -1729,25 +1585,6 @@ static kal_uint32 slim_video(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 	return ERROR_NONE;
 }
 
-/*************************************************************************
- *	 FUNCTION
- *	 Custom1
- *
- *	 DESCRIPTION
- *	This function start the sensor Custom1.
- *
- *	 PARAMETERS
- **image_window : address pointer of pixel numbers in
- * one period of HSYNC
- **sensor_config_data : address pointer of line numbers
- *in one period of VSYNC
- *
- *	 RETURNS
- *	   None
- *
- *	 GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 Custom1(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 		      MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {

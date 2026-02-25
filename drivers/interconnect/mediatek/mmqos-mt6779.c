@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Ming-Fan Chen <ming-fan.chen@mediatek.com>
- */
 
 #include <dt-bindings/interconnect/mtk,mmqos.h>
 #include <dt-bindings/interconnect/mtk,mt6779-emi.h>

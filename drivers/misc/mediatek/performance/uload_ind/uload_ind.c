@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include <linux/seq_file.h>
 #include <linux/proc_fs.h>
 #include "mtk_perfmgr_internal.h"

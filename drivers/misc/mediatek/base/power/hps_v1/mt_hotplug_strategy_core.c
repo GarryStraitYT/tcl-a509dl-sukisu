@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/**
- * @file    mt_hotplug_strategy_core.c
- * @brief   hotplug strategy(hps) - core
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>	/* MODULE_DESCRIPTION, MODULE_LICENSE */
@@ -83,9 +76,6 @@ static void hps_periodical_by_timer(void)
 
 #endif /* HPS_PERIODICAL_BY_ */
 
-/*
- * hps task main loop
- */
 static int _hps_task_main(void *data)
 {
 	void (*algo_func_ptr)(void);
@@ -117,9 +107,6 @@ static int _hps_task_main(void *data)
 	return 0;
 }
 
-/*
- * hps task control interface
- */
 int hps_task_start(void)
 {
 #if HPS_TASK_RT
@@ -182,9 +169,6 @@ void hps_task_wakeup(void)
 	mutex_unlock(&hps_ctxt.lock);
 }
 
-/*
- * init
- */
 int hps_core_init(void)
 {
 	int r = 0;
@@ -210,9 +194,6 @@ int hps_core_init(void)
 	return r;
 }
 
-/*
- * deinit
- */
 int hps_core_deinit(void)
 {
 	int r = 0;

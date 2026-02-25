@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/module.h>       /* needed by all modules */
 #include <mt-plat/sync_write.h>

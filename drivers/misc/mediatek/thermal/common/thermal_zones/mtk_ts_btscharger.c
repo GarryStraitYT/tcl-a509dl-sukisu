@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -86,15 +83,6 @@ static struct thermal_cooling_device *cl_dev_sysrst;
 
 static int mtktscharger_debug_log;
 
-/* This is to preserve last temperature readings from charger driver.
- * In case mtk_ts_charger.c fails to read temperature.
- */
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5000;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __HAL_BTIF_DMA_H_
 #define __HAL_BTIF_DMA_H_

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "LCM"
 
@@ -105,17 +102,11 @@ static struct LCM_UTIL_FUNCS lcm_util;
 #define LCM_ID_OTM1911A 0x40
 
 
-/*****************************************************************************
- * Function Prototype
- *****************************************************************************/
 static int _lcm_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id);
 static int _lcm_i2c_remove(struct i2c_client *client);
 
 
-/*****************************************************************************
- * Data Structure
- *****************************************************************************/
 struct _lcm_i2c_dev {
 	struct i2c_client *client;
 
@@ -144,9 +135,6 @@ static struct i2c_driver _lcm_i2c_driver = {
 
 };
 
-/*****************************************************************************
- * Function
- *****************************************************************************/
 static int _lcm_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id)
 {
@@ -187,9 +175,6 @@ static int _lcm_i2c_write_bytes(unsigned char addr, unsigned char value)
 	return ret;
 }
 
-/*
- * module load/unload record keeping
- */
 static int __init _lcm_i2c_init(void)
 {
 	pr_debug("[LCM][I2C] %s\n", __func__);

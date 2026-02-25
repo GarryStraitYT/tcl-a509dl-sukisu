@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- * Author: Owen Chen <owen.chen@mediatek.com>
- */
 
 #include <linux/clk-provider.h>
 #include <linux/io.h>
@@ -14,9 +10,6 @@
 #define ALL_CLK_ON		0
 #define DUMP_INIT_STATE		0
 
-/*
- * clkdbg dump_regs
- */
 
 enum {
 	topckgen,
@@ -41,11 +34,6 @@ enum {
 
 #define REGBASE_V(_phys, _id_name) { .phys = _phys, .name = #_id_name }
 
-/*
- * checkpatch.pl ERROR:COMPLEX_MACRO
- *
- * #define REGBASE(_phys, _id_name) [_id_name] = REGBASE_V(_phys, _id_name)
- */
 
 static struct regbase rb[] = {
 	[topckgen] = REGBASE_V(0x10000000, topckgen),
@@ -163,9 +151,6 @@ static void __init init_regbase(void)
 		rb[i].virt = ioremap(rb[i].phys, PAGE_SIZE);
 }
 
-/*
- * clkdbg fmeter
- */
 
 #include <linux/delay.h>
 
@@ -340,9 +325,6 @@ static u32 fmeter_freq_op(const struct fmeter_clk *fclk)
 	return 0;
 }
 
-/*
- * clkdbg dump_state
- */
 
 static const char * const *get_all_clk_names(void)
 {
@@ -648,9 +630,6 @@ static const char * const *get_all_clk_names(void)
 	return clks;
 }
 
-/*
- * clkdbg pwr_status
- */
 
 static const char * const *get_pwr_names(void)
 {
@@ -692,9 +671,6 @@ static const char * const *get_pwr_names(void)
 	return pwr_names;
 }
 
-/*
- * clkdbg dump_clks
- */
 
 void setup_provider_clk(struct provider_clk *pvdck)
 {
@@ -724,9 +700,6 @@ void setup_provider_clk(struct provider_clk *pvdck)
 	}
 }
 
-/*
- * chip_ver functions
- */
 
 #include <linux/seq_file.h>
 #include <mt-plat/mtk_chip.h>
@@ -745,9 +718,6 @@ static int clkdbg_chip_ver(struct seq_file *s, void *v)
 	return 0;
 }
 
-/*
- * init functions
- */
 
 static struct clkdbg_ops clkdbg_mt6765_ops = {
 	.get_all_fmeter_clks = get_all_fmeter_clks,

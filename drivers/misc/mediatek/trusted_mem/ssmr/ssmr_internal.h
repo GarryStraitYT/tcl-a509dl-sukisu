@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __SSMR_INTERNAL_H__
 #define __SSMR_INTERNAL_H__
@@ -28,20 +25,6 @@
 
 #define SSMR_INVALID_FEATURE(f) (f >= __MAX_NR_SSMR_FEATURES)
 
-/*
- *  req_size :         feature request size
- *  proc_entry_fops :  file operation fun pointer
- *  state :            region online/offline state
- *  count :            region max alloc size by feature
- *  alloc_pages :      current feature offline alloc size
- *  is_unmapping :     unmapping state
- *  use_cache_memory : when use reserved memory it will be true
- *  page :             zmc alloc page
- *  cache_page :       alloc page by reserved memory
- *  usable_size :      cma usage size
- *  scheme_flag :      show feaure support which schemes
- *  enable :           show feature status
- */
 struct SSMR_Feature {
 	bool is_unmapping;
 	bool use_cache_memory;

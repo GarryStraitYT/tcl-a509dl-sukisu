@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Kai Chieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MTK_AFE_DEBUG_H_
 #define _MTK_AFE_DEBUG_H_

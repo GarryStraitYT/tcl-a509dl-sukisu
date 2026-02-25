@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Yunfei Dong <yunfei.dong@mediatek.com>
- */
 
 #ifndef __UAPI_MTK_VCU_CONTROLS_H__
 #define __UAPI_MTK_VCU_CONTROLS_H__
@@ -11,14 +7,6 @@
 #define LOG_INFO_SIZE 1024
 #define VCODEC_CMDQ_CMD_MAX           (2048)
 
-/**
- * struct mem_obj - memory buffer allocated in kernel
- *
- * @iova:	iova of buffer
- * @len:	buffer length
- * @pa:	physical address
- * @va: kernel virtual address
- */
 struct mem_obj {
 	u64 iova;
 	u32 len;
@@ -26,31 +14,12 @@ struct mem_obj {
 	u64 va;
 };
 
-/**
- * struct map_obj - memory buffer mmaped in kernel
- *
- * @map_buf:	iova of buffer
- *	0: not mapped buf; 1: mapped buf
- * @map_type:	the type of mmap
- *	0: reserved; 1: MM_BASE;
- *	2: MM_CACHEABLE_BASE; 3: PA_BASE
- * @reserved: reserved
- */
 struct map_obj {
 	u32 map_buf;
 	u32 map_type;
 	u64 reserved;
 };
 
-/**
- * struct gce_cmds - cmds buffer
- *
- * @cmd:	gce cmd
- * @addr:	cmd operation addr
- * @data:	cmd operation data
- * @mask:  cmd operation mask
- * @cmd_cnt: cmdq total cmd count
- */
 struct gce_cmds {
 	u8  cmd[VCODEC_CMDQ_CMD_MAX];
 	u64 addr[VCODEC_CMDQ_CMD_MAX];
@@ -61,14 +30,6 @@ struct gce_cmds {
 	u32 cmd_cnt;
 };
 
-/**
- * struct gce_cmdq_obj - cmdQ buffer allocated in kernel
- *
- * @cmds_user_ptr: user pointer to struct gce_cmds
- * @gce_handle: instance handle
- * @flush_order: cmdQ buffer order
- * @codec_type: decoder(1) or encoder(0)
- */
 struct gce_cmdq_obj {
 	u64	cmds_user_ptr;
 	u64	gce_handle;
@@ -78,12 +39,6 @@ struct gce_cmdq_obj {
 	u32 secure;
 };
 
-/**
- * struct gce_obj - gce allocated in kernel
- * @gce_handle: instance handle
- * @flush_order: cmdQ buffer order
- * @codec_type: decoder(1) or encoder(0)
- */
 struct gce_obj {
 	u64	gce_handle;
 	u32	flush_order;
@@ -208,14 +163,6 @@ struct compat_mem_obj {
 };
 #endif
 
-/**
- * struct share_obj - DTCM (Data Tightly-Coupled Memory) buffer shared with
- *		      AP and VCU
- *
- * @id:		IPI id
- * @len:	share buffer length
- * @share_buf:	share buffer data
- */
 struct share_obj {
 	s32 id;
 	u32 len;

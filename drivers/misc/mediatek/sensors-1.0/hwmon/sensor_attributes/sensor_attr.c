@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "<HWMSEN> " fmt
 
@@ -107,13 +104,6 @@ int sensor_attr_deregister(struct sensor_attr_t *misc)
 	return 0;
 }
 
-/*
- *static char *sensor_attr_devnode(struct device *dev, umode_t *mode)
- *{
- *	pr_debug("sensor_attr: name :%s\n", dev_name(dev));
- *	return kasprintf(GFP_KERNEL, "sensor/%s", dev_name(dev));
- *}
- */
 
 int __init sensor_attr_init(void)
 {

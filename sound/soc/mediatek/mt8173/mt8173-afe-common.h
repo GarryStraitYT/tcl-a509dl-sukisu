@@ -1,13 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mt8173_afe_common.h  --  Mediatek 8173 audio driver common definitions
- *
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Koro Chen <koro.chen@mediatek.com>
- *             Sascha Hauer <s.hauer@pengutronix.de>
- *             Hidalgo Huang <hidalgo.huang@mediatek.com>
- *             Ir Lian <ir.lian@mediatek.com>
- */
 
 #ifndef _MT8173_AFE_COMMON_H_
 #define _MT8173_AFE_COMMON_H_

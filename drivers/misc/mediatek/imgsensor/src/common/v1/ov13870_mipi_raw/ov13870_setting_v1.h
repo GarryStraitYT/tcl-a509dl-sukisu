@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _OV31870MIPI_SETTING_V1_H_
 #define _OV31870MIPI_SETTING_V1_H_

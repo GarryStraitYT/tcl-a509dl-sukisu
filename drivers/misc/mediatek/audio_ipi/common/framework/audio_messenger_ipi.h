@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef AUDIO_MESSENGER_IPI_H
 #define AUDIO_MESSENGER_IPI_H
@@ -12,11 +9,6 @@
 
 
 
-/*
- * =============================================================================
- *                     MACRO
- * =============================================================================
- */
 
 #define MAX_IPI_MSG_BUF_SIZE     (240) /* SHARE_BUF_SIZE - 16 */
 #define IPI_MSG_HEADER_SIZE      (16)
@@ -25,11 +17,6 @@
 #define IPI_MSG_MAGIC_NUMBER     (0x8888)
 
 
-/*
- * =============================================================================
- *                     typedef
- * =============================================================================
- */
 
 enum { /* audio_ipi_msg_source_layer_t */
 	AUDIO_IPI_LAYER_FROM_HAL,
@@ -71,11 +58,6 @@ enum { /* audio_ipi_msg_ack_t */
 	AUDIO_IPI_MSG_CANCELED      = 8
 };
 
-/*
- * =============================================================================
- *                     struct definition
- * =============================================================================
- */
 
 struct aud_data_t {
 	uint32_t memory_size;      /* buffer size (memory) */
@@ -130,20 +112,10 @@ struct ipi_msg_t {
 };
 
 
-/*
- * =============================================================================
- *                     hook function
- * =============================================================================
- */
 
 typedef void (*recv_message_t)(struct ipi_msg_t *p_ipi_msg);
 
 
-/*
- * =============================================================================
- *                     public function
- * =============================================================================
- */
 
 uint16_t get_message_buf_size(const struct ipi_msg_t *p_ipi_msg);
 
@@ -198,11 +170,6 @@ bool check_print_msg_info(const struct ipi_msg_t *p_ipi_msg);
 	} while (0)
 
 
-/*
- * =============================================================================
- *                     public functions - declaration
- * =============================================================================
- */
 
 void audio_messenger_ipi_init(void);
 

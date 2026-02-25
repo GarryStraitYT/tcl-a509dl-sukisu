@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -961,60 +958,4 @@ MODULE_AUTHOR("Jeff Chang <jeff_chang@richtek.com>");
 MODULE_VERSION(TCPC_CORE_VERSION);
 MODULE_LICENSE("GPL");
 
-/* Release Version
- * 2.0.12_MTK
- * (1) Fix voltage/current steps of RDO for APDO
- * (2) Non-blocking TCPC notification by default
- * (3) Fix synchronization/locking problems
- * (4) Fix NoRp.SRC support
- *
- * 2.0.11_MTK
- * (1) Fix PD compliance failures of Ellisys and MQP
- * (2) Wait the result of BC1.2 before starting PD policy engine
- * (3) Fix compile warnings
- * (4) Fix NoRp.SRC support
- *
- * 2.0.10_MTK
- * (1) fix battery noitifier plug out cause recursive locking detected in
- *     nh->srcu.
- *
- * 2.0.9_MTK
- * (1) fix 10k A-to-C legacy cable workaround side effect when
- *     cable plug in at worakround flow.
- *
- * 2.0.8_MTK
- * (1) fix timeout thread flow for wakeup pd event thread
- *     after disable timer first.
- *
- * 2.0.7_MTK
- * (1) add extract pd source capability pdo defined in
- *     PD30 v1.1 ECN for pe40 get apdo profile.
- *
- * 2.0.6_MTK
- * (1) register battery notifier for battery plug out
- *     avoid TA hardreset 3 times will show charing icon.
- *
- * 2.0.5_MTK
- * (1) add CONFIG_TYPEC_CAP_NORP_SRC to support
- *      A-to-C No-Rp cable.
- * (2) add handler pd eint with eint mask
- *
- * 2.0.4_MTK
- * (1) add CONFIG_TCPC_NOTIFIER_LATE_SYNC to
- *      move irq_enable to late_initcall_sync stage
- *      to prevent from notifier_supply_num setting wrong.
- *
- * 2.0.3_MTK
- * (1) use local_irq_XXX to instead raw_local_irq_XXX
- *      to fix lock prov WARNING
- * (2) Remove unnecessary charger detect flow. it does
- *      not need to switch BC1-2 path on otg_en
- *
- * 2.0.2_MTK
- * (1) Fix Coverity and check patch issue
- * (2) Fix 32-bit project build error
- *
- * 2.0.1_MTK
- *	First released PD3.0 Driver for MTK Platform
- */
 

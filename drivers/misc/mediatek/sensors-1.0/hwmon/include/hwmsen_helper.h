@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "hwmsensor.h"
 #include <linux/i2c.h>
@@ -39,25 +36,6 @@ REG_LK = 0x0004, /*lcoked, register test will by-pass this register */
 REG_RW = REG_RO | REG_WO,
 };
 /*----------------------------------------------------------------------------*/
-/*
- * @sign, map: only used in accelerometer/magnetic field
- *      sometimes, the sensor output need to be remapped before reporting to
- * framework.
- *      the 'sign' is only -1 or +1 to align the sign for framework's coordinate
- * system
- *      the 'map'  align the value for framework's coordinate system. Take
- * accelerometer
- *      as an example:
- *      assume HAL receives original acceleration: acc[] = {100, 0, 100}
- *      sign[] = {1, -1, 1, 0};
- *      map[]  = {HWM_CODE_ACC_Y, HWM_CODE_ACC_X, HWM_CODE_ACC_Z, 0};
- *      according to the above 'sign' & 'map', the sensor output need to remap
- * as {y, -x, z}:
- *      float resolution = unit_numerator*GRAVITY_EARTH/unit_denominator;
- *      acc_x = sign[0]*acc[map[0]]*resolution;
- *      acc_y = sign[1]*acc[map[1]]*resolution;
- *      acc_z = sign[2]*acc[map[2]]*resolution;
- */
 struct hwmsen_convert {
 	s8 sign[C_MAX_HWMSEN_EVENT_NUM];
 	u8 map[C_MAX_HWMSEN_EVENT_NUM];

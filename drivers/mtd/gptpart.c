@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author:	Guochun Mao	<guochun.mao@mediatek.com>
- *		Xiaolei Li	<xiaolei.li@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -98,10 +93,6 @@ static int validate_mbr_partition(struct mtd_info *master,
 	return 0;
 }
 
-/*
- * Parse the gpt header and get the required header fields
- * Return 0 on valid signature
- */
 static int partition_parse_gpt_header(unsigned char *buffer,
 				      struct gpt_info *info)
 {

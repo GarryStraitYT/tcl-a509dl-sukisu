@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __IMGSENSOR_HW_MT6306_h__
 #define __IMGSENSOR_HW_MT6306_h__

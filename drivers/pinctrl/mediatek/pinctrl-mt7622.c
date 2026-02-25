@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2017-2018 MediaTek Inc.
- *
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #include "pinctrl-moore.h"
 
@@ -258,10 +252,6 @@ static const struct mtk_pin_desc mt7622_pins[] = {
 	MT7622_PIN(102, "GPIO_E"),
 };
 
-/* List all groups consisting of these pins dedicated to the enablement of
- * certain hardware block and the corresponding mode for all of the pins. The
- * hardware probably has multiple combinations of these pinouts.
- */
 
 /* EMMC */
 static int mt7622_emmc_pins[] = { 40, 41, 42, 43, 44, 45, 47, 48, 49, 50, };
@@ -660,9 +650,6 @@ static const struct group_desc mt7622_groups[] = {
 	PINCTRL_PIN_GROUP("wled", mt7622_wled),
 };
 
-/* Joint those groups owning the same capability in user point of view which
- * allows that people tend to use through the device tree.
- */
 static const char *mt7622_emmc_groups[] = { "emmc", "emmc_rst", };
 static const char *mt7622_ethernet_groups[] = { "esw", "esw_p0_p1",
 						"esw_p2_p3_p4", "mdc_mdio",

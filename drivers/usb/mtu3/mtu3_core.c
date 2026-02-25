@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_core.c - hardware access layer and gadget init/exit of
- *                     MediaTek usb3 Dual-Role Controller Driver
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
@@ -422,18 +414,6 @@ void mtu3_deconfig_ep(struct mtu3 *mtu, struct mtu3_ep *mep)
 	dev_dbg(mtu->dev, "%s: %s\n", __func__, mep->name);
 }
 
-/*
- * Two scenarios:
- * 1. when device IP supports SS, the fifo of EP0, TX EPs, RX EPs
- *	are separated;
- * 2. when supports only HS, the fifo is shared for all EPs, and
- *	the capability registers of @EPNTXFFSZ or @EPNRXFFSZ indicate
- *	the total fifo size of non-ep0, and ep0's is fixed to 64B,
- *	so the total fifo size is 64B + @EPNTXFFSZ;
- *	Due to the first 64B should be reserved for EP0, non-ep0's fifo
- *	starts from offset 64 and are divided into two equal parts for
- *	TX or RX EPs for simplification.
- */
 static void get_ep_fifo_config(struct mtu3 *mtu)
 {
 	struct mtu3_fifo_info *tx_fifo;
@@ -814,10 +794,6 @@ static void mtu3_hw_exit(struct mtu3 *mtu)
 	mtu3_mem_free(mtu);
 }
 
-/**
- * we set 32-bit DMA mask by default, here check whether the controller
- * supports 36-bit DMA or not, if it does, set 36-bit DMA mask.
- */
 static int mtu3_set_dma_mask(struct mtu3 *mtu)
 {
 	struct device *dev = mtu->dev;

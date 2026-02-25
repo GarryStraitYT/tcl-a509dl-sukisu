@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include "perf_ioctl.h"
 
 #if defined(CONFIG_MTK_FPSGO) || defined(CONFIG_MTK_FPSGO_V3)

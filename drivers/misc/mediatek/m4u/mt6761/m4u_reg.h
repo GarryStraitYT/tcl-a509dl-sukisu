@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT_M4U_REG_H__
 #define _MT_M4U_REG_H__
@@ -364,13 +361,6 @@
 #define REG_PERIAXI_BUS_CTL3   (0x208)
 #define F_PERI_MMU_EN(port, en)       ((en)<<((port)))
 
-/* #include <sync_write.h>
- * for kernel-4.19, remove this file,
- * mt_reg_sync_writel & ioread32 should remove
- * use standard flow:
- *     use readl / readl_relaxed & writel / writel_relaxed,
- *     and add barrier in appropriate place.
- */
 
 static inline unsigned int
 M4U_ReadReg32(unsigned long M4uBase, unsigned int Offset)

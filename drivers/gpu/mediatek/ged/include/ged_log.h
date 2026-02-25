@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __GED_LOG_H__
 #define __GED_LOG_H__
@@ -40,9 +37,6 @@ void ged_log_buf_free(GED_LOG_BUF_HANDLE hLogBuf);
 /* query by Name, return NULL if not found */
 GED_LOG_BUF_HANDLE ged_log_buf_get(const char *pszName);
 
-/* register a pointer,
- * it will be set after the corresponding buffer is allcated.
- */
 int ged_log_buf_get_early(const char *pszName,
 	GED_LOG_BUF_HANDLE *callback_set_handle);
 

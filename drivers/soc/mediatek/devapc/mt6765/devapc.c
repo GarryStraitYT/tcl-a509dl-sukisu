@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -387,14 +384,7 @@ static struct DEVICE_INFO devapc_infra_devices[] = {
 };
 #endif
 
-/*
- * The extern functions for EMI MPU are removed because EMI MPU and Device APC
- * do not share the same IRQ now.
- */
 
-/**************************************************************************
- *STATIC FUNCTION
- **************************************************************************/
 
 #ifdef CONFIG_MTK_HIBERNATION
 static int devapc_pm_restore_noirq(struct device *device)
@@ -1047,9 +1037,6 @@ static struct platform_driver devapc_driver = {
 	},
 };
 
-/*
- * devapc_init: module init function.
- */
 static int __init devapc_init(void)
 {
 	int ret;
@@ -1076,9 +1063,6 @@ static int __init devapc_init(void)
 	return 0;
 }
 
-/*
- * devapc_exit: module exit function.
- */
 static void __exit devapc_exit(void)
 {
 	DEVAPC_MSG("[DEVAPC] DEVAPC module exit\n");
@@ -1087,9 +1071,6 @@ static void __exit devapc_exit(void)
 #endif
 }
 
-/* Device APC no longer shares IRQ with EMI and
- * can be changed to use the earlier "arch_initcall"
- */
 arch_initcall(devapc_init);
 module_exit(devapc_exit);
 MODULE_LICENSE("GPL");

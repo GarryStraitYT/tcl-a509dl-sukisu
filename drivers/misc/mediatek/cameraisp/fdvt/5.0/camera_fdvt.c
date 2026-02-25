@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
-/*****************************************************************************
- * camera_fdvt.c - Linux FDVT Device Driver
- *
- * DESCRIPTION:
- *     This file provid the other drivers FDVT relative functions
- *
- *****************************************************************************/
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
@@ -60,9 +50,6 @@
 #include <cmdq_record.h>
 #include <smi_public.h>
 
-/* Measure the kernel performance
- * #define __FDVT_KERNEL_PERFORMANCE_MEASURE__
- */
 #ifdef __FDVT_KERNEL_PERFORMANCE_MEASURE__
 #include <linux/met_drv.h>
 #include <linux/mtk_ftrace.h>
@@ -148,17 +135,11 @@ pr_info(MyTag "[%s] " format, __func__, ##args)
 #define log_ast(format, args...) \
 pr_debug(MyTag "[%s] " format, __func__, ##args)
 
-/*****************************************************************************
- *
- *****************************************************************************/
 // For other projects.
 // #define FDVT_WR32(addr, data)    iowrite32(data, addr)
 // For 89 Only.   // NEED_TUNING_BY_PROJECT
 #define FDVT_WR32(addr, data)    mt_reg_sync_writel(data, addr)
 #define FDVT_RD32(addr)          ioread32(addr)
-/*****************************************************************************
- *
- *****************************************************************************/
 /* dynamic log level */
 #define FDVT_DBG_DBGLOG              (0x00000001)
 #define FDVT_DBG_INFLOG              (0x00000002)
@@ -167,17 +148,11 @@ pr_debug(MyTag "[%s] " format, __func__, ##args)
 #define FDVT_DBG_WRITE_REG           (0x00000010)
 #define FDVT_DBG_TASKLET             (0x00000020)
 
-/*
- *    CAM interrupt status
- */
 
 /* normal siganl : happens to be the same bit as register bit*/
 /*#define FDVT_INT_ST           (1<<0)*/
 
 
-/*
- *   IRQ signal mask
- */
 
 #define INT_ST_MASK_FDVT     ( \
 			FDVT_INT_ST)
@@ -329,9 +304,6 @@ static struct FDVT_CONFIG_STRUCT g_FdvtEnqueReq_Struct;
 static struct FDVT_CONFIG_STRUCT g_FdvtDequeReq_Struct;
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 struct  FDVT_USER_INFO_STRUCT {
 	pid_t Pid;
 	pid_t Tid;
@@ -343,9 +315,6 @@ enum FDVT_PROCESS_ID_ENUM {
 };
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 struct FDVT_IRQ_INFO_STRUCT {
 	unsigned int Status[FDVT_IRQ_TYPE_AMOUNT];
 	signed int FdvtIrqCnt;
@@ -398,12 +367,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[FDVT_IRQ_TYPE_AMOUNT];
 
-/*
- *   for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *   limited:
- *   each log must shorter than 512 bytes
- *  total log length in each irq/logtype can't over 1024 bytes
- */
 #define LOG_MACRO
 #ifdef LOG_MACRO
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {\
@@ -902,25 +865,16 @@ pr_debug(IRQTag fmt,  ##args)
 #define DMA_DEBUG_SEL_REG                    (ISP_FDVT_BASE + 0x3F4)
 #define DMA_BW_SELF_TEST_REG                 (ISP_FDVT_BASE + 0x3F8)
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline unsigned int FDVT_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline unsigned int FDVT_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline unsigned int FDVT_GetIRQState(unsigned int type,
 					    unsigned int userNumber,
 					    unsigned int stus,
@@ -968,9 +922,6 @@ static inline unsigned int FDVT_GetIRQState(unsigned int type,
 }
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline unsigned int FDVT_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
@@ -991,9 +942,6 @@ for (i = start; i <= end; i += 0x10) {\
 } \
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline void FDVT_Reset(void)
 {
 	log_dbg("- E.");
@@ -1038,9 +986,6 @@ static inline void FDVT_Reset_Every_Frame(void)
 	FDVT_WR32(FDVT_START_REG, 0x0);
 	log_dbg(" FDVT Reset Every Frame end!\n");
 }
-/*****************************************************************************
- *
- *****************************************************************************/
 
 static bool ConfigFDVTRequest(unsigned int ReqIdx)
 {
@@ -1510,9 +1455,6 @@ static bool Check_FDVT_Is_Busy(void)
 #endif
 
 
-/*
- *
- */
 static signed int FDVT_DumpReg(void)
 {
 	signed int Ret = 0;
@@ -1697,9 +1639,6 @@ static inline void FDVT_Disable_Unprepare_ccf_clock(void)
 }
 #endif
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static void FDVT_EnableClock(bool En)
 {
 #if defined(EP_NO_CLKMGR)
@@ -1781,9 +1720,6 @@ static void FDVT_EnableClock(bool En)
 	}
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_ReadReg(FDVT_REG_IO_STRUCT *pRegIo)
 {
 	unsigned int i;
@@ -1837,12 +1773,6 @@ EXIT:
 }
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
-/* Can write sensor's test model only,
- * if need write to other modules, need modify current code flow
- */
 static signed int FDVT_WriteRegToHw(FDVT_REG_STRUCT *pReg, unsigned int Count)
 {
 	signed int Ret = 0;
@@ -1885,9 +1815,6 @@ static signed int FDVT_WriteRegToHw(FDVT_REG_STRUCT *pReg, unsigned int Count)
 
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_WriteReg(FDVT_REG_IO_STRUCT *pRegIo)
 {
 	signed int Ret = 0;
@@ -1936,9 +1863,6 @@ EXIT:
 
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_WaitIrq(FDVT_WAIT_IRQ_STRUCT *WaitIrq)
 {
 
@@ -2168,9 +2092,6 @@ EXIT:
 }
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static long FDVT_ioctl(struct file *pFile,
 		       unsigned int Cmd, unsigned long Param)
 {
@@ -2791,9 +2712,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static int compat_get_FDVT_read_register_data(compat_FDVT_REG_IO_STRUCT
 					     __user *data32,
 					     FDVT_REG_IO_STRUCT __user *data)
@@ -3015,9 +2933,6 @@ static long FDVT_ioctl_compat(struct file *filp,
 
 #endif
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_open(struct inode *pInode, struct file *pFile)
 {
 	signed int Ret = 0;
@@ -3117,9 +3032,6 @@ EXIT:
 
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_release(struct inode *pInode, struct file *pFile)
 {
 	struct FDVT_USER_INFO_STRUCT *pUserInfo;
@@ -3164,9 +3076,6 @@ EXIT:
 }
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_mmap(struct file *pFile, struct vm_area_struct *pVma)
 {
 	unsigned long length = 0;
@@ -3204,9 +3113,6 @@ static signed int FDVT_mmap(struct file *pFile, struct vm_area_struct *pVma)
 	return 0;
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 
 static dev_t FDVTDevNo;
 static struct cdev *pFDVTCharDrv;
@@ -3224,9 +3130,6 @@ static const struct file_operations FDVTFileOper = {
 #endif
 };
 
-/**************************************************************
- *
- **************************************************************/
 //#ifdef CONFIG_MTK_IOMMU_V2
 //enum mtk_iommu_callback_ret_t FDVT_M4U_TranslationFault_callback(int port,
 	//unsigned int mva, void *data)
@@ -3266,9 +3169,6 @@ enum m4u_callback_ret_t FDVT_M4U_TranslationFault_callback(int port,
 }
 #endif
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline void FDVT_UnregCharDev(void)
 {
 	log_dbg("- E.");
@@ -3282,9 +3182,6 @@ static inline void FDVT_UnregCharDev(void)
 	unregister_chrdev_region(FDVTDevNo, 1);
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static inline signed int FDVT_RegCharDev(void)
 {
 	signed int Ret = 0;
@@ -3324,9 +3221,6 @@ EXIT:
 	return Ret;
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_probe(struct platform_device *pDev)
 {
 	signed int Ret = 0;
@@ -3593,9 +3487,6 @@ EXIT:
 	return Ret;
 }
 
-/*****************************************************************************
- * Called when the device is being detached from the driver
- *****************************************************************************/
 static signed int FDVT_remove(struct platform_device *pDev)
 {
 	/*struct resource *pRes;*/
@@ -3623,9 +3514,6 @@ static signed int FDVT_remove(struct platform_device *pDev)
 	return 0;
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int bPass1_On_In_Resume_TG1;
 
 static signed int FDVT_suspend(struct platform_device *pDev, pm_message_t Mesg)
@@ -3643,9 +3531,6 @@ static signed int FDVT_suspend(struct platform_device *pDev, pm_message_t Mesg)
 	return 0;
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static signed int FDVT_resume(struct platform_device *pDev)
 {
 	log_dbg("bPass1_On_In_Resume_TG1(%d).\n", bPass1_On_In_Resume_TG1);
@@ -3710,10 +3595,6 @@ int FDVT_pm_restore_noirq(struct device *device)
 #endif				/*CONFIG_PM */
 /*---------------------------------------------------------------------------*/
 #ifdef CONFIG_OF
-/*
- * Note!!! The order and member of .compatible
- * must be the same with FDVT_DEV_NODE_IDX
- */
 static const struct of_device_id FDVT_of_ids[] = {
 /*	{.compatible = "mediatek,ipesyscq",},*/
 	{.compatible = "mediatek,fdvt",},
@@ -3732,9 +3613,6 @@ const struct dev_pm_ops FDVT_pm_ops = {
 };
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 static struct platform_driver FDVTDriver = {
 	.probe = FDVT_probe,
 	.remove = FDVT_remove,
@@ -3969,9 +3847,6 @@ static const struct file_operations fdvt_reg_proc_fops = {
 };
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 
 int32_t FDVT_ClockOnCallback(uint64_t engineFlag)
 {
@@ -4120,9 +3995,6 @@ static signed int __init FDVT_Init(void)
 	log_dbg("- X. Ret: %d.", Ret);
 	return Ret;
 }
-/*****************************************************************************
- *
- *****************************************************************************/
 static void __exit FDVT_Exit(void)
 {
 	/*int i;*/
@@ -4137,9 +4009,6 @@ static void __exit FDVT_Exit(void)
 }
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 void FDVT_ScheduleWork(struct work_struct *data)
 {
 	if (FDVT_DBG_DBGLOG & FDVTInfo.DebugMask)
@@ -4241,9 +4110,6 @@ static void ISP_TaskletFunc_FDVT(unsigned long data)
 }
 
 
-/*****************************************************************************
- *
- *****************************************************************************/
 module_init(FDVT_Init);
 module_exit(FDVT_Exit);
 MODULE_DESCRIPTION("Camera FDVT driver");

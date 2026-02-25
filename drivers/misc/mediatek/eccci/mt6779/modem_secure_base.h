@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __MODEM_SECURE_BASE_H__
 #define __MODEM_SECURE_BASE_H__

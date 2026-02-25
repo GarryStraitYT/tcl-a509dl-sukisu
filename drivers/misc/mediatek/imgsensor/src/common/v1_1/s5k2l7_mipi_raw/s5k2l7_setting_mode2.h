@@ -1,26 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     s5k2l7_setting_mode2.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor setting file
- *
- * Setting Release Date:
- * ------------
- *     2016.09.01
- *
- ****************************************************************************/
 #ifndef _s5k2l7MIPI_SETTING_MODE2_H_
 #define _s5k2l7MIPI_SETTING_MODE2_H_
 
@@ -135,10 +113,6 @@ static struct imgsensor_info_struct _imgsensor_info_m2 =                       \
 	.i2c_speed = 1000,                                                     \
 }
 
-/* full_w; full_h; x0_offset; y0_offset; w0_size; h0_size; scale_w; scale_h;
- * x1_offset;  y1_offset;  w1_size;  h1_size;
- * x2_tg_offset;	 y2_tg_offset;	w2_tg_size;  h2_tg_size;
- */
 #define struct_SENSOR_WINSIZE_INFO struct SENSOR_WINSIZE_INFO_STRUCT
 #define _S5K2L7_MODE2_WINSIZE_INFO_                                            \
 static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m2[5] =              \
@@ -165,13 +139,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m2[5] =              \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 2 initial setting
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_init_2l7_m2[] = {
 	0X6214, 0X7970,
 	0X6218, 0X7150,
@@ -2016,13 +1983,6 @@ kal_uint16 addr_data_pair_init_2l7_m2[] = {
 };
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 2 preview setting
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_preview_2l7_m2[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -2177,13 +2137,6 @@ kal_uint16 addr_data_pair_preview_2l7_m2[] = {
 };
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 capture setting (M1_fullsize_setting)
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_capture_2l7_m2[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -2338,13 +2291,6 @@ kal_uint16 addr_data_pair_capture_2l7_m2[] = {
 };
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 2 high speed video setting
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_hs_2l7_m2[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -2498,13 +2444,6 @@ kal_uint16 addr_data_pair_hs_2l7_m2[] = {
 	0X6218, 0X79F0
 };
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 2 slim video setting
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_slim_2l7_m2[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -2658,13 +2597,6 @@ kal_uint16 addr_data_pair_slim_2l7_m2[] = {
 	0X6218, 0X79F0
 };
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 2 cpature with WDR setting
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_capture_wdr_2l7_m2[] = {
 };
 

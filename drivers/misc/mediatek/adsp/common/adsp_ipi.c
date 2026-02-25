@@ -20,11 +20,6 @@
 #include <adsp_ipi_queue.h>
 #include <audio_messenger_ipi.h>
 
-/*
- * =============================================================================
- *                     log
- * =============================================================================
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -40,9 +35,6 @@ struct adsp_share_obj *adsp_send_obj[ADSP_CORE_TOTAL];
 struct adsp_share_obj *adsp_rcv_obj[ADSP_CORE_TOTAL];
 struct mutex adsp_ipi_mutex[ADSP_CORE_TOTAL];
 
-/*
- * find an ipi handler and invoke it
- */
 void adsp_A_ipi_handler(void)
 {
 	enum adsp_ipi_id ipi_id;
@@ -103,9 +95,6 @@ void adsp_A_ipi_handler(void)
 		pr_notice("IPC ISR %lld us too long!!", stop_time);
 }
 
-/*
- * ipi initialize
- */
 void adsp_A_ipi_init(void)
 {
 	mutex_init(&adsp_ipi_mutex[ADSP_A_ID]);
@@ -115,12 +104,6 @@ void adsp_A_ipi_init(void)
 	pr_debug("adsp_send_obj[ADSP_A_ID] = 0x%p", adsp_send_obj[ADSP_A_ID]);
 }
 
-/*
- * API let apps can register an ipi handler to receive IPI
- * @param id:      IPI ID
- * @param handler:  IPI handler
- * @param name:  IPI name
- */
 enum adsp_ipi_status adsp_ipi_registration(
 	enum adsp_ipi_id id,
 	void (*ipi_handler)(int id, void *data, unsigned int len),
@@ -139,10 +122,6 @@ enum adsp_ipi_status adsp_ipi_registration(
 }
 EXPORT_SYMBOL_GPL(adsp_ipi_registration);
 
-/*
- * API let apps unregister an ipi handler
- * @param id:      IPI ID
- */
 enum adsp_ipi_status adsp_ipi_unregistration(enum adsp_ipi_id id)
 {
 	if (id < ADSP_NR_IPI && id >= 0) {
@@ -154,14 +133,6 @@ enum adsp_ipi_status adsp_ipi_unregistration(enum adsp_ipi_id id)
 }
 EXPORT_SYMBOL_GPL(adsp_ipi_unregistration);
 
-/*
- * API for apps to send an IPI to adsp
- * @param id:   IPI ID
- * @param buf:  the pointer of data
- * @param len:  data length
- * @param wait: If true, wait (atomically) until data have been gotten by Host
- * @param len:  data length
- */
 enum adsp_ipi_status adsp_ipi_send(enum adsp_ipi_id id, void *buf,
 				   unsigned int  len, unsigned int wait,
 				   enum adsp_core_id adsp_id)

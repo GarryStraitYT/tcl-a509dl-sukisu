@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_TCPC_CONFIG_H
 #define __LINUX_TCPC_CONFIG_H
@@ -57,12 +54,6 @@
 
 #define CONFIG_TCPC_DBG_PRESTR		"TCPC-"
 
-/*
- * USB 2.0 & 3.0 current
- * Unconfigured :	100 / 150 mA
- * Configured :		500 / 900 mA
- * http://www.testusb.com/power_issue.htm
- */
 
 #define CONFIG_TYPEC_SNK_CURR_DFT		150
 #define CONFIG_TYPEC_SRC_CURR_DFT		500
@@ -115,9 +106,6 @@
 
 /* #define CONFIG_USB_PD_RICHTEK_UVDM */
 
-/**********************************************************
- * Mode Operation
- **********************************************************/
 
 #define CONFIG_USB_PD_MODE_OPERATION
 
@@ -135,9 +123,6 @@
 
 #endif	/* CONFIG_USB_PD_MODE_OPERATION */
 
-/**********************************************************
- * PD revision 3.0 feature
- **********************************************************/
 
 #define CONFIG_USB_PD_REV30
 
@@ -146,14 +131,6 @@
 #define CONFIG_USB_PD_REV30_SYNC_SPEC_REV
 #define CONFIG_USB_PD_REV30_COLLISION_AVOID
 
-/*
- * If DUT send a PD command immediately after Policy Engine is ready,
- * it may interrupt the compliance test process and getting a failed result.
- * even you make sure the CC state is SinkTxNG or SinkTxOK.
- *
- * SRC_FLOW_DELAY_STARTUP: For Ellisys
- * SNK_FLOW_DELAY_STARTUP: For MQP
- */
 
 #define CONFIG_USB_PD_REV30_SRC_FLOW_DELAY_STARTUP
 #define CONFIG_USB_PD_REV30_SNK_FLOW_DELAY_STARTUP
@@ -225,9 +202,6 @@
 
 #endif	/* CONFIG_USB_PD_REV30 */
 
-/**********************************************************
- * PD direct charge support
- **********************************************************/
 
 #ifdef CONFIG_USB_PD_ALT_MODE_RTDC
 #define CONFIG_USB_PD_DIRECT_CHARGE
@@ -282,35 +256,10 @@
 /* S/W patch for NoGoodCRC after PR_SWAP (repeat PS_RDY)*/
 #define CONFIG_USB_PD_IGNORE_PS_RDY_AFTER_PR_SWAP
 
-/*
- * S/W patch for INT handler was stuck by other task (system busy)
- *
- * If the communication fails due to a timeout,
- * check the rx buffer is empty or not.
- *
- * If the rx buffer isn't empty, postpone timer.
- */
 
 #define CONFIG_USB_PD_CHECK_RX_PENDING_IF_SRTOUT
 #define CONFIG_USB_PD_ONLY_PRINT_SYSTEM_BUSY
 
-/*
- * S/W patch for
- * If the CC pin is shorted to ground and our receive ability is better,
- * then we may receive message however always send failed.
- *
- * For the source role, it becomes an infinite hard reset loop.
- * For the sink role, it becomes an infinite error recovery loop.
- *
- * RENEGOTIATION_COUNTER:
- *     Auto error recovery
- *     if retried hard reset many times still negotiation failed.
- *
- * ERROR_RECOVERY_ONCE:
- *     If we have tried an error recovery,
- *     using pure typec mode during next time we reconnect.
- *
- */
 
 #define CONFIG_USB_PD_RENEGOTIATION_COUNTER
 #define CONFIG_USB_PD_ERROR_RECOVERY_ONCE
@@ -386,9 +335,6 @@
 /* #define CONFIG_USB_PD_DBG_SKIP_ALERT_HANDLER */
 #define CONFIG_USB_PD_DBG_DP_DFP_D_AUTO_UPDATE
 
-/**********************************************************
- * TypeC Shield Protection
- **********************************************************/
 
 #ifdef CONFIG_MTK_TYPEC_WATER_DETECT
 #define CONFIG_WATER_DETECTION

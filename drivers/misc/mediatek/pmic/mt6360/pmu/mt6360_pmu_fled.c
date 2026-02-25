@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -879,11 +876,3 @@ MODULE_DESCRIPTION("MT6360 PMU FLED Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(MT6360_PMU_FLED_DRV_VERSION);
 
-/*
- * Version Note
- * 1.0.1_MTK
- * (1) Print warnings when strobe mode with HZ=1 or CFO=0
- *
- * 1.0.0_MTK
- * (1) Initial Release
- */

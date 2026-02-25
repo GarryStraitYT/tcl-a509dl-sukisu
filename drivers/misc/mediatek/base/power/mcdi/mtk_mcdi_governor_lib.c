@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 #include <linux/kernel.h>
 #include <linux/delay.h>
 
@@ -144,11 +141,6 @@ static bool mcdi_cpu_cluster_on_off_stat_check(int cpu)
 	return ret;
 }
 
-/*
- * if ALL CPUs in other cluster is power OFF, but the other cluster is power ON,
- * means other cluster can NOT powered OFF due to residency condition failed
- * Therefore we can skip checking any core dpidle/SODI conditions
- */
 static bool other_cpu_off_but_cluster_on(int cpu)
 {
 	unsigned int on_off_stat = 0;

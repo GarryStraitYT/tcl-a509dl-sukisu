@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -50,10 +47,6 @@ void register_usb_hal_disconnect_check(void (*function)(void))
 	usb_hal_disconnect_check_fptr = function;
 }
 int musb_fake_CDP;
-/* kernel_init_done should be set in
- * early-init stage through
- * init.$platform.usb.rc
- */
 int kernel_init_done;
 int musb_force_on;
 int musb_host_dynamic_fifo = 1;
@@ -381,9 +374,6 @@ static struct usb_phy_io_ops musb_ulpi_access = {
 
 /*-------------------------------------------------------------------------*/
 
-/*
- * Load an endpoint's FIFO
- */
 void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *src)
 {
 	void __iomem *fifo;
@@ -430,9 +420,6 @@ void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *src)
 	}
 }
 
-/*
- * Unload an endpoint's FIFO
- */
 void musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
 {
 	void __iomem *fifo;
@@ -514,9 +501,6 @@ void musb_load_testpacket(struct musb *musb)
 
 /*-------------------------------------------------------------------------*/
 
-/*
- * Handles OTG hnp timeouts, such as b_ase0_brst
- */
 static void musb_otg_timer_func(struct timer_list *t)
 {
 	struct musb	*musb = from_timer(musb, t, otg_timer);
@@ -607,9 +591,6 @@ void musb_handle_disconnect(struct musb *musb)
 #endif
 #endif
 
-/*
- * Stops the HNP transition. Caller must take care of locking.
- */
 void musb_hnp_stop(struct musb *musb)
 {
 	struct usb_hcd *hcd = musb_to_hcd(musb);
@@ -661,17 +642,6 @@ void musb_hnp_stop(struct musb *musb)
 	musb->port1_status &= ~(USB_PORT_STAT_C_CONNECTION << 16);
 }
 EXPORT_SYMBOL_GPL(musb_hnp_stop);
-/*
- * Interrupt Service Routine to record USB "global" interrupts.
- * Since these do not happen often and signify things of
- * paramount importance, it seems OK to check them individually;
- * the order of the tests is specified in the manual
- *
- * @param musb instance pointer
- * @param int_usb register contents
- * @param devctl
- * @param power
- */
 static struct musb_fifo_cfg ep0_cfg = {
 	.style = MUSB_FIFO_RXTX, .maxpacket = 64, .ep_mode = EP_CONT,
 };
@@ -1189,17 +1159,6 @@ b_host:
 		}
 	}
 #ifdef NEVER
-/* REVISIT ... this would be for multiplexing periodic endpoints, or
- * supporting transfer phasing to prevent exceeding ISO bandwidth
- * limits of a given frame or microframe.
- *
- * It's not needed for peripheral side, which dedicates endpoints;
- * though it _might_ use SOF irqs for other purposes.
- *
- * And it's not currently needed for host side, which also dedicates
- * endpoints, relies on TX/RX interval registers, and isn't claimed
- * to support ISO transfers yet.
- */
 	if (int_usb & MUSB_INTR_SOF) {
 		void __iomem *mbase = musb->mregs;
 		struct musb_hw_ep *ep;
@@ -1238,9 +1197,6 @@ b_host:
 
 /*-------------------------------------------------------------------------*/
 
-/*
- * Program the HDRC to start (enable interrupts, dma, etc.).
- */
 void musb_start(struct musb *musb)
 {
 	void __iomem *regs = musb->mregs;
@@ -1454,13 +1410,6 @@ void musb_flush_dma_transcation(struct musb *musb)
 	}
 }
 
-/*
- * Make the HDRC stop (disable interrupts, etc.);
- * reversible by musb_start
- * called on gadget driver unregister
- * with controller locked, irqs blocked
- * acts as a NOP unless some role activated the hardware
- */
 void musb_stop(struct musb *musb)
 {
 	/* stop IRQs, timers, ... */
@@ -1528,12 +1477,6 @@ static void musb_shutdown(struct platform_device *pdev)
 	/* FIXME power down */
 }
 
-/*
- * configure a fifo; for non-shared endpoints, this may be called
- * once for a tx fifo and once for an rx fifo.
- *
- * returns negative errno or offset for next fifo.
- */
 static int fifo_setup(struct musb *musb, struct musb_hw_ep *hw_ep,
 		      const struct musb_fifo_cfg *cfg, u16 offset)
 {
@@ -1784,10 +1727,6 @@ int ep_config_from_table_for_host(struct musb *musb)
 }
 
 
-/*
- * ep_config_from_hw - when MUSB_C_DYNFIFO_DEF is false
- * @param musb the controller
- */
 static int ep_config_from_hw(struct musb *musb)
 {
 	u8 epnum = 0;
@@ -1832,9 +1771,6 @@ static int ep_config_from_hw(struct musb *musb)
 
 enum { MUSB_CONTROLLER_MHDRC, MUSB_CONTROLLER_HDRC, };
 
-/* Initialize MUSB (M)HDRC part of the USB hardware subsystem;
- * configure endpoints, or take their config from silicon
- */
 static int musb_core_init(u16 musb_type, struct musb *musb)
 {
 	u8 reg;
@@ -1954,13 +1890,6 @@ static int musb_core_init(u16 musb_type, struct musb *musb)
 
 
 
-/*
- * handle all the irqs defined by the HDRC core. for now we expect:  other
- * irq sources (phy, dma, etc) will be handled first, musb->int_* values
- * will be assigned, and the irq will already have been acked.
- *
- * called in irq context with spinlock held, irqs blocked
- */
 irqreturn_t musb_interrupt(struct musb *musb)
 {
 	irqreturn_t retval = IRQ_NONE;
@@ -2213,9 +2142,6 @@ static ssize_t vbus_show
 
 DEVICE_ATTR_RW(vbus);
 
-/* Gadget drivers can't know that a host is connected so they might want
- * to start SRP, but users can.  This allows userspace to trigger SRP.
- */
 static ssize_t srp_store
 (struct device *dev, struct device_attribute *attr, const char *buf, size_t n)
 {
@@ -2271,9 +2197,6 @@ static void musb_otg_notifier_work(struct work_struct *data)
 	send_otg_event(musb->otg_event);
 }
 #endif
-/* --------------------------------------------------------------------------
- * Init support
- */
 
 static struct musb *allocate_instance(struct device *dev,
 		      struct musb_hdrc_config *config, void __iomem *mbase)
@@ -2355,14 +2278,6 @@ static void musb_free(struct musb *musb)
 	usb_put_hcd(musb_to_hcd(musb));
 }
 
-/*
- * Perform generic per-controller initialization.
- *
- * @dev: the controller (already clocked, etc)
- * @nIrq: IRQ number
- * @ctrl: virtual address of controller registers,
- *	not yet corrected for platform-specific offsets
- */
 #ifdef CONFIG_OF
 static int
 musb_init_controller
@@ -2607,9 +2522,6 @@ fail0:
 
 /*-------------------------------------------------------------------------*/
 
-/* all implementations (PCI bridge to FPGA, VLYNQ, etc) should just
- * bridge to a platform device; this driver then suffices.
- */
 static int musb_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;

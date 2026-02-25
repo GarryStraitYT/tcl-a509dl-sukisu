@@ -1,33 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- *
- * Filename:
- * ---------
- *   AudDrv_OffloadCommon.h
- *
- * Project:
- * --------
- *   None
- *
- * Description:
- * ------------
- *   Audio Offload Kernel Definitions
- *
- * Author:
- * -------
- *   HY Chang
- *
- *---------------------------------------------------------------------------
----
- *
-
-*******************************************************************************/
 
 
 #ifndef AUDIO_OFFLOAD_COMMON_H

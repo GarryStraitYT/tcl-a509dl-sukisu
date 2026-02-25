@@ -1,28 +1,16 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_IDLE_INTERNAL_H__
 #define __MTK_IDLE_INTERNAL_H__
 
 #include "mtk_lp_dts_def.h"
 
-/********************************************************************
- * Change idle condition check order (1:SO3,DP,SO, 0:DP,SO3,SO)
- *******************************************************************/
 #define MTK_IDLE_ADJUST_CHECK_ORDER     (1)
 
 
-/********************************************************************
- * Enable/Disable all idle related trace_tag
- *******************************************************************/
 #define MTK_IDLE_TRACE_TAG_ENABLE       (1)
 
 
-/********************************************************************
- * mtk idle related definitions
- *******************************************************************/
 #define MTK_IDLE_OPT_VCORE_LP_MODE  (1 << 0)
 #define MTK_IDLE_OPT_XO_UFS_ON_OFF  (1 << 1)
 #define MTK_IDLE_OPT_CLKBUF_BBLPM   (1 << 2)
@@ -30,9 +18,6 @@
 #define MTK_IDLE_OPT_SLEEP_DPIDLE   (1 << 16)
 
 
-/********************************************************************
- * mtk idle log flag
- *******************************************************************/
 #define MTK_IDLE_LOG_REDUCE         (1 << 0)
 #define MTK_IDLE_LOG_RESOURCE_USAGE (1 << 1)
 #define MTK_IDLE_LOG_DISABLE        (1 << 2)
@@ -110,9 +95,6 @@ struct mtk_idle_init_data {
 const char*
 	mtk_idle_block_reason_name(int reason);
 
-/********************************************************************
- * mtk_dpidle.c / mtk_sodi3.c / mtk_sodi.c
- *******************************************************************/
 
 #include <linux/debugfs.h>	/* struct dentry */
 
@@ -142,25 +124,16 @@ bool sodi_can_enter(int reason);
 #define MTK_PROCFS_SODI        "/proc/mtk_lpm/cpuidle/soidle_state"
 #define MTK_PROCFS_SUSPEND     "/proc/mtk_lpm/cpuidle/slp/suspend_state"
 #define MTK_PROCFS_RESOURCE    "/proc/mtk_lpm/cpuidle/spm_resource_req"
-/********************************************************************
- * mtk_idle_internal.c
- *******************************************************************/
 
 int mtk_idle_enter(
 	int idle_type, int cpu, unsigned int op_cond, unsigned int idle_flag);
 
 
-/********************************************************************
- * mtk_spm_resource_req.c
- *******************************************************************/
 
 unsigned int spm_get_resource_usage(void);
 unsigned int spm_get_resource_usage_by_user(unsigned int user);
 
 
-/********************************************************************
- * mtk_idle_profile.c
- *******************************************************************/
 
 /* idle ratio for internal use */
 bool mtk_idle_get_ratio_status(void);
@@ -202,9 +175,6 @@ void mtk_idle_latency_profile_result(unsigned int idle_type);
 	mtk_idle_latency_profile(idle_type, 2*idx+1)
 
 
-/********************************************************************
- * mtk_idle_twam.c
- *******************************************************************/
 
 struct mtk_idle_twam {
 	u32 sel;

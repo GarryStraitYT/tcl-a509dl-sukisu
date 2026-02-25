@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -30,10 +27,6 @@
 #ifdef CONFIG_PM
 #include <linux/suspend.h>
 #endif
-/*=============================================================
- *Macro
- *=============================================================
- */
 #define MTKTS_DCTM_TEMP_CRIT 85000	/* 85.000 degree Celsius */
 
 #define mtkts_dctm_dprintk(fmt, args...)   \
@@ -46,16 +39,8 @@ do {                                    \
 #define mtkts_dctm_printk(fmt, args...) \
 pr_debug("[Thermal/TZ/DCTM]" fmt, ##args)
 
-/*=============================================================
- *Function prototype
- *=============================================================
- */
 static int mtkts_dctm_register_thermal(void);
 static void mtkts_dctm_unregister_thermal(void);
-/*=============================================================
- *Local variable for thermal zone
- *=============================================================
- */
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static DEFINE_SEMAPHORE(sem_mutex);
@@ -71,22 +56,12 @@ static int g_THERMAL_TRIP[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static char g_bind[10][20] = {"mtktsdctm-sysrst", "no-cooler",
 "no-cooler", "no-cooler", "no-cooler", "no-cooler", "no-cooler",
 "no-cooler", "no-cooler", "no-cooler"};
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 1000;
 static int polling_factor2 = 1000;
 
 static int g_resume_done = 1;
-/* =============================================================
- * Tskin Model Parameters
- * =============================================================
- */
 #define SCALE_UNIT_TINT 1000000
 #define SCALE_UNIT_T_TRANSIENT 1000000
 #define SCALE_UNIT_RHS 10
@@ -106,10 +81,6 @@ static int rhsNode[NUMRHS] = {0, 2};
 static long long rhs[NUMNODE] = {0, 0, 0};
 static long long tn[NUMNODE] = {0, 0, 0};
 static long long tn_1[NUMNODE] = {0, 0, 0};
-/* =============================================================
- * Runtime Changeable Variables
- * =============================================================
- */
 static int tamb = TAMB;
 static int tamb_coef = TAMBCOEF;
 static int tpcb_coef = TPCBCOEF;
@@ -121,10 +92,6 @@ static long long AcMatrixNz[ACNZ] = {3397825, 2473916, 45481, 2473916, 4136358,
 76043, 45481, 76043, 156376};
 static long long CapMatrix[NUMNODE] = {0, 0, 63135};
 
-/* =============================================================
- * Dynamic RC for Tskin to TTj Model Parameters
- * =============================================================
- */
 #define INIT_R1_R2  1543 //unit = 1000
 #define INIT_R1C1   5000 //unit = 1000
 #define DTSKIN_THRES 1000 // dtskin = 1C
@@ -137,10 +104,6 @@ static long long CapMatrix[NUMNODE] = {0, 0, 63135};
 static int mtkts_dctm_ttj_on;
 static int mtkts_dctm_drc_reset;
 
-/* =============================================================
- * Runtime Changeable Variables
- * =============================================================
- */
 static int init_r1_r2 = INIT_R1_R2;
 static int init_r1c1 = INIT_R1C1;
 static int dtskin_thres = DTSKIN_THRES;
@@ -152,14 +115,7 @@ static int ttj_limit = TTj_Limit;
 
 static DEFINE_MUTEX(dctm_mutex);
 
-/* =============================================================
- * Tskin calculation functions
- * =============================================================
- */
 
-/*
- * Calculate Initial (Booting) Tskin by Model
- */
 static int tskinInit(int tpcbInit)
 {
 	int i = 0, j = 0;
@@ -190,9 +146,6 @@ static int tskinInit(int tpcbInit)
 	return tn[TSKINNODE];
 }
 
-/*
- * Calculate Transient Value of Tskin
- */
 static int tskinTransient(int tpcb)
 {
 	int i = 0;
@@ -248,10 +201,6 @@ static void dctmdrc_update_params(void)
 	mtkts_dctm_printk("%s : ret %d\n", __func__, ret);
 }
 
-/* =============================================================
- * Thermal zone functions
- * =============================================================
- */
 static int mtkts_dctm_get_temp(struct thermal_zone_device *thermal, int *t)
 {
 	int temp = 0;

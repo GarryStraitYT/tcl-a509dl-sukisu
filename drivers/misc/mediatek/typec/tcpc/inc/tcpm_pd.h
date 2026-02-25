@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef TCPM_PD_H_
 #define TCPM_PD_H_
@@ -35,13 +32,6 @@
 #define PD_CCDO_SIZE	1
 #define PD_ADO_SIZE		1
 
-/*
- * Battery Status Data Object (BSDO)
- * ----------
- * <31:16>  :: Battery Present Capacity (1/10 WH, 0xFFFF = SOC unknown)
- * <15:8>     :: Battery Info
- * <7:0>    :: Reserved and Shall be set to zero
- */
 
 #define BSDO(cap, info)	(((cap) << 16) | ((info) << 8))
 
@@ -55,13 +45,6 @@
 
 #define BSDO_BAT_CAP_UNKNOWN		(0xffff)
 
-/*
- * Country Code Data Object (CCDO)
- * ----------
- * <31:24>  :: First character of the Alpha-2 Country Code
- * <23:16>  :: Second character of the Alpha-2 Country Code
- * <15:0>    :: Reserved and Shall be set to zero
- */
 
 #define CCDO(code)	((code) << 16)
 
@@ -69,13 +52,6 @@
 #define CCDO_COUNTRY_CODE1(x)	((x >> 24) & 0xff)
 #define CCDO_COUNTRY_CODE2(x)	((x >> 16) & 0xff)
 
-/*
- * Alert Data Object (ADO)
- * ----------
- * <31:24>  :: Type Of Alert
- * <23:20>  :: Fixed Batteries (bit field)
- * <19:16>  :: Hot Swappable Batteries (bit field)
- */
 
 #define ADO_ALERT_BAT_CHANGED	(1<<1)
 #define ADO_ALERT_OCP	(1<<2)

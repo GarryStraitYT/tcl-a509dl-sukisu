@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __AP_THERMAL_LIMIT_H__
 #define __AP_THERMAL_LIMIT_H__
@@ -15,12 +12,6 @@ struct apthermolmt_user {
 	void *ptr;
 };
 
-/*
- *	apthermolmt_register_user
- *	@return 0 success, < 0 with errors
- *	@handle ptr to memory
- *	@log ptr to log string
- */
 extern
 int apthermolmt_register_user
 (struct apthermolmt_user *handle, char *log);
@@ -29,44 +20,26 @@ extern
 int apthermolmt_unregister_user
 (struct apthermolmt_user *handle);
 
-/*
- *	@limit 0x7FFFFFFF for unlimit
- */
 extern
 void apthermolmt_set_cpu_power_limit
 (struct apthermolmt_user *handle, unsigned int limit);
 
-/*
- *	@limit 0x7FFFFFFF for unlimit
- */
 extern
 void apthermolmt_set_vpu_power_limit
 (struct apthermolmt_user *handle, unsigned int limit);
 
-/*
- *	@limit 0x7FFFFFFF for unlimit
- */
 extern
 void apthermolmt_set_mdla_power_limit
 (struct apthermolmt_user *handle, unsigned int limit);
 
-/*
- *	@limit 0x7FFFFFFF for unlimit
- */
 extern
 void apthermolmt_set_gpu_power_limit
 (struct apthermolmt_user *handle, unsigned int limit);
 
-/*
- *	@limit 0 for unlimit
- */
 extern
 void apthermolmt_set_general_cpu_power_limit
 (unsigned int limit);
 
-/*
- *	@limit 0 for unlimit
- */
 extern
 void apthermolmt_set_general_gpu_power_limit
 (unsigned int limit);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/tcpci_event.h"
@@ -66,9 +63,6 @@ DECL_PE_STATE_TRANSITION(PD_HW_TX_FAILED) = {
 DECL_PE_STATE_REACTION(PD_HW_TX_FAILED);
 #endif	/* CONFIG_USB_PD_PR_SWAP_ERROR_RECOVERY */
 
-/*
- * [BLOCK] Porcess PD Ctrl MSG
- */
 
 static inline bool pd_process_ctrl_msg_good_crc(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -102,9 +96,6 @@ static inline bool pd_process_ctrl_msg(
 	}
 }
 
-/*
- * [BLOCK] Porcess DPM MSG
- */
 
 static inline bool pd_process_dpm_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -120,9 +111,6 @@ static inline bool pd_process_dpm_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess HW MSG
- */
 
 static inline bool pd_process_hw_msg_vbus_present(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -156,9 +144,6 @@ static inline bool pd_process_hw_msg(
 	}
 }
 
-/*
- * [BLOCK] Porcess Timer MSG
- */
 
 static inline bool pd_process_timer_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -182,9 +167,6 @@ static inline bool pd_process_timer_msg(
 	}
 }
 
-/*
- * [BLOCK] Process Policy Engine's PRS Message
- */
 
 bool pd_process_event_prs(struct pd_port *pd_port, struct pd_event *pd_event)
 {

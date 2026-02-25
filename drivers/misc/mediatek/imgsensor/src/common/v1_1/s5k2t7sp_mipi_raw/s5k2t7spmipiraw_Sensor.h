@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 s5k2t7spmipiraw_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _S5K2T7SPMIPI_SENSOR_H
 #define _S5K2T7SPMIPI_SENSOR_H
 

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include <linux/module.h>
 #include <linux/phy.h>
 #include <linux/of.h>
@@ -32,12 +29,6 @@
 /* Add delay on RX_CLK */
 #define Q2110_RGMII_RX_TIMING_CTRL	BIT(14)
 
-/* Set and/or override some configuration registers based on the
- * marvell,88q2110 property stored in the of_node for the phydev.
- * marvell,88q2110 = <speed master>,...;
- * speed: 1000Mbps or 100Mbps.
- * master: 1-master, 0-slave.
- */
 static int q2110_dts_init(struct phy_device *phydev)
 {
 	const __be32 *paddr;

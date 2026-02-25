@@ -1,20 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- * Author: Zhiyong Tao <zhiyong.tao@mediatek.com>
- *
- */
 
 #include "pinctrl-mtk-mt8183.h"
 #include "pinctrl-paris.h"
 
-/* MT8183 have multiple bases to program pin configuration listed as the below:
- * iocfg[0]:0x10005000, iocfg[1]:0x11F20000, iocfg[2]:0x11E80000,
- * iocfg[3]:0x11E70000, iocfg[4]:0x11E90000, iocfg[5]:0x11D30000,
- * iocfg[6]:0x11D20000, iocfg[7]:0x11C50000, iocfg[8]:0x11F30000.
- * _i_based could be used to indicate what base the pin should be mapped into.
- */
 
 #define PIN_FIELD_BASE(_s_pin, _e_pin, _i_base, _s_addr, _x_addrs, _s_bit, _x_bits)	\
 	PIN_FIELD_CALC(_s_pin, _e_pin, _i_base, _s_addr, _x_addrs, _s_bit,	\

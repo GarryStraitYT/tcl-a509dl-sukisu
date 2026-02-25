@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/stddef.h>
@@ -12,9 +9,6 @@
 #include <linux/irqflags.h>
 #include "engine_request.h"
 
-/*
- * module control
- */
 MODULE_DESCRIPTION("Stand Alone Engine Request");
 MODULE_AUTHOR("MM3SW5");
 MODULE_LICENSE("GPL");
@@ -52,9 +46,6 @@ MODULE_PARM_DESC(dpe_egn_debug, " activates debug info");
 	} while (0)
 
 
-/*
- * Single ring ctl init
- */
 signed int dpe_init_ring_ctl(struct ring_ctrl *rctl)
 {
 	if (rctl == NULL)
@@ -89,9 +80,6 @@ signed int dpe_init_frame(struct frame *frame)
 	return 0;
 }
 
-/*
- * single request init
- */
 signed int dpe_init_request(struct request *req)
 {
 	int f;
@@ -111,9 +99,6 @@ signed int dpe_init_request(struct request *req)
 	return 0;
 }
 
-/*
- * per-frame data init
- */
 signed int dpe_set_frame_data(struct frame *f, void *engine)
 {
 	if (f == NULL) {
@@ -126,11 +111,6 @@ signed int dpe_set_frame_data(struct frame *f, void *engine)
 	return 0;
 }
 
-/*
- * TOP : per-sub-engine
- * Size Limitaion: eng_reqs : [MAX_REQUEST_SIZE_PER_ENGINE]
- *	     data : [MAX_REQUEST_SIZE_PER_ENGINE][MAX_FRAMES_PER_REQUEST]
- */
 signed int dpe_register_requests(struct engine_requests *eng, size_t size)
 {
 	int f, r, d;
@@ -296,9 +276,6 @@ ERROR:
 	return -1;
 }
 
-/* ConfigWMFERequest / ConfigOCCRequest abstraction
- * TODO: locking should be here NOT camera_owe.c
- */
 signed int dpe_request_handler(struct engine_requests *eng, spinlock_t *lock)
 {
 	unsigned int f, fn;

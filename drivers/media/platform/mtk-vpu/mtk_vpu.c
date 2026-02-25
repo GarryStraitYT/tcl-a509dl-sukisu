@@ -1,16 +1,3 @@
-/*
-* Copyright (c) 2016 MediaTek Inc.
-* Author: Andrew-CT Chen <andrew-ct.chen@mediatek.com>
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License version 2 as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*/
 #include <linux/clk.h>
 #include <linux/debugfs.h>
 #include <linux/firmware.h>
@@ -27,11 +14,6 @@
 
 #include "mtk_vpu.h"
 
-/**
- * VPU (video processor unit) is a tiny processor controlling video hardware
- * related to video codec, scaling and color format converting.
- * VPU interfaces with other blocks by share memory and interrupt.
- **/
 
 #define INIT_TIMEOUT_MS		2000U
 #define IPI_TIMEOUT_MS		2000U
@@ -69,78 +51,33 @@
 /* vpu inter-processor communication interrupt */
 #define VPU_IPC_INT		BIT(8)
 
-/**
- * enum vpu_fw_type - VPU firmware type
- *
- * @P_FW: program firmware
- * @D_FW: data firmware
- *
- */
 enum vpu_fw_type {
 	P_FW,
 	D_FW,
 };
 
-/**
- * struct vpu_mem - VPU extended program/data memory information
- *
- * @va:		the kernel virtual memory address of VPU extended memory
- * @pa:		the physical memory address of VPU extended memory
- *
- */
 struct vpu_mem {
 	void *va;
 	dma_addr_t pa;
 };
 
-/**
- * struct vpu_regs - VPU TCM and configuration registers
- *
- * @tcm:	the register for VPU Tightly-Coupled Memory
- * @cfg:	the register for VPU configuration
- * @irq:	the irq number for VPU interrupt
- */
 struct vpu_regs {
 	void __iomem *tcm;
 	void __iomem *cfg;
 	int irq;
 };
 
-/**
- * struct vpu_wdt_handler - VPU watchdog reset handler
- *
- * @reset_func:	reset handler
- * @priv:	private data
- */
 struct vpu_wdt_handler {
 	void (*reset_func)(void *);
 	void *priv;
 };
 
-/**
- * struct vpu_wdt - VPU watchdog workqueue
- *
- * @handler:	VPU watchdog reset handler
- * @ws:		workstruct for VPU watchdog
- * @wq:		workqueue for VPU watchdog
- */
 struct vpu_wdt {
 	struct vpu_wdt_handler handler[VPU_RST_MAX];
 	struct work_struct ws;
 	struct workqueue_struct *wq;
 };
 
-/**
- * struct vpu_run - VPU initialization status
- *
- * @signaled:		the signal of vpu initialization completed
- * @fw_ver:		VPU firmware version
- * @dec_capability:	decoder capability which is not used for now and
- *			the value is reserved for future use
- * @enc_capability:	encoder capability which is not used for now and
- *			the value is reserved for future use
- * @wq:			wait queue for VPU initialization status
- */
 struct vpu_run {
 	u32 signaled;
 	char fw_ver[VPU_FW_VER_LEN];
@@ -149,62 +86,18 @@ struct vpu_run {
 	wait_queue_head_t wq;
 };
 
-/**
- * struct vpu_ipi_desc - VPU IPI descriptor
- *
- * @handler:	IPI handler
- * @name:	the name of IPI handler
- * @priv:	the private data of IPI handler
- */
 struct vpu_ipi_desc {
 	ipi_handler_t handler;
 	const char *name;
 	void *priv;
 };
 
-/**
- * struct share_obj - DTCM (Data Tightly-Coupled Memory) buffer shared with
- *		      AP and VPU
- *
- * @id:		IPI id
- * @len:	share buffer length
- * @share_buf:	share buffer data
- */
 struct share_obj {
 	s32 id;
 	u32 len;
 	unsigned char share_buf[SHARE_BUF_SIZE];
 };
 
-/**
- * struct mtk_vpu - vpu driver data
- * @extmem:		VPU extended memory information
- * @reg:		VPU TCM and configuration registers
- * @run:		VPU initialization status
- * @wdt:		VPU watchdog workqueue
- * @ipi_desc:		VPU IPI descriptor
- * @recv_buf:		VPU DTCM share buffer for receiving. The
- *			receive buffer is only accessed in interrupt context.
- * @send_buf:		VPU DTCM share buffer for sending
- * @dev:		VPU struct device
- * @clk:		VPU clock on/off
- * @fw_loaded:		indicate VPU firmware loaded
- * @enable_4GB:		VPU 4GB mode on/off
- * @vpu_mutex:		protect mtk_vpu (except recv_buf) and ensure only
- *			one client to use VPU service at a time. For example,
- *			suppose a client is using VPU to decode VP8.
- *			If the other client wants to encode VP8,
- *			it has to wait until VP8 decode completes.
- * @wdt_refcnt:		WDT reference count to make sure the watchdog can be
- *			disabled if no other client is using VPU service
- * @ack_wq:		The wait queue for each codec and mdp. When sleeping
- *			processes wake up, they will check the condition
- *			"ipi_id_ack" to run the corresponding action or
- *			go back to sleep.
- * @ipi_id_ack:		The ACKs for registered IPI function sending
- *			interrupt to VPU
- *
- */
 struct mtk_vpu {
 	struct vpu_mem extmem[2];
 	struct vpu_regs reg;

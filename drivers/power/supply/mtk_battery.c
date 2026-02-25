@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #include <linux/cdev.h>		/* cdev */
 #include <linux/err.h>	/* IS_ERR, PTR_ERR */
@@ -219,7 +215,7 @@ int fgauge_get_profile_id(void)
         gm->battery_id_voltage = auxadc_voltage; //Added by baiwei.peng for batt_id on 2020/12/02
 	id_volt = auxadc_voltage * 1000; //unit:uV
 	bm_err("[%s]battery_id_voltage is %d\n", __func__, id_volt);
-	if (strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_TF")) {
+	if (strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_TF") || strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_NA_OM")) {
 		if ((sizeof(g_battery_id_voltage) /
 			sizeof(int)) != TOTAL_BATTERY_NUMBER) {
 			bm_debug("[%s]error! voltage range incorrect!\n",
@@ -654,7 +650,8 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 					POWER_SUPPLY_STATUS_CHARGING;
 			fg_sw_bat_cycle_accu(gm);
 			/* Begin added by bitao.xiong for defect-10124663 on 2020-11-09 */
-			#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF)
+			#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+				|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 			if (gm->fixed_uisoc != 0xffff) {
 				if (gm->fixed_uisoc >= 100)
 					bs_data->bat_status = POWER_SUPPLY_STATUS_FULL;

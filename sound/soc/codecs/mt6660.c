@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -1072,6 +1069,3 @@ MODULE_DESCRIPTION("MT6660 SPKAMP Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("1.0.7_G");
 
-/* 1.0.7_G
- *	add return check for snprintf function
- */

@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- *
- */
 
 
 #ifndef _LEDS_HAL_H
@@ -10,9 +6,6 @@
 
 #include "mtk_leds_sw.h"
 
-/****************************************************************************
- * LED HAL functions
- ***************************************************************************/
 extern void mt_leds_wake_lock_init(void);
 extern unsigned int mt_get_bl_brightness(void);
 extern unsigned int mt_get_bl_duty(void);

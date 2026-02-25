@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 #include <linux/kobject.h>
 #include "ccci_fsm_internal.h"
 #include "ccci_fsm_sys.h"

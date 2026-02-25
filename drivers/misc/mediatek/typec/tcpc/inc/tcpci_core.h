@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_RT_TCPCI_CORE_H
 #define __LINUX_RT_TCPCI_CORE_H
@@ -269,25 +266,14 @@ struct tcpc_ops {
 
 #define TCPC_LOW_POWER_MODE_RETRY	5
 
-/*
- * Confirm DUT is connected to legacy cable or not
- *	after suupect_counter > this threshold (0 = always check)
- */
 
 #define TCPC_LEGACY_CABLE_SUSPECT_THD	1
 
-/*
- * Try another s/w workaround after retry_counter more than this value
- * Try which soltuion first is determined by tcpc_flags
- */
 
 #define TCPC_LEGACY_CABLE_RETRY_SOLUTION	2
 
 struct tcpc_managed_res;
 
-/*
- * tcpc device
- */
 
 struct tcpc_device {
 	struct i2c_client *client;

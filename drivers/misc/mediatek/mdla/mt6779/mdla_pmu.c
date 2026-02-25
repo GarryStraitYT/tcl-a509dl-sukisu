@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include "mdla_debug.h"
 
 #include <linux/io.h>
@@ -43,13 +40,6 @@ static void pmu_reg_write(u32 value, u32 offset)
 #define pmu_reg_clear(mask, offset) \
 	pmu_reg_write(pmu_reg_read(offset) & ~(mask), (offset))
 
-/*
- * API naming rules
- * pmu_xxx_save(): save registers to variables
- * pmu_xxx_get(): load values from saved variables.
- * pmu_xxx_read(): read values from registers.
- * pmu_xxx_write(): write values to registers.
- */
 
 static int pmu_event_write(u32 handle, u32 val)
 {

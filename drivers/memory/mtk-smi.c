@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015-2020 MediaTek Inc.
- */
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/device.h>
@@ -24,11 +21,6 @@
 #define REG_SMI_SECUR_CON_OFFSET(id)	(((id) >> 3) << 2)
 #define REG_SMI_SECUR_CON_ADDR(id)	\
 	(REG_SMI_SECUR_CON_BASE + REG_SMI_SECUR_CON_OFFSET(id))
-/*
- * every port have 4 bit to control, bit[port + 3] control virtual or physical,
- * bit[port + 2 : port + 1] control the domain, bit[port] control the security
- * or non-security.
- */
 #define SMI_SECUR_CON_VAL_MSK(id)	(~(0xf << (((id) & 0x7) << 2)))
 #define SMI_SECUR_CON_VAL_VIRT(id)	BIT((((id) & 0x7) << 2) + 3)
 /* mt2701 domain should be set to 3 */

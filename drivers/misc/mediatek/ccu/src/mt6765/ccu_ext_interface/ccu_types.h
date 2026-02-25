@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 #ifndef CCU_TYPES_H
 #define CCU_TYPES_H
 
@@ -35,9 +32,6 @@
 #define MNULL 0
 #endif
 
-/********************************************************************
- *Sensor Types
- ********************************************************************/
 /* #define CCU_CODE_SLIM*/
 /* typedef unsigned char   BOOLEAN;    // uint8_t*/
 #define U8 unsigned char	/* uint8_t*/
@@ -53,9 +47,6 @@
 #define NULL                0
 #endif				/* NULL*/
 
-/********************************************************************
- * Error code
- ********************************************************************/
 #define ERR_NONE                    (0)
 #define ERR_INVALID                 (-1)
 #define ERR_TIMEOUT                 (-2)

@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/***************************************************************************
- *
- * Filename:
- * ---------
- *   mtk_pcm_capture.c
- *
- * Project:
- * --------
- *   Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio Ul1 data1 uplink
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *-------------------------------------------------------------------------
- *
- *
- *************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -64,9 +31,6 @@ static struct snd_dma_buffer *Capture_dma_buf;
 static struct audio_digital_i2s *mAudioDigitalI2S;
 static bool mCaptureUseSram;
 
-/*
- *    function implementation
- */
 static void StartAudioCaptureHardware(struct snd_pcm_substream *substream);
 static void StopAudioCaptureHardware(struct snd_pcm_substream *substream);
 static int mtk_capture_probe(struct platform_device *pdev);

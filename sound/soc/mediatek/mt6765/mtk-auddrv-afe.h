@@ -1,34 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   AudioAfe.h
- *
- * Project:
- * --------
- *   MT6759  Audio Driver Afe Register setting
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- *   Ir Lian (mtk00976)
- *   Harvey Huang (mtk03996)
- *   Chipeng Chang (mtk02308)
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
 #ifndef _AUDDRV_AFE_H_
 #define _AUDDRV_AFE_H_
@@ -38,25 +9,13 @@
 #include "mtk-soc-digital-type.h"
 #include <linux/types.h>
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
-/*****************************************************************************
- *                         D A T A   T Y P E S
- *****************************************************************************/
 
 enum audio_sdm_level {
 	AUDIO_SDM_LEVEL_MUTE = 0,
 	AUDIO_SDM_LEVEL_NORMAL = 0x1d,
 };
-/*****************************************************************************
- *                          C O N S T A N T S
- *****************************************************************************/
 #define AUDIO_HW_PHYSICAL_BASE  (0x11220000L)
 #define AUDIO_CLKCFG_PHYSICAL_BASE  (0x10000000L)
 /* need enable this register before access all register */
@@ -65,9 +24,6 @@ enum audio_sdm_level {
 #define AUDIO_HW_VIRTUAL_BASE (0xF1220000L)
 #define APMIXEDSYS_BASE (0x1000C000L)
 /* Register TOP */
-/* We need to write AP_PLL_CON5 to set mux,
- * thus we can set APLL Tuner in AFE setting
- */
 #define AP_PLL_CON3 (0x000C)
 
 #ifdef AUDIO_MEM_IOREMAP
@@ -87,13 +43,7 @@ enum audio_sdm_level {
 /* APLL clock base */
 #define APLL_44K_BASE (180633600)
 #define APLL_48K_BASE (196608000)
-/*****************************************************************************
- *                         M A C R O
- *****************************************************************************/
 
-/*****************************************************************************
- *                  R E G I S T E R       D E F I N I T I O N
- *****************************************************************************/
 
 #define AUDIO_CLK_CFG_4 (0x0080)
 #define AUDIO_CLK_CFG_4_CLR (0x0088)

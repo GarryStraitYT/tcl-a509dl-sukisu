@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _VCODEC_IPI_MSG_H_
 #define _VCODEC_IPI_MSG_H_
@@ -27,19 +24,12 @@ enum mtk_fmt_type {
 	MTK_FMT_FRAME = 2,
 };
 
-/**
- * struct mtk_video_fmt - Structure used to store information about pixelformats
- */
 struct mtk_video_fmt {
 	__u32	fourcc;
 	__u32	type;   /* enum mtk_fmt_type */
 	__u32	num_planes;
 };
 
-/**
- * struct mtk_codec_framesizes - Structure used to store information about
- *							framesizes
- */
 struct mtk_codec_framesizes {
 	__u32	fourcc;
 	__u32	profile;
@@ -87,19 +77,6 @@ struct mtk_hdr_dynamic_info {
 		 */
 };
 
-/**
- * struct vdec_pic_info  - picture size information
- * @pic_w: picture width
- * @pic_h: picture height
- * @buf_w   : picture buffer width (codec aligned up from pic_w)
- * @buf_h   : picture buffer heiht (codec aligned up from pic_h)
- * @fb_sz: frame buffer size
- * @bitdepth: Sequence bitdepth
- * @layout_mode: mediatek frame layout mode
- * @fourcc: frame buffer color format
- * E.g. suppose picture size is 176x144,
- *      buffer size will be aligned to 176x160.
- */
 struct vdec_pic_info {
 	__u32 pic_w;
 	__u32 pic_h;
@@ -111,19 +88,6 @@ struct vdec_pic_info {
 	__u32 fourcc;
 };
 
-/**
- * struct vdec_dec_info - decode information
- * @dpb_sz		: decoding picture buffer size
- * @vdec_changed_info  : some changed flags
- * @bs_dma		: Input bit-stream buffer dma address
- * @bs_fd               : Input bit-stream buffer dmabuf fd
- * @fb_dma		: Y frame buffer dma address
- * @fb_fd             : Y frame buffer dmabuf fd
- * @vdec_bs_va		: VDEC bitstream buffer struct virtual address
- * @vdec_fb_va		: VDEC frame buffer struct virtual address
- * @fb_num_planes	: frame buffer plane count
- * @reserved		: reserved variable for 64bit align
- */
 struct vdec_dec_info {
 	__u32 dpb_sz;
 	__u32 vdec_changed_info;

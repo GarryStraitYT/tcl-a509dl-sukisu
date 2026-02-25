@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk-dsp-common.h --  Mediatek ADSP dmemory control
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chipeng <Chipeng.chang@mediatek.com>
- */
 
 #ifndef AUDIO_DSP_COMMON_H
 #define AUDIO_DSP_COMMON_H

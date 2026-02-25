@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef __CAM_CAL_LIST_H
 #define __CAM_CAL_LIST_H
 #include <linux/i2c.h>

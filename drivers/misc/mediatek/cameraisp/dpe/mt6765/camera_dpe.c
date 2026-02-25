@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/device.h>
@@ -1986,9 +1983,6 @@ static bool Check_WMFE_Is_Busy(void)
 #endif
 
 
-/*
- *
- */
 static signed int DPE_DumpReg(void)
 {
 	signed int Ret = 0;
@@ -4217,10 +4211,6 @@ int DPE_pm_restore_noirq(struct device *device)
 #endif				/*CONFIG_PM */
 /*---------------------------------------------------------*/
 #ifdef CONFIG_OF
-/*
- * Note!!! The order and member of .compatible must be the same with that in
- *  "DPE_DEV_NODE_ENUM" in camera_DPE.h
- */
 static const struct of_device_id DPE_of_ids[] = {
 	{.compatible = "mediatek,dpe",},
 	{}

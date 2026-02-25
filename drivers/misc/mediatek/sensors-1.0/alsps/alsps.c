@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "<ALS/PS> " fmt
 
@@ -634,18 +631,6 @@ static int ps_enable_and_batch(void)
 	if (cxt->ps_power == 1 && cxt->ps_enable == 0) {
 		pr_debug("PS disable\n");
 /* stop polling firstly, if needed */
-/*
- *		if (cxt->ps_ctl.is_report_input_direct == false
- *			&& cxt->is_ps_polling_run == true) {
- *			smp_mb();// for memory barrier
- *			del_timer_sync(&cxt->timer_ps);
- *			smp_mb();// for memory barrier
- *			cancel_work_sync(&cxt->report_ps);
- *			cxt->drv_data.ps_data.values[0] = ALSPS_INVALID_VALUE;
- *			cxt->is_ps_polling_run = false;
- *			pr_debug("ps stop polling done\n");
- *		}
- */
 		/* turn off the ps_power */
 		err = cxt->ps_ctl.enable_nodata(0);
 		if (err) {
@@ -687,22 +672,6 @@ static int ps_enable_and_batch(void)
 		}
 		pr_debug("ps set ODR, fifo latency done\n");
 /* start polling, if needed */
-/*		if (cxt->ps_ctl.is_report_input_direct == false) {
- *			int mdelay = cxt->ps_delay_ns;
- *
- *			do_div(mdelay, 1000000);
- *			atomic_set(&cxt->delay_ps, mdelay);
- *			if (cxt->is_ps_polling_run == false) {
- *				mod_timer(&cxt->timer_ps, jiffies +
- *					atomic_read(&cxt->delay_ps)/(1000/HZ));
- *				cxt->is_ps_polling_run = true;
- *				cxt->is_ps_first_data_after_enable = true;
- *			}
- *		pr_debug("ps delay %d ms\n", atomic_read(&cxt->delay_ps));
- *		} else {
- *			ps_data_report(1, 3);
- *		}
- */
 		pr_debug("PS batch done\n");
 	}
 	return 0;

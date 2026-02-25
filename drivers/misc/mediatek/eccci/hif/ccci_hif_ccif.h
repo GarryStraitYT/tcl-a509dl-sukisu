@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __MODEM_CCIF_H__
 #define __MODEM_CCIF_H__
@@ -291,9 +288,6 @@ void ccci_reset_ccif_hw(unsigned char md_id,
 
 //int md_ccif_send(unsigned char hif_id, int channel_id);
 
-/* always keep this in mind:
- * what if there are more than 1 modems using CLDMA...
- */
 extern struct regmap *syscon_regmap_lookup_by_phandle(struct device_node *np,
 	const char *property);
 extern int regmap_write(struct regmap *map, unsigned int reg, unsigned int val);

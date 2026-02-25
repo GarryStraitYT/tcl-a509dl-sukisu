@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef DFT_TAG
 #undef DFT_TAG
@@ -34,11 +31,6 @@ struct _MTK_BTIF_IRQ_STR_ mtk_btif_irq = {
 	.p_irq_handler = NULL,
 };
 
-/*
- * will call clock manager's API export by WCP to control BTIF's clock,
- * but we may need to access these registers in case of
- * btif clock control logic is wrong in clock manager
- */
 
 struct _MTK_BTIF_INFO_STR_ mtk_btif_info = {
 #ifndef CONFIG_OF
@@ -61,47 +53,13 @@ static int btif_rx_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif_info,
 			       const unsigned int max_len);
 static int btif_tx_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif);
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_rx_ier_ctrl
- * DESCRIPTION
- *  BTIF Rx interrupt enable/disable
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  enable   [IN]        control if rx interrupt enabled or not
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 static int hal_btif_rx_ier_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en);
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_tx_ier_ctrl
- * DESCRIPTION
- *  BTIF Tx interrupt enable/disable
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  enable   [IN]        control if tx interrupt enabled or not
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 static int hal_btif_tx_ier_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en);
 
 #ifndef MTK_BTIF_MARK_UNUSED_API
 static int btif_sleep_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en);
 
-/*****************************************************************************
- * FUNCTION
- *  _btif_receive_data
- * DESCRIPTION
- *  receive data from btif module in FIFO polling mode
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  p_buf    [IN/OUT] pointer to rx data buffer
- *  max_len  [IN]        max length of rx buffer
- * RETURNS
- *  positive means data is available, 0 means no data available
- *****************************************************************************/
 static int _btif_receive_data(struct _MTK_BTIF_INFO_STR_ *p_btif,
 			      unsigned char *p_buf, const unsigned int max_len);
 static int btif_tx_thr_set(struct _MTK_BTIF_INFO_STR_ *p_btif,
@@ -238,15 +196,6 @@ static void _btif_set_default_setting(void)
 }
 #endif
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_info_get
- * DESCRIPTION
- *  get btif's information included base address , irq related information
- * PARAMETERS
- * RETURNS
- *  BTIF's information
- *****************************************************************************/
 struct _MTK_BTIF_INFO_STR_ *hal_btif_info_get(void)
 {
 #if NEW_TX_HANDLING_SUPPORT
@@ -268,16 +217,6 @@ struct _MTK_BTIF_INFO_STR_ *hal_btif_info_get(void)
 
 	return &mtk_btif_info;
 }
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_clk_get_and_prepare
- * DESCRIPTION
- *  get clock from device tree and prepare for enable/disable control
- * PARAMETERS
- *  pdev  device pointer
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 #if !defined(CONFIG_MTK_CLKMGR)
 int hal_btif_clk_get_and_prepare(struct platform_device *pdev)
 {
@@ -309,16 +248,6 @@ int hal_btif_clk_get_and_prepare(struct platform_device *pdev)
 		}
 		return i_ret;
 }
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_clk_unprepare
- * DESCRIPTION
- *  unprepare btif clock and apdma clock
- * PARAMETERS
- *  none
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_clk_unprepare(void)
 {
 	clk_unprepare(clk_btif);
@@ -326,16 +255,6 @@ int hal_btif_clk_unprepare(void)
 	return 0;
 }
 #endif
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_clk_ctrl
- * DESCRIPTION
- *  control clock output enable/disable of BTIF module
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_clk_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif,
 		      enum _ENUM_CLOCK_CTRL_ flag)
 {
@@ -480,16 +399,6 @@ static int btif_new_handshake_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif,
 	return true;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_hw_init
- * DESCRIPTION
- *  BTIF hardware init
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_hw_init(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 /*Chaozhong: To be implement*/
@@ -538,17 +447,6 @@ int hal_btif_hw_init(struct _MTK_BTIF_INFO_STR_ *p_btif)
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_rx_ier_ctrl
- * DESCRIPTION
- *  BTIF Rx interrupt enable/disable
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  enable   [IN]        control if rx interrupt enabled or not
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_rx_ier_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en)
 {
 	int i_ret = -1;
@@ -564,17 +462,6 @@ int hal_btif_rx_ier_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en)
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_tx_ier_ctrl
- * DESCRIPTION
- *  BTIF Tx interrupt enable/disable
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  enable   [IN]        control if tx interrupt enabled or not
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_tx_ier_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en)
 {
 	int i_ret = -1;
@@ -593,18 +480,6 @@ int hal_btif_tx_ier_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en)
 
 #ifndef MTK_BTIF_MARK_UNUSED_API
 
-/*****************************************************************************
- * FUNCTION
- *  _btif_receive_data
- * DESCRIPTION
- *  receive data from btif module in FIFO polling mode
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  p_buf    [IN/OUT] pointer to rx data buffer
- *  max_len  [IN]        max length of rx buffer
- * RETURNS
- *  positive means data is available, 0 means no data available
- *****************************************************************************/
 int _btif_receive_data(struct _MTK_BTIF_INFO_STR_ *p_btif,
 		       unsigned char *p_buf, const unsigned int max_len)
 {
@@ -656,17 +531,6 @@ static int btif_tx_thr_set(struct _MTK_BTIF_INFO_STR_ *p_btif,
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  btif_rx_fifo_reset
- * DESCRIPTION
- *  reset BTIF's rx fifo
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  ec       [IN]        control if loopback mode is enabled or not
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 static int btif_rx_fifo_reset(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 /*Chaozhong: To be implement*/
@@ -685,16 +549,6 @@ static int btif_rx_fifo_reset(struct _MTK_BTIF_INFO_STR_ *p_btif)
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  btif_tx_fifo_reset
- * DESCRIPTION
- *  reset BTIF's tx fifo
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 static int btif_tx_fifo_reset(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 	int i_ret = -1;
@@ -714,16 +568,6 @@ static int btif_tx_fifo_reset(struct _MTK_BTIF_INFO_STR_ *p_btif)
 
 #endif
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_loopback_ctrl
- * DESCRIPTION
- *  BTIF Tx/Rx loopback mode set, this operation can only be done
- *  after set BTIF to normal mode
- * PARAMETERS
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_loopback_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en)
 {
 	int i_ret = -1;
@@ -741,18 +585,6 @@ int hal_btif_loopback_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif, bool en)
 }
 
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_rx_handler
- * DESCRIPTION
- *  lower level interrupt handler
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  p_buf    [IN/OUT] pointer to rx data buffer
- *  max_len  [IN]        max length of rx buffer
- * RETURNS
- *  0 means success; negative means fail; positive means rx data length
- *****************************************************************************/
 int hal_btif_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif,
 			 unsigned char *p_buf, const unsigned int max_len)
 {
@@ -803,16 +635,6 @@ int hal_btif_rx_cb_reg(struct _MTK_BTIF_INFO_STR_ *p_btif_info,
 	return 0;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  btif_rx_irq_handler
- * DESCRIPTION
- *  lower level rx interrupt handler
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  positive means length of rx data , negative means fail
- *****************************************************************************/
 static int btif_rx_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif_info,
 			       unsigned char *p_buf, const unsigned int max_len)
 {
@@ -833,14 +655,6 @@ static int btif_rx_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif_info,
 		rx_buf[rx_len] = BTIF_READ8(base);
 		rx_len++;
 /*need to consult CC Hwang for advice */
-/*
- * whether we need to do memory barrier here
- * Ans: no
- */
-/*
- * whether we need to d memory barrier when call BTIF_SET_BIT or BTIF_CLR_BIT
- * Ans: no
- */
 		if (rx_len == local_buf_len) {
 			if (rx_cb)
 				(*rx_cb) (p_btif_info, rx_buf, rx_len);
@@ -853,27 +667,10 @@ static int btif_rx_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif_info,
 	if (rx_len && rx_cb)
 		(*rx_cb) (p_btif_info, rx_buf, rx_len);
 
-/*
- * make sure all data write back to memory, mb or dsb?
- * need to consult CC Hwang for advice
- * Ans: no need here
- */
 	i_ret = total_len;
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  btif_tx_irq_handler
- * DESCRIPTION
- *  lower level tx interrupt handler
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  p_buf    [IN/OUT] pointer to rx data buffer
- *  max_len  [IN]        max length of rx buffer
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 static int btif_tx_irq_handler(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 	int i_ret = -1;
@@ -930,17 +727,6 @@ ret:
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_tx_mode_ctrl
- * DESCRIPTION
- *  set BTIF tx to corresponding mode (PIO/DMA)
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  mode     [IN]        rx mode <PIO/DMA>
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_tx_mode_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif,
 			  enum _ENUM_BTIF_MODE_ mode)
 {
@@ -958,17 +744,6 @@ int hal_btif_tx_mode_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif,
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_rx_mode_ctrl
- * DESCRIPTION
- *  set BTIF rx to corresponding mode (PIO/DMA)
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  mode     [IN]        rx mode <PIO/DMA>
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_rx_mode_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif,
 			  enum _ENUM_BTIF_MODE_ mode)
 {
@@ -986,19 +761,6 @@ int hal_btif_rx_mode_ctrl(struct _MTK_BTIF_INFO_STR_ *p_btif,
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_send_data
- * DESCRIPTION
- *  send data through btif in FIFO mode
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  p_buf    [IN]        pointer to rx data buffer
- *  max_len  [IN]        tx buffer length
- * RETURNS
- *  positive means number of data sent; 0 means no data put to FIFO;
- *  negative means error happens
- *****************************************************************************/
 int hal_btif_send_data(struct _MTK_BTIF_INFO_STR_ *p_btif,
 		       const unsigned char *p_buf, const unsigned int buf_len)
 {
@@ -1070,11 +832,6 @@ int hal_btif_send_data(struct _MTK_BTIF_INFO_STR_ *p_btif,
 		ava_len = ava_len > left_len ? left_len : ava_len;
 /*update sent length valud after this operation*/
 		sent_len += ava_len;
-/*
- * whether we need memory barrier here?
- * Ans: No, no memory ordering issue exist,
- * CPU will make sure logically right
- */
 		while (ava_len--)
 			btif_reg_sync_writeb(*(p_data++), BTIF_THR(base));
 
@@ -1090,16 +847,6 @@ int hal_btif_send_data(struct _MTK_BTIF_INFO_STR_ *p_btif,
 }
 
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_raise_wak_sig
- * DESCRIPTION
- *  raise wakeup signal to counterpart
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_raise_wak_sig(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 	int i_ret = -1;
@@ -1117,27 +864,12 @@ int hal_btif_raise_wak_sig(struct _MTK_BTIF_INFO_STR_ *p_btif)
 /*wait for a period for longer than 1/32k period, here we use 40us*/
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	usleep_range(128, 160);
-/*
- * according to linux/documentation/timers/timers-how-to, we choose usleep_range
- * SLEEPING FOR ~USECS OR SMALL MSECS ( 10us - 20ms):      * Use usleep_range
- */
 /*write 1 to pull ap_wakeup_consyss high*/
 	BTIF_SET_BIT(BTIF_WAK(base), BTIF_WAK_BIT);
 	i_ret = 0;
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_dump_reg
- * DESCRIPTION
- *  dump BTIF module's information when needed
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- *  flag     [IN]        register id flag
- * RETURNS
- *  0 means success, negative means fail
- *****************************************************************************/
 int hal_btif_dump_reg(struct _MTK_BTIF_INFO_STR_ *p_btif,
 		      enum _ENUM_BTIF_REG_ID_ flag)
 {
@@ -1192,16 +924,6 @@ int hal_btif_dump_reg(struct _MTK_BTIF_INFO_STR_ *p_btif,
 	return i_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_is_tx_complete
- * DESCRIPTION
- *  get tx complete flag
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  true means tx complete, false means tx in process
- *****************************************************************************/
 bool hal_btif_is_tx_complete(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 /*Chaozhong: To be implement*/
@@ -1213,12 +935,6 @@ bool hal_btif_is_tx_complete(struct _MTK_BTIF_INFO_STR_ *p_btif)
 	unsigned int rx_dr = 0;
 	unsigned int tx_irq_disable = 0;
 
-/*
- * 3 conditions allow clock to be disable
- * 1. if TEMT is set or not
- * 2. if DR is set or not
- * 3. Tx IRQ is disabled or not
- */
 	lsr = BTIF_READ32(BTIF_LSR(base));
 	tx_empty = lsr & BTIF_LSR_TEMT_BIT;
 	rx_dr = lsr & BTIF_LSR_DR_BIT;
@@ -1243,16 +959,6 @@ bool hal_btif_is_tx_complete(struct _MTK_BTIF_INFO_STR_ *p_btif)
 	return b_ret;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  hal_btif_is_tx_allow
- * DESCRIPTION
- *  whether tx is allowed
- * PARAMETERS
- *  p_base   [IN]        BTIF module's base address
- * RETURNS
- *  true if tx operation is allowed; false if tx is not allowed
- *****************************************************************************/
 bool hal_btif_is_tx_allow(struct _MTK_BTIF_INFO_STR_ *p_btif)
 {
 #define MIN_TX_MB ((26 * 1000000 / 13) / 1000000)

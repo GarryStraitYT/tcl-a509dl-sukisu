@@ -32,10 +32,6 @@
 #include <adsp_helper.h>
 #include <adsp_dvfs.h>
 
-/*==============================================================================
- *                     ioctl
- *==============================================================================
- */
 #define AUDIO_DSP_DEVICE_PATH "/dev/adsp"
 #define AUDIO_DSP_IOC_MAGIC 'a'
 
@@ -46,11 +42,6 @@
 #define AUDIO_DSP_IOCTL_ADSP_RESET_CBK \
 	_IOR(AUDIO_DSP_IOC_MAGIC, 2, unsigned int)
 
-/*
- * =============================================================================
- *                     struct
- * =============================================================================
- */
 
 struct audio_dsp_reg_feature_t {
 	uint16_t reg_flag;
@@ -61,11 +52,6 @@ struct audio_dsp_query_status_t {
 	int16_t ready_flag;
 	uint16_t core_id;
 };
-/*
- * =============================================================================
- *                     static var
- * =============================================================================
- */
 static long status_update_flag;
 static DECLARE_WAIT_QUEUE_HEAD(status_wq);
 static unsigned long last_dsp_status;
@@ -73,10 +59,6 @@ static int16_t last_ready_flag;
 static int adsp_hal_feature_table[ADSP_NUM_FEATURE_ID];
 
 
-/*==============================================================================
- *                     functions - implementation
- *==============================================================================
- */
 void adsp_read_status_release(const unsigned long dsp_event)
 {
 	last_dsp_status = dsp_event;

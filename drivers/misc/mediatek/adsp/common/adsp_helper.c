@@ -88,12 +88,6 @@ struct wakeup_source *adsp_reset_lock;
 DEFINE_SPINLOCK(adsp_reset_spinlock);
 #endif
 
-/*
- * register apps notification
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param nb:   notifier block struct
- */
 void adsp_A_register_notify(struct notifier_block *nb)
 {
 	mutex_lock(&adsp_A_notify_mutex);
@@ -106,12 +100,6 @@ void adsp_A_register_notify(struct notifier_block *nb)
 	mutex_unlock(&adsp_A_notify_mutex);
 }
 EXPORT_SYMBOL_GPL(adsp_A_register_notify);
-/*
- * unregister apps notification
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param nb:     notifier block struct
- */
 void adsp_A_unregister_notify(struct notifier_block *nb)
 {
 	mutex_lock(&adsp_A_notify_mutex);
@@ -127,12 +115,6 @@ void adsp_extern_notify(enum ADSP_NOTIFY_EVENT notify_status)
 				     notify_status, NULL);
 }
 
-/*
- * adsp_set_reset_status, set and return scp reset status function
- * return value:
- *   0: scp not in reset status
- *   1: scp in reset status
- */
 unsigned int adsp_set_reset_status(void)
 {
 	unsigned long spin_flags;
@@ -148,12 +130,6 @@ unsigned int adsp_set_reset_status(void)
 	return 0;
 }
 
-/*
- * callback function for work struct
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 void adsp_sys_reset_ws(struct work_struct *ws)
 {
 	struct adsp_work_t *sws = container_of(ws, struct adsp_work_t, work);
@@ -229,8 +205,6 @@ void adsp_sys_reset_ws(struct work_struct *ws)
 #endif
 	adsp_enable_dsp_clk(false);
 }
-/*
- */
 void adsp_send_reset_wq(enum ADSP_RESET_TYPE type, enum adsp_core_id core_id)
 {
 	adsp_sys_reset_work.flags = (unsigned int) type;
@@ -250,13 +224,6 @@ void adsp_recovery_init(void)
 	adsp_recovery_flag[ADSP_A_ID] = ADSP_RECOVERY_OK;
 }
 #endif
-/*
- * callback function for work struct
- * notify apps to start their tasks or generate an exception according to flag
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void adsp_notify_ws(struct work_struct *ws)
 {
 #ifdef CFG_RECOVERY_SUPPORT
@@ -273,13 +240,6 @@ static void adsp_notify_ws(struct work_struct *ws)
 }
 
 
-/*
- * callback function for work struct
- * notify apps to start their tasks or generate an exception according to flag
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void adsp_timeout_ws(struct work_struct *ws)
 {
 #ifdef CFG_RECOVERY_SUPPORT
@@ -300,13 +260,6 @@ void adsp_reset_ready(uint32_t id)
 	adsp_ready[id] = 0;
 }
 
-/*
- * handle notification from adsp
- * mark adsp is ready for running tasks
- * @param id:   ipi id
- * @param data: ipi data
- * @param len:  length of ipi data
- */
 void adsp_A_ready_ipi_handler(int id, void *data, unsigned int len)
 {
 	unsigned int adsp_image_size = *(unsigned int *)data;
@@ -332,9 +285,6 @@ void adsp_A_ready_ipi_handler(int id, void *data, unsigned int len)
 	}
 }
 
-/*
- * @return: 1 if adsp is ready for running tasks
- */
 int is_adsp_ready(uint32_t id)
 {
 	if (id >= ADSP_CORE_TOTAL)
@@ -348,11 +298,6 @@ int is_adsp_ready(uint32_t id)
 	return adsp_ready[id];
 }
 
-/*
- * power on adsp
- * generate error if power on fail
- * @return:         1 if success
- */
 uint32_t adsp_power_on(uint32_t enable)
 {
 	if (enable) {
@@ -800,9 +745,6 @@ static struct platform_driver mtk_adsp_device = {
 #endif
 	},
 };
-/*
- * driver initialization entry point
- */
 static int __init adsp_init(void)
 {
 	int ret = 0;
@@ -893,9 +835,6 @@ ERROR:
 	return ret;
 }
 
-/*
- * driver exit point
- */
 static void __exit adsp_exit(void)
 {
 	free_irq(adspreg.wdt_irq, NULL);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -78,9 +75,6 @@ struct sywt78_platform_data {
 };
 
 
-/******************************************************************************
- * Pinctrl configuration
- *****************************************************************************/
 static int sywt78_pinctrl_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -169,9 +163,6 @@ static int sywt78_pinctrl_set(int pin, int state)
 }
 
 
-/******************************************************************************
- * sywt78 operations
- *****************************************************************************/
 /* flashlight enable function */
 static int sywt78_enable(void)
 {
@@ -228,9 +219,6 @@ static int sywt78_uninit(void)
 	return 0;
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer sywt78_timer;
 static unsigned int sywt78_timeout_ms;
 
@@ -247,9 +235,6 @@ static enum hrtimer_restart sywt78_timer_func(struct hrtimer *timer)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int sywt78_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -358,9 +343,6 @@ static struct flashlight_operations sywt78_ops = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int sywt78_chip_init(void)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.

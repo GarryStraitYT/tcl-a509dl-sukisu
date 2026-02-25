@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifndef LINUX_RT_REGMAP_H
 #define LINUX_RT_REGMAP_H
@@ -15,25 +12,12 @@ enum rt_access_mode {
 	RT_4BYTE_MODE = 4,
 };
 
-/* start : the start address of group
- * end : the end address of group
- * mode : access mode (1,2,4 bytes)
- */
 struct rt_access_group {
 	u32 start;
 	u32 end;
 	enum rt_access_mode mode;
 };
 
-/* rt_reg_type
- * RT_NORMAL	: Write data without mask
- *			Read from cache
- * RT_WBITS	: Write data with mask
- *			Read from cache
- * RT_VOLATILE	: Write data to chip directly
- *			Read data from chip
- * RT_RESERVE	: Reserve registers (Write/Read as RT_NORMAL)
- */
 
 #define RT_REG_TYPE_MASK	(0x03)
 #define RT_NORMAL		(0x00)
@@ -41,9 +25,6 @@ struct rt_access_group {
 #define RT_VOLATILE		(0x02)
 #define RT_RESERVE		(0x03)
 
-/* RT_WR_ONCE : write once will check write data and cache data,
- *		if write data = cache data, data will not be writen.
- */
 #define RT_WR_ONCE		(0x08)
 #define RT_NORMAL_WR_ONCE	(RT_NORMAL|RT_WR_ONCE)
 #define RT_WBITS_WR_ONCE	(RT_WBITS|RT_WR_ONCE)
@@ -53,15 +34,6 @@ enum rt_data_format {
 	RT_BIG_ENDIAN,
 };
 
-/* rt_regmap_mode
- *  0  0  0  0  0  0  0  0
- *	  |  |  |  |  |  |
- *	  |  |  |  |__|  byte_mode
- *        |  |__|   ||
- *        |   ||   Cache_mode
- *        |   Block_mode
- *        Debug_mode
- */
 
 #define RT_BYTE_MODE_MASK	(0x01)
 /* 1 byte for each register*/
@@ -94,15 +66,6 @@ enum rt_data_format {
 #define RT_DBG_SPECIAL	(1 << 5)
 
 
-/* struct rt_register
- *
- * Ricktek register map structure for store mapping data
- * @addr: register address.
- * @name: register name.
- * @size: register byte size.
- * @reg_type: register R/W type ( RT_NORMAL, RT_WBITS, RT_VOLATILE, RT_RESERVE).
- * @wbit_mask: register writeable bits mask.
- */
 struct rt_register {
 	u32 addr;
 	const char *name;
@@ -111,12 +74,6 @@ struct rt_register {
 	unsigned char *wbit_mask;
 };
 
-/* Declare a rt_register by RT_REG_DECL
- * @_addr: regisetr address.
- * @_reg_length: register data length.
- * @_reg_type: register type (rt_reg_type).
- * @_mask: register writealbe mask.
- */
 #define RT_REG_DECL(_addr, _reg_length, _reg_type, _mask_...)	\
 	static unsigned char rt_writable_mask_##_addr[_reg_length] = _mask_;\
 	static struct rt_register rt_register_##_addr = {	\
@@ -126,9 +83,6 @@ struct rt_register {
 		.wbit_mask = rt_writable_mask_##_addr,\
 	}
 
-/* Declare a rt_register by RT_NAMED_REG_DECL
- * @_name: a name for a rt_register.
- */
 #define RT_NAMED_REG_DECL(_addr, _name, _reg_length, _reg_type, _mask_...) \
 	static unsigned char rt_writable_mask_##_addr[_reg_length] = _mask_;\
 	static struct rt_register rt_register_##_addr = {	\
@@ -143,20 +97,6 @@ struct rt_register {
 
 #define RT_REG(_addr) (&rt_register_##_addr)
 
-/* rt_regmap_properties
- * @name: the name of debug node.
- * @aliases: alisis name of rt_regmap_device.
- * @rm: rt_regiseter_map pointer array.
- * @register_num: the number of rt_register_map registers.
- * @map_byte_num: total byte number of register map.
- * @group: register map access group.
- * @rt_format: default is little endian.
- * @rt_regmap_mode: rt_regmap_device mode.
- * @max_byte_size: max byte size of one register map.
- * @cache_mode_ori: original cache mode when register rt_regmap_device.
- * @watchdog: watchdog for GUI connected.
- * @io_log_en: enable/disable io log
- */
 struct rt_regmap_properties {
 	const char *name;
 	const char *aliases;
@@ -172,11 +112,6 @@ struct rt_regmap_properties {
 	unsigned char watchdog:1;
 };
 
-/* A passing struct for rt_regmap_reg_read and rt_regmap_reg_write function
- * reg: regmap addr.
- * mask: mask for update bits.
- * rt_data: register value.
- */
 struct rt_reg_data {
 	u32 reg;
 	u32 mask;

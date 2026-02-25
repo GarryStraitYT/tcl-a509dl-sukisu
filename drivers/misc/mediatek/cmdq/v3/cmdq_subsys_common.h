@@ -1,17 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _CMDQ_SUBSYS_COMMON_H_
 #define _CMDQ_SUBSYS_COMMON_H_
 
-/* Define CMDQ subsys
- *
- * CMDQ subsys base address define in DTS.
- * Mapping dts name and subsys define must sync with
- * subsys table define in cmdq_subsys_common.c.
- */
 enum CMDQ_SUBSYS_ENUM {
 	CMDQ_SUBSYS_G3D_CONFIG_BASE,
 	CMDQ_SUBSYS_MMSYS_CONFIG,

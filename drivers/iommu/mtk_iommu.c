@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2015-2016 MediaTek Inc.
- * Author: Yong Wu <yong.wu@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 #include <linux/bootmem.h>
 #include <linux/bug.h>
 #include <linux/clk.h>
@@ -117,10 +104,6 @@
 
 #define MTK_PROTECT_PA_ALIGN			256
 
-/*
- * Get the local arbiter ID and the portid within the larb arbiter
- * from mtk_m4u_id which is defined by MTK_M4U_ID.
- */
 #define MTK_M4U_TO_LARB(id)		(((id) >> 5) & 0xf)
 #define MTK_M4U_TO_PORT(id)		((id) & 0x1f)
 
@@ -141,54 +124,14 @@ struct mtk_iommu_resv_iova_region {
 
 static const struct iommu_ops mtk_iommu_ops;
 
-/*
- * In M4U 4GB mode, the physical address is remapped as below:
- *  CPU PA         ->   M4U HW PA
- *  0x4000_0000         0x1_4000_0000 (Add bit32)
- *  0x8000_0000         0x1_8000_0000 ...
- *  0xc000_0000         0x1_c000_0000 ...
- *  0x1_0000_0000       0x1_0000_0000 (No change)
- *
- * Thus, We always add BIT32 in the iommu_map and disable BIT32 if PA is >=
- * 0x1_4000_0000 in the iova_to_phys.
- */
 #define MTK_IOMMU_4GB_MODE_PA_140000000     0x140000000UL
 
-/*
- * In M4U 4GB mode, the physical address is remapped as below:
- *
- * CPU Physical address:
- * ====================
- *
- * 0      1G       2G     3G       4G     5G
- * |---A---|---B---|---C---|---D---|---E---|
- * +--I/O--+------------Memory-------------+
- *
- * IOMMU output physical address:
- *  =============================
- *
- *                                 4G      5G     6G      7G      8G
- *                                 |---E---|---B---|---C---|---D---|
- *                                 +------------Memory-------------+
- *
- * The Region 'A'(I/O) can NOT be mapped by M4U; For Region 'B'/'C'/'D', the
- * bit32 of the CPU physical address always is needed to set, and for Region
- * 'E', the CPU physical address keep as is.
- * Additionally, The iommu consumers always use the CPU phyiscal address.
- */
 #define MTK_IOMMU_4GB_MODE_REMAP_BASE	 0x40000000
 
 static LIST_HEAD(m4ulist);	/* List all the M4U HWs */
 
 #define for_each_m4u(data)	list_for_each_entry(data, &m4ulist, list)
 
-/*
- * There may be 1 or 2 M4U HWs, But we always expect they are in the same domain
- * for the performance.
- *
- * Here always return the mtk_iommu_data of the first probed M4U where the
- * iommu domain information is recorded.
- */
 static struct mtk_iommu_data *mtk_iommu_get_m4u_data(void)
 {
 	struct mtk_iommu_data *data;

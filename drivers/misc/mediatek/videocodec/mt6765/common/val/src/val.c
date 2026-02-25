@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
-/*=============================================================================
- *                              Include Files
- *===========================================================================
- */
 #include "val_types_private.h"
 #include "val_api_private.h"
 /* #include "mfv_reg.h" */
@@ -28,10 +21,6 @@
 
 
 
-/*=============================================================================
- *                              Function Body
- *===========================================================================
- */
 
 enum VAL_RESULT_T eVideoMemAlloc(struct VAL_MEMORY_T *a_prPaam,
 				unsigned int a_u4ParamSize)

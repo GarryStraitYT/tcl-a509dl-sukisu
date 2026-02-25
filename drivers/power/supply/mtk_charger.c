@@ -1,27 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- *
- * Filename:
- * ---------
- *    mtk_charger.c
- *
- * Project:
- * --------
- *   Android_Software
- *
- * Description:
- * ------------
- *   This Module defines functions of Battery charging
- *
- * Author:
- * -------
- * Wy Chuang
- *
- */
 #include <linux/init.h>		/* For init/exit macros */
 #include <linux/module.h>	/* For MODULE_ marcros  */
 #include <linux/fs.h>
@@ -61,7 +39,8 @@
 #if defined(TARGET_BUILD_MMITEST)
 #include "mtk_battery.h"
 #else
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 #include "mtk_battery.h"
 #endif
 #endif
@@ -1247,7 +1226,7 @@ static void mtk_battery_notify_check(struct mtk_charger *info)
 	if (info->notify_test_mode == 0x0000) {
 		mtk_battery_notify_VCharger_check(info);
 		/* Begin modified by bitao.xiong for task-10031392 on 2020-10-15 */
-		if (strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_TF"))
+		if (strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_TF") || strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_NA_OM"))
 			mtk_battery_notify_VBatTemp_check(info);
 		/* End modified by bitao.xiong for task-10031392 on 2020-10-15 */
 	} else {
@@ -1287,7 +1266,8 @@ static void mtk_chg_get_tchg(struct mtk_charger *info)
 }
 
 /* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 static int pmic_get_charging_current(void)
 {
 	int ret = 0;
@@ -1381,7 +1361,8 @@ static void charger_check_status(struct mtk_charger *info)
 		return;
 
 	/* Begin added by bitao.xiong for defect-10164762  on 2020-11-18 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	charger_dev_kick_wdt(info->chg1_dev);
 	#endif
 	/* End added by bitao.xiong for defect-10164762  on 2020-11-18 */
@@ -1512,7 +1493,8 @@ stop_charging:
 
 	info->can_charging = charging;
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	mtk_charger_check_input_avg_current(info, info->can_charging);
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
@@ -1716,6 +1698,26 @@ static char *dump_charger_type(int type)
 	}
 }
 
+static void kpoc_power_off_check(struct mtk_charger *info)
+{
+	unsigned int boot_mode = info->bootmode;
+	int vbus = 0;
+
+	/* 8 = KERNEL_POWER_OFF_CHARGING_BOOT */
+	/* 9 = LOW_POWER_OFF_CHARGING_BOOT */
+	if (boot_mode == 8 || boot_mode == 9) {
+		vbus = get_vbus(info);
+		if (vbus >= 0 && vbus < 2500 && !mtk_is_charger_on(info) && !info->pd_reset) {
+			chr_err("Unplug Charger/USB in KPOC mode, vbus=%d, shutdown\n", vbus);
+			kernel_power_off();
+		}
+	}
+}
+
+/* Begin added by bin.song.hz for task 10431118 on 2020-12-07 */
+extern void tct_detect_charger(void);
+/* End added by bin.song.hz for task 10431118 on 2020-12-07 */
+
 static int charger_routine_thread(void *arg)
 {
 	struct mtk_charger *info = arg;
@@ -1757,6 +1759,14 @@ static int charger_routine_thread(void *arg)
 
 		is_charger_on = mtk_is_charger_on(info);
 
+		/* Begin added by bin.song.hz for task 10431118 on 2020-12-07 */
+		if(get_vbus(info) < 2000 && is_charger_on)
+		{
+			chr_err("is_charger_on = %d, vbus is too low!\n", is_charger_on);
+			tct_detect_charger();
+		}
+		/* End added by bin.song.hz for task 10431118 on 2020-12-07 */
+
 		if (info->charger_thread_polling == true)
 			mtk_charger_start_timer(info);
 
@@ -1767,6 +1777,7 @@ static int charger_routine_thread(void *arg)
 /* End added by bitao.xiong for task-9878355 on 2020-09-05 */
 		check_dynamic_mivr(info);
 		charger_check_status(info);
+		kpoc_power_off_check(info);
 
 		if (is_disable_charger(info) == false &&
 			is_charger_on == true &&
@@ -1893,7 +1904,8 @@ static int mtk_charger_setup_files(struct platform_device *pdev)
 		goto _out;
 
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	ret = device_create_file(&(pdev->dev), &dev_attr_nonstand_charge_type);
 	if (ret)
 		goto _out;

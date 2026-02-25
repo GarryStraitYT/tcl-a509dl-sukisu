@@ -9,9 +9,6 @@
 #include "adsp_helper.h"
 #include "adsp_bus_monitor.h"
 
-/**
- * TIMEOUT_VALUE = value * unit(15 cycle count) / clk_src
- */
 #define BUS_MON_STAGE1_TIMEOUT_VALUE    (0x01DA0A2B) /* 1.00 sec @ 466MHz */
 #define BUS_MON_STAGE2_TIMEOUT_VALUE    (0x03B41456) /* 2.00 sec @ 466MHz */
 

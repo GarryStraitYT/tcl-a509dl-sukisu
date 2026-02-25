@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2014-2018 MediaTek Inc.
 
-/*
- * Library for MediaTek External Interrupt Support
- *
- * Author: Maoguang Meng <maoguang.meng@mediatek.com>
- *	   Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #include <linux/delay.h>
 #include <linux/err.h>

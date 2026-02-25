@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #ifndef __IMGSENSOR_COMMON_H__
@@ -14,9 +11,6 @@
 #include "kd_camera_feature.h"
 #include "kd_imgsensor_define.h"
 
-/************************************************************************
- * Debug configuration
- ************************************************************************/
 #define PREFIX "[imgsensor]"
 #define DEBUG_CAMERA_HW_K
 #ifdef DEBUG_CAMERA_HW_K

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define VENDOR_CHIP_DRIVER
 
@@ -67,14 +64,6 @@
 #define MHL_SII8348
 
 
-/*
- *
-	To-do list:
-	1.  Open RDMA_DPI_PATH_SUPPORT or DPI_DVT_TEST_SUPPORT;
-	2.  extern picture data structure and modify Makefile,
-	     e.g.  extern unsigned char kara_1280x720[2764800];
-	3.  Modify sii8348 driver;
- */
 
 /********************************************/
 
@@ -533,9 +522,6 @@ int dvt_init_DSC_param(unsigned char arg)
 	return 0;
 }
 #endif
-/*
- * OVL1 -> OVL1_MOUT -> DISP_RDMA1 -> RDMA1_SOUT -> DPI_SEL -> DPI
- */
 int dvt_start_ovl1_to_dpi(unsigned int resolution, unsigned int timeS)
 {
 	int ret = 0;

@@ -1,33 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- *
- * Filename:
- * ---------
- *   AudDrv_Common_func.h
- *
- * Project:
- * --------
- *   MT6797 FPGA LDVT Audio Driver
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- *   George
- *
- *---------------------------------------------------------------------------
- *
- *
- ****************************************************************************
- */
 
 #ifndef AUDIO_COMMON_FUNC_H
 #define AUDIO_COMMON_FUNC_H

@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #ifndef __PINCTRL_MTK_COMMON_V2_H
 #define __PINCTRL_MTK_COMMON_V2_H
@@ -85,15 +79,6 @@ static const char * const mtk_default_register_base_names[] = {
 	"base",
 };
 
-/* struct mtk_pin_field - the structure that holds the information of the field
- *			  used to describe the attribute for the pin
- * @base:		the index pointing to the entry in base address list
- * @offset:		the register offset relative to the base address
- * @mask:		the mask used to filter out the field from the register
- * @bitpos:		the start bit relative to the register
- * @next:		the indication that the field would be extended to the
-			next register
- */
 struct mtk_pin_field {
 	u8  index;
 	u32 offset;
@@ -102,21 +87,6 @@ struct mtk_pin_field {
 	u8  next;
 };
 
-/* struct mtk_pin_field_calc - the structure that holds the range providing
- *			       the guide used to look up the relevant field
- * @s_pin:		the start pin within the range
- * @e_pin:		the end pin within the range
- * @i_base:		the index pointing to the entry in base address list
- * @s_addr:		the start address for the range
- * @x_addrs:		the address distance between two consecutive registers
- *			within the range
- * @s_bit:		the start bit for the first register within the range
- * @x_bits:		the bit distance between two consecutive pins within
- *			the range
- * @sz_reg:		the size of bits in a register
- * @fixed:		the consecutive pins share the same bits with the 1st
- *			pin
- */
 struct mtk_pin_field_calc {
 	u16 s_pin;
 	u16 e_pin;
@@ -129,50 +99,21 @@ struct mtk_pin_field_calc {
 	u8  fixed;
 };
 
-/* struct mtk_pin_reg_calc - the structure that holds all ranges used to
- *			     determine which register the pin would make use of
- *			     for certain pin attribute.
- * @range:		     the start address for the range
- * @nranges:		     the number of items in the range
- */
 struct mtk_pin_reg_calc {
 	const struct mtk_pin_field_calc *range;
 	unsigned int nranges;
 };
 
-/**
- * struct mtk_func_desc - the structure that providing information
- *			  all the funcs for this pin
- * @name:		the name of function
- * @muxval:		the mux to the function
- */
 struct mtk_func_desc {
 	const char *name;
 	u8 muxval;
 };
 
-/**
- * struct mtk_eint_desc - the structure that providing information
- *			       for eint data per pin
- * @eint_m:		the eint mux for this pin
- * @eitn_n:		the eint number for this pin
- */
 struct mtk_eint_desc {
 	u16 eint_m;
 	u16 eint_n;
 };
 
-/**
- * struct mtk_pin_desc - the structure that providing information
- *			       for each pin of chips
- * @number:		unique pin number from the global pin number space
- * @name:		name for this pin
- * @eint:		the eint data for this pin
- * @drv_n:		the index with the driving group
- * @funcs:		all available functions for this pins (only used in
- *			those drivers compatible to pinctrl-mtk-common.c-like
- *			ones)
- */
 struct mtk_pin_desc {
 	unsigned int number;
 	const char *name;

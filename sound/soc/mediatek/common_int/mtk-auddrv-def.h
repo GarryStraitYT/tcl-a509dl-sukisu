@@ -1,32 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- *
- * Filename:
- * ---------
- *   auddrv-def.h
- *
- * Project:
- * --------
- *   Audio Driver
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- *   Chipeng Chang (MTK02308)
- *
- *---------------------------------------------------------------------------
- *
- *****************************************************************************
- */
 
 #ifndef AUDIO_DEF_H
 #define AUDIO_DEF_H
@@ -50,9 +23,6 @@
 #define AUDIO_AEE(message)
 #endif
 
-/**********************************
- *  Other Definitions             *
- **********************************/
 #define BIT_00 0x00000001 /* ---- ---- ---- ---- ---- ---- ---- ---1 */
 #define BIT_01 0x00000002 /* ---- ---- ---- ---- ---- ---- ---- --1- */
 #define BIT_02 0x00000004 /* ---- ---- ---- ---- ---- ---- ---- -1-- */

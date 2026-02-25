@@ -1,11 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * Definitions for akm09912 compass chip.
- */
 #ifndef MAGHUB_H
 #define MAGHUB_H
 

@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "mtk_vcodec_mem.h"
 
-/*
- * #undef pr_debug
- * #define pr_debug pr_info
- */
 
 struct mtk_vcu_queue *mtk_vcu_mem_init(struct device *dev,
 	struct device *cmdq_dev)

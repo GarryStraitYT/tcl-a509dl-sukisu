@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef PD_DPM_CORE_H
 #define PD_DPM_CORE_H
@@ -115,9 +112,6 @@ void pd_dpm_vcs_evaluate_swap(struct pd_port *pd_port);
 void pd_dpm_vcs_enable_vconn(struct pd_port *pd_port, uint8_t role);
 
 
-/*
- * PE : PD3.0
- */
 
 #ifdef CONFIG_USB_PD_REV30
 
@@ -316,16 +310,6 @@ extern bool dc_parse_svid_data(struct pd_port *pd_port,
 #endif /* CONFIG_USB_PD_ALT_MODE_RTDC */
 
 
-/**
- * pd_dpm_get_ready_reaction
- *
- * Get a pending event from the reaction's table definied by DPM.
- *
- * Returns TCP_DPM_EVT_ID if succeeded;
- * Returns Zero to indicate there is no pending event.
- * Returns DPM_READY_REACTION_BUSY to indicate
- *	waiting for previous reaction is finished.
- */
 
 #define DPM_READY_REACTION_BUSY		(0xff)
 extern uint8_t pd_dpm_get_ready_reaction(struct pd_port *pd_port);

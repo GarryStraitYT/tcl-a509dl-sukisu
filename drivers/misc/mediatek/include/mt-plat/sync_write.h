@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef MT_SYNC_WRITE_H
 #define MT_SYNC_WRITE_H
@@ -11,9 +8,6 @@
 #include <linux/io.h>
 #include <asm/cacheflush.h>
 
-/*
- * Define macros.
- */
 #define mt_reg_sync_writel(v, a) \
 	do {    \
 		__raw_writel((v), (void __force __iomem *)((a)));   \

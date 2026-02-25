@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include "sched.h"
 #include <trace/events/sched.h>
 
@@ -55,12 +52,6 @@ migrate_running_task(int dst_cpu, struct task_struct *p, struct rq *src_rq)
 }
 
 #if defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
-/*
- * The cpu types are distinguished using a list of perf_order_domains
- * which each represent one cpu type using a cpumask.
- * The list is assumed ordered by compute capacity with the
- * fastest domain first.
- */
 
 /* Perf order domain common utils */
 LIST_HEAD(perf_order_domains);
@@ -88,11 +79,6 @@ void perf_order_cpu_mask_setup(void)
 	}
 }
 
-/*
- *Perf domain capacity compare function
- * Only inspect lowest id of cpus in same domain.
- * Assume CPUs in same domain has same capacity.
- */
 struct cluster_info {
 	struct perf_order_domain *pod;
 	unsigned long cpu_perf;
@@ -121,11 +107,6 @@ static inline void fillin_cluster(struct cluster_info *cinfo,
 				cpumask_bits(&pod->possible_cpus)[0]);
 }
 
-/*
- * Negative, if @a should sort before @b
- * Positive, if @a should sort after @b.
- * Return 0, if ordering is to be preserved
- */
 int perf_domain_compare(void *priv, struct list_head *a, struct list_head *b)
 {
 	struct cluster_info ca;
@@ -732,9 +713,6 @@ fastest_domain_idle_prefer_pull(int this_cpu, struct task_struct **p,
 	}
 }
 
-/*
- * rq: src rq
- */
 static int
 migrate_runnable_task(struct task_struct *p, int dst_cpu,
 					struct rq *rq)
@@ -920,9 +898,6 @@ void task_rotate_work_init(void)
 }
 #endif /* CONFIG_MTK_SCHED_BIG_TASK_MIGRATE */
 
-/**
- *for isolation
- */
 void init_cpu_isolated(const struct cpumask *src)
 {
 	cpumask_copy(&__cpu_isolated_mask, src);
@@ -930,11 +905,6 @@ void init_cpu_isolated(const struct cpumask *src)
 
 DEFINE_MUTEX(sched_isolation_mutex);
 struct cpumask cpu_all_masks;
-/*
- * Remove a task from the runqueue and pretend that it's migrating. This
- * should prevent migrations for the detached task and disallow further
- * changes to tsk_cpus_allowed.
- */
 void
 iso_detach_one_task(struct task_struct *p, struct rq *rq,
 			struct list_head *tasks)
@@ -973,10 +943,6 @@ static inline bool iso_is_per_cpu_kthread(struct task_struct *p)
 	return true;
 }
 
-/*
- * Per-CPU kthreads are allowed to run on !actie && online CPUs, see
- * __set_cpus_allowed_ptr() and select_fallback_rq().
- */
 static inline bool iso_is_cpu_allowed(struct task_struct *p, int cpu)
 {
 	if (!cpumask_test_cpu(cpu, &p->cpus_allowed))
@@ -1064,25 +1030,6 @@ set_cpumask_isolated(unsigned int cpu, bool isolated)
 		cpumask_clear_cpu(cpu, &__cpu_isolated_mask);
 }
 
-/*
- * 1) CPU is isolated and cpu is offlined:
- *	Unisolate the core.
- * 2) CPU is not isolated and CPU is offlined:
- *	No action taken.
- * 3) CPU is offline and request to isolate
- *	Request ignored.
- * 4) CPU is offline and isolated:
- *	Not a possible state.
- * 5) CPU is online and request to isolate
- *	Normal case: Isolate the CPU
- * 6) CPU is not isolated and comes back online
- *	Nothing to do
- *
- * Note: The client calling sched_isolate_cpu() is repsonsible for ONLY
- * calling sched_deisolate_cpu() on a CPU that the client previously isolated.
- * Client is also responsible for deisolating when a core goes offline
- * (after CPU is marked offline).
- */
 int _sched_isolate_cpu(int cpu)
 {
 	struct rq *rq = cpu_rq(cpu);
@@ -1135,12 +1082,6 @@ out:
 	return ret_code;
 }
 
-/*
- * Note: The client calling sched_isolate_cpu() is repsonsible for ONLY
- * calling sched_deisolate_cpu() on a CPU that the client previously isolated.
- * Client is also responsible for deisolating when a core goes offline
- * (after CPU is marked offline).
- */
 int __sched_deisolate_cpu_unlocked(int cpu)
 {
 	int ret_code = 0;

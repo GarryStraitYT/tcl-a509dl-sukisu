@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Pierre Lee <pierre.lee@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
@@ -80,9 +76,6 @@ static int __fh_ctrl_cmd_handler(struct clk_mt_fhctl *fh,
 }
 
 
-/***************************************************************************
- * FHCTL Debug CTRL OPS
- ***************************************************************************/
 static ssize_t fh_ctrl_proc_write(struct file *file,
 				const char *buffer, size_t count, loff_t *data)
 {

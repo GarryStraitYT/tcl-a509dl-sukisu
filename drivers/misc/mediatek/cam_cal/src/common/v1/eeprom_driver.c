@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #define PFX "CAM_CAL"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__
 
@@ -52,9 +49,6 @@ static DEFINE_SPINLOCK(g_spinLock);	/*for SMP */
 
 static unsigned int g_lastDevID;
 
-/***********************************************************
- *
- ***********************************************************/
 struct stCAM_CAL_CMD_INFO_STRUCT {
 	unsigned int sensorID;
 	unsigned int deviceID;
@@ -68,10 +62,6 @@ struct stCAM_CAL_CMD_INFO_STRUCT {
 static struct stCAM_CAL_CMD_INFO_STRUCT
 	g_camCalDrvInfo[IMGSENSOR_SENSOR_IDX_MAX_NUM];
 
-/********************************************************************
- * EEPROM_set_i2c_bus()
- * To i2c client and slave id
- ********************************************************************/
 
 static int EEPROM_set_i2c_bus(unsigned int deviceID,
 			      struct stCAM_CAL_CMD_INFO_STRUCT *cmdInfo)
@@ -108,9 +98,6 @@ static int EEPROM_set_i2c_bus(unsigned int deviceID,
 
 
 
-/*************************************************
- * EEPROM_get_cmd_info function
- *************************************************/
 
 static int EEPROM_get_cmd_info(unsigned int sensorID,
 	struct stCAM_CAL_CMD_INFO_STRUCT *cmdInfo)
@@ -188,9 +175,6 @@ static struct stCAM_CAL_CMD_INFO_STRUCT *EEPROM_get_cmd_info_ex
 	}
 }
 
-/**************************************************
- * EEPROM_HW_i2c_probe
- **************************************************/
 static int EEPROM_HW_i2c_probe
 	(struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -213,17 +197,11 @@ static int EEPROM_HW_i2c_probe
 
 
 
-/**********************************************
- * CAMERA_HW_i2c_remove
- **********************************************/
 static int EEPROM_HW_i2c_remove(struct i2c_client *client)
 {
 	return 0;
 }
 
-/***********************************************
- * EEPROM_HW_i2c_probe2
- ***********************************************/
 static int EEPROM_HW_i2c_probe2
 	(struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -244,17 +222,11 @@ static int EEPROM_HW_i2c_probe2
 	return 0;
 }
 
-/********************************************************
- * CAMERA_HW_i2c_remove2
- ********************************************************/
 static int EEPROM_HW_i2c_remove2(struct i2c_client *client)
 {
 	return 0;
 }
 
-/********************************************************
- * EEPROM_HW_i2c_probe3
- ********************************************************/
 static int EEPROM_HW_i2c_probe3
 	(struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -275,17 +247,11 @@ static int EEPROM_HW_i2c_probe3
 	return 0;
 }
 
-/*************************************************************
- * CAMERA_HW_i2c_remove3
- *************************************************************/
 static int EEPROM_HW_i2c_remove3(struct i2c_client *client)
 {
 	return 0;
 }
 
-/*************************************************************
- * I2C related variable
- *************************************************************/
 
 
 static const struct i2c_device_id
@@ -316,9 +282,6 @@ struct i2c_driver EEPROM_HW_i2c_driver = {
 	.id_table = EEPROM_HW_i2c_id,
 };
 
-/*********************************************************
- * I2C Driver structure for Sub
- *********************************************************/
 #ifdef CONFIG_OF
 static const struct of_device_id EEPROM_HW2_i2c_driver_of_ids[] = {
 	{.compatible = "mediatek,camera_sub_eeprom",},
@@ -339,9 +302,6 @@ struct i2c_driver EEPROM_HW_i2c_driver2 = {
 	.id_table = EEPROM_HW_i2c_id2,
 };
 
-/**********************************************************
- * I2C Driver structure for Main2
- **********************************************************/
 #ifdef CONFIG_OF
 static const struct of_device_id EEPROM_HW3_i2c_driver_of_ids[] = {
 	{.compatible = "mediatek,camera_main_two_eeprom",},
@@ -363,9 +323,6 @@ struct i2c_driver EEPROM_HW_i2c_driver3 = {
 };
 
 
-/*******************************************************
- * EEPROM_HW_probe
- *******************************************************/
 static int EEPROM_HW_probe(struct platform_device *pdev)
 {
 	i2c_add_driver(&EEPROM_HW_i2c_driver2);
@@ -373,9 +330,6 @@ static int EEPROM_HW_probe(struct platform_device *pdev)
 	return i2c_add_driver(&EEPROM_HW_i2c_driver);
 }
 
-/*******************************************************
- * EEPROM_HW_remove()
- *******************************************************/
 static int EEPROM_HW_remove(struct platform_device *pdev)
 {
 	i2c_del_driver(&EEPROM_HW_i2c_driver);
@@ -384,9 +338,6 @@ static int EEPROM_HW_remove(struct platform_device *pdev)
 	return 0;
 }
 
-/******************************************************
- *
- ******************************************************/
 static struct platform_device g_platDev = {
 	.name = CAM_CAL_DRV_NAME,
 	.id = 0,
@@ -456,9 +407,6 @@ static int EEPROM_compat_get_info
 	return err;
 }
 
-/*************************************************
- * ioctl
- *************************************************/
 
 static long EEPROM_drv_compat_ioctl
 	(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -772,9 +720,6 @@ static const struct file_operations g_stCAM_CAL_fops1 = {
 	.unlocked_ioctl = EEPROM_drv_ioctl
 };
 
-/***********************************************
- *
- ***********************************************/
 
 #define CAM_CAL_DYNAMIC_ALLOCATE_DEVNO 1
 static inline int EEPROM_chrdev_register(void)
@@ -839,9 +784,6 @@ static void EEPROM_chrdev_unregister(void)
 	unregister_chrdev_region(g_devNum, 1);
 }
 
-/***********************************************
- *
- ***********************************************/
 
 static int __init EEPROM_drv_init(void)
 {

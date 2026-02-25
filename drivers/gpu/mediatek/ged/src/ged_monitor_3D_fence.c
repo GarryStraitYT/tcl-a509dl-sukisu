@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/workqueue.h>
@@ -13,9 +10,6 @@
 #include <linux/dma-fence.h>
 
 #include <mt-plat/mtk_gpu_utility.h>
-/* This has been removed on kernel-4.19
- * #include <trace/events/gpu.h>
- */
 #ifdef MTK_GPU_DVFS
 #include <mtk_gpufreq.h>
 #else

@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Houlong Wei <houlong.wei@mediatek.com>
- */
 
 #ifndef _DT_BINDINGS_GCE_MT2712_H
 #define _DT_BINDINGS_GCE_MT2712_H

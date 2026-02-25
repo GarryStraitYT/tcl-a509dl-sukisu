@@ -1,41 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *  mt_sco_digital_type.h
- *
- * Project:
- * --------
- *   MT6583  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
 #ifndef _AUDIO_HDMI_TYPE_H
 #define _AUDIO_HDMI_TYPE_H
 
 #include <linux/list.h>
 
-/*****************************************************************************
- *                ENUM DEFINITION
- ******************************************************************************/
 enum hdmi_display_type {
 	HDMI_DISPLAY_MHL = 0,
 	HDMI_DISPLAY_SILMPORT = 1,

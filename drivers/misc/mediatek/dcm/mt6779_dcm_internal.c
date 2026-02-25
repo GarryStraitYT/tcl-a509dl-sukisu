@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/io.h>
 #include <linux/export.h>
@@ -72,10 +69,6 @@ short is_dcm_bringup(void)
 #endif
 }
 
-/*****************************************
- * following is implementation per DCM module.
- * 1. per-DCM function is 1-argu with ON/OFF/MODE option.
- *****************************************/
 int dcm_topckg(int on)
 {
 	return 0;

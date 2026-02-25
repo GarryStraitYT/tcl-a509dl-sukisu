@@ -1,13 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Mediatek 8173 ALSA SoC AFE platform driver
- *
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Koro Chen <koro.chen@mediatek.com>
- *             Sascha Hauer <s.hauer@pengutronix.de>
- *             Hidalgo Huang <hidalgo.huang@mediatek.com>
- *             Ir Lian <ir.lian@mediatek.com>
- */
 
 #include <linux/delay.h>
 #include <linux/module.h>
@@ -21,9 +12,6 @@
 #include "../common/mtk-afe-platform-driver.h"
 #include "../common/mtk-afe-fe-dai.h"
 
-/*****************************************************************************
- *                  R E G I S T E R       D E F I N I T I O N
- *****************************************************************************/
 #define AUDIO_TOP_CON0		0x0000
 #define AUDIO_TOP_CON1		0x0004
 #define AFE_DAC_CON0		0x0010

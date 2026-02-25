@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include <linux/interrupt.h>
@@ -173,12 +170,6 @@ static const struct v4l2_file_operations mtk_vcodec_fops = {
 };
 
 
-/**
- * Suspend callbacks after user space processes are frozen
- * Since user space processes are frozen, there is no need and cannot hold same
- * mutex that protects lock owner while checking status.
- * If video codec hardware is still active now, must not to enter suspend.
- **/
 static int mtk_vcodec_dec_suspend(struct device *pDev)
 {
 	int val, i;

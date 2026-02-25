@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/interrupt.h>
 #include <linux/mfd/mt6359/registers.h>
@@ -25,16 +22,6 @@
 
 #define DEF_OC_IRQ_ENABLE_DELAY_MS	10
 
-/*
- * MT6359 regulators' information
- *
- * @desc: standard fields of regulator description.
- * @da_reg: for query status of regulators.
- * @qi: Mask for query enable signal status of regulators.
- * @modeset_reg: for operating AUTO/PWM mode register.
- * @modeset_mask: MASK for operating modeset register.
- * @modeset_shift: SHIFT for operating modeset register.
- */
 struct mt6359_regulator_info {
 	int irq;
 	int oc_irq_enable_delay_ms;
@@ -53,13 +40,6 @@ struct mt6359_regulator_info {
 	u32 lp_mode_shift;
 };
 
-/*
- * MTK regulators' init data
- *
- * @id: chip id
- * @size: num of regulators
- * @regulator_info: regulator info.
- */
 struct mt_regulator_init_data {
 	u32 id;
 	u32 size;

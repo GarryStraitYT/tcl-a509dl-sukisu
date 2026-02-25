@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __CONN_MD_EXP_H_
 #define __CONN_MD_EXP_H_
@@ -15,15 +12,6 @@
 #undef CHAR
 #endif
 
-/*
- * Provide a common conn_md_ipc_ilm_t definition for wmt_drv.ko to reference,
- * this decouples wmt_drv.ko away from ECCCI's ipc_ilm definition, as its
- * naming varies between different Kernel versions currently.
- * If in future the fields in this struct varies as well, we could either:
- * 1. Redefine entire struct from conn_md, or
- * 2. Let wmt_drv.ko handles the difference via:
- *      #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
- */
 #define conn_md_ipc_ilm_t struct ipc_ilm
 
 enum CONN_MD_ERR_CODE {

@@ -18,6 +18,8 @@ obj-$(CONFIG_TOUCHSCREEN_MTK_TOKYOLITETMO_FT8006S)      +=  tokyolitetmo_ft8006s
 #Add-end by baiwei.peng for TP porting on 2020/09/03
 
 obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)      +=  bangkoktf_ft5446/
+obj-$(CONFIG_TOUCHSCREEN_MTK_CHSC5XXX_BANGKOKTF)      +=  bangkoktf_CHSC5XXX/
+obj-$(CONFIG_TOUCHSCREEN_MTK_BETTERLIFE_BANGKOKTF)      +=  bangkoktf_betterlife_ts/
 obj-$(CONFIG_TOUCHSCREEN_MTK_GT1151_BANGKOKTF)      +=  bangkoktf_GT1151/
 
 

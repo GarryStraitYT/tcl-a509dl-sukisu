@@ -1,14 +1,3 @@
-/*
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 as published
- * by the Free Software Foundation.
- *
- * Parts of this file are based on Ralink's 2.6.21 BSP
- *
- * Copyright (C) 2008-2011 Gabor Juhos <juhosg@openwrt.org>
- * Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
- * Copyright (C) 2013 John Crispin <john@phrozen.org>
- */
 
 #include <linux/kernel.h>
 #include <linux/init.h>

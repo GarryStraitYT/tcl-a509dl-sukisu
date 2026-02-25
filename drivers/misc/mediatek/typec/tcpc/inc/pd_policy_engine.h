@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef PD_POLICY_ENGINE_H_
 #define PD_POLICY_ENGINE_H_
@@ -406,16 +403,6 @@ enum pd_pe_state {
 	PD_NR_PE_STATES,
 };
 
-/**
- * pd_policy_engine_run
- *
- * Driving the PE to get next event, and take the corresponding actions.
- *
- *
- * Returns True if a pending event is processed;
- * Returns Zero to indicate there is no pending event.
- * Returns Negative Value if an error occurs.
- */
 
 int pd_policy_engine_run(struct tcpc_device *tcpc_dev);
 

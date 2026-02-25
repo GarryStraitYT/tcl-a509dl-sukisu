@@ -1,13 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Based on pinctrl-mtk-mt6765.h
- *
- * Copyright (C) 2018 MediaTek Inc.
- *
- * Author: ZH Chen <zh.chen@mediatek.com>
- *
- * Copyright (c) 2018 Manivannan Sadhasivam
- */
 
 #ifndef __PINCTRL_MTK_MT6797_H
 #define __PINCTRL_MTK_MT6797_H

@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -272,11 +269,3 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek MT6370 PMU Core");
 MODULE_VERSION(MT6370_PMU_CORE_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.1_MTK
- * (1) Do not run mt6370_pmu_core_reset() for MT6372
- *
- * 1.0.0_MTK
- * (1) Initial Release
- */

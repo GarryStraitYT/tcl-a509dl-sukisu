@@ -1,29 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*! \file
- *   \brief  Declaration of library functions
- *
- *   Any definitions in this file will be shared among GLUE Layer
- *   and internal Driver Stack.
- */
 
 #ifndef _MTK_WCN_CMB_STUB_H_
 #define _MTK_WCN_CMB_STUB_H_
 
 #include <linux/pm.h>
 
-/*******************************************************************************
- *                        C O M P I L E R   F L A G S
- *******************************************************************************
- */
 
-/*******************************************************************************
- *                                M A C R O S
- *******************************************************************************
- */
 /* Audio GPIO naming style for 73/75/77 */
 /* #define MTK_WCN_CMB_AUD_IO_NAMING_STYLE_0 1 */
 /* Audio GPIO naming style for 89/8135 */
@@ -34,20 +17,8 @@
 #define MTK_WCN_CMB_AUD_IO_NAMING_STYLE_3 1
 #define MTK_WCN_CMB_FOR_SDIO_1V_AUTOK 1
 
-/*******************************************************************************
- *                   E X T E R N A L   R E F E R E N C E S
- *******************************************************************************
- */
 
-/*******************************************************************************
- *                             C O N S T A N T S
- *******************************************************************************
- */
 
-/*******************************************************************************
- *                            D A T A   T Y P E S
- *******************************************************************************
- */
 enum CMB_STUB_AIF_X {
 	CMB_STUB_AIF_0 = 0,	/* 0000: BT_PCM_OFF & FM analog (line in/out) */
 	CMB_STUB_AIF_1 = 1,	/* 0001: BT_PCM_ON & FM analog (in/out) */
@@ -124,20 +95,8 @@ struct _CMB_STUB_CB_ {
 	wmt_clock_fail_dump_cb clock_fail_dump_cb;
 };
 
-/*******************************************************************************
- *                           P U B L I C   D A T A
- *******************************************************************************
- */
 
-/*******************************************************************************
- *                          P R I V A T E   D A T A
- *******************************************************************************
- */
 
-/*******************************************************************************
- *                 F U N C T I O N   D E C L A R A T I O N S
- *******************************************************************************
- */
 
 extern struct sdio_ops mt_sdio_ops[4];
 
@@ -156,9 +115,6 @@ static inline int mtk_wcn_cmb_stub_audio_ctrl(enum CMB_STUB_AIF_X state)
 extern int mt_combo_plt_enter_deep_idle(enum COMBO_IF src);
 extern int mt_combo_plt_exit_deep_idle(enum COMBO_IF src);
 
-/* Use new mtk_wcn_stub APIs instead of old mt_combo ones for kernel to control
- * function on/off.
- */
 extern void mtk_wcn_cmb_stub_func_ctrl(unsigned int type, unsigned int on);
 extern int mtk_wcn_cmb_stub_query_ctrl(void);
 extern int mtk_wcn_cmb_stub_trigger_assert(void);
@@ -173,18 +129,6 @@ extern int mtk_wcn_cmb_stub_1vautok_for_dvfs(void);
 extern int mtk_wcn_wmt_chipid_query(void);
 extern void mtk_wcn_wmt_set_chipid(int chipid);
 
-/* mtk_uart_pdn_enable -- request uart port enter/exit deep idle mode,
- * this API is defined in uart driver
- *
- * @ port - uart port name, Eg: "ttyMT0", "ttyMT1", "ttyMT2"
- * @ enable - "1", enable deep idle; "0", disable deep idle
- *
- * Return 0 if success, else -1
- */
 extern unsigned int mtk_uart_pdn_enable(char *port, int enable);
-/*******************************************************************************
- *                             F U N C T I O N S
- *******************************************************************************
- */
 
 #endif /* _MTK_WCN_CMB_STUB_H_ */

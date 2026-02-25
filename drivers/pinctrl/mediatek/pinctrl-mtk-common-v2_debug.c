@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- *
- * Author: Light Hsieh <light.hsieh@mediatek.com>
- *
- */
 
 #include <linux/module.h>
 
@@ -135,10 +129,6 @@ static int mtk_hw_set_value_wrap(struct mtk_pinctrl *hw, unsigned int gpio,
 #define mtk_pctrl_set_pinmux(hw, gpio, val)		\
 	mtk_hw_set_value_wrap(hw, gpio, val, PINCTRL_PIN_REG_MODE)
 
-/* MTK HW use 0 as input, 1 for output
- * This interface is for set direct register value,
- * so don't reverse
- */
 #define mtk_pctrl_set_direction(hw, gpio, val)		\
 	mtk_hw_set_value_wrap(hw, gpio, val, PINCTRL_PIN_REG_DIR)
 

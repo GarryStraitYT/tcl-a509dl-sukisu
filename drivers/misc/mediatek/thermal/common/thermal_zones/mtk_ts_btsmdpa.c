@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 
 #include <linux/version.h>
@@ -28,10 +25,6 @@
 #if defined(CONFIG_MEDIATEK_MT6577_AUXADC)
 #include <linux/iio/consumer.h>
 #endif
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 #if !defined(CONFIG_MEDIATEK_MT6577_AUXADC)
 int __attribute__ ((weak))
 IMM_IsAdcInitReady(void)
@@ -47,8 +40,6 @@ IMM_GetOneChannelValue(int dwChannel, int data[4], int *rawdata)
 	return -1;
 }
 #endif
-/*=============================================================
- */
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static DEFINE_SEMAPHORE(sem_mutex);
@@ -74,12 +65,6 @@ static char g_bind7[20] = { 0 };
 static char g_bind8[20] = { 0 };
 static char g_bind9[20] = { 0 };
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5000;
@@ -105,25 +90,6 @@ struct iio_channel *thermistor_ch1;
 
 /* #define INPUT_PARAM_FROM_USER_AP */
 
-/*
- * kernel fopen/fclose
- */
-/*
- *static mm_segment_t oldfs;
- *
- *static void my_close(int fd)
- *{
- *	set_fs(oldfs);
- *	sys_close(fd);
- *}
- *
- *static int my_open(char *fname, int flag)
- *{
- *	oldfs = get_fs();
- *    set_fs(KERNEL_DS);
- *    return sys_open(fname, flag, 0);
- *}
- */
 struct BTSMDPA_TEMPERATURE {
 	__s32 BTSMDPA_Temp;
 	__s32 TemperatureR;
@@ -1270,15 +1236,6 @@ struct file *file, const char __user *buffer, size_t count, loff_t *data)
 	return -EINVAL;
 }
 
-/* int  mtkts_btsmdpa_register_cooler(void)
- * {
- *	cooling devices
- *	cl_dev_sysrst = mtk_thermal_cooling_device_register(
- *				"mtktsbtsmdpatery-sysrst", NULL,
- *				&mtkts_btsmdpa_cooling_sysrst_ops);
- *	return 0;
- * }
- */
 
 
 static int mtkts_btsmdpa_register_thermal(void)

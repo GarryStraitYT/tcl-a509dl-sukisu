@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
-/*
- * Author: Xiao Wang <xiao.wang@mediatek.com>
- */
 #include <linux/list.h>
 #include <linux/device.h>
 #include <linux/module.h>
@@ -53,17 +47,6 @@
 unsigned int trace_sample_time = 200000000;
 
 /* CLDMA setting */
-/* always keep this in mind:
- * what if there are more than 1 modems using CLDMA...
- */
-/*
- * we use this as rgpd->data_allow_len,
- * so skb length must be >= this size,
- * check ccci_bm.c's skb pool design.
- * channel 3 is for network in normal mode,
- * but for mdlogger_ctrl in exception mode,
- * so choose the max packet size.
- */
 static int net_rx_queue_buffer_size[CLDMA_RXQ_NUM] = { NET_RX_BUF };
 static int normal_rx_queue_buffer_size[CLDMA_RXQ_NUM] = { 0 };
 static int net_rx_queue_buffer_number[CLDMA_RXQ_NUM] = { 512 };
@@ -592,11 +575,6 @@ static void cldma_timeout_timer_func(unsigned long data)
 #endif
 
 //#if MD_GENERATION == (6293)
-/*
- * AP_L2RISAR0 register is different from others.
- * its valid bit is 0,8,16,24
- * So we have to gather/scatter it to match other registers
- */
 static inline u32 cldma_reg_bit_gather(u32 reg_s)
 {
 	u32 reg_g = 0;
@@ -656,9 +634,6 @@ static inline void ccci_md_check_rx_seq_num(unsigned char md_id,
 	}
 }
 
-/* may be called from workqueue or NAPI or tasklet (queue0) context,
- * only NAPI and tasklet with blocking=false
- */
 static int cldma_gpd_rx_collect(struct md_cd_queue *queue,
 	int budget, int blocking)
 {
@@ -2421,9 +2396,6 @@ static int md_cd_write_room(unsigned char hif_id, unsigned char qno)
 	return md_ctrl->txq[qno].budget;
 }
 
-/* only run this in thread context,
- * as we use flush_work in it
- */
 static int md_cldma_clear(unsigned char hif_id)
 {
 	struct md_cd_ctrl *md_ctrl = cldma_ctrl;

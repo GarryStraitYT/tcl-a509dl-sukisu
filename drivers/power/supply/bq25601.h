@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _bq25601_SW_H_
 #define _bq25601_SW_H_
@@ -20,11 +17,6 @@
 #define	bq25601_CON11		0x0B
 #define bq25601_REG_NUM 12
 
-/**********************************************************
- *
- *   [MASK/SHIFT]
- *
- *********************************************************/
 //CON0
 #define CON0_EN_HIZ_MASK   0x01
 #define CON0_EN_HIZ_SHIFT  7
@@ -192,11 +184,6 @@
 #define CON11_Rev_MASK           0x03
 #define CON11_Rev_SHIFT          0
 
-/**********************************************************
- *
- *   [Extern Function]
- *
- *********************************************************/
 //CON0----------------------------------------------------
 extern void bq25601_set_en_hiz(unsigned int val);
 extern void bq25601_set_vindpm(unsigned int val);

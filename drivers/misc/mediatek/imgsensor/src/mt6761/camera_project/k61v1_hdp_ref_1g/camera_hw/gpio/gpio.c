@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "gpio.h"
 
@@ -30,9 +27,6 @@ struct GPIO_PINCTRL gpio_pinctrl_list_switch[GPIO_CTRL_STATE_MAX_NUM_SWITCH] = {
 
 static struct GPIO gpio_instance;
 
-/*
- * reset all state of gpio to default value
- */
 static enum IMGSENSOR_RETURN gpio_release(void *pinstance)
 {
 	int i, j;

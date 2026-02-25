@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef _MTK_QMU_H_
 #define _MTK_QMU_H_
@@ -17,9 +14,6 @@
 
 /* CUSTOM SETTING */
 #define GPD_LEN_ALIGNED (64)	/* > gpd len (16) and cache line size aligned */
-/* GPD_LEN_ALIGNED -
- * 16(should be sizeof(TGPD)
- */
 #define GPD_EXT_LEN (48)
 #define GPD_SZ (16)
 #define DFT_MAX_GPD_NUM 36

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/init.h>
@@ -26,11 +23,7 @@ static int Enable_AUXADC_LOG;
 
 static DEFINE_MUTEX(pmic_adc_mutex);
 
-/* =====================================
- */
 /* PMIC-AUXADC */
-/* =====================================
- */
 
 int PMIC_IMM_GetOneChannelValue(unsigned int dwChannel,
 				int deCount, int trimd)

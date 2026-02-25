@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/bootmem.h>
 #include <linux/bug.h>
@@ -112,10 +109,6 @@
 
 #define MTK_PROTECT_PA_ALIGN			256
 
-/*
- * Get the local arbiter ID and the portid within the larb arbiter
- * from mtk_m4u_id which is defined by MTK_M4U_ID.
- */
 #define MTK_M4U_ID(larb, port)		(((larb) << 5) | (port))
 #define MTK_M4U_TO_LARB(id)		(((id) >> 5) & 0xf)
 #define MTK_M4U_TO_PORT(id)		((id) & 0x1f)
@@ -129,47 +122,14 @@ struct mtk_iommu_resv_iova_region {
 
 static const struct iommu_ops mtk_iommu_ops;
 
-/*
- * In M4U 4GB mode, the physical address is remapped as below:
- *  CPU PA         ->   M4U HW PA
- *  0x4000_0000         0x1_4000_0000 (Add bit32)
- *  0x8000_0000         0x1_8000_0000 ...
- *  0xc000_0000         0x1_c000_0000 ...
- *  0x1_0000_0000       0x1_0000_0000 (No change)
- *
- * Thus, We always add BIT32 in the iommu_map and disable BIT32 if PA is >=
- * 0x1_4000_0000 in the iova_to_phys.
- */
 #define MTK_IOMMU_4GB_MODE_PA_140000000     0x140000000UL
 
 static LIST_HEAD(m4ulist);	/* List all the M4U HWs */
 
 #define for_each_m4u(data)	list_for_each_entry(data, &m4ulist, list)
 
-/*
- * There may be 1 or 2 M4U HWs, But we always expect they are in the same domain
- * for the performance.
- *
- * Here always return the mtk_iommu_data of the first probed M4U where the
- * iommu domain information is recorded.
- */
 
-/*
- * reserved IOVA Domain for IOMMU users of HW limitation.
- */
 
-/*
- * struct mtk_domain_data:	domain configuration
- * @min_iova:	Start address of iova
- * @max_iova:	End address of iova
- * @port_mask:	User can specify mtk_iommu_domain by smi larb and port.
- *		Different mtk_iommu_domain have different iova space,
- *		port_mask is made up of larb_id and port_id.
- *		The format of larb and port can refer to mtxxxx-larb-port.h.
- *		bit[4:0] = port_id  bit[11:5] = larb_id.
- * Note: one user can only belong to one IOVAD,
- * the port mask is in unit of SMI larb.
- */
 #define MTK_MAX_PORT_NUM	5
 
 struct mtk_domain_data {
@@ -183,9 +143,6 @@ const struct mtk_domain_data single_dom = {
 	.max_iova = DMA_BIT_MASK(32)
 };
 
-/*
- * related file: mt6779-larb-port.h
- */
 const struct mtk_domain_data mt6779_multi_dom[] = {
 	/* normal  domain */
 	{

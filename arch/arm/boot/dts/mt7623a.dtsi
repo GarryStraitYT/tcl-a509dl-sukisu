@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017-2018 MediaTek Inc.
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 /dts-v1/;
 #include <dt-bindings/power/mt7623a-power.h>

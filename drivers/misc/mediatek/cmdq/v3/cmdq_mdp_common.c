@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include "cmdq_mdp_common.h"
 #include "cmdq_device.h"
@@ -832,16 +829,6 @@ static s32 cmdq_mdp_check_engine_waiting_unlock(struct cmdqRecStruct *handle)
 }
 #endif
 
-/* check if engine conflict when thread dispatch
- * Parameter:
- *	task: [IN] current check task with engine flag and secure flag.
- *	forceLog: [IN] print debug log
- *	*pThreadOut:
- *         [IN] prefer thread. please pass CMDQ_INVALID_THREAD if no prefere
- *         [OUT] dispatch thread result
- * Return:
- *     0 for success; else the error code is returned
- */
 static bool cmdq_mdp_check_engine_conflict(
 	struct cmdqRecStruct *handle, s32 *thread_out)
 {

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -481,12 +477,6 @@ static void __exit dramc_drv_exit(void)
 module_init(dramc_drv_init);
 module_exit(dramc_drv_exit);
 
-/*
- * mtk_dramc_get_steps_freq - get the freq of target DVFS step
- * @step:	the step index of DVFS
- *
- * Returns the DRAM freq
- */
 int mtk_dramc_get_steps_freq(unsigned int step)
 {
 	struct dramc_dev_t *dramc_dev_ptr;
@@ -682,11 +672,6 @@ static unsigned int fmeter_v1(struct dramc_dev_t *dramc_dev_ptr)
 	return decode_freq(vco_freq);
 }
 
-/*
- * mtk_dramc_get_data_rate - calculate DRAM data rate
- *
- * Returns DRAM data rate (MB/s)
- */
 unsigned int mtk_dramc_get_data_rate(void)
 {
 	struct dramc_dev_t *dramc_dev_ptr;
@@ -723,12 +708,6 @@ static unsigned int mr4_v1(struct dramc_dev_t *dramc_dev_ptr, unsigned int ch)
 		mr4_dev_ptr->mr4_rg.shift;
 }
 
-/*
- * mtk_dramc_get_mr4 - get the DRAM MR4 value of specific DRAM channel
- * @ch:	the channel index
- *
- * Returns the MR4 value
- */
 unsigned int mtk_dramc_get_mr4(unsigned int ch)
 {
 	struct dramc_dev_t *dramc_dev_ptr;
@@ -754,11 +733,6 @@ unsigned int mtk_dramc_get_mr4(unsigned int ch)
 }
 EXPORT_SYMBOL(mtk_dramc_get_mr4);
 
-/*
- * mtk_dramc_get_ddr_type - get DRAM type
- *
- * Returns the DRAM type
- */
 unsigned int mtk_dramc_get_ddr_type(void)
 {
 	struct dramc_dev_t *dramc_dev_ptr;

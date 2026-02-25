@@ -1,15 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * Take VPU__D2D as an example:
- * Define 2 ftrace event:
- *            1. enter event
- *            2. leave event
- */
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM met_vpusys_events

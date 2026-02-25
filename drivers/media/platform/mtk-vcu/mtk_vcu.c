@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <asm/cacheflush.h>
 #include <linux/cdev.h>
@@ -43,20 +40,7 @@
 #include <uapi/linux/mtk_vcu_controls.h>
 #include "mtk_vcu.h"
 
-/*
-#undef pr_debug
-#define pr_debug pr_info
 
-#undef dev_dbg
-#define dev_dbg dev_info
-*/
-
-/**
- * VCU (Video Communication/Controller Unit) is a tiny processor
- * controlling video hardware related to video codec, scaling and color
- * format converting.
- * VCU interfaces with other blocks by share memory and interrupt.
- **/
 #define VCU_PATH                "/dev/vpud"
 #define MDP_PATH                "/dev/mdpd"
 #define CAM_PATH                "/dev/camd"
@@ -152,20 +136,6 @@ static __attribute__((used)) unsigned int time_ms_s, time_ms_e;
 				timeout_ms); \
 	} while (0)
 
-/**
- * struct vcu_mem - VCU memory information
- *
- * @p_vma:      the user virtual memory address of
- *              VCU extended program memory
- * @d_vma:      the user  virtual memory address of VCU extended data memory
- * @p_va:       the kernel virtual memory address of
- *              VCU extended program memory
- * @d_va:       the kernel virtual memory address of VCU extended data memory
- * @p_pa:       the physical memory address of VCU extended program memory
- * @d_pa:       the physical memory address of VCU extended data memory
- * @p_iova:     the iova memory address of VCU extended program memory
- * @d_iova:     the iova memory address of VCU extended data memory
- */
 struct vcu_mem {
 	unsigned long p_vma;
 	unsigned long d_vma;
@@ -179,17 +149,6 @@ struct vcu_mem {
 	unsigned long d_len;
 };
 
-/**
- * struct vcu_run - VCU initialization status
- *
- * @signaled:           the signal of vcu initialization completed
- * @fw_ver:             VCU firmware version
- * @dec_capability:     decoder capability which is not used for now and
- *                      the value is reserved for future use
- * @enc_capability:     encoder capability which is not used for now and
- *                      the value is reserved for future use
- * @wq:                 wait queue for VCU initialization status
- */
 struct vcu_run {
 	u32 signaled;
 	char fw_ver[VCU_FW_VER_LEN];
@@ -198,13 +157,6 @@ struct vcu_run {
 	wait_queue_head_t wq;
 };
 
-/**
- * struct vcu_ipi_desc - VCU IPI descriptor
- *
- * @handler:    IPI handler
- * @name:       the name of IPI handler
- * @priv:       the private data of IPI handler
- */
 struct vcu_ipi_desc {
 	ipi_handler_t handler;
 	const char *name;
@@ -233,43 +185,6 @@ struct gce_ctx_info {
 	/* gce not callbacked cnt */
 };
 
-/**
- * struct mtk_vcu - vcu driver data
- * @extmem:             VCU extended memory information
- * @run:                VCU initialization status
- * @ipi_desc:           VCU IPI descriptor
- * @dev:                VCU struct device
- * @vcu_mutex:          protect mtk_vcu (except recv_buf) and ensure only
- *                      one client to use VCU service at a time. For example,
- *                      suppose a client is using VCU to decode VP8.
- *                      If the other client wants to encode VP8,
- *                      it has to wait until VP8 decode completes.
- * @vcu_gce_mutex       protect mtk_vcu gce flush & callback power sequence
- * @file:               VCU daemon file pointer
- * @is_open:            The flag to indicate if VCUD device is open.
- * @ack_wq:             The wait queue for each codec and mdp. When sleeping
- *                      processes wake up, they will check the condition
- *                      "ipi_id_ack" to run the corresponding action or
- *                      go back to sleep.
- * @ipi_id_ack:         The ACKs for registered IPI function sending
- *                      interrupt to VCU
- * @get_wq:             When sleeping process waking up, it will check the
- *                      condition "ipi_got" to run the corresponding action or
- *                      go back to sleep.
- * @ipi_got:            The flags for IPI message polling from user.
- * @ipi_done:           The flags for IPI message polling from user again, which
- *                      means the previous messages has been dispatched done in
- *                      daemon.
- * @user_obj:           Temporary share_obj used for ipi_msg_get.
- * @vcu_devno:          The vcu_devno for vcu init vcu character device
- * @vcu_cdev:           The point of vcu character device.
- * @vcu_class:          The class_create for create vcu device
- * @vcu_device:         VCU struct device
- * @vcuname:            VCU struct device name in dtsi
- * @path:               The path to keep mdpd path or vcud path.
- * @vpuid:              VCU device id
- *
- */
 struct mtk_vcu {
 	struct vcu_mem extmem;
 	struct vcu_run run;
@@ -1947,12 +1862,6 @@ static const struct file_operations vcu_fops = {
 #endif
 };
 
-/**
- * Suspend callbacks after user space processes are frozen
- * Since user space processes are frozen, there is no need and cannot hold same
- * mutex that protects lock owner while checking status.
- * If video codec hardware is still active now, must not to enter suspend.
- **/
 static int mtk_vcu_suspend(struct device *pDev)
 {
 	if (atomic_read(&vcu_ptr->ipi_done[VCU_VDEC]) == 0 ||
@@ -1974,15 +1883,6 @@ static int mtk_vcu_resume(struct device *pDev)
 	return 0;
 }
 
-/**
- * Suspend notifiers before user space processes are frozen.
- * User space driver can still complete decoding/encoding of current frame.
- * Change state to is_entering_suspend to stop send ipi_msg but allow current
- * wait ipi_msg to be done.
- * Since there is no critical section proection, it is possible for a new task
- * to start after changing to is_entering_suspend state. This case will be
- * handled by suspend callback mtk_vcu_suspend.
- **/
 static int mtk_vcu_suspend_notifier(struct notifier_block *nb,
 					unsigned long action, void *data)
 {

@@ -1,15 +1,3 @@
-/*
- * Copyright (C) 2016 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
 
 #include <linux/spinlock.h>
 #include <linux/of.h>
@@ -19,17 +7,10 @@
 
 static DEFINE_SPINLOCK(counter_info_lock);
 
-/* FIX ME: volatile can not pass check patch
-* static volatile void *g_MFG_base;
-*/
 
 static void *g_MFG_base;
 static int mfg_is_power_on;
 
-/* FIX ME: volatile can not pass check patch
-* #define base_write32(addr, value)     do { *(volatile uint32_t *)(addr) = (uint32_t)(value) } while (0)
-* #define base_read32(addr)             (*(volatile uint32_t *)(addr))
-*/
 #define base_write32(addr, value)     do { *(uint32_t *)(addr) = (uint32_t)(value) } while (0)
 #define base_read32(addr)             (*(uint32_t *)(addr))
 #define MFG_write32(addr, value)      base_write32(g_MFG_base+addr, value)
@@ -62,10 +43,6 @@ static struct {
 
 #define MFG_COUNTER_SIZE (ARRAY_SIZE(mfg_counters))
 
-/*
- * require: power must be on
- * require: get counters_lock
- */
 static void mtk_mfg_counter_update(void)
 {
 	int i;
@@ -90,9 +67,6 @@ static void mtk_mfg_counter_update(void)
 	}
 }
 
-/*
- * require: get counters_lock
- */
 static void mtk_mfg_counter_reset_record(void)
 {
 	int i;
@@ -103,9 +77,6 @@ static void mtk_mfg_counter_reset_record(void)
 	}
 }
 
-/*
- * require: get counters_lock
- */
 static void mtk_mfg_counter_reset_register(void)
 {
 	int i;

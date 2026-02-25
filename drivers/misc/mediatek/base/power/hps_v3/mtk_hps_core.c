@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -15,17 +12,8 @@
 #include "mtk_hps.h"
 #include <trace/events/sched.h>
 #include <mt-plat/aee.h>
-/*
- *#include <trace/events/mtk_events.h>
- *#include <mt-plat/met_drv.h>
- *#include <mt-plat/mtk_ram_console.h>
- *#include <mt-plat/met_drv.h>
- */
 
 #define TLP_THRESHOLD 250
-/*
- * static
- */
 #define STATIC
 /* #define STATIC static */
 #define MS_TO_NS(x)     (x * 1E6L)
@@ -35,9 +23,6 @@ static unsigned int hps_cpu_load_info[10];
 static int hps_load_cnt[10];
 static DEFINE_SPINLOCK(load_info_lock);
 
-/*
- * hps timer callback
- */
 static void  _hps_timer_callback(struct timer_list *t)
 {
 	int ret;
@@ -91,9 +76,6 @@ unsigned int hps_get_per_cpu_load(int cpu, int isReset)
 	spin_unlock(&load_info_lock);
 	return ret;
 }
-/*
- * hps task main loop
- */
 static int _hps_task_main(void *data)
 {
 	int cnt = 0;
@@ -213,9 +195,6 @@ ACAO_HPS_END:
 	return 0;
 }
 
-/*
- * hps task control interface
- */
 int hps_task_start(void)
 {
 
@@ -296,9 +275,6 @@ static void ppm_limit_callback(struct ppm_client_req req)
 	hps_task_wakeup_nolock();
 }
 
-/*
- * init
- */
 int hps_core_init(void)
 {
 	int r = 0;
@@ -315,9 +291,6 @@ int hps_core_init(void)
 	return r;
 }
 
-/*
- * deinit
- */
 int hps_core_deinit(void)
 {
 	int r = 0;

@@ -23,10 +23,6 @@
 #include "../mtk-base-dsp.h"
 #include "../mtk-dsp-common.h"
 
-/*
- * todo: let user space decide this
- * mapping dl ==> task
- */
 static struct mtk_adsp_task_attr adsp_task_attr[AUDIO_TASK_DAI_NUM] = {
 	[AUDIO_TASK_VOIP_ID] = {false, MT6779_MEMIF_DL12, -1, -1,
 				VOIP_FEATURE_ID, false},

@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
 
-/*
- * [PD2.0] Figure 8-49: Type-C DFP to UFP Data Role Swap State Diagram
- */
 
 void pe_drs_dfp_ufp_evaluate_dr_swap_entry(struct pd_port *pd_port)
 {
@@ -37,9 +31,6 @@ void pe_drs_dfp_ufp_reject_dr_swap_entry(struct pd_port *pd_port)
 	pd_reply_wait_reject_msg(pd_port);
 }
 
-/*
- * [PD2.0] Figure 8-50: Type-C UFP to DFP Data Role Swap State Diagram
- */
 
 void pe_drs_ufp_dfp_evaluate_dr_swap_entry(struct pd_port *pd_port)
 {

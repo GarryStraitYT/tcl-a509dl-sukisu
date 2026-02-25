@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -151,9 +148,6 @@ static int aw3644_flash_read(struct i2c_client *client, u8 reg)
 	return ret;
 }
 
-/******************************************************************************
- * aw3644 operations
- *****************************************************************************/
 /* i2c wrapper function */
 static int aw3644_flash_write(struct i2c_client *client, u8 reg, u8 val)
 {
@@ -172,9 +166,6 @@ static int aw3644_flash_write(struct i2c_client *client, u8 reg, u8 val)
 
 }
 
-/******************************************************************************
- * Pinctrl configuration
- *****************************************************************************/
 static int aw3644_pinctrl_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -555,13 +546,7 @@ static int aw3644_uninit(void)
 	return 0;
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static void aw3644_work_disable_ch1(struct work_struct *data)
 {
 	pr_debug("ht work queue callback\n");
@@ -690,9 +675,6 @@ static int aw3644_operate(int channel, int enable)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int aw3644_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -797,9 +779,6 @@ static struct flashlight_operations aw3644_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int aw3644_chip_init(struct aw3644_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to "set driver" operation
@@ -925,9 +904,6 @@ static struct i2c_driver aw3644_i2c_driver = {
 	.id_table = aw3644_i2c_id,
 };
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int aw3644_probe(struct platform_device *dev)
 {
 	pr_info("aw3644_platform_probe start.\n");

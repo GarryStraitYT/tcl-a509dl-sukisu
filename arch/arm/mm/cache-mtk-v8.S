@@ -1,16 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
 #include <linux/linkage.h>
 #include <linux/init.h>
 #include <asm/assembler.h>
@@ -19,15 +7,6 @@
 
 #include "proc-macros.S"
 
-/*
- *      __xxxx_dcache_user_area(start,size)
- *
- *      Ensure that any D-cache lines for the interval [start, start+size)
- *      are cleaned or/and invalidated to the PoC.
- *
- *      - start        - virtual start address of region (EL0/EL1)
- *      - size         - size in question
- */
 
 ENTRY(__clean_dcache_user_area)
 	uaccess_enable r2

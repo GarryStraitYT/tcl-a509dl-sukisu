@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT_GPUFREQ_H_
 #define _MT_GPUFREQ_H_
@@ -26,9 +23,6 @@ struct mt_gpufreq_power_table_info {
 
 typedef void (*gpufreq_power_limit_notify)(unsigned int); /* legacy */
 
-/****************************
- * MTK GPUFREQ API
- ****************************/
 extern unsigned int mt_gpufreq_get_cur_freq_index(void);
 extern unsigned int mt_gpufreq_get_cur_freq(void);
 extern unsigned int mt_gpufreq_get_cur_volt(void);

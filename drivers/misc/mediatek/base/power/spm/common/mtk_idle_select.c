@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -25,10 +22,6 @@ int __attribute__((weak)) spm_load_firmware_status(void) { return -1; }
 /* [ByChip] Internal weak functions: implemented in mtk_idle_cond_check.c */
 void __attribute__((weak)) mtk_idle_cond_update_state(void) {}
 
-/* [ByChip] Internal weak functions:
- * If platform need to blocked idle task by specific define.
- * Please implement it in platform folder
- */
 int __attribute__((weak)) mtk_idle_plat_bootblock_check(void)
 {
 	return MTK_IDLE_PLAT_READY;

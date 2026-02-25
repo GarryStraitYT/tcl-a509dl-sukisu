@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -722,13 +718,6 @@ late_initcall_sync(emimpu_ap_region_init);
 module_init(emimpu_drv_init);
 module_exit(emimpu_drv_exit);
 
-/*
- * mtk_emimpu_init_region - init rg_info's apc data with default forbidden
- * @rg_info:	the target region for init
- * @rg_num:	the region id for the rg_info
- *
- * Returns 0 for success and 1 for abort
- */
 int mtk_emimpu_init_region(
 	struct emimpu_region_t *rg_info, unsigned int rg_num)
 {
@@ -763,12 +752,6 @@ int mtk_emimpu_init_region(
 }
 EXPORT_SYMBOL(mtk_emimpu_init_region);
 
-/*
- * mtk_emi_mpu_free_region - free the apc data in rg_info
- * @rg_info:	the target region for free
- *
- * Returns 0 for success
- */
 int mtk_emimpu_free_region(struct emimpu_region_t *rg_info)
 {
 	kfree(rg_info->apc);
@@ -776,14 +759,6 @@ int mtk_emimpu_free_region(struct emimpu_region_t *rg_info)
 }
 EXPORT_SYMBOL(mtk_emimpu_free_region);
 
-/*
- * mtk_emimpu_set_addr - set the address space
- * @rg_info:	the target region for address setting
- * @start:	the start address
- * @end:	the end address
- *
- * Returns 0 for success
- */
 int mtk_emimpu_set_addr(struct emimpu_region_t *rg_info,
 	unsigned long long start, unsigned long long end)
 {
@@ -793,14 +768,6 @@ int mtk_emimpu_set_addr(struct emimpu_region_t *rg_info,
 }
 EXPORT_SYMBOL(mtk_emimpu_set_addr);
 
-/*
- * mtk_emimpu_set_apc - set access permission for target domain
- * @rg_info:	the target region for apc setting
- * @d_num:	the target domain id
- * @apc:	the access permission setting
- *
- * Returns 0 for success
- */
 int mtk_emimpu_set_apc(struct emimpu_region_t *rg_info,
 	unsigned int d_num, unsigned int apc)
 {
@@ -822,13 +789,6 @@ int mtk_emimpu_set_apc(struct emimpu_region_t *rg_info,
 }
 EXPORT_SYMBOL(mtk_emimpu_set_apc);
 
-/*
- * mtk_emimpu_lock_region - set lock for target region
- * @rg_info:	the target region for lock
- * @lock:	enable/disable lock
- *
- * Returns 0 for success
- */
 int mtk_emimpu_lock_region(struct emimpu_region_t *rg_info, bool lock)
 {
 	rg_info->lock = lock;
@@ -836,12 +796,6 @@ int mtk_emimpu_lock_region(struct emimpu_region_t *rg_info, bool lock)
 }
 EXPORT_SYMBOL(mtk_emimpu_lock_region);
 
-/*
- * mtk_emimpu_set_protection - set emimpu protect into device
- * @rg_info:	the target region information
- *
- * Return 0 for success, -1 for fail
- */
 int mtk_emimpu_set_protection(struct emimpu_region_t *rg_info)
 {
 	struct emimpu_dev_t *emimpu_dev_ptr;
@@ -886,12 +840,6 @@ int mtk_emimpu_set_protection(struct emimpu_region_t *rg_info)
 }
 EXPORT_SYMBOL(mtk_emimpu_set_protection);
 
-/*
- * mtk_emimpu_clear_protection - clear emimpu protection
- * @rg_info:	the target region information
- *
- * Return 0 for success, -1 for fail
- */
 int mtk_emimpu_clear_protection(struct emimpu_region_t *rg_info)
 {
 	struct emimpu_dev_t *emimpu_dev_ptr;
@@ -915,12 +863,6 @@ int mtk_emimpu_clear_protection(struct emimpu_region_t *rg_info)
 }
 EXPORT_SYMBOL(mtk_emimpu_clear_protection);
 
-/*
- * mtk_emimpu_prehandle_register - register callback for irq prehandler
- * @bypass_func:	function point for prehandler
- *
- * Return 0 for success, -EINVAL for fail
- */
 int mtk_emimpu_prehandle_register(
 	irqreturn_t (*bypass_func)
 	(unsigned int emi_id, struct reg_info_t *dump, unsigned int leng))
@@ -935,12 +877,6 @@ int mtk_emimpu_prehandle_register(
 }
 EXPORT_SYMBOL(mtk_emimpu_prehandle_register);
 
-/*
- * mtk_emimpu_postclear_register - register callback for clear posthandler
- * @clear_func:	function point for posthandler
- *
- * Return 0 for success, -EINVAL for fail
- */
 int mtk_emimpu_postclear_register(void (*clear_func)(unsigned int emi_id))
 {
 	if (!clear_func) {
@@ -953,12 +889,6 @@ int mtk_emimpu_postclear_register(void (*clear_func)(unsigned int emi_id))
 }
 EXPORT_SYMBOL(mtk_emimpu_postclear_register);
 
-/*
- * mtk_emimpu_debugdump_register - register callback for debug info dump
- * @debug_func:	function point for debug info dump
- *
- * Return 0 for success, -EINVAL for fail
- */
 int mtk_emimpu_debugdump_register(void (*debug_func)(void))
 {
 	struct emimpu_dbg_cb *targ_dbg_cb;
@@ -1000,12 +930,6 @@ int mtk_emimpu_debugdump_register(void (*debug_func)(void))
 }
 EXPORT_SYMBOL(mtk_emimpu_debugdump_register);
 
-/*
- * mtk_emimpu_md_handling_register - register callback for md handling
- * @md_handling_func:	function point for md handling
- *
- * Return 0 for success, -EINVAL for fail
- */
 int mtk_emimpu_md_handling_register(
 	void (*md_handling_func)
 	(unsigned int emi_id, struct reg_info_t *dump, unsigned int leng))
@@ -1020,14 +944,6 @@ int mtk_emimpu_md_handling_register(
 }
 EXPORT_SYMBOL(mtk_emimpu_md_handling_register);
 
-/*
- * mtk_emimpu_register_callback - register callback for debug handling
- * @mpucb:   function point for debug handling
- *
- * Return 0 for success, -EINVAL or -ENOMEN for fail
- *
- * This function can only be called in a non-atomic context since it may sleep
- */
 int mtk_emimpu_register_callback(
 	irqreturn_t (*debug_dump)
 	(unsigned int emi_id, struct reg_info_t *dump, unsigned int len))
@@ -1056,11 +972,6 @@ int mtk_emimpu_register_callback(
 	return 0;
 }
 EXPORT_SYMBOL(mtk_emimpu_register_callback);
-/*
- * mtk_clear_md_violation - clear irq for md violation
- *
- * No return
- */
 void mtk_clear_md_violation(void)
 {
 	struct emimpu_dev_t *emimpu_dev_ptr;

@@ -1,17 +1,3 @@
-/*
- * mt65xx pinctrl driver based on Allwinner A1X pinctrl driver.
- * Copyright (c) 2014 MediaTek Inc.
- * Author: Hongzhou.Yang <hongzhou.yang@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/io.h>
 #include <linux/gpio/driver.h>
@@ -52,12 +38,6 @@ static const char * const mtk_gpio_functions[] = {
 	"func12", "func13", "func14", "func15",
 };
 
-/*
- * There are two base address for pull related configuration
- * in mt8135, and different GPIO pins use different base address.
- * When pin number greater than type1_start and less than type1_end,
- * should use the second base address.
- */
 static struct regmap *mtk_get_regmap(struct mtk_pinctrl *pctl,
 		unsigned long pin)
 {

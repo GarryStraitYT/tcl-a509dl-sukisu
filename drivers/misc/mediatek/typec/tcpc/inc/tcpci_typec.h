@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_TCPCI_TYPEC_H
 #define __LINUX_TCPCI_TYPEC_H
@@ -9,13 +6,6 @@
 
 struct tcpc_device;
 
-/******************************************************************************
- *  Call following function to trigger TYPEC Connection State Change
- *
- * 1. H/W -> CC/PS Change.
- * 2. Timer -> CCDebounce or PDDebounce or others Timeout
- * 3. Policy Engine -> PR_SWAP, Error_Recovery, PE_Idle
- *****************************************************************************/
 
 extern int tcpc_typec_enter_lpm_again(struct tcpc_device *tcpc_dev);
 extern int tcpc_typec_handle_cc_change(struct tcpc_device *tcpc_dev);

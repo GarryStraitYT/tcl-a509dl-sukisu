@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __MT_CCCI_COMMON_H__
 #define __MT_CCCI_COMMON_H__
@@ -9,9 +6,6 @@
 #include <asm/setup.h>
 #include <linux/device.h>
 #include <linux/skbuff.h>
-/*
- * all code owned by CCCI should use modem index starts from ZERO
- */
 enum MD_SYS {
 	/* MD SYS name counts from 1,
 	 * but internal index counts from 0

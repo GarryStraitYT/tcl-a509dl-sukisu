@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>       /* needed by all modules */
 #include <linux/ioport.h>
@@ -37,9 +34,6 @@ void memcpy_from_sspm(void *trg, const void __iomem *src, int size)
 		*t++ = *s++;
 }
 
-/*
- * @return: 1 if sspm is ready for running tasks
- */
 unsigned int is_sspm_ready(void)
 {
 	return sspm_ready ? 1 : 0;

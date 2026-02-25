@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT6769_VPU_REG_H_
 #define _MT6769_VPU_REG_H_

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -82,9 +79,6 @@ struct lm3642_chip_data {
 };
 
 
-/******************************************************************************
- * lm3642 operations
- *****************************************************************************/
 static const int lm3642_current[LM3642_LEVEL_NUM] = {
 	 48,  93,  141,  188,  281,  375,  469,  563, 656, 750,
 	844, 938, 1031, 1125, 1219, 1313, 1406, 1500
@@ -229,9 +223,6 @@ int lm3642_uninit(void)
 	return 0;
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer lm3642_timer;
 static unsigned int lm3642_timeout_ms;
 
@@ -248,9 +239,6 @@ static enum hrtimer_restart lm3642_timer_func(struct hrtimer *timer)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int lm3642_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -387,9 +375,6 @@ static struct flashlight_operations lm3642_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int lm3642_chip_init(struct lm3642_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.
@@ -537,9 +522,6 @@ static struct i2c_driver lm3642_i2c_driver = {
 	.id_table = lm3642_i2c_id,
 };
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int lm3642_probe(struct platform_device *pdev)
 {
 	struct lm3642_platform_data *pdata = dev_get_platdata(&pdev->dev);

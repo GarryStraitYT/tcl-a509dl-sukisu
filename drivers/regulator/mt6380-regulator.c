@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2017 MediaTek Inc.
- * Author: Chenglin Xu <chenglin.xu@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/module.h>
 #include <linux/of.h>
@@ -82,14 +69,6 @@
 #define MT6380_REGULATOR_MODE_AUTO	0
 #define MT6380_REGULATOR_MODE_FORCE_PWM	1
 
-/*
- * mt6380 regulators' information
- *
- * @desc: standard fields of regulator description
- * @vselon_reg: Register sections for hardware control mode of bucks
- * @modeset_reg: Register for controlling the buck/LDO control mode
- * @modeset_mask: Mask for controlling the buck/LDO control mode
- */
 struct mt6380_regulator_info {
 	struct regulator_desc desc;
 	u32 vselon_reg;

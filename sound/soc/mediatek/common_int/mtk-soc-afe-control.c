@@ -1,39 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *  mt_sco_afe_control.c
- *
- * Project:
- * --------
- *   MT6797  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-soc-afe-control.h"
 #include "mtk-auddrv-afe.h"
@@ -56,11 +24,6 @@
 #if defined(CONFIG_MTK_AUDIO_SCP_SPKPROTECT_SUPPORT)
 #include "mtk-auddrv-scp-spkprotect-common.h"
 #endif
-/*
- * #include <mt-plat/mt_boot.h>
- * #include <mt-plat/mt_boot_common.h>
- * #include <mt-plat/mt_lpae.h>
- */
 
 #ifdef CONFIG_MTK_AUXADC_INTF
 #include <mach/mtk_pmic.h>
@@ -148,9 +111,6 @@ static bool ScreenState;
 
 static unsigned int LowLatencyDebug;
 
-/*
- * Function Forward Declaration
- */
 
 static irqreturn_t AudDrv_IRQ_handler(int irq, void *dev_id);
 static void Clear_Mem_CopySize(enum soc_aud_digital_block MemBlock);
@@ -162,9 +122,6 @@ static unsigned int ADDADLSampleRateTransform(unsigned int sampleRate);
 static unsigned int ADDAULSampleRateTransform(unsigned int sampleRate);
 static unsigned int MDSampleRateTransform(unsigned int sampleRate);
 
-/*
- *    function implementation
- */
 
 static bool CheckSize(unsigned int size)
 {
@@ -309,15 +266,6 @@ void SetExternalModemStatus(const bool bEnable)
 	mExternalModemStatus = bEnable;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  InitAfeControl ,ResetAfeControl
- *
- * DESCRIPTION
- *  afe init function
- *
- *****************************************************************************
- */
 int InitAfeControl(struct device *pDev)
 {
 	int i = 0;
@@ -459,15 +407,6 @@ bool ResetAfeControl(void)
 	return true;
 }
 
-/*****************************************************************************
- * FUNCTION
- *  Register_aud_irq
- *
- * DESCRIPTION
- *  IRQ handler
- *
- *****************************************************************************
- */
 bool Register_Aud_Irq(void *dev, unsigned int afe_irq_number)
 {
 	int ret;
@@ -508,15 +447,6 @@ int AudDrv_DSP_IRQ_handler(void *PrivateData)
 		Auddrv_DSP_DL1_Interrupt_Handler(PrivateData);
 	return 0;
 }
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_IRQ_handler / AudDrv_magic_tasklet
- *
- * DESCRIPTION
- *  IRQ handler
- *
- *****************************************************************************
- */
 irqreturn_t AudDrv_IRQ_handler(int irq, void *dev_id)
 {
 	/* unsigned long flags; */
@@ -681,15 +611,6 @@ void SetVOWStatus(bool bEnable)
 	}
 }
 
-/*****************************************************************************
- * FUNCTION
- *  Auddrv_Reg_map
- *
- * DESCRIPTION
- * Auddrv_Reg_map
- *
- *****************************************************************************
- */
 static bool afe_on;
 void EnableAfe(bool bEnable)
 {
@@ -1257,11 +1178,6 @@ bool Set2ndI2SAdcEnable(bool bEnable)
 bool set_adc_enable(bool enable)
 {
 	if (enable) {
-/* Enable UL SRC order:
- * UL clock (AUDIO_TOP_CON0) -> AFE (AFE_DAC_CON0) ->
- * ADDA UL DL (AFE_ADDA_UL_DL_CON0) ->
- * ADDA UL SRC (AFE_ADDA_UL_SRC_CON0)
- */
 #ifdef CONFIG_FPGA_EARLY_PORTING
 		pr_debug("%s(), enable fpga clock divide by 4", __func__);
 		Afe_Set_Reg(FPGA_CFG0, 0x1 << 1, 0x1 << 1);
@@ -1302,11 +1218,6 @@ bool set_adc_enable(bool enable)
 bool set_adc2_enable(bool enable)
 {
 	if (enable) {
-/* Enable UL SRC order:
- * UL clock (AUDIO_TOP_CON0) -> AFE (AFE_DAC_CON0) ->
- * ADDA UL DL (AFE_ADDA_UL_DL_CON0) ->
- * ADDA UL SRC (AFE_ADDA_UL_SRC_CON0)
- */
 #ifdef CONFIG_FPGA_EARLY_PORTING
 		pr_debug("%s(), enable fpga clock divide by 4", __func__);
 		Afe_Set_Reg(FPGA_CFG0, 0x1 << 1, 0x1 << 1);
@@ -1867,15 +1778,6 @@ bool set_general_asrc_parameter(enum audio_general_asrc_id id,
 	return ret;
 }
 
-/***************************************************************************
- * FUNCTION
- *  AudDrv_Allocate_DL1_Buffer / AudDrv_Free_DL1_Buffer
- *
- * DESCRIPTION
- *  allocate DL1 Buffer
- *
- ***************************************************************************
- */
 int AudDrv_Allocate_DL1_Buffer(struct device *pDev, kal_uint32 Afe_Buf_Length,
 			       dma_addr_t dma_addr, unsigned char *dma_area)
 {
@@ -3821,12 +3723,6 @@ int irq_get_total_user(enum Soc_Aud_IRQ_MCU_MODE _irq)
 /* IRQ Manager END*/
 
 /* memif lpbk api */
-/*
- * implementation of hw data delay mechanism using memif
- * dl and ul memif share one same memory,
- * buffer size is 2 * delay_us
- * dl memif will start first, after a delay_us the ul will start
- */
 static struct memif_lpbk *cur_memif_lpbk;
 int memif_lpbk_enable(struct memif_lpbk *memif_lpbk)
 {

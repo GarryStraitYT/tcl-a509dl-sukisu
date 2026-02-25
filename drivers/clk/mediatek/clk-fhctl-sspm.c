@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Pierre Lee <pierre.lee@mediatek.com>
- */
 
 #include "clk-fhctl.h"
 #include "sspm_ipi.h"

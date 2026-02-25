@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/err.h>
@@ -74,13 +71,6 @@ static struct wrapper_data wrapper_data_mt6779 = {
 
 static struct wrapper_data *mmdvfs_wrapper;
 
-/**
- * mmdvfs_wrapper_set_freq - set frequency
- * @clk_id: clk id to set frequency
- * @freq: frequency reguirement in MHz
- *
- * Returns 0 on success, or an appropriate error code otherwise
- */
 s32 mmdvfs_wrapper_set_freq(u32 clk_id, u32 freq)
 {
 	u32 i;
@@ -104,15 +94,6 @@ s32 mmdvfs_wrapper_set_freq(u32 clk_id, u32 freq)
 }
 EXPORT_SYMBOL_GPL(mmdvfs_wrapper_set_freq);
 
-/**
- * mmdvfs_wrapper_get_freq_steps - get available frequency number and array
- * @clk_id: clk id to get frequency information
- * @freq_steps: available frequency array and maximum size is MAX_FREQ_STEP
- * The order of freq steps is from high to low
- * @step_size: size of available items in freq_steps
- *
- * Returns 0 on success, or an appropriate error code otherwise
- */
 s32 mmdvfs_wrapper_get_freq_steps(
 	u32 clk_id, u64 *freq_steps, u32 *step_size)
 {
@@ -131,12 +112,6 @@ s32 mmdvfs_wrapper_get_freq_steps(
 }
 EXPORT_SYMBOL_GPL(mmdvfs_wrapper_get_freq_steps);
 
-/**
- * mmdvfs_qos_get_freq - get current frequency
- * @clk_id: clk id to get current frequency
- *
- * Returns frequency in MHz, or 0 if something wrong
- */
 u64 mmdvfs_qos_get_freq(u32 clk_id)
 {
 	struct regulator *reg;

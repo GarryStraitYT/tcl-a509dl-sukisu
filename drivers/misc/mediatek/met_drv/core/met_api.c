@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -21,9 +18,6 @@
 
 #include "met_api.h"
 
-/******************************************************************************
- * Tracepoints
- ******************************************************************************/
 #define MET_DEFINE_PROBE(probe_name, proto) \
 		static void probe_##probe_name(void *data, PARAMS(proto))
 #define MET_REGISTER_TRACE(probe_name) \

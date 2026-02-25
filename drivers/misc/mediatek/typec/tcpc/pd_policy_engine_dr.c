@@ -1,20 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
 
-/*
- * [PD2.0]
- * Figure 8-53 Dual-Role (Source) Get Source Capabilities diagram
- * Figure 8-54 Dual-Role (Source) Give Sink Capabilities diagram
- * Figure 8-55 Dual-Role (Sink) Get Sink Capabilities State Diagram
- * Figure 8-56 Dual-Role (Sink) Give Source Capabilities State Diagram
- */
 
 void pe_dr_src_get_source_cap_entry(struct pd_port *pd_port)
 {

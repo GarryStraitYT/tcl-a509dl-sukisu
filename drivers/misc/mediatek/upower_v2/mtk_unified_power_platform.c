@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -34,18 +31,9 @@
 
 #define MSB(range)	(1 ? range)
 #define LSB(range)	(0 ? range)
-/**
- * Genearte a mask wher MSB to LSB are all 0b1
- * @r:	Range in the form of MSB:LSB
- */
 #define BITMASK(r)	\
 	(((unsigned int) -1 >> (31 - MSB(r))) & ~((1U << LSB(r)) - 1))
 
-/**
- * Set value at MSB:LSB. For example, BITS(7:3, 0x5A)
- * will return a value where bit 3 to bit 7 is 0x5A
- * @r:	Range in the form of MSB:LSB
- */
 /* BITS(MSB:LSB, value) => Set value at MSB:LSB  */
 #define BITS(r, val)	((val << LSB(r)) & BITMASK(r))
 
@@ -212,13 +200,6 @@ static void upower_scale_l_cap(void)
 	}
 }
 
-/****************************************************
- * According to chip version get the raw upower tbl *
- * and let upower_tbl_infos points to it.           *
- * Choose a non used upower tbl location and let    *
- * upower_tbl_ref points to it to store target      *
- * power tbl.                                       *
- ***************************************************/
 
 void get_original_table(void)
 {
@@ -233,11 +214,6 @@ void get_original_table(void)
 	/* get location of target table */
 /* #if (NR_UPOWER_TBL_LIST <= 1) */
 	upower_tbl_ref = &final_upower_tbl[0];
-/* #else
- *	upower_tbl_ref = upower_tbl_infos_list[(idx+1) %
- *	NR_UPOWER_TBL_LIST][0].p_upower_tbl;
- * #endif
- */
 
 	upower_debug("idx %d dest:%p, src:%p\n",
 			(idx+1)%NR_UPOWER_TBL_LIST,

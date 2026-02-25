@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef MTK_UNIFIED_POWER_H
 #define MTK_UNIFIED_POWER_H
@@ -26,9 +23,6 @@ extern "C" {
 	#define upower_debug(fmt, args...)
 #endif
 
-/***************************
- * Basic Data Declarations *
- **************************/
 /* 8bytes + 4bytes + 4bytes + 24bytes = 40 bytes*/
 /* but compiler will align to 40 bytes for computing more faster */
 /* if a table has 16 opps --> 40*16= 640 bytes*/
@@ -62,9 +56,6 @@ struct upower_tbl_info {
 	struct upower_tbl *p_upower_tbl;
 };
 
-/***************************
- * Global variables        *
- **************************/
 extern struct upower_tbl *upower_tbl_ref; /* upower table reference to sram*/
 extern int degree_set[NR_UPOWER_DEGREE];
 extern struct upower_tbl_info *upower_tbl_infos; /* collect all of raw tbls */
@@ -73,9 +64,6 @@ extern unsigned char upower_enable;
 extern unsigned char upower_recognize_by_eem[NR_UPOWER_BANK];
 void init_cpu_capacity(unsigned int cpu);
 
-/***************************
- * APIs                    *
- **************************/
 /* provided by eem */
 extern unsigned int mt_eem_is_enabled(void);
 /* PPM */

@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT_ISP_H
 #define _MT_ISP_H
@@ -15,14 +12,8 @@
 #include <linux/compat.h>
 #endif
 
-/*
- *   external function declaration
- */
 extern void mt_irq_set_sens(unsigned int irq, unsigned int sens);
 extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
-/*
- *   enforce kernel log enable
- */
 /* #define KERNEL_LOG  //enable debug log flag if defined */
 #define ISR_LOG_ON		/* turn on log print at isr if defined */
 #define ISP_RAW_D_SUPPORT (1)
@@ -32,14 +23,8 @@ extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
 				 * fix fps, not read at each isr)
 				 */
 #define SIG_ERESTARTSYS 512	/* ERESTARTSYS */
-/******************************************************************************
- *
- *****************************************************************************/
 #define ISP_DEV_MAJOR_NUMBER    251
 #define ISP_MAGIC               'k'
-/******************************************************************************
- *
- *****************************************************************************/
 /* CAM_CTL_INT_P1_STATUS */
 #define ISP_IRQ_P1_STATUS_VS1_INT_ST                (1<<0)
 #define ISP_IRQ_P1_STATUS_TG1_INT1_ST               (1<<1)
@@ -342,20 +327,8 @@ extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
 #define ISP_IRQ_CAMSV2_STATUS_rsv_18				(1<<18)
 #define ISP_IRQ_CAMSV2_STATUS_IMGO_DROP_ST			(1<<19)
 
-/******************************************************************************
- *
- ******************************************************************************/
 
 /* defined if want to support multiple dequne and enque or camera 3.0 */
-/*
- *     support multiple deque and enque if defined.
- *     note: still en/de que 1 buffer each time only
- *     e.g:
- *         deque();
- *         deque();
- *         enque();
- *         enque();
- */
 #define _rtbc_buf_que_2_0_
 
 
@@ -788,9 +761,6 @@ enum ISP_ED_BUF_STATE_ENUM {
 	ISP_ED_BUF_STATE_DEQUE_SUCCESS,
 	ISP_ED_BUF_STATE_DEQUE_FAIL
 };
-/******************************************************************************
- * pass1 real time buffer control use cq0c
- *****************************************************************************/
 /*  */
 #define _rtbc_use_cq0c_
 
@@ -803,15 +773,6 @@ struct CQ_CMD_ST {
 	unsigned int inst;
 	unsigned int data_ptr_pa;
 };
-/*
- * typedef struct _cq_cmd_rtbc_st_
- * {
- *     struct CQ_CMD_ST imgo;
- *     struct CQ_CMD_ST img2o;
- *     struct CQ_CMD_ST cq0ci;
- *     struct CQ_CMD_ST end;
- * }CQ_CMD_RTBC_ST;
- */
 struct CQ_INFO_RTBC_ST {
 	struct CQ_CMD_ST imgo;
 	struct CQ_CMD_ST rrzo;
@@ -931,14 +892,8 @@ struct compat_ISP_REGISTER_USERKEY_STRUCT {
 
 
 /*  */
-/*****************************************************************************
- *
- ****************************************************************************/
 
 
-/****************************************************************************
- *
- ****************************************************************************/
 enum ISP_CMD_ENUM {
 	ISP_CMD_RESET_CAM_P1,	/* Reset */
 	ISP_CMD_RESET_CAM_P2,

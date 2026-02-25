@@ -1,27 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     s5k2l7_setting_mode1.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor setting file
- *
- * Setting Release Date:
- * ------------
- *     2016.09.01
- *
- ****************************************************************************/
 #ifndef _s5k2l7MIPI_SETTING_MODE1_V2_H_
 #define _s5k2l7MIPI_SETTING_MODE1_V2_H_
 
@@ -136,10 +114,6 @@ static struct imgsensor_info_struct _imgsensor_info_m1_v2 =                    \
 	.i2c_speed = 300,                                                      \
 }
 
-/* full_w; full_h; x0_offset; y0_offset; w0_size; h0_size; scale_w; scale_h;
- * x1_offset;  y1_offset;  w1_size;  h1_size;
- * x2_tg_offset;	 y2_tg_offset;	w2_tg_size;  h2_tg_size;
- */
 #define struct_SENSOR_WINSIZE_INFO struct SENSOR_WINSIZE_INFO_STRUCT
 #define _S5K2L7_MODE1_V2_WINSIZE_INFO_                                         \
 static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
@@ -166,13 +140,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 initial setting
- *
- ****************************************************************************/
 #define _S5K2L7_MODE1_INIT_MODULE_V2_ do {         \
 	write_cmos_sensor_twobyte(0X6028, 0X2000); \
 	write_cmos_sensor_twobyte(0X602A, 0XBBF4); \
@@ -272,17 +239,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 preview setting
- *     $MIPI[Width:4032,Height:1512,Format:Raw10,Lane:4,ErrorCheck:0,
- *     PolarityData:0,PolarityClock:0,Buffer:4,DataRate:2034,useEmbData:0]
- *     $MV1[MCLK:24,Width:4032,Height:1512,
- *     Format:MIPI_Raw10,mipi_lane:4,mipi_datarate:2034,pvi_pclk_inverse:0]
- *
- ****************************************************************************/
 #define _S5K2L7_MODE1_PREVIEW_MODULE_V2_ do {          \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -513,17 +469,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 capture setting (M1_fullsize_setting)
- *     $MIPI[Width:8064,Height:3024,Format:Raw10,Lane:4,ErrorCheck:0,
- *     PolarityData:0,PolarityClock:0,Buffer:4,DataRate:2034,useEmbData:0]
- *     $MV1[MCLK:24,Width:8064,Height:3024,
- *     Format:MIPI_Raw10,mipi_lane:4,mipi_datarate:2034,pvi_pclk_inverse:0]
- *
- ****************************************************************************/
 #define _S5K2L7_MODE1_CAPTURE_MODULE_V2_ do {          \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -754,17 +699,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 high speed video setting
- *     $MIPI[Width:2688,Height:756,Format:Raw10,Lane:4,ErrorCheck:0,
- *     PolarityData:0,PolarityClock:0,Buffer:4,DataRate:2034,useEmbData:0]
- *     $MV1[MCLK:24,Width:2688,Height:756,
- *     Format:MIPI_Raw10,mipi_lane:4,mipi_datarate:2034,pvi_pclk_inverse:0]
- *
- ****************************************************************************/
 #define _S5K2L7_MODE1_HS_VIDEO_MODULE_V2_ do {         \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -993,17 +927,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
 	write_cmos_sensor_twobyte(0X6218, 0X79F0);     \
 } while (0)
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 slim video setting
- *     $MIPI[Width:2688,Height:756,Format:Raw10,Lane:4,ErrorCheck:0,
- *     PolarityData:0,PolarityClock:0,Buffer:4,DataRate:2034,useEmbData:0]
- *     $MV1[MCLK:24,Width:2688,Height:756,
- *     Format:MIPI_Raw10,mipi_lane:4,mipi_datarate:2034,pvi_pclk_inverse:0]
- *
- ****************************************************************************/
 #define _S5K2L7_MODE1_SLIM_VIDEO_MODULE_V2_ do {       \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -1232,17 +1155,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m1_v2[5] =           \
 	write_cmos_sensor_twobyte(0X6218, 0X79F0);     \
 } while (0)
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 1 cpature with WDR setting
- *     $MIPI[Width:8064,Height:3024,Format:Raw10,Lane:4,ErrorCheck:0,
- *     PolarityData:0,PolarityClock:0,Buffer:4,DataRate:2034,useEmbData:0]
- *     $MV1[MCLK:24,Width:8064,Height:3024,
- *     Format:MIPI_Raw10,mipi_lane:4,mipi_datarate:2034,pvi_pclk_inverse:0]
- *
- ****************************************************************************/
 #define _S5K2L7_MODE1_CAPTURE_WDR_MODULE_V2_ do {      \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \

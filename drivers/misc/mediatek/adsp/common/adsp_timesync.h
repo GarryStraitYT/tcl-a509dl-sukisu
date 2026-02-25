@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- * Author: Celine Liu <Celine.liu@mediatek.com>
- */
 
 #ifndef _ADSP_TIMESYNC_H_
 #define _ADSP_TIMESYNC_H_
@@ -26,9 +22,6 @@
 #define TIMESYNC_FLAG_FREEZE   (1 << 2)
 #define TIMESYNC_FLAG_UNFREEZE (1 << 3)
 
-/* sched_clock wrap time is 4398 seconds for arm arch timer
- * applying a period less than it for tinysys timesync
- */
 #define TIMESYNC_WRAP_TIME     (4000*NSEC_PER_SEC)
 
 void adsp_timesync_suspend(u8 fz);

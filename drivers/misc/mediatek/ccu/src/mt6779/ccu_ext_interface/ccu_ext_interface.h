@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __CCU_INTERFACE__
 #define __CCU_INTERFACE__
@@ -10,9 +7,6 @@
 
 extern MBOOL sec_vsync_pushed;
 
-/******************************************************************************
-* Task definition
-******************************************************************************/
 typedef enum {
 	DELIMITER_SYSCTRL_MSG_MIN = 0, /*To identify ccu control msg count*/
 	/*Receive by CCU*/
@@ -69,9 +63,6 @@ struct ccu_msg {
 	uint32_t sensor_idx;
 };
 
-/******************************************************************************
-* Status definition
-******************************************************************************/
 #define CCU_STATUS_INIT_DONE              0xffff0000
 #define CCU_STATUS_INIT_DONE_2            0xffff00a5
 

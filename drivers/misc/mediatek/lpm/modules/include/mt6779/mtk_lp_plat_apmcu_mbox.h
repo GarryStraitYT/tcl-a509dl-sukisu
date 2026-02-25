@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #ifndef __MTK_LP_PLAT_APMCU_MBOX_H__

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/clocksource.h>
 #include <linux/sched/clock.h>
@@ -32,9 +29,6 @@
 #define TIMESYNC_FLAG_FREEZE   (1 << 2)
 #define TIMESYNC_FLAG_UNFREEZE (1 << 3)
 
-/* sched_clock wrap time is 4398 seconds for arm arch timer
- * applying a period less than it for tinysys timesync
- */
 #define TIMESYNC_WRAP_TIME (4000*NSEC_PER_SEC)
 
 struct timesync_context_t {

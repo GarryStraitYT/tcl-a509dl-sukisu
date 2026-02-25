@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2014 MediaTek Inc.
- */
 
 
 #include <linux/cpuidle.h>

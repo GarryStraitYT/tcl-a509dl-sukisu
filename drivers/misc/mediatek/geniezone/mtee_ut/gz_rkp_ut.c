@@ -1,19 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -199,14 +186,6 @@ int _vreg_test_basic(void)
 
 #if test_vreg_dyn_ipa_mmu_basic
 
-/*Test: dynamic ipa mmu unmap/map/change type operations
- * Detail:
- * (1) alloc a buffer (buf) with size 64KB and update
- *     ipa type to vm_ram_ro_xn (read-only, no execution).
- * (2) because the test buffer is allocated in the test fun,
- *     the ipa type needs to update back to vm_ram_rw before
- *     freeing the test buffer. (Or data abort will occur)
- */
 int _vreg_test_dyn_ipa_mmu_basic(void)
 {
 	int i;

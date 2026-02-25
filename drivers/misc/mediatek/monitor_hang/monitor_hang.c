@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/cdev.h>
 #include <linux/delay.h>
@@ -312,9 +309,6 @@ static const struct file_operations monitor_hang_fops = {
 };
 #endif
 
-/******************************************************************************
- * hang detect File operations
- *****************************************************************************/
 static int monitor_hang_open(struct inode *inode, struct file *filp)
 {
 

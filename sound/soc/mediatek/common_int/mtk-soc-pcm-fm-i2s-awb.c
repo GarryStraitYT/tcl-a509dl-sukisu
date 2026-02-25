@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mtk_pcm_fm_i2s_awb.c
- *
- * Project:
- * --------
- *   Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio fm_i2s awb capture
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -53,9 +20,6 @@ static struct snd_dma_buffer *Awb_Capture_dma_buf;
 
 static int fm_capture_mem_blk;
 
-/*
- *    function implementation
- */
 static void StartAudioFMI2SAWBHardware(struct snd_pcm_substream *substream);
 static void StopAudioFMI2SAWBHardware(struct snd_pcm_substream *substream);
 static int mtk_fm_i2s_awb_probe(struct platform_device *pdev);

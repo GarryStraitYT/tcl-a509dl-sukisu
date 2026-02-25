@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/******************************************************************************
- *  KERNEL HEADER
- ******************************************************************************/
 #include "sec_osal.h"
 
 #include <linux/string.h>
@@ -24,16 +18,10 @@
 #include <linux/module.h>
 #include <linux/vmalloc.h>
 
-/*****************************************************************************
- * MACRO
- *****************************************************************************/
 #ifndef ASSERT
 #define ASSERT(expr)        WARN_ON(!(expr))
 #endif
 
-/*****************************************************************************
- * GLOBAL VARIABLE
- *****************************************************************************/
 DEFINE_SEMAPHORE(hacc_sem);
 DEFINE_SEMAPHORE(mtd_sem);
 DEFINE_SEMAPHORE(rid_sem);
@@ -43,18 +31,12 @@ DEFINE_SEMAPHORE(osal_verify_sem);
 DEFINE_SEMAPHORE(osal_secro_sem);
 DEFINE_SEMAPHORE(osal_secro_v5_sem);
 
-/*****************************************************************************
- * LOCAL VARIABLE
- *****************************************************************************/
 static mm_segment_t curr_fs;
 #define OSAL_MAX_FP_COUNT           4096
 #define OSAL_FP_OVERFLOW            OSAL_MAX_FP_COUNT
 /* The array 0 will be not be used, and fp_id=0 will be though as NULL file */
 static struct file *g_osal_fp[OSAL_MAX_FP_COUNT] = { 0 };
 
-/*****************************************************************************
- * PORTING LAYER
- *****************************************************************************/
 void osal_kfree(void *buf)
 {
 	/* kfree(buf); */

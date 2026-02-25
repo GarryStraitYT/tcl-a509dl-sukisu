@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/spinlock.h>
 #include <linux/of.h>
@@ -11,18 +8,10 @@
 
 static DEFINE_SPINLOCK(counter_info_lock);
 
-/* FIX ME: volatile can not pass check patch
- * static volatile void *g_MFG_base;
- */
 
 static void *g_MFG_base;
 static int mfg_is_power_on;
 
-/* FIX ME: volatile can not pass check patch
- * #define base_write32(addr, value) \
- *	do { *(volatile uint32_t *)(addr) = (uint32_t)(value) } while (0)
- * #define base_read32(addr)             (*(volatile uint32_t *)(addr))
- */
 #define base_write32(addr, value) \
 		do { *(uint32_t *)(addr) = (uint32_t)(value) } while (0)
 #define base_read32(addr)             (*(uint32_t *)(addr))
@@ -56,10 +45,6 @@ static struct {
 
 #define MFG_COUNTER_SIZE (ARRAY_SIZE(mfg_counters))
 
-/*
- * require: power must be on
- * require: get counters_lock
- */
 static void mtk_mfg_counter_update(void)
 {
 	int i;
@@ -84,9 +69,6 @@ static void mtk_mfg_counter_update(void)
 	}
 }
 
-/*
- * require: get counters_lock
- */
 static void mtk_mfg_counter_reset_record(void)
 {
 	int i;
@@ -97,9 +79,6 @@ static void mtk_mfg_counter_reset_record(void)
 	}
 }
 
-/*
- * require: get counters_lock
- */
 static void mtk_mfg_counter_reset_register(void)
 {
 	int i;

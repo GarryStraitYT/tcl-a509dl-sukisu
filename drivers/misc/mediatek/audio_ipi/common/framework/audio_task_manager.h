@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #ifndef AUDIO_TASK_MANAGER_H
 #define AUDIO_TASK_MANAGER_H
@@ -11,19 +8,9 @@
 #include <audio_task.h>
 #include <audio_messenger_ipi.h>
 
-/*
- * =============================================================================
- *                     hook function
- * =============================================================================
- */
 
 typedef void (*task_unloaded_t)(void);
 
-/*
- * =============================================================================
- *                     public function
- * =============================================================================
- */
 
 void audio_task_manager_init(void);
 void audio_task_manager_deinit(void);

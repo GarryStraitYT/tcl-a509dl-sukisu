@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_gadget_ep0.c - MediaTek USB3 DRD peripheral driver ep0 handling
- *
- * Copyright (c) 2016 MediaTek Inc.
- *
- * Author:  Chunfeng.Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/iopoll.h>
 #include <linux/usb/composite.h>
@@ -126,12 +119,6 @@ static void ep0_load_test_packet(struct mtu3 *mtu)
 	ep0_write_fifo(mtu->ep0, mtu3_test_packet, sizeof(mtu3_test_packet));
 }
 
-/*
- * A. send STALL for setup transfer without data stage:
- *		set SENDSTALL and SETUPPKTRDY at the same time;
- * B. send STALL for other cases:
- *		set SENDSTALL only.
- */
 static void ep0_stall_set(struct mtu3_ep *mep0, bool set, u32 pktrdy)
 {
 	struct mtu3 *mtu = mep0->mtu;
@@ -422,13 +409,6 @@ static int ep0_handle_feature(struct mtu3 *mtu,
 	return handled;
 }
 
-/*
- * handle all control requests can be handled
- * returns:
- *	negative errno - error happened
- *	zero - need delegate SETUP to gadget driver
- *	positive - already handled
- */
 static int handle_standard_request(struct mtu3 *mtu,
 			  struct usb_ctrlrequest *setup)
 {

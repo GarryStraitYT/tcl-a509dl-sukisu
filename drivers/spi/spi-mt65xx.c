@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Leilk Liu <leilk.liu@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/clk.h>
 #include <linux/device.h>
@@ -146,10 +133,6 @@ static const struct mtk_spi_compatible mt8183_compat = {
 	.enhance_timing = true,
 };
 
-/*
- * A piece of default chip info unless the platform
- * supplies it.
- */
 static const struct mtk_chip_config mtk_default_chip_info = {
 	.sample_sel = 0,
 

@@ -1,34 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- *
- * Filename:
- * ---------
- *    mtk-soc-pcm-common
- *
- * Project:
- * --------
- *     mtk-soc-pcm-common function
- *
- *
- * Description:
- * ------------
- *   common function
- *
- * Author:
- * -------
- *   Chipeng Chang (MTK02308)
- *
- *---------------------------------------------------------------------------
----
- *
-
-****************************************************************************/
 
 #include "mtk-soc-pcm-common.h"
 

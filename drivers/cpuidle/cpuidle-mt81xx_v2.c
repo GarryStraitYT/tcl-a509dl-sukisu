@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/cpuidle.h>
 #include <linux/cpumask.h>
@@ -147,13 +144,6 @@ static const struct of_device_id mt81xx_v2_idle_state_match[] __initconst = {
 	{ },
 };
 
-/*
- * arm64_idle_init
- *
- * Registers the arm64 specific cpuidle driver with the cpuidle
- * framework. It relies on core code to parse the idle states
- * and initialize them using driver data structures accordingly.
- */
 int __init mt81xx_v2_cpuidle_init(void)
 {
 	int cpu, ret;

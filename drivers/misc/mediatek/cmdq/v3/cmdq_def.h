@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __CMDQ_DEF_H__
 #define __CMDQ_DEF_H__
@@ -99,14 +96,6 @@
 
 typedef u64 CMDQ_VARIABLE;
 
-/*
- * SPR / CPR / VAR naming rule and number
- **********************************************
- *    <-       SPR	 ->    <-     CPR    ->
- *    <reserved><FREE use >    <   FREE use   >
- * VAR#    0	1    2	  3    4    5	 6    7
- * CPR#			       0    1	 2    3
- */
 
 #define CMDQ_SPR_FOR_LOOP_DEBUG		(1)
 #define CMDQ_THR_SPR_START		(2)
@@ -297,13 +286,7 @@ struct cmdqDTSDataStruct {
 	uint32_t MDPBaseAddress[CMDQ_MAX_MDP_PA_BASE_COUNT];
 };
 
-/* Custom "wide" pointer type for 64-bit job handle (pointer to VA)
- * typedef unsigned long long cmdqJobHandle_t;
- */
 #define cmdqJobHandle_t unsigned long long
-/* Custom "wide" pointer type for 64-bit compatibility.
- * Always cast from uint32_t*.
- */
 #define cmdqU32Ptr_t unsigned long long
 
 #define CMDQ_U32_PTR(x) ((uint32_t *)(unsigned long)x)
@@ -342,17 +325,6 @@ struct cmdqReadAddressStruct {
 	cmdqU32Ptr_t values;
 };
 
-/*
- * Secure address metadata:
- * According to handle type,
- * translate handle and replace (_d)th instruciton to
- *     1. sec_addr = hadnle_sec_base_addr(baseHandle) + offset(_b)
- *     2. sec_mva = mva( hadnle_sec_base_addr(baseHandle) + offset(_b) )
- *     3. secure world normal mva = map(baseHandle)
- *        . pass normal mva to parameter baseHandle
- *        . use case: OVL reads from secure and normal buffers
- *          at the same time)
- */
 enum CMDQ_SEC_ADDR_METADATA_TYPE {
 	CMDQ_SAM_H_2_PA = 0,	/* sec handle to sec PA */
 	CMDQ_SAM_H_2_MVA = 1,	/* sec handle to sec MVA */
@@ -413,9 +385,6 @@ struct cmdqSecIspMeta {
 	uint64_t DmgiHandle;
 };
 
-/* client extension bits for cmdq secure driver
- * must sync with iwc header sec_extension_iwc
- */
 enum sec_extension {
 	SEC_MDP_AAL = 0,
 	SEC_TDSHP

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Pierre Lee <pierre.lee@mediatek.com>
- */
 
 
 #include <linux/clk.h>
@@ -25,14 +21,8 @@
 #include "clk-mtk.h"
 
 
-/************************************************
- **********      register base addr    **********
- ************************************************/
 #define REG_ADDR(base, x) (void __iomem *)((unsigned long)base + (x))
 
-/************************************************
- **********         Variable           **********
- ************************************************/
 
 /* spinlock for fhctl */
 static DEFINE_SPINLOCK(fhctl_lock);
@@ -40,9 +30,6 @@ static LIST_HEAD(clk_mt_fhctl_list);
 
 static struct mtk_fhctl *g_p_fhctl;
 
-/*****************************************************************
- * Global variable operation
- ****************************************************************/
 static void __set_fhctl(struct mtk_fhctl *pfhctl)
 {
 	g_p_fhctl = pfhctl;
@@ -54,9 +41,6 @@ static struct mtk_fhctl *__get_fhctl(void)
 }
 
 
-/*****************************************************************
- * OF Info init
- ****************************************************************/
 static int mtk_fhctl_parse_dt(struct mtk_fhctl *fhctl)
 {
 
@@ -179,9 +163,6 @@ struct clk_mt_fhctl *mtk_fh_get_fh_obj_tbl(struct mtk_fhctl *pfhctl, int posi)
 }
 EXPORT_SYMBOL(mtk_fh_get_fh_obj_tbl);
 
-/*********************************************************
- * For clock driver control
- ********************************************************/
 bool _mtk_fh_set_rate(int pll_id, unsigned long dds, int postdiv)
 {
 	struct mtk_fhctl *fhctl;
@@ -256,9 +237,6 @@ bool _mtk_fh_set_rate(int pll_id, unsigned long dds, int postdiv)
 	return false;
 }
 
-/****************************************************
- * CLK FHCTL reg init
- ***************************************************/
 
 static struct clk_mt_fhctl_regs *__mt_fhctl_fh_regs_init(
 				struct mtk_fhctl *fhctl, unsigned int pll_id)

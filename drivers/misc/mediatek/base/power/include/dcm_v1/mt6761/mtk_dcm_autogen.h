@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 
 #ifndef __MTK_DCM_AUTOGEN_H__

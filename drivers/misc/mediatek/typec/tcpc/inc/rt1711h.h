@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_RT1711H_H
 #define __LINUX_RT1711H_H
@@ -44,9 +41,6 @@
 #define RT1711H_REG_DRP_DUTY_CTRL			(0xA3)
 #define RT1711H_REG_BMCIO_RXDZEN			(0xAF)
 
-/*
- * Device ID
- */
 
 #define RT1711H_DID_A		0x2170
 #define RT1711H_DID_B		0x2171
@@ -54,18 +48,12 @@
 
 #define RT1715_DID_D			0x2173
 
-/*
- * RT1711H_REG_PHY_CTRL1			(0x80)
- */
 
 #define RT1711H_REG_PHY_CTRL1_SET( \
 	retry_discard, toggle_cnt, bus_idle_cnt, rx_filter) \
 	((retry_discard << 7) | (toggle_cnt << 4) | \
 	(bus_idle_cnt << 2) | (rx_filter & 0x03))
 
-/*
- * RT1711H_REG_CLK_CTRL2			(0x87)
- */
 
 #define RT1711H_REG_CLK_DIV_600K_EN		(1<<7)
 #define RT1711H_REG_CLK_BCLK2_EN		(1<<6)
@@ -75,9 +63,6 @@
 #define RT1711H_REG_CLK_BCLK_EN			(1<<1)
 #define RT1711H_REG_CLK_BCLK_TH_EN		(1<<0)
 
-/*
- * RT1711H_REG_CLK_CTRL3			(0x88)
- */
 
 #define RT1711H_REG_CLK_OSCMUX_RG_EN	(1<<7)
 #define RT1711H_REG_CLK_CK_24M_EN		(1<<6)
@@ -88,9 +73,6 @@
 #define RT1711H_REG_CLK_PCLK_RG_EN		(1<<1)
 #define RT1711H_REG_CLK_PCLK_TG_EN		(1<<0)
 
-/*
- * RT1711H_REG_BMC_CTRL				(0x90)
- */
 
 #define RT1711H_REG_IDLE_EN				(1<<6)
 #define RT1711H_REG_DISCHARGE_EN			(1<<5)
@@ -100,34 +82,22 @@
 #define RT1711H_REG_VBUS_DET_EN				(1<<1)
 #define RT1711H_REG_BMCIO_OSC_EN			(1<<0)
 
-/*
- * RT1711H_REG_RT_STATUS				(0x97)
- */
 
 #define RT1711H_REG_RA_DETACH				(1<<5)
 #define RT1711H_REG_VBUS_80				(1<<1)
 
-/*
- * RT1711H_REG_RT_INT				(0x98)
- */
 
 #define RT1711H_REG_INT_RA_DETACH			(1<<5)
 #define RT1711H_REG_INT_WATCHDOG			(1<<2)
 #define RT1711H_REG_INT_VBUS_80				(1<<1)
 #define RT1711H_REG_INT_WAKEUP				(1<<0)
 
-/*
- * RT1711H_REG_RT_MASK				(0x99)
- */
 
 #define RT1711H_REG_M_RA_DETACH				(1<<5)
 #define RT1711H_REG_M_WATCHDOG				(1<<2)
 #define RT1711H_REG_M_VBUS_80				(1<<1)
 #define RT1711H_REG_M_WAKEUP				(1<<0)
 
-/*
- * RT1711H_REG_IDLE_CTRL				(0x9B)
- */
 
 #define RT1711H_REG_CK_300K_SEL				(1<<7)
 #define RT1711H_REG_SHIPPING_OFF			(1<<5)
@@ -145,9 +115,6 @@
 	((ck300 << 7) | (ship_dis << 5) | (auto_idle << 3) | (tout & 0x07))
 #endif
 
-/*
- * RT1711H_REG_INTRST_CTRL			(0x9C)
- */
 
 #define RT1711H_REG_INTRST_EN				(1<<7)
 
@@ -155,9 +122,6 @@
 #define RT1711H_REG_INTRST_SET(en, tout) \
 	((en << 7) | (tout & 0x03))
 
-/*
- * RT1711H_REG_WATCHDOG_CTRL		(0x9D)
- */
 
 #define RT1711H_REG_WATCHDOG_EN				(1<<7)
 
@@ -165,9 +129,6 @@
 #define RT1711H_REG_WATCHDOG_CTRL_SET(en, tout)	\
 	((en << 7) | (tout & 0x07))
 
-/*
- * RT1711H_REG_I2CRST_CTRL		(0x9E)
- */
 
 #define RT1711H_REG_I2CRST_EN				(1<<7)
 

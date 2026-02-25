@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -37,16 +34,8 @@
 #endif
 #endif
 
-/*=============================================================
- * Local variable definition
- *=============================================================
- */
 #define AP_THERMO_LMT_MAX_USERS				(4)
 
-/*=============================================================
- * Local variable definition
- *=============================================================
- */
 static unsigned int apthermolmt_prev_cpu_pwr_lim;
 static unsigned int apthermolmt_curr_cpu_pwr_lim = 0x7FFFFFFF;
 #if defined(THERMAL_VPU_SUPPORT)
@@ -87,10 +76,6 @@ static unsigned int gp_curr_gpu_pwr_limit;
 
 static DEFINE_MUTEX(apthermolmt_cpu_mutex);
 
-/*=============================================================
- * Weak functions
- *=============================================================
- */
 #if defined(ATM_USES_PPM)
 void __attribute__ ((weak))
 mt_ppm_cpu_thermal_protect(unsigned int limited_power)
@@ -113,15 +98,7 @@ mt_gpufreq_thermal_protect(unsigned int limited_power)
 }
 
 
-/*=============================================================
- * Local function prototype
- *=============================================================
- */
 
-/*=============================================================
- * Function definitions
- *=============================================================
- */
 int apthermolmt_register_user(struct apthermolmt_user *handle, char *log)
 {
 	int i = 1;

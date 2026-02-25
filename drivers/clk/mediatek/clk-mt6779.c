@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Wendell Lin <wendell.lin@mediatek.com>
- */
 
 #include <linux/of.h>
 #include <linux/of_address.h>
@@ -1618,10 +1614,6 @@ static const struct mtk_gate_regs apmixed_cg_regs = {
 #define GATE_APMIXED(_id, _name, _parent, _shift)	\
 	GATE_APMIXED_FLAGS(_id, _name, _parent, _shift,	0)
 
-/*
- * CRITICAL CLOCK:
- * apmixed_appll26m is the toppest clock gate of all PLLs.
- */
 static const struct mtk_gate apmixed_clks[] = {
 	GATE_APMIXED(CLK_APMIXED_SSUSB26M, "apmixed_ssusb26m",
 		"f_f26m_ck",

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -18,9 +15,6 @@
 #define GET_EVENT_RATIO_NORMAL(x)   ((x)/(WINDOW_LEN_NORMAL/1000))
 
 
-/********************************************************************
- * Weak functions for chip dependent flow.
- *******************************************************************/
 
 /* [ByChip] Internal weak functions: implemented in mtk_spm_irq.c */
 void __attribute__((weak)) spm_twam_register_handler(twam_handler_t handler) {}

@@ -82,12 +82,6 @@ static int adsp_awake_send_swint (int ret, uint32_t reg_val, uint32_t mask)
 	return ret;
 }
 
-/*
- * acquire adsp lock flag, keep adsp awake
- * @param adsp_id: adsp core id
- * return 0     : get lock success
- *        non-0 : get lock fail
- */
 int adsp_awake_lock(enum adsp_core_id adsp_id)
 {
 	if (adsp_id >= ADSP_CORE_TOTAL) {
@@ -141,12 +135,6 @@ int adsp_awake_lock(enum adsp_core_id adsp_id)
 }
 EXPORT_SYMBOL_GPL(adsp_awake_lock);
 
-/*
- * release adsp awake lock flag
- * @param adsp_id: adsp core id
- * return 0     : release lock success
- *        non-0 : release lock fail
- */
 int adsp_awake_unlock(enum adsp_core_id adsp_id)
 {
 	if (adsp_id >= ADSP_CORE_TOTAL) {
@@ -207,13 +195,6 @@ void adsp_awake_init(void)
 		mutex_init(&adsp_awake_mutexs[i]);
 }
 
-/*
- * lock/unlock switch of adsppll clock
- * @param adsp_id: adsp core id
- *        unlock: if unlock adsppll
- * return 0     : send command success
- *        non-0 : adsp is not ready
- */
 int adsp_awake_unlock_adsppll(enum adsp_core_id adsp_id, uint32_t unlock)
 {
 	if (adsp_id >= ADSP_CORE_TOTAL) {
@@ -249,12 +230,6 @@ int adsp_awake_unlock_adsppll(enum adsp_core_id adsp_id, uint32_t unlock)
 }
 EXPORT_SYMBOL_GPL(adsp_awake_unlock_adsppll);
 
-/*
- * dump adsp lock list in adsp log
- * @param adsp_id: adsp core id
- * return 0     : dump list success
- *        non-0 : dump list fail
- */
 int adsp_awake_dump_list(enum adsp_core_id adsp_id)
 {
 	if (adsp_id >= ADSP_CORE_TOTAL) {
@@ -341,36 +316,18 @@ static int adsp_awake_set_state(enum adsp_core_id adsp_id, uint32_t next_state)
 	}
 }
 
-/*
- * force adsp lock, keep adsp awake
- * @param adsp_id: adsp core id
- * return 0     : force lock success
- *        non-0 : force lock fail
- */
 int adsp_awake_force_lock(enum adsp_core_id adsp_id)
 {
 	return adsp_awake_set_state(adsp_id, AP_AWAKE_STATE_FORCE_LOCK);
 }
 EXPORT_SYMBOL_GPL(adsp_awake_force_lock);
 
-/*
- * force adsp unlock
- * @param adsp_id: adsp core id
- * return 0     : force unlock success
- *        non-0 : force unlock fail
- */
 int adsp_awake_force_unlock(enum adsp_core_id adsp_id)
 {
 	return adsp_awake_set_state(adsp_id, AP_AWAKE_STATE_FORCE_UNLOCK);
 }
 EXPORT_SYMBOL_GPL(adsp_awake_force_unlock);
 
-/*
- * set adsp normal
- * @param adsp_id: adsp core id
- * return 0     : set normal success
- *        non-0 : set normal fail
- */
 int adsp_awake_set_normal(enum adsp_core_id adsp_id)
 {
 	return adsp_awake_set_state(adsp_id, AP_AWAKE_STATE_NORMAL);

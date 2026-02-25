@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __CMDQSECTL_API_H__
 #define __CMDQSECTL_API_H__
@@ -34,9 +31,6 @@
 
 /* TCI message data: see cmdq_sec_iwc_common.h */
 
-/* Trustlet UUID:
- * filename of output bin is {TL_UUID}.tlbin
- */
 #define TL_CMDQ_UUID { { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
 
 #endif /*__CMDQSECTEST_API_H__*/

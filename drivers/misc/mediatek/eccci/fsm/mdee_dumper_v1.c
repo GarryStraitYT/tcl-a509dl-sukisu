@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 #include <linux/kernel.h>
 #include <linux/rtc.h>
 #include <linux/timer.h>
@@ -422,9 +419,6 @@ err_exit:
 	kfree(i_bit_ex_info);
 }
 
-/*
- * copy raw data (struct ex_log_t) received from md into struct debug_info_t
- */
 static void mdee_dumper_info_prepare_v1(struct ccci_fsm_ee *mdee)
 {
 	struct ex_log_t *ex_info;

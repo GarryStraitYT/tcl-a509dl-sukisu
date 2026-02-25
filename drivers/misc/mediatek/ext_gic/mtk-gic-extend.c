@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -34,11 +31,6 @@ void __iomem *GIC_DIST_BASE;
 void __iomem *GIC_CPU_BASE;
 void __iomem *INT_POL_CTL0;
 
-/**
- * get_hardware_irq - get a hardware interrupt num
- * @virq:	a linux irq
- *
- */
 unsigned int get_hardware_irq(unsigned int virq)
 {
 	struct irq_desc *desc = irq_to_desc(virq);
@@ -58,12 +50,6 @@ unsigned int get_hardware_irq(unsigned int virq)
 	else
 		return -EINVAL;
 }
-/*
- * mt_irq_mask_all: disable all interrupts
- * @mask: pointer to struct mtk_irq_mask for storing the original mask value.
- * Return 0 for success; return negative values for failure.
- * (This is ONLY used for the idle current measurement by the factory mode.)
- */
 int mt_irq_mask_all(struct mtk_irq_mask *mask)
 {
 	void __iomem *dist_base;
@@ -114,12 +100,6 @@ int mt_irq_mask_all(struct mtk_irq_mask *mask)
 	}
 }
 
-/*
- * mt_irq_mask_restore: restore all interrupts
- * @mask: pointer to struct mtk_irq_mask for storing the original mask value.
- * Return 0 for success; return negative values for failure.
- * (This is ONLY used for the idle current measurement by the factory mode.)
- */
 int mt_irq_mask_restore(struct mtk_irq_mask *mask)
 {
 	void __iomem *dist_base;
@@ -161,12 +141,6 @@ int mt_irq_mask_restore(struct mtk_irq_mask *mask)
 	return 0;
 }
 
-/*
- * mt_irq_set_pending_for_sleep: pending an interrupt for the sleep
- * manager's use
- * @irq: interrupt id
- * (THIS IS ONLY FOR SLEEP FUNCTION USE. DO NOT USE IT YOURSELF!)
- */
 void mt_irq_set_pending_for_sleep(unsigned int irq)
 {
 	void __iomem *dist_base;
@@ -252,11 +226,6 @@ u32 mt_irq_get_pending_vec(u32 start_irq)
 	return pending_vec;
 }
 
-/*
- * mt_irq_unmask_for_sleep: enable an interrupt for the sleep manager's use
- * @irq: interrupt id
- * (THIS IS ONLY FOR SLEEP FUNCTION USE. DO NOT USE IT YOURSELF!)
- */
 void mt_irq_unmask_for_sleep(unsigned int virq)
 {
 	u32 mask;
@@ -280,11 +249,6 @@ void mt_irq_unmask_for_sleep(unsigned int virq)
 	mb();
 }
 
-/*
- * mt_irq_mask_for_sleep: disable an interrupt for the sleep manager's use
- * @irq: interrupt id
- * (THIS IS ONLY FOR SLEEP FUNCTION USE. DO NOT USE IT YOURSELF!)
- */
 void mt_irq_mask_for_sleep(unsigned int virq)
 {
 	u32 mask;
@@ -355,10 +319,6 @@ static unsigned int is_fiq_set[(NR_IRQS + 31) / 32];
 static int fiq_glued;
 unsigned int irq_total_secondary_cpus;
 static spinlock_t irq_lock;
-/*
- * mt_irq_mask: disable an interrupt.
- * @data: irq_data
- */
 static void mt_irq_mask(struct irq_data *data)
 {
 	const unsigned int irq = data->irq;
@@ -376,10 +336,6 @@ static void mt_irq_mask(struct irq_data *data)
 	dsb();
 }
 
-/*
- * mt_irq_unmask: enable an interrupt.
- * @data: irq_data
- */
 static void mt_irq_unmask(struct irq_data *data)
 {
 	const unsigned int irq = data->irq;
@@ -397,11 +353,6 @@ static void mt_irq_unmask(struct irq_data *data)
 	dsb();
 }
 
-/*
- * mt_irq_set_sens: set the interrupt sensitivity
- * @irq: interrupt id
- * @sens: sensitivity
- */
 static void mt_irq_set_sens(unsigned int irq, unsigned int sens)
 {
 	unsigned long flags;
@@ -433,11 +384,6 @@ static void mt_irq_set_sens(unsigned int irq, unsigned int sens)
 	dsb();
 }
 
-/*
- * mt_irq_set_polarity: set the interrupt polarity
- * @irq: interrupt id
- * @polarity: interrupt polarity
- */
 static void mt_irq_set_polarity(unsigned int irq, unsigned int polarity)
 {
 	unsigned long flags;
@@ -468,12 +414,6 @@ static void mt_irq_set_polarity(unsigned int irq, unsigned int polarity)
 	spin_unlock_irqrestore(&irq_lock, flags);
 }
 
-/*
- * mt_irq_set_type: set interrupt type
- * @irq: interrupt id
- * @flow_type: interrupt type
- * Always return 0.
- */
 static int mt_irq_set_type(struct irq_data *data, unsigned int flow_type)
 {
 	const unsigned int irq = data->irq;
@@ -663,10 +603,6 @@ static int restore_for_fiq(struct notifier_block *nfb, unsigned long action,
 }
 #endif				/* CONFIG_MTK_IN_HOUSE_TEE_SUPPORT */
 
-/*
- * trigger_sw_irq: force to trigger a GIC SGI.
- * @irq: SGI number
- */
 void trigger_sw_irq(int irq)
 {
 	if (irq < NR_GIC_SGI)
@@ -674,12 +610,6 @@ void trigger_sw_irq(int irq)
 			+ GIC_DIST_SOFTINT));
 }
 
-/*
- * mt_disable_fiq: disable an interrupt which is directed to FIQ.
- * @irq: interrupt id
- * Return error code.
- * NoteXXX: Not allow to suspend due to FIQ context.
- */
 int mt_disable_fiq(int irq)
 {
 	int i;
@@ -694,12 +624,6 @@ int mt_disable_fiq(int irq)
 	return -1;
 }
 
-/*
- * mt_enable_fiq: enable an interrupt which is directed to FIQ.
- * @irq: interrupt id
- * Return error code.
- * NoteXXX: Not allow to suspend due to FIQ context.
- */
 int mt_enable_fiq(int irq)
 {
 	int i;
@@ -714,9 +638,6 @@ int mt_enable_fiq(int irq)
 	return -1;
 }
 
-/*
- * For gic_arch_extn, check and mask if it is FIQ.
- */
 static void mt_fiq_mask_check(struct irq_data *d)
 {
 	if (!line_is_fiq(d->irq))
@@ -725,9 +646,6 @@ static void mt_fiq_mask_check(struct irq_data *d)
 	__mt_disable_fiq(d->irq);
 }
 
-/*
- * For gic_arch_extn, check and unmask if it is FIQ.
- */
 static void mt_fiq_unmask_check(struct irq_data *d)
 {
 	if (!line_is_fiq(d->irq))
@@ -736,9 +654,6 @@ static void mt_fiq_unmask_check(struct irq_data *d)
 	__mt_enable_fiq(d->irq);
 }
 
-/*
- * fiq_isr: FIQ handler.
- */
 static void fiq_isr(struct fiq_glue_handler *h, void *regs, void *svc_sp)
 {
 	unsigned int iar, irq;
@@ -770,13 +685,6 @@ static void fiq_isr(struct fiq_glue_handler *h, void *regs, void *svc_sp)
 	mt_fiq_eoi(iar);
 }
 
-/*
- * get_fiq_isr_log: get fiq_isr_log for debugging.
- * @cpu: processor id
- * @log: pointer to the address of fiq_isr_log
- * @len: length of fiq_isr_log
- * Return 0 for success or error code for failure.
- */
 int get_fiq_isr_log(int cpu, unsigned int *log, unsigned int *len)
 {
 	if (log)
@@ -819,14 +727,6 @@ static int __init_fiq(void)
 	return ret;
 }
 
-/*
- * request_fiq: direct an interrupt to FIQ and register its handler.
- * @irq: interrupt id
- * @handler: FIQ handler
- * @irq_flags: IRQF_xxx
- * @arg: argument to the FIQ handler
- * Return error code.
- */
 int request_fiq(int irq, fiq_isr_handler handler, unsigned long irq_flags,
 		void *arg)
 {

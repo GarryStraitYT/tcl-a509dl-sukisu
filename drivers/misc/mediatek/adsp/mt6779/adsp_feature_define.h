@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_feature_define.h --  Mediatek ADSP feature definition
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Celine Liu <Celine.liu@mediatek.com>
- */
 
 
 #ifndef __ADSP_FEATURE_DEFINE_H__

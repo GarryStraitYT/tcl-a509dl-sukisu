@@ -1,29 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2011 MediaTek Inc.
- */
 
-/*#include <mach/mt_typedefs.h>
- * #include <mach/mt_reg_base.h>
- */
 #include "sec_error.h"
 #include "hacc_mach.h"
 #include <linux/io.h>
 
-/******************************************************************************
- * this file contains the hardware secure engine low-level operations
- * note that : all the functions in this file are ONLY for HACC internal usages.
- ******************************************************************************/
 
-/******************************************************************************
- * CONSTANT DEFINITIONS
- ******************************************************************************/
 #define MOD                         "HACC"
 #define HACC_TEST                    (0)
 
-/******************************************************************************
- * DEBUG
- ******************************************************************************/
 #define SEC_DEBUG                   (0)
 #define SMSG
 #define DMSG
@@ -32,14 +16,8 @@
 #define DMSG
 #endif
 
-/******************************************************************************
- * LOCAL VERIABLE
- ******************************************************************************/
 static struct hacc_context hacc_ctx;
 
-/******************************************************************************
- * LOCAL FUNCTIONS
- ******************************************************************************/
 
 #if HACC_TEST
 static void hacc_test(void)
@@ -74,9 +52,6 @@ static void hacc_test(void)
 #define hacc_test()      do {} while (0)
 #endif
 
-/******************************************************************************
- * GLOBAL FUNCTIONS
- ******************************************************************************/
 static unsigned int hacc_set_cfg(struct aes_cfg *cfg)
 {
 	memcpy(&hacc_ctx.cfg, cfg, sizeof(struct aes_cfg));

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/device.h>       /* needed by device_* */
@@ -74,10 +71,6 @@ int scp_awake_counts[SCP_CORE_TOTAL];
 #if SCP_RECOVERY_SUPPORT
 unsigned int scp_recovery_flag[SCP_CORE_TOTAL];
 #define SCP_A_RECOVERY_OK	0x44
-/*  scp_reset_status
- *  0: scp not in reset status
- *  1: scp in reset status
- */
 atomic_t scp_reset_status = ATOMIC_INIT(RESET_STATUS_STOP);
 
 /* shadow it due to sram may not access during sleep */
@@ -133,12 +126,6 @@ DEFINE_SPINLOCK(scp_awake_spinlock);
 /* set flag after driver initial done */
 static bool driver_init_done;
 
-/*
- * memory copy to scp sram
- * @param trg: trg address
- * @param src: src address
- * @param size: memory size
- */
 void memcpy_to_scp(void __iomem *trg, const void *src, int size)
 {
 	int i;
@@ -151,12 +138,6 @@ void memcpy_to_scp(void __iomem *trg, const void *src, int size)
 EXPORT_SYMBOL_GPL(memcpy_to_scp);
 
 
-/*
- * memory copy from scp sram
- * @param trg: trg address
- * @param src: src address
- * @param size: memory size
- */
 void memcpy_from_scp(void *trg, const void __iomem *src, int size)
 {
 	int i;
@@ -167,12 +148,6 @@ void memcpy_from_scp(void *trg, const void __iomem *src, int size)
 		*t++ = *s++;
 }
 
-/*
- * acquire a hardware semaphore
- * @param flag: semaphore id
- * return  1 :get sema success
- *        -1 :get sema timeout
- */
 int get_scp_semaphore(int flag)
 {
 	int read_back;
@@ -225,12 +200,6 @@ int get_scp_semaphore(int flag)
 }
 EXPORT_SYMBOL_GPL(get_scp_semaphore);
 
-/*
- * release a hardware semaphore
- * @param flag: semaphore id
- * return  1 :release sema success
- *        -1 :release sema fail
- */
 int release_scp_semaphore(int flag)
 {
 	int read_back;
@@ -274,12 +243,6 @@ EXPORT_SYMBOL_GPL(release_scp_semaphore);
 
 
 static BLOCKING_NOTIFIER_HEAD(scp_A_notifier_list);
-/*
- * register apps notification
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param nb:   notifier block struct
- */
 void scp_A_register_notify(struct notifier_block *nb)
 {
 	mutex_lock(&scp_A_notify_mutex);
@@ -294,12 +257,6 @@ void scp_A_register_notify(struct notifier_block *nb)
 EXPORT_SYMBOL_GPL(scp_A_register_notify);
 
 
-/*
- * unregister apps notification
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param nb:     notifier block struct
- */
 void scp_A_unregister_notify(struct notifier_block *nb)
 {
 	mutex_lock(&scp_A_notify_mutex);
@@ -328,14 +285,6 @@ void scp_schedule_logger_work(struct scp_work_struct *scp_ws)
 }
 #endif
 
-/*
- * callback function for work struct
- * notify apps to start their tasks
- * or generate an exception according to flag
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void scp_A_notify_ws(struct work_struct *ws)
 {
 	struct scp_work_struct *sws =
@@ -381,14 +330,6 @@ static void scp_A_notify_ws(struct work_struct *ws)
 }
 
 
-/*
- * callback function for work struct
- * notify apps to start their tasks
- * or generate an exception according to flag
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void scp_timeout_ws(struct work_struct *ws)
 {
 #if SCP_RECOVERY_SUPPORT
@@ -402,23 +343,6 @@ static void scp_timeout_ws(struct work_struct *ws)
 
 
 #ifdef SCP_PARAMS_TO_SCP_SUPPORT
-/*
- * Function/Space for kernel to pass static/initial parameters to scp's driver
- * @return: 0 for success, positive for info and negtive for error
- *
- * Note: The function should be called before disabling 26M & resetting scp.
- *
- * An example of function instance of sensor_params_to_scp:
- * int sensor_params_to_scp(phys_addr_t addr_vir, size_t size)
- * {
- *     int *params;
- *
- *     params = (int *)addr_vir;
- *     params[0] = 0xaaaa;
- *
- *     return 0;
- * }
- */
 static int params_to_scp(void)
 {
 #ifdef CFG_SENSOR_PARAMS_TO_SCP_SUPPORT
@@ -441,9 +365,6 @@ static int params_to_scp(void)
 }
 #endif
 
-/*
- * mark notify flag to 1 to notify apps to start their tasks
- */
 static void scp_A_set_ready(void)
 {
 	pr_debug("[SCP] %s()\n", __func__);
@@ -459,11 +380,6 @@ static void scp_A_set_ready(void)
 }
 
 
-/*
- * callback for reset timer
- * mark notify flag to 0 to generate an exception
- * @param data: unuse
- */
 #if SCP_BOOT_TIME_OUT_MONITOR
 static void scp_wait_ready_timeout(struct timer_list *t)
 {
@@ -477,15 +393,6 @@ static void scp_wait_ready_timeout(struct timer_list *t)
 }
 #endif
 
-/*
- * handle notification from scp
- * mark scp is ready for running tasks
- * It is important to call scp_ram_dump_init() in this IPI handler. This
- * timing is necessary to ensure that the region_info has been initialized.
- * @param id:   ipi id
- * @param data: ipi data
- * @param len:  length of ipi data
- */
 static void scp_A_ready_ipi_handler(int id, void *data, unsigned int len)
 {
 	unsigned int scp_image_size = *(unsigned int *)data;
@@ -512,13 +419,6 @@ __attribute__((weak)) void report_hub_dmd(uint32_t case_id,
 }
 
 
-/*
- * Handle notification from scp.
- * Report error from SCP to other kernel driver.
- * @param id:   ipi id
- * @param data: ipi data
- * @param len:  length of ipi data
- */
 static void scp_err_info_handler(int id, void *data, unsigned int len)
 {
 	struct error_info *info = (struct error_info *)data;
@@ -540,9 +440,6 @@ static void scp_err_info_handler(int id, void *data, unsigned int len)
 }
 
 
-/*
- * @return: 1 if scp is ready for running tasks
- */
 unsigned int is_scp_ready(enum scp_core_id id)
 {
 	if (scp_ready[id])
@@ -552,16 +449,6 @@ unsigned int is_scp_ready(enum scp_core_id id)
 }
 EXPORT_SYMBOL_GPL(is_scp_ready);
 
-/*
- * reset scp and create a timer waiting for scp notify
- * notify apps to stop their tasks if needed
- * generate error if reset fail
- * NOTE: this function may be blocked
- *       and should not be called in interrupt context
- * @param reset:    bit[0-3]=0 for scp enable, =1 for reboot
- *                  bit[4-7]=0 for All, =1 for scp_A, =2 for scp_B
- * @return:         0 if success
- */
 int reset_scp(int reset)
 {
 	void __iomem *scp_reset_reg = scpreg.cfg;
@@ -632,9 +519,6 @@ int reset_scp(int reset)
 }
 
 
-/*
- * TODO: what should we do when hibernation ?
- */
 static int scp_pm_event(struct notifier_block *notifier
 			, unsigned long pm_event, void *unused)
 {
@@ -809,10 +693,6 @@ void scp_wdt_reset(enum scp_core_id cpu_id)
 }
 EXPORT_SYMBOL(scp_wdt_reset);
 
-/*
- * trigger wdt manually
- * debug use
- */
 static ssize_t wdt_reset_store(struct device *dev
 		, struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -830,10 +710,6 @@ static ssize_t wdt_reset_store(struct device *dev
 
 DEVICE_ATTR_WO(wdt_reset);
 
-/*
- * trigger scp reset manually
- * debug use
- */
 static ssize_t scp_reset_store(struct device *dev
 		, struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -855,10 +731,6 @@ static ssize_t scp_reset_store(struct device *dev
 
 DEVICE_ATTR_WO(scp_reset);
 
-/*
- * trigger wdt manually
- * debug use
- */
 
 static ssize_t scp_recovery_flag_show(struct device *dev
 			, struct device_attribute *attr, char *buf)
@@ -885,8 +757,6 @@ static DEVICE_ATTR_RW(scp_recovery_flag);
 #endif
 
 
-/******************************************************************************
- *****************************************************************************/
 static ssize_t log_filter_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -916,8 +786,6 @@ static ssize_t log_filter_store(struct device *dev,
 
 DEVICE_ATTR_WO(log_filter);
 
-/******************************************************************************
- *****************************************************************************/
 static struct miscdevice scp_device = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "scp",
@@ -925,10 +793,6 @@ static struct miscdevice scp_device = {
 };
 
 
-/*
- * register /dev and /sys files
- * @return:     0: success, otherwise: fail
- */
 static int create_files(void)
 {
 	int ret;
@@ -1420,17 +1284,11 @@ void scp_deregister_sensor(enum feature_id id, enum scp_sensor_id sensor_id)
 	mutex_unlock(&scp_register_sensor_mutex);
 }
 
-/*
- * apps notification
- */
 void scp_extern_notify(enum SCP_NOTIFY_EVENT notify_status)
 {
 	blocking_notifier_call_chain(&scp_A_notifier_list, notify_status, NULL);
 }
 
-/*
- * reset awake counter
- */
 void scp_reset_awake_counts(void)
 {
 	int i;
@@ -1446,12 +1304,6 @@ void scp_awake_init(void)
 }
 
 #if SCP_RECOVERY_SUPPORT
-/*
- * scp_set_reset_status, set and return scp reset status function
- * return value:
- *   0: scp not in reset status
- *   1: scp in reset status
- */
 unsigned int scp_set_reset_status(void)
 {
 	unsigned long spin_flags;
@@ -1468,8 +1320,6 @@ unsigned int scp_set_reset_status(void)
 }
 EXPORT_SYMBOL_GPL(scp_set_reset_status);
 
-/******************************************************************************
- *****************************************************************************/
 void print_clk_registers(void)
 {
 	void __iomem *loader_base = (void __iomem *)scp_loader_base_virt;
@@ -1498,12 +1348,6 @@ void print_clk_registers(void)
 	}
 }
 
-/*
- * callback function for work struct
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 void scp_sys_reset_ws(struct work_struct *ws)
 {
 	struct scp_work_struct *sws = container_of(ws
@@ -1629,10 +1473,6 @@ void scp_sys_reset_ws(struct work_struct *ws)
 }
 
 
-/*
- * schedule a work to reset scp
- * @param type: exception type
- */
 void scp_send_reset_wq(enum SCP_RESET_TYPE type)
 {
 	scp_sys_reset_work.flags = (unsigned int) type;
@@ -1906,9 +1746,6 @@ static struct platform_driver mtk_scpsys_device = {
 	},
 };
 
-/*
- * driver initialization entry point
- */
 static int __init scp_init(void)
 {
 	int ret = 0;
@@ -2059,9 +1896,6 @@ err:
 	return -1;
 }
 
-/*
- * driver exit point
- */
 static void __exit scp_exit(void)
 {
 	int i = 0;

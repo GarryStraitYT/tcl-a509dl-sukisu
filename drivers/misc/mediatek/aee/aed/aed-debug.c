@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 
 #include <linux/arm-smccc.h>
@@ -254,11 +251,6 @@ static struct kprobe kp_kpd_irq_handler = {
 	.fault_handler = handler_fault,
 };
 
-/*
- * fault_handler: this is called if an exception is generated for any
- * instruction within the pre- or post-handler, or when Kprobes
- * single-steps the probed instruction.
- */
 static int handler_fault(struct kprobe *p, struct pt_regs *regs, int trapnr)
 {
 	pr_notice("fault_handler: p->addr = 0x%p, trap #%dn", p->addr, trapnr);

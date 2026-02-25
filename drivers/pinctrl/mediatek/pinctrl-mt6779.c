@@ -1,20 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author: Andy Teng <andy.teng@mediatek.com>
- *
- */
 
 #include <linux/module.h>
 #include "pinctrl-mtk-mt6779.h"
 #include "pinctrl-paris.h"
 
-/* MT6779 have multiple bases to program pin configuration listed as the below:
- * gpio:0x10005000,     iocfg_rm:0x11C20000, iocfg_br:0x11D10000,
- * iocfg_lm:0x11E20000, iocfg_lb:0x11E70000, iocfg_rt:0x11EA0000,
- * iocfg_lt:0x11F20000, iocfg_tl:0x11F30000
- * _i_based could be used to indicate what base the pin should be mapped into.
- */
 
 #define PIN_FIELD_BASE(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits) \
 	PIN_FIELD_CALC(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits, \

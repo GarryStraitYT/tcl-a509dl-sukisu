@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -282,8 +278,5 @@ static int __init dram_calib_perf_check(void)
 	return 0;
 }
 
-/* NOTE: must be called after aed driver initialized
- *(i.e. must be later than arch_initcall)
- */
 late_initcall(dram_calib_perf_check);
 #endif

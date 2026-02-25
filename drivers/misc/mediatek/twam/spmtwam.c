@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -23,20 +20,6 @@
 #define CREATE_TRACE_POINTS
 #include "spmtwam_events.h"
 
-/* spmtwam node operations:
- * 1. setup twam speed mode (optional, default high)
- *    echo [0|1] > /proc/spmtwam/speed_mode
- * 2. setup signal [0-3], id [0-31], and monitor type [0-3] for each channel
- *    echo [0-3]  > /proc/spmtwam/ch0/signal
- *    echo [0-31] > /proc/spmtwam/ch0/id
- *    echo [0-3]  > /proc/spmtwam/ch0/monitor_type
- * 3. start monitor (monitor up to 4 channels at the same time)
- *    echo 1 > /proc/spmtwam/state
- * 4. stop monitor (will clear all configs)
- *    echo 0 > /proc/spmtwam/state
- * 5. check current config state
- *    cat /proc/spmtwam/state
- */
 
 struct spmtwam_local_cfg {
 	bool enable;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #ifdef CONFIG_USB_MTK_OTG
 #include <linux/module.h>

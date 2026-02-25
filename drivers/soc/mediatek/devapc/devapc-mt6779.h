@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __DEVAPC_MT6779_H__
 #define __DEVAPC_MT6779_H__
 
-/******************************************************************************
- * VARIABLE DEFINATION
- ******************************************************************************/
 
 /* dbg status default setting */
 #define PLAT_DBG_UT_DEFAULT		false
@@ -20,9 +14,6 @@
 #define PLAT_VIO_MASK_STA_NUM		17
 #define PLAT_VIO_SHIFT_MAX_BIT		25
 
-/******************************************************************************
- * DATA STRUCTURE
- ******************************************************************************/
 
 enum OTHER_TYPES_INDEX {
 	SRAMROM_VIO_INDEX = 511,
@@ -45,9 +36,6 @@ struct TOPAXI_ID_INFO {
 	uint8_t		bit[TOPAXI_MI0_BIT_LENGTH];
 };
 
-/******************************************************************************
- * PLATFORM DEFINATION
- ******************************************************************************/
 
 /* For Infra VIO_DBG */
 #define INFRA_VIO_DBG_MSTID			0x0000FFFF

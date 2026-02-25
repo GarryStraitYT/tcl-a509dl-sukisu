@@ -1,19 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * NOTE:
- * The modification is appended to initialization of image sensor.
- * After sensor initialization, use the function
- * bool otp_update_wb(unsigned char golden_rg, unsigned char golden_bg)
- * and
- * bool otp_update_lenc(void)
- * and then the calibration of AWB & LSC & BLC will be applied.
- * After finishing the OTP written, we will provide you the typical
- * value of golden sample.
- */
 
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
@@ -71,13 +57,6 @@ static void write_cmos_sensor_8(kal_uint16 addr, kal_uint8 para)
 	iWriteRegI2C(pusendcmd, 3, I2C_ID);
 }
 
-/*************************************************************************
- * Function    :  wb_gain_set
- * Description :  Set WB ratio to register gain setting  512x
- * Parameters  :  [int] r_ratio : R ratio data compared with golden module R
- *                b_ratio : B ratio data compared with golden module B
- * Return      :  [bool] 0 : set wb fail 1 : WB set success
- *************************************************************************/
 bool wb_gain_set(kal_uint32 r_ratio, kal_uint32 b_ratio)
 {
 	kal_uint32 R_GAIN = 0;
@@ -181,13 +160,6 @@ bool S5K4H7_update_awb(unsigned char page)
 }
 
 
-/***************************************************************************
- * Function    :  otp_update_wb
- * Description :  Update white balance settings from OTP
- * Parameters  :  [in] golden_rg : R/G of golden camera module
- [in] golden_bg : B/G of golden camera module
- * Return      :  1, success; 0, fail
- ***************************************************************************/
 bool S5K4H7_otp_update(void)
 {
 	bool flag = 0;

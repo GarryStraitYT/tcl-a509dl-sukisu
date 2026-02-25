@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "ddp_manager"
 
@@ -519,15 +516,6 @@ int dpmgr_modify_path_power_on_new_modules(disp_path_handle dp_handle,
 	return 0;
 }
 
-/**
- * NOTES: modify path should call API like this :
- *   old_scenario = dpmgr_get_scenario(handle);
- *   dpmgr_modify_path_power_on_new_modules();
- *   dpmgr_modify_path();
- *
- * after cmdq handle exec done:
- *   dpmgr_modify_path_power_off_old_modules();
- */
 int dpmgr_modify_path(disp_path_handle dp_handle,
 	enum DDP_SCENARIO_ENUM new_scenario, struct cmdqRecStruct *cmdq_handle,
 	enum DDP_MODE mode, int sw_only)
@@ -2026,11 +2014,6 @@ int dpmgr_init(void)
 	return 0;
 }
 
-/* dpmgr_factory_mode_test
- *  dpmgr_factory_mode_reset
- *  to be implemented in dsi driver
- *  these two functions are used for external display factory mode
- */
 int dpmgr_factory_mode_test(int module_name, void *cmdqhandle, void *config)
 {
 	if (ddp_get_module_driver(module_name) == 0 ||

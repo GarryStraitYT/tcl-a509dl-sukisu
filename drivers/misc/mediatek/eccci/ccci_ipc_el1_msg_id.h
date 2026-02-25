@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 enum CCCI_IPC_MSG_ID_CODE {
 	IPC_EL1_MSG_ID_INVALID = IPC_EL1_MSG_ID_BEGIN,

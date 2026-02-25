@@ -1,33 +1,4 @@
-/*****************************************************************************
- * Copyright (C) 2016 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- *
- * Accelerometer Sensor Driver
- *
- * This software is licensed under the terms of the GNU General Public
- * License version 2, as published by the Free Software Foundation, and
- * may be copied, distributed, and modified under those terms.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *history01  Modified by lanying.he for XR5592217 on 2017/11/24 for significant 
- *history02  Modified by lanying.he for XR5592217 on 2017/11/27 for gsensor calibration
- *history03  Modified by weizhi.chen for Task 6503037 MC3416-P driver update on 2018/07/11
- *****************************************************************************/
 
-/*****************************************************************************
- *** HEADER FILES
- *****************************************************************************/
 
 #include "cust_acc.h"
 #include "accel.h"
@@ -58,9 +29,6 @@ static bool pre_suspend;   //added by lanying.he for suspend
 /***************************SIGNIFICANT***************************/
 //End added by lanying.he for significant
 
-/*****************************************************************************
- *** CONFIGURATION
- *****************************************************************************/
 /* #define _MC3XXX_SUPPORT_DOT_CALIBRATION_  *//* Just for mcube's calibration APK*/
 #define _MC3XXX_SUPPORT_LPF_
 /*#define _MC3XXX_SUPPORT_CONCURRENCY_PROTECTION_ */
@@ -72,19 +40,10 @@ static bool pre_suspend;   //added by lanying.he for suspend
 #define C_MAX_FIR_LENGTH	(32)
 #define VIRTUAL_Z	0
 
-/*****************************************************************************
- *** CONSTANT / DEFINITION
- *****************************************************************************/
-/**************************
- *** CONFIGURATION
- **************************/
 #define MC3XXX_DEV_NAME						"MC3XXX"
 #define MC3XXX_DEV_DRIVER_VERSION			  "2.1.6"
 #define MC3XXX_DEV_DRIVER_VERSION_VIRTUAL_Z	"1.0.1"
 
-/**************************
- *** COMMON
- **************************/
 #define MC3XXX_AXIS_X	  0
 #define MC3XXX_AXIS_Y	  1
 #define MC3XXX_AXIS_Z	  2
@@ -114,9 +73,6 @@ struct acc_hw *get_cust_acc(void)
 {
 	return &accel_cust;
 }
-/*****************************************************************************
- *** DATA TYPE / STRUCTURE DEFINITION / ENUM
- *****************************************************************************/
 enum MCUBE_TRC {
 	MCUBE_TRC_FILTER  = 0x01,
 	MCUBE_TRC_RAWDATA = 0x02,
@@ -191,14 +147,8 @@ struct S_LRF_CB {
 };
 #endif
 
-/*****************************************************************************
- *** EXTERNAL FUNCTION
- *****************************************************************************/
 /* extern struct acc_hw*	mc3xxx_get_cust_acc_hw(void); */
 
-/*****************************************************************************
- *** STATIC FUNCTION
- *****************************************************************************/
 static int mc3xxx_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id);
 static int mc3xxx_i2c_remove(struct i2c_client *client);
 static int _mc3xxx_i2c_auto_probe(struct i2c_client *client);
@@ -210,9 +160,6 @@ static int MC3XXX_SetPowerMode(struct i2c_client *client, bool enable);
 static int MC3XXX_WriteCalibration(struct i2c_client *client, int dat[MC3XXX_AXES_NUM]);
 static void MC3XXX_SetGain(void);
 
-/*****************************************************************************
- *** STATIC VARIBLE & CONTROL BLOCK DECLARATION
- *****************************************************************************/
 static unsigned char	s_bResolution;
 static unsigned char	s_bPCODE;
 static unsigned char	s_bPCODER;
@@ -317,9 +264,6 @@ static signed char	s_bAccuracyStatus = SENSOR_STATUS_ACCURACY_MEDIUM;
 	static int	prev_P_STATUS;
 #endif
 
-/*****************************************************************************
- *** MACRO
- *****************************************************************************/
 #ifdef _MC3XXX_SUPPORT_CONCURRENCY_PROTECTION_
 static int mc3xxx_mutex_lock(void);
 static void mc3xxx_mutex_unlock(void);
@@ -351,9 +295,6 @@ static void mc3xxx_mutex_unlock(void)
 #define IS_MCFM3X()	((s_bHWID == 0x20) || ((s_bHWID >= 0x22) && (s_bHWID <= 0x2F)))
 #define IS_MENSA()	(0xA0 == s_bHWID)
 
-/*****************************************************************************
- *** TODO
- *****************************************************************************/
 #define DATA_PATH			  "/sdcard2/mcube-register-map.txt"
 
 #ifdef _MC3XXX_SUPPORT_DOT_CALIBRATION_
@@ -361,9 +302,6 @@ static void mc3xxx_mutex_unlock(void)
 	static char	backup_file_path[MC3XXX_BUF_SIZE] = "/data/misc/sensors/mcube-calib.txt";
 #endif
 
-/*****************************************************************************
- *** FUNCTION
- *****************************************************************************/
 
 /**************I2C operate API*****************************/
 static int MC3XXX_i2c_read_block(struct i2c_client *client, u8 addr, u8 *data, u8 len)
@@ -438,9 +376,6 @@ static int MC3XXX_i2c_write_block(struct i2c_client *client, u8 addr, u8 *data, 
 }
 
 
-/*****************************************
- *** GetLowPassFilter
- *****************************************/
 static unsigned int GetLowPassFilter(unsigned int X0, unsigned int Y1)
 {
 	unsigned int lTemp;
@@ -456,9 +391,6 @@ static unsigned int GetLowPassFilter(unsigned int X0, unsigned int Y1)
 	return Y1;
 }
 
-/*****************************************
- *** openFile
- *****************************************/
 static struct file *openFile(char *path, int flag, int mode)
 {
 	struct file *fp = NULL;
@@ -473,9 +405,6 @@ static struct file *openFile(char *path, int flag, int mode)
 
 }
 
-/*****************************************
- *** readFile
- *****************************************/
 #ifdef _MC3XXX_SUPPORT_DOT_CALIBRATION_
 static int readFile(struct file *fp, char *buf, int readlen)
 {
@@ -486,9 +415,6 @@ static int readFile(struct file *fp, char *buf, int readlen)
 }
 #endif
 
-/*****************************************
- *** writeFile
- *****************************************/
 static int writeFile(struct file *fp, char *buf, int writelen)
 {
 	if (fp->f_op && fp->f_op->write)
@@ -497,18 +423,12 @@ static int writeFile(struct file *fp, char *buf, int writelen)
 		return -1;
 }
 
-/*****************************************
- *** closeFile
- *****************************************/
 static int closeFile(struct file *fp)
 {
 	filp_close(fp, NULL);
 	return 0;
 }
 
-/*****************************************
- *** initKernelEnv
- *****************************************/
 static void initKernelEnv(void)
 {
 	oldfs = get_fs();
@@ -516,9 +436,6 @@ static void initKernelEnv(void)
 	ACC_LOG("initKernelEnv\n");
 }
 
-/*****************************************
- *** mcube_write_log_data
- *****************************************/
 static int mcube_write_log_data(struct i2c_client *client, u8 data[0x3f])
 {
 	#define _WRT_LOG_DATA_BUFFER_SIZE	(66 * 50)
@@ -573,9 +490,6 @@ static int mcube_write_log_data(struct i2c_client *client, u8 data[0x3f])
 }
 
 #ifdef _MC3XXX_SUPPORT_DOT_CALIBRATION_
-/*****************************************
- *** mcube_read_cali_file
- *****************************************/
 static int mcube_read_cali_file(struct i2c_client *client)
 {
 	int cali_data[3] = {0}, cali_data1[3] = {0};
@@ -629,9 +543,6 @@ static int mcube_read_cali_file(struct i2c_client *client)
 	return 0;
 }
 
-/*****************************************
- *** mcube_load_cali
- *****************************************/
 static void	mcube_load_cali(struct i2c_client *pt_i2c_client)
 {
 	if (false == s_nIsCaliLoaded) {
@@ -644,9 +555,6 @@ static void	mcube_load_cali(struct i2c_client *pt_i2c_client)
 
 #endif /* _MC3XXX_SUPPORT_DOT_CALIBRATION_ */
 
-/*****************************************
- *** mcube_psensor_ioctl
- *****************************************/
 #ifdef _MC3XXX_SUPPORT_VPROXIMITY_SENSOR_
 static long mcube_psensor_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -689,26 +597,17 @@ static long mcube_psensor_ioctl(struct file *file, unsigned int cmd, unsigned lo
 	return err;
 }
 
-/*****************************************
- *** STATIC STRUCTURE:: fops
- *****************************************/
 static const struct file_operations mcube_psensor_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = mcube_psensor_ioctl,
 };
 
-/*****************************************
- *** STATIC STRUCTURE:: misc-device
- *****************************************/
 static struct miscdevice mcube_psensor_device = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "psensor",
 	.fops  = &mcube_psensor_fops,
 };
 
-/*****************************************
- *** psensor_ps_operate
- *****************************************/
 static int psensor_ps_operate(void *self, uint32_t command, void *buff_in, int size_in,
 	void *buff_out /*sensor_data*/, int size_out, int *actualout)
 {
@@ -783,17 +682,11 @@ static int psensor_ps_operate(void *self, uint32_t command, void *buff_in, int s
 }
 #endif  /* end of _MC3XXX_SUPPORT_VPROXIMITY_SENSOR_ */
 
-/*****************************************
- *** MC3XXX_power
- *****************************************/
 static void MC3XXX_power(struct acc_hw *hw, unsigned int on)
 {
 }
 
 #ifdef _MC3XXX_SUPPORT_DOT_CALIBRATION_
-/*****************************************
- *** MC3XXX_rbm
- *****************************************/
 static void MC3XXX_rbm(struct i2c_client *client, int enable)
 {
 	u8	_baDataBuf[3] = { 0 };
@@ -862,9 +755,6 @@ static void MC3XXX_rbm(struct i2c_client *client, int enable)
 	mdelay(220);
 }
 
-/*****************************************
- *** MC3XXX_ReadData_RBM
- *****************************************/
 static int MC3XXX_ReadData_RBM(struct i2c_client *client, int data[MC3XXX_AXES_NUM])
 {
 	u8 addr = 0x0d;
@@ -907,9 +797,6 @@ static int MC3XXX_ReadData_RBM(struct i2c_client *client, int data[MC3XXX_AXES_N
 }
 #endif /* _MC3XXX_SUPPORT_DOT_CALIBRATION_ */
 
-/*****************************************
- *** MC3XXX_ValidateSensorIC
- *****************************************/
 static int MC3XXX_ValidateSensorIC(unsigned char *pbPCode, unsigned char *pbHwID)
 {
 	ACC_LOG("[%s] *pbPCode: 0x%02X, *pbHwID: 0x%02X\n", __func__, *pbPCode, *pbHwID);
@@ -958,9 +845,6 @@ static int MC3XXX_ValidateSensorIC(unsigned char *pbPCode, unsigned char *pbHwID
 	return MC3XXX_RETCODE_ERROR_IDENTIFICATION;
 }
 
-/*****************************************
- *** MC3XXX_Read_Chip_ID
- *****************************************/
 static int MC3XXX_Read_Chip_ID(struct i2c_client *client, char *buf)
 {
 	u8	 _bChipID[4] = { 0 };
@@ -983,9 +867,6 @@ static int MC3XXX_Read_Chip_ID(struct i2c_client *client, char *buf)
 	return sprintf(buf, "%02X-%02X-%02X-%02X\n", _bChipID[3], _bChipID[2], _bChipID[1], _bChipID[0]);
 }
 
-/*****************************************
- *** MC3XXX_Read_Reg_Map
- *****************************************/
 static int MC3XXX_Read_Reg_Map(struct i2c_client *p_i2c_client, u8 *pbUserBuf)
 {
 	u8	 _baData[MC3XXX_REGMAP_LENGTH] = { 0 };
@@ -1010,9 +891,6 @@ static int MC3XXX_Read_Reg_Map(struct i2c_client *p_i2c_client, u8 *pbUserBuf)
 	return 0;
 }
 
-/*****************************************
- *** MC3XXX_SaveDefaultOffset
- *****************************************/
 static void MC3XXX_SaveDefaultOffset(struct i2c_client *p_i2c_client)
 {
 	ACC_LOG("[%s]\n", __func__);
@@ -1025,9 +903,6 @@ static void MC3XXX_SaveDefaultOffset(struct i2c_client *p_i2c_client)
 		s_baOTP_OffsetData[3], s_baOTP_OffsetData[4], s_baOTP_OffsetData[5]);
 }
 
-/*****************************************
- *** MC3XXX_LPF
- *****************************************/
 #ifdef _MC3XXX_SUPPORT_LPF_
 static void MC3XXX_LPF(struct mc3xxx_i2c_data *priv, s16 data[MC3XXX_AXES_NUM])
 {
@@ -1084,9 +959,6 @@ static void MC3XXX_LPF(struct mc3xxx_i2c_data *priv, s16 data[MC3XXX_AXES_NUM])
 #endif	/* END OF #ifdef _MC3XXX_SUPPORT_LPF_ */
 
 #ifdef _MC3XXX_SUPPORT_LRF_
-/*****************************************
- *** _MC3XXX_LowResFilter
- *****************************************/
 static void _MC3XXX_LowResFilter(s16 nAxis, s16 naData[MC3XXX_AXES_NUM])
 {
 	#define _LRF_DIFF_COUNT_POS				  2
@@ -1159,9 +1031,6 @@ _LRF_RETURN:
 }
 #endif	/* END OF #ifdef _MC3XXX_SUPPORT_LRF_ */
 
-/*****************************************
- *** _MC3XXX_ReadData_RBM2RAW
- *****************************************/
 static void	_MC3XXX_ReadData_RBM2RAW(s16 waData[MC3XXX_AXES_NUM])
 {
 	struct mc3xxx_i2c_data   *_pt_i2c_obj = mc3xxx_obj_i2c_data;
@@ -1211,9 +1080,6 @@ static void	_MC3XXX_ReadData_RBM2RAW(s16 waData[MC3XXX_AXES_NUM])
 	iAcc1Lpf1_Z = iAcc1Lpf0_Z;
 }
 
-/*****************************************
- *** MC3XXX_ReadData
- *****************************************/
 static int	MC3XXX_ReadData(struct i2c_client *pt_i2c_client, s16 waData[MC3XXX_AXES_NUM])
 {
 	u8	_baData[MC3XXX_DATA_LEN] = { 0 };
@@ -1316,9 +1182,6 @@ static int	MC3XXX_ReadData(struct i2c_client *pt_i2c_client, s16 waData[MC3XXX_A
 	return MC3XXX_RETCODE_SUCCESS;
 }
 
-/*****************************************
- *** MC3XXX_ReadOffset
- *****************************************/
 static int MC3XXX_ReadOffset(struct i2c_client *client, s16 ofs[MC3XXX_AXES_NUM])
 {
 	int err = 0;
@@ -1361,9 +1224,6 @@ static int MC3XXX_ReadOffset(struct i2c_client *client, s16 ofs[MC3XXX_AXES_NUM]
 	return err;
 }
 
-/*****************************************
- *** MC3XXX_ResetCalibration
- *****************************************/
 static int MC3XXX_ResetCalibration(struct i2c_client *client)
 {
 	struct mc3xxx_i2c_data *obj = i2c_get_clientdata(client);
@@ -1416,9 +1276,6 @@ static int MC3XXX_ResetCalibration(struct i2c_client *client)
 	return err;
 }
 
-/*****************************************
- *** MC3XXX_ReadCalibration
- *****************************************/
 static int MC3XXX_ReadCalibration(struct i2c_client *client, int dat[MC3XXX_AXES_NUM])
 {
 	struct mc3xxx_i2c_data *obj = i2c_get_clientdata(client);
@@ -1440,9 +1297,6 @@ static int MC3XXX_ReadCalibration(struct i2c_client *client, int dat[MC3XXX_AXES
 	return 0;
 }
 
-/*****************************************
- *** MC3XXX_WriteCalibration
- *****************************************/
 static int MC3XXX_WriteCalibration(struct i2c_client *client, int dat[MC3XXX_AXES_NUM])
 {
 	struct mc3xxx_i2c_data *obj = i2c_get_clientdata(client);
@@ -1578,9 +1432,6 @@ static int MC3XXX_WriteCalibration(struct i2c_client *client, int dat[MC3XXX_AXE
 	return err;
 }
 
-/*****************************************
- *** MC3XXX_SetPowerMode
- *****************************************/
 static int MC3XXX_SetPowerMode(struct i2c_client *client, bool enable)
 {
 	u8 databuf[2] = {0};
@@ -1620,9 +1471,6 @@ static int MC3XXX_SetPowerMode(struct i2c_client *client, bool enable)
 	return MC3XXX_RETCODE_SUCCESS;
 }
 
-/*****************************************
- *** MC3XXX_SetResolution
- *****************************************/
 static void MC3XXX_SetResolution(void)
 {
 	ACC_LOG("[%s]\n", __func__);
@@ -1676,9 +1524,6 @@ static void MC3XXX_SetResolution(void)
 	ACC_LOG("[%s] s_bResolution: %d\n", __func__, s_bResolution);
 }
 
-/*****************************************
- *** MC3XXX_SetSampleRate
- *****************************************/
 static void MC3XXX_SetSampleRate(struct i2c_client *pt_i2c_client)
 {
 	unsigned char	_baDataBuf[2] = { 0 };
@@ -1727,9 +1572,6 @@ static void MC3XXX_SetSampleRate(struct i2c_client *pt_i2c_client)
 	MC3XXX_i2c_write_block(pt_i2c_client, MC3XXX_REG_SAMPLE_RATE, _baDataBuf, 1);
 }
 
-/*****************************************
- *** MC3XXX_LowPassFilter
- *****************************************/
 static void MC3XXX_LowPassFilter(struct i2c_client *mc3XXX_client)
 {
 	unsigned char	_baDataBuf[2] = { 0 };
@@ -1747,9 +1589,6 @@ static void MC3XXX_LowPassFilter(struct i2c_client *mc3XXX_client)
 	}
 }
 
-/*****************************************
- *** MC3XXX_ConfigRegRange
- *****************************************/
 static void MC3XXX_ConfigRegRange(struct i2c_client *pt_i2c_client)
 {
 	unsigned char	_baDataBuf[2] = { 0 };
@@ -1786,9 +1625,6 @@ static void MC3XXX_ConfigRegRange(struct i2c_client *pt_i2c_client)
 	ACC_LOG("[%s] set 0x%X\n", __func__, _baDataBuf[1]);
 }
 
-/*****************************************
- *** MC3XXX_SetGain
- *****************************************/
 static void MC3XXX_SetGain(void)
 {
 	gsensor_gain.x = gsensor_gain.y = gsensor_gain.z = 1024;
@@ -1808,9 +1644,6 @@ static void MC3XXX_SetGain(void)
 	ACC_LOG("[%s] gain: %d / %d / %d\n", __func__, gsensor_gain.x, gsensor_gain.y, gsensor_gain.z);
 }
 
-/*****************************************
- *** MC3XXX_Init
- *****************************************/
  
 //Begin added by lanying.he for significant
 
@@ -2017,9 +1850,6 @@ static int MC3XXX_Init(struct i2c_client *client, int reset_cali)
 	return MC3XXX_RETCODE_SUCCESS;
 }
 
-/*****************************************
- *** MC3XXX_ReadChipInfo
- *****************************************/
 static int MC3XXX_ReadChipInfo(struct i2c_client *client, char *buf, int bufsize)
 {
 	if ((buf == NULL) || (bufsize <= 30))
@@ -2034,9 +1864,6 @@ static int MC3XXX_ReadChipInfo(struct i2c_client *client, char *buf, int bufsize
 	return 0;
 }
 
-/*****************************************
- *** MC3XXX_ReadSensorData
- *****************************************/
 static int MC3XXX_ReadSensorData(struct i2c_client *pt_i2c_client, char *pbBuf, int nBufSize)
 {
 	int					   _naAccelData[MC3XXX_AXES_NUM] = { 0 };
@@ -2110,9 +1937,6 @@ static int MC3XXX_ReadSensorData(struct i2c_client *pt_i2c_client, char *pbBuf, 
 	return MC3XXX_RETCODE_SUCCESS;
 }
 
-/*****************************************
- *** _MC3XXX_ReadAverageData
- *****************************************/
 #ifdef _MC3XXX_SUPPORT_APPLY_AVERAGE_AGORITHM_
 static int _MC3XXX_ReadAverageData(struct i2c_client *client, char *buf)
 {
@@ -2189,9 +2013,6 @@ static int _MC3XXX_ReadAverageData(struct i2c_client *client, char *buf)
 }
 #endif	/* END OF #ifdef _MC3XXX_SUPPORT_APPLY_AVERAGE_AGORITHM_ */
 
-/*****************************************
- *** MC3XXX_ReadRawData
- *****************************************/
 static int MC3XXX_ReadRawData(struct i2c_client *client, char *buf)
 {
 	int res = 0;
@@ -2225,9 +2046,6 @@ static int MC3XXX_ReadRawData(struct i2c_client *client, char *buf)
 }
 
 #ifdef _MC3XXX_SUPPORT_DOT_CALIBRATION_
-/*****************************************
- *** MC3XXX_ReadRBMData
- *****************************************/
 static int MC3XXX_ReadRBMData(struct i2c_client *client, char *buf)
 {
 	int res = 0;
@@ -2255,9 +2073,6 @@ static int MC3XXX_ReadRBMData(struct i2c_client *client, char *buf)
 }
 #endif /* _MC3XXX_SUPPORT_DOT_CALIBRATION_ */
 
-/*****************************************
- *** MC3XXX_JudgeTestResult
- *****************************************/
 static int MC3XXX_JudgeTestResult(struct i2c_client *client)
 {
 	int	res				  = 0;
@@ -2287,9 +2102,6 @@ static int MC3XXX_JudgeTestResult(struct i2c_client *client)
 	return -EINVAL;
 }
 
-/*****************************************
- *** MC3XXX_SelfCheck
- *****************************************/
 static void MC3XXX_SelfCheck(struct i2c_client *client, u8 *pUserBuf)
 {
 	u8	_bRData1 = 0;
@@ -2375,9 +2187,6 @@ static void MC3XXX_SelfCheck(struct i2c_client *client, u8 *pUserBuf)
 	mdelay(10);
 }
 
-/*****************************************
- *** MC3XXX_GetOpenStatus
- *****************************************/
 #ifdef _MC3XXX_SUPPORT_PERIODIC_DOC_
 static int	MC3XXX_GetOpenStatus(void)
 {
@@ -2391,9 +2200,6 @@ static int	MC3XXX_GetOpenStatus(void)
 }
 #endif
 
-/*****************************************
- *** show_chipinfo_value
- *****************************************/
 static ssize_t show_chipinfo_value(struct device_driver *ddri, char *buf)
 {
 	struct i2c_client *client = mc3xxx_i2c_client;
@@ -2409,9 +2215,6 @@ static ssize_t show_chipinfo_value(struct device_driver *ddri, char *buf)
 	return snprintf(buf, PAGE_SIZE, "%s\n", strbuf);
 }
 
-/*****************************************
- *** show_sensordata_value
- *****************************************/
 static ssize_t show_sensordata_value(struct device_driver *ddri, char *buf)
 {
 	struct i2c_client *client = mc3xxx_i2c_client;
@@ -2428,9 +2231,6 @@ static ssize_t show_sensordata_value(struct device_driver *ddri, char *buf)
 	return snprintf(buf, PAGE_SIZE, "%s\n", strbuf);
 }
 
-/*****************************************
- *** show_cali_value
- *****************************************/
 static ssize_t show_cali_value(struct device_driver *ddri, char *buf)
 {
 	struct i2c_client *client = mc3xxx_i2c_client;
@@ -2472,9 +2272,6 @@ static ssize_t show_cali_value(struct device_driver *ddri, char *buf)
 		return len;
 }
 
-/*****************************************
- *** store_cali_value
- *****************************************/
 static ssize_t store_cali_value(struct device_driver *ddri, const char *buf, size_t count)
 {
 	struct i2c_client *client = mc3xxx_i2c_client;
@@ -2507,9 +2304,6 @@ static ssize_t store_cali_value(struct device_driver *ddri, const char *buf, siz
 	return count;
 }
 
-/*****************************************
- *** show_selftest_value
- *****************************************/
 static ssize_t show_selftest_value(struct device_driver *ddri, char *buf)
 {
 	struct i2c_client *client = mc3xxx_i2c_client;
@@ -2522,9 +2316,6 @@ static ssize_t show_selftest_value(struct device_driver *ddri, char *buf)
 	return snprintf(buf, 8, "%s\n", selftestRes);
 }
 
-/*****************************************
- *** store_selftest_value
- *****************************************/
 static ssize_t store_selftest_value(struct device_driver *ddri, const char *buf, size_t count)
 {   /*write anything to this register will trigger the process*/
 	struct i2c_client *client = mc3xxx_i2c_client;
@@ -2557,9 +2348,6 @@ static ssize_t store_selftest_value(struct device_driver *ddri, const char *buf,
 	return count;
 }
 
-/*****************************************
- *** show_firlen_value
- *****************************************/
 static ssize_t show_firlen_value(struct device_driver *ddri, char *buf)
 {
 	#ifdef _MC3XXX_SUPPORT_LPF_
@@ -2588,9 +2376,6 @@ static ssize_t show_firlen_value(struct device_driver *ddri, char *buf)
 	#endif
 }
 
-/*****************************************
- *** store_firlen_value
- *****************************************/
 static ssize_t store_firlen_value(struct device_driver *ddri, const char *buf, size_t count)
 {
 	#ifdef _MC3XXX_SUPPORT_LPF_
@@ -2619,9 +2404,6 @@ static ssize_t store_firlen_value(struct device_driver *ddri, const char *buf, s
 	return count;
 }
 
-/*****************************************
- *** show_trace_value
- *****************************************/
 static ssize_t show_trace_value(struct device_driver *ddri, char *buf)
 {
 	ssize_t res = 0;
@@ -2638,9 +2420,6 @@ static ssize_t show_trace_value(struct device_driver *ddri, char *buf)
 	return res;
 }
 
-/*****************************************
- *** store_trace_value
- *****************************************/
 static ssize_t store_trace_value(struct device_driver *ddri, const char *buf, size_t count)
 {
 	struct mc3xxx_i2c_data *obj = mc3xxx_obj_i2c_data;
@@ -2661,9 +2440,6 @@ static ssize_t store_trace_value(struct device_driver *ddri, const char *buf, si
 	return count;
 }
 
-/*****************************************
- *** show_status_value
- *****************************************/
 static ssize_t show_status_value(struct device_driver *ddri, char *buf)
 {
 	ssize_t len = 0;
@@ -2685,9 +2461,6 @@ static ssize_t show_status_value(struct device_driver *ddri, char *buf)
 	return len;
 }
 
-/*****************************************
- *** show_power_status
- *****************************************/
 static ssize_t show_power_status(struct device_driver *ddri, char *buf)
 {
 	ssize_t res = 0;
@@ -2704,9 +2477,6 @@ static ssize_t show_power_status(struct device_driver *ddri, char *buf)
 	return res;
 }
 
-/*****************************************
- *** show_version_value
- *****************************************/
 static ssize_t show_version_value(struct device_driver *ddri, char *buf)
 {
 	if (1 == VIRTUAL_Z)
@@ -2715,9 +2485,6 @@ static ssize_t show_version_value(struct device_driver *ddri, char *buf)
 		return snprintf(buf, PAGE_SIZE, "%s\n", MC3XXX_DEV_DRIVER_VERSION);
 }
 
-/*****************************************
- *** show_chip_id
- *****************************************/
 static ssize_t show_chip_id(struct device_driver *ddri, char *buf)
 {
 	struct mc3xxx_i2c_data   *_pt_i2c_data = mc3xxx_obj_i2c_data;
@@ -2725,17 +2492,11 @@ static ssize_t show_chip_id(struct device_driver *ddri, char *buf)
 	return MC3XXX_Read_Chip_ID(_pt_i2c_data->client, buf);
 }
 
-/*****************************************
- *** show_virtual_z
- *****************************************/
 static ssize_t show_virtual_z(struct device_driver *ddri, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%s\n", VIRTUAL_Z == 1 ? "Virtual Z Support" : "No Virtual Z Support");
 }
 
-/*****************************************
- *** show_regiter_map
- *****************************************/
 static ssize_t show_regiter_map(struct device_driver *ddri, char *buf)
 {
 	u8		 _bIndex	   = 0;
@@ -2770,17 +2531,11 @@ static ssize_t show_regiter_map(struct device_driver *ddri, char *buf)
 	return _tLength;
 }
 
-/*****************************************
- *** store_regiter_map
- *****************************************/
 static ssize_t store_regiter_map(struct device_driver *ddri, const char *buf, size_t count)
 {
 	return count;
 }
 
-/*****************************************
- *** show_chip_orientation
- *****************************************/
 static ssize_t show_chip_orientation(struct device_driver *ptDevDrv, char *pbBuf)
 {
 	ssize_t		  _tLength = 0;
@@ -2793,9 +2548,6 @@ static ssize_t show_chip_orientation(struct device_driver *ptDevDrv, char *pbBuf
 	return _tLength;
 }
 
-/*****************************************
- *** store_chip_orientation
- *****************************************/
 static ssize_t store_chip_orientation(struct device_driver *ptDevDrv, const char *pbBuf, size_t tCount)
 {
 	int _nDirection = 0;
@@ -2816,17 +2568,11 @@ static ssize_t store_chip_orientation(struct device_driver *ptDevDrv, const char
 	return tCount;
 }
 
-/*****************************************
- *** show_accuracy_status
- *****************************************/
 static ssize_t show_accuracy_status(struct device_driver *ddri, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%d\n", s_bAccuracyStatus);
 }
 
-/*****************************************
- *** store_accuracy_status
- *****************************************/
 static ssize_t store_accuracy_status(struct device_driver *ddri, const char *buf, size_t count)
 {
 	int	_nAccuracyStatus = 0;
@@ -2848,9 +2594,6 @@ static ssize_t store_accuracy_status(struct device_driver *ddri, const char *buf
 	return count;
 }
 
-/*****************************************
- *** show_selfcheck_value
- *****************************************/
 static ssize_t show_selfcheck_value(struct device_driver *ptDevDriver, char *pbBuf)
 {
 	struct i2c_client   *_pt_i2c_client = mc3xxx_i2c_client;
@@ -2865,9 +2608,6 @@ static ssize_t show_selfcheck_value(struct device_driver *ptDevDriver, char *pbB
 	return 64;
 }
 
-/*****************************************
- *** store_selfcheck_value
- *****************************************/
 static ssize_t store_selfcheck_value(struct device_driver *ddri, const char *buf, size_t count)
 {
 	/* reserved */
@@ -2876,9 +2616,6 @@ static ssize_t store_selfcheck_value(struct device_driver *ddri, const char *buf
 	return count;
 }
 
-/*****************************************
- *** show_chip_validate_value
- *****************************************/
 static ssize_t show_chip_validate_value(struct device_driver *ptDevDriver, char *pbBuf)
 {
 	unsigned char	_bChipValidation = 0;
@@ -2888,9 +2625,6 @@ static ssize_t show_chip_validate_value(struct device_driver *ptDevDriver, char 
 	return snprintf(pbBuf, PAGE_SIZE, "%d\n", _bChipValidation);
 }
 
-/*****************************************
- *** show_pdoc_enable_value
- *****************************************/
 static ssize_t show_pdoc_enable_value(struct device_driver *ptDevDriver, char *pbBuf)
 {
 	#ifdef _MC3XXX_SUPPORT_PERIODIC_DOC_
@@ -2974,9 +2708,6 @@ static ssize_t store_reg_val(struct device_driver *ddri, const char *buf, size_t
 }
 //End added by lanying.he for significant
 
-/*****************************************
- *** DRIVER ATTRIBUTE LIST TABLE
- *****************************************/
 static DRIVER_ATTR(chipinfo,		   S_IRUGO, show_chipinfo_value,   NULL);
 static DRIVER_ATTR(sensordata,		   S_IRUGO, show_sensordata_value, NULL);
 static DRIVER_ATTR(cali, S_IWUSR | S_IRUGO, show_cali_value,	   store_cali_value);
@@ -3017,9 +2748,6 @@ static struct driver_attribute   *mc3xxx_attr_list[] = {
 							   &driver_attr_regval,  //added by lanying.he for significant
 							   };
 
-/*****************************************
- *** mc3xxx_create_attr
- *****************************************/
 //tct need chipinfo which display in mmi
 static ssize_t gsensor_show(struct device* dev,struct device_attribute *attr, char *buf)
 {
@@ -3069,9 +2797,6 @@ static int mc3xxx_create_attr(struct device_driver *driver)
 	return err;
 }
 
-/*****************************************
- *** mc3xxx_delete_attr
- *****************************************/
 static int mc3xxx_delete_attr(struct device_driver *driver)
 {
 	int idx, err = 0;
@@ -3085,9 +2810,6 @@ static int mc3xxx_delete_attr(struct device_driver *driver)
 
 	return err;
 }
-/*****************************************
- Begin added by lanying.he for gsensor calibration
- *****************************************/
  static int mc3xxx_open(struct inode *inode, struct file *file)
 {
 	file->private_data = mc3xxx_i2c_client;
@@ -3503,12 +3225,6 @@ static long mc3xxx_compat_ioctl(struct file *file, unsigned int cmd,
 	return err;
 }
 #endif
-/*****************************************
- End added by lanying.he for gsensor calibration
- *****************************************/
-/*****************************************
- *** MC3XXX_reset
- *****************************************/
 static void MC3XXX_reset(struct i2c_client *client)
 {
 	unsigned char	_baBuf[2] = { 0 };
@@ -3582,9 +3298,6 @@ static struct miscdevice mc3xxx_device = {
 						.fops  = &mc3xxx_fops,
 						};
 //End added by lanying.he for gsensor calibration
-/*****************************************
- *** mc3xxx_suspend
- *****************************************/
 static int mc3xxx_suspend(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
@@ -3616,9 +3329,6 @@ static int mc3xxx_suspend(struct device *dev)
 	return err;
 }
 
-/*****************************************
- *** mc3xxx_resume
- *****************************************/
 static int mc3xxx_resume(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
@@ -3660,9 +3370,6 @@ static int mc3xxx_resume(struct device *dev)
 }
 
 
-/*****************************************
- *** _mc3xxx_i2c_auto_probe
- *****************************************/
 static int _mc3xxx_i2c_auto_probe(struct i2c_client *client)
 {
 	#define _MC3XXX_I2C_PROBE_ADDR_COUNT_	\
@@ -3791,30 +3498,10 @@ static int mc3xxx_get_data(int *x, int *y, int *z, int *status)
 static int mc3xxx_batch(int flag, int64_t samplingPeriodNs, int64_t maxBatchReportLatencyNs)
 {
 	int value = 0;
-/*
-*	int err = 0;
-*	int sample_delay = 0;
-*/
 
 	value = (int)samplingPeriodNs/1000/1000;
 	/*FIX ME */
 	/*NEED SUPPORT batch ?*/
-/*
-*	if (value <= 5)
-*		sample_delay = MC3410_ACCEL_ODR_400HZ;
-*	else if (value <= 10)
-*		sample_delay = MC3410_ACCEL_ODR_200HZ;
-*	else
-*		sample_delay = MC3410_ACCEL_ODR_100HZ;
-*
-*	err = MC3XXX_SetSampleRate(mc3xxx_obj_i2c_data->client);
-*
-*	if (err < 0) {
-*		ACC_PR_ERR("set delay parameter error!\n");
-*		return -1;
-*	}
-*	ACC_LOG("mc3xxx_batch acc set delay = (%d) ok.\n", value);
-*/
 	ACC_LOG("mc3xxx_batch (%d), chip only use 1024HZ\n", value);
 	return 0;
 }
@@ -3920,9 +3607,6 @@ static struct accel_factory_public mc3xxx_factory_device = {
 };
 #endif
 //End delete by lanying.he for calibration
-/*****************************************
- *** mc3xxx_i2c_probe
- *****************************************/
 static int mc3xxx_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct i2c_client *new_client;
@@ -4072,9 +3756,6 @@ exit:
 	return err;
 }
 
-/*****************************************
- *** mc3xxx_i2c_remove
- *****************************************/
 static int mc3xxx_i2c_remove(struct i2c_client *client)
 {
 	int err = 0;
@@ -4101,9 +3782,6 @@ static int mc3xxx_i2c_remove(struct i2c_client *client)
 }
 
 
-/*****************************************
- *** mc3xxx_remove
- *****************************************/
 static int mc3xxx_remove(void)
 {
 	MC3XXX_power(hw, 0);
@@ -4113,9 +3791,6 @@ static int mc3xxx_remove(void)
 }
 
 // Begin added by lanying.he for significant
-/*****************************************
- *** significant
- *****************************************/
  #ifdef SIGNIFICANT
 irqreturn_t eint_func(int irq , void *desc) //liupeng begin
 {
@@ -4248,9 +3923,6 @@ int mc3413_set_acc_interrupter(bool flag)
 }
 #endif
 //End added by lanying.he for significant
-/*****************************************
- *** mc3xxx_local_init
- *****************************************/
 #ifdef CONFIG_MTK_ROBUST   
 extern char gsensor_module_name[256]; //add by lanying.he adding gsensor deviceinfo
 #endif
@@ -4271,9 +3943,6 @@ static int  mc3xxx_local_init(void)
 	return 0;
 }
 
-/*****************************************
- *** mc3xxx_init
- *****************************************/
 static int __init mc3xxx_init(void)
 {
 	if(acc_driver_add(&mc3xxx_init_info)==-1)
@@ -4284,9 +3953,6 @@ static int __init mc3xxx_init(void)
 	return 0;
 }
 
-/*****************************************
- *** mc3xxx_exit
- *****************************************/
 static void __exit mc3xxx_exit(void)
 {
 	ACC_LOG("mc3xxx_exit\n");

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/fs.h>
 #include <linux/slab.h>
@@ -21,13 +18,6 @@
 #define VP9_MAX_FRM_BUF_NUM 9
 #define VP9_MAX_FRM_BUF_NODE_NUM (VP9_MAX_FRM_BUF_NUM * 2)
 
-/**
- * struct vp9_dram_buf - contains buffer info for vpu
- * @va : cpu address
- * @pa : iova address
- * @sz : buffer size
- * @padding : for 64 bytes alignment
- */
 struct vp9_dram_buf {
 	unsigned long va;
 	unsigned long pa;
@@ -35,93 +25,28 @@ struct vp9_dram_buf {
 	unsigned int padding;
 };
 
-/**
- * struct vp9_fb_info - contains frame buffer info
- * @fb : frmae buffer
- * @reserved : reserved field used by vpu
- */
 struct vp9_fb_info {
 	struct vdec_fb *fb;
 	unsigned int reserved[32];
 };
 
-/**
- * struct vp9_ref_cnt_buf - contains reference buffer information
- * @buf : referenced frame buffer
- * @ref_cnt : referenced frame buffer's reference count.
- *      When reference count=0, remove it from reference list
- */
 struct vp9_ref_cnt_buf {
 	struct vp9_fb_info buf;
 	unsigned int ref_cnt;
 };
 
-/**
- * struct vp9_fb_info - contains current frame's reference buffer information
- * @buf : reference buffer
- * @idx : reference buffer index to frm_bufs
- * @reserved : reserved field used by vpu
- */
 struct vp9_ref_buf {
 	struct vp9_fb_info *buf;
 	unsigned int idx;
 	unsigned int reserved[6];
 };
 
-/**
- * struct vp9_fb_info - contains frame buffer info
- * @fb : super frame reference frame buffer
- * @used : this reference frame info entry is used
- * @padding : for 64 bytes size align
- */
 struct vp9_sf_ref_fb {
 	struct vdec_fb fb;
 	int used;
 	int padding;
 };
 
-/*
- * struct vdec_vp9_vsi - shared buffer between host and VPU firmware
- *      AP-W/R : AP is writer/reader on this item
- *      VPU-W/R: VPU is write/reader on this item
- * @sf_bs_buf : super frame backup buffer (AP-W, VPU-R)
- * @sf_ref_fb : record supoer frame reference buffer information
- *      (AP-R/W, VPU-R/W)
- * @sf_next_ref_fb_idx : next available super frame (AP-W, VPU-R)
- * @sf_frm_cnt : super frame count, filled by vpu (AP-R, VPU-W)
- * @sf_frm_offset : super frame offset, filled by vpu (AP-R, VPU-W)
- * @sf_frm_sz : super frame size, filled by vpu (AP-R, VPU-W)
- * @sf_frm_idx : current super frame (AP-R, VPU-W)
- * @sf_init : inform super frame info already parsed by vpu (AP-R, VPU-W)
- * @fb : capture buffer (AP-W, VPU-R)
- * @bs : bs buffer (AP-W, VPU-R)
- * @cur_fb : current show capture buffer (AP-R/W, VPU-R/W)
- * @pic_w : picture width (AP-R, VPU-W)
- * @pic_h : picture height (AP-R, VPU-W)
- * @buf_w : codec width (AP-R, VPU-W)
- * @buf_h : coded height (AP-R, VPU-W)
- * @buf_sz_y_bs : ufo compressed y plane size (AP-R, VPU-W)
- * @buf_sz_c_bs : ufo compressed cbcr plane size (AP-R, VPU-W)
- * @buf_len_sz_y : size used to store y plane ufo info (AP-R, VPU-W)
- * @buf_len_sz_c : size used to store cbcr plane ufo info (AP-R, VPU-W)
-
- * @profile : profile sparsed from vpu (AP-R, VPU-W)
- * @show_frame : display this frame or not (AP-R, VPU-W)
- * @show_existing_frame : inform this frame is show existing frame
- *      (AP-R, VPU-W)
- * @frm_to_show_idx : index to show frame (AP-R, VPU-W)
-
- * @refresh_frm_flags : indicate when frame need to refine reference count
- *      (AP-R, VPU-W)
- * @resolution_changed : resolution change in this frame (AP-R, VPU-W)
-
- * @frm_bufs : maintain reference buffer info (AP-R/W, VPU-R/W)
- * @ref_frm_map : maintain reference buffer map info (AP-R/W, VPU-R/W)
- * @new_fb_idx : index to frm_bufs array (AP-R, VPU-W)
- * @frm_num : decoded frame number, include sub-frame count (AP-R, VPU-W)
- * @mv_buf : motion vector working buffer (AP-W, VPU-R)
- * @frm_refs : maintain three reference buffer info (AP-R/W, VPU-R/W)
- */
 struct vdec_vp9_vsi {
 	unsigned char sf_bs_buf[VP9_SUPER_FRAME_BS_SZ];
 	struct vp9_sf_ref_fb sf_ref_fb[VP9_MAX_FRM_BUF_NUM - 1];
@@ -158,22 +83,6 @@ struct vdec_vp9_vsi {
 	struct vp9_ref_buf frm_refs[REFS_PER_FRAME];
 };
 
-/*
- * struct vdec_vp9_inst - vp9 decode instance
- * @mv_buf : working buffer for mv
- * @dec_fb : vdec_fb node to link fb to different fb_xxx_list
- * @available_fb_node_list : current available vdec_fb node
- * @fb_use_list : current used or referenced vdec_fb
- * @fb_free_list : current available to free vdec_fb
- * @fb_disp_list : current available to display vdec_fb
- * @cur_fb : current frame buffer
- * @ctx : current decode context
- * @vpu : vpu instance information
- * @vsi : shared buffer between host and VPU firmware
- * @total_frm_cnt : total frame count, it do not include sub-frames in super
- *          frame
- * @mem : instance memory information
- */
 struct vdec_vp9_inst {
 	struct mtk_vcodec_mem mv_buf;
 
@@ -287,11 +196,6 @@ static void vp9_free_all_sf_ref_fb(struct vdec_vp9_inst *inst)
 	}
 }
 
-/* For each sub-frame except the last one, the driver will dynamically
- * allocate reference buffer by calling vp9_get_sf_ref_fb()
- * The last sub-frame will use the original fb provided by the
- * vp9_dec_decode() interface
- */
 static int vp9_get_sf_ref_fb(struct vdec_vp9_inst *inst)
 {
 	int idx;

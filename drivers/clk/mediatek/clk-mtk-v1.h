@@ -1,15 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author: James Liao <jamesjj.liao@mediatek.com>
- */
 
 #ifndef __DRV_CLK_MTK_H
 #define __DRV_CLK_MTK_H
 
-/*
- * This is a private header file. DO NOT include it except clk-*.c.
- */
 
 #include <linux/bitops.h>
 #include <linux/clk.h>

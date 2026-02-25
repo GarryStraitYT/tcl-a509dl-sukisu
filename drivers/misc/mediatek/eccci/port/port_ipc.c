@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -30,9 +27,6 @@ static struct ipc_task_id_map ipc_msgsvc_maptbl[] = {
 };
 
 #ifdef CONFIG_MTK_CONN_MD
-/* this file also include ccci_ipc_task_ID.h,
- * must include it after ipc_msgsvc_maptbl
- */
 #include "conn_md_exp.h"
 #endif
 

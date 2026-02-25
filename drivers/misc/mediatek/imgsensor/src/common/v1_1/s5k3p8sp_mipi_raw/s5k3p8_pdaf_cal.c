@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
@@ -29,10 +26,6 @@
 /*********************Modify Following Strings for Debug**********************/
 #define PFX "s5k3p8_camera_pdaf"
 /* #define LOG_1 LOG_INF("s5k3p8,MIPI 4LANE\n") */
-/* #define LOG_2 \
- * LOG_INF("preview 2096*1552@30fps,640Mbps/lane; video 4192*3104@30fps,
- * 1.2Gbps/lane; capture 13M@30fps,1.2Gbps/lane\n")
- */
 /****************************   Modify end   *********************************/
 
 #define LOG_INF(fmt, args...)   pr_debug(PFX "[%s] " fmt, __func__, ##args)

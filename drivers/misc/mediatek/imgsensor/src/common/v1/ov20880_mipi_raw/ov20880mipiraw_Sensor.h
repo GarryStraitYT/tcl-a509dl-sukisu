@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 OV20880mipi_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *	PengtaoFan
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _OV20880MIPI_SENSOR_H
 #define _OV20880MIPI_SENSOR_H
 

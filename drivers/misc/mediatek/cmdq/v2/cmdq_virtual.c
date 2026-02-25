@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include "cmdq_core.h"
 #include "cmdq_reg.h"
@@ -239,9 +236,6 @@ uint64_t cmdq_virtual_flag_from_scenario_legacy(
 	return flag;
 }
 
-/*
- * GCE capability
- */
 uint32_t cmdq_virtual_get_subsys_LSB_in_arg_a(void)
 {
 	return 16;
@@ -270,10 +264,6 @@ bool cmdq_virtual_is_valid_notify_thread_for_secure_path(
 #endif
 }
 
-/**
- * Scenario related
- *
- */
 bool cmdq_virtual_is_disp_scenario(
 	const enum CMDQ_SCENARIO_ENUM scenario)
 {
@@ -564,10 +554,6 @@ bool cmdq_virtual_is_disp_loop(enum CMDQ_SCENARIO_ENUM scenario)
 	return is_disp_loop;
 }
 
-/**
- * Module dependent
- *
- */
 void cmdq_virtual_get_reg_id_from_hwflag(uint64_t hwflag,
 	enum CMDQ_DATA_REGISTER_ENUM *valueRegId,
 	enum CMDQ_DATA_REGISTER_ENUM *destRegId,
@@ -921,10 +907,6 @@ const char *cmdq_virtual_parse_error_module_by_hwflag_impl(
 	return module;
 }
 
-/**
- * Debug
- *
- */
 void cmdq_virtual_dump_mmsys_config(void)
 {
 	/* do nothing */
@@ -979,10 +961,6 @@ void cmdq_virtual_dump_gpr(void)
 }
 
 
-/**
- * Record usage
- *
- */
 
 uint64_t cmdq_virtual_flag_from_scenario(enum CMDQ_SCENARIO_ENUM scn)
 {
@@ -1053,10 +1031,6 @@ uint64_t cmdq_virtual_flag_from_scenario(enum CMDQ_SCENARIO_ENUM scn)
 	return flag;
 }
 
-/**
- * Event backup
- *
- */
 struct cmdq_backup_event_struct {
 	enum CMDQ_EVENT_ENUM EventID;
 	uint32_t BackupValue;
@@ -1124,10 +1098,6 @@ void cmdq_virtual_event_restore(void)
 	}
 }
 
-/**
- * Test
- *
- */
 void cmdq_virtual_test_setup(void)
 {
 	/* unconditionally set CMDQ_SYNC_TOKEN_CONFIG_ALLOW */

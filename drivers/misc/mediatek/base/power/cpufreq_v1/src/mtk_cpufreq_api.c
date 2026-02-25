@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include "mtk_cpufreq_internal.h"
 #include "mtk_cpufreq_hybrid.h"

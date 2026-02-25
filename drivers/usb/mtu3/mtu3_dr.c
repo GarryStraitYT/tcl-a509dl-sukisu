@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_dr.c - dual role switch and host glue layer
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/usb/role.h>
 #include <linux/of_platform.h>
@@ -175,10 +168,6 @@ static void ssusb_gadget_disconnect(struct mtu3 *mtu)
 	usb_gadget_set_state(&mtu->g, USB_STATE_NOTATTACHED);
 }
 
-/*
- * switch to host: -> MTU3_VBUS_OFF --> MTU3_ID_GROUND
- * switch to device: -> MTU3_ID_FLOAT --> MTU3_VBUS_VALID
- */
 static void ssusb_set_mailbox(struct otg_switch_mtk *otg_sx,
 	enum mtu3_vbus_id_state status)
 {
@@ -248,10 +237,6 @@ static void ssusb_vbus_work(struct work_struct *work)
 		ssusb_set_mailbox(otg_sx, MTU3_VBUS_OFF);
 }
 
-/*
- * @ssusb_id_notifier is called in atomic context, but @ssusb_set_mailbox
- * may sleep, so use work queue here
- */
 static int ssusb_id_notifier(struct notifier_block *nb,
 	unsigned long event, void *ptr)
 {
@@ -316,12 +301,6 @@ static int ssusb_extcon_register(struct otg_switch_mtk *otg_sx)
 	return 0;
 }
 
-/*
- * We provide an interface via debugfs to switch between host and device modes
- * depending on user input.
- * This is useful in special cases, such as uses TYPE-A receptacle but also
- * wants to support dual-role mode.
- */
 void ssusb_mode_switch(struct ssusb_mtk *ssusb, int to_host)
 {
 	struct otg_switch_mtk *otg_sx = &ssusb->otg_switch;

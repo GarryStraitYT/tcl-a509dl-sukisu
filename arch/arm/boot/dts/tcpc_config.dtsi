@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 / {
 	rt1711_typec: rt1711_type_c_port0 {

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -145,13 +142,6 @@ static int bat_info_vbus; /* Vbus */
 static int bat_info_aicr; /* input current */
 
 
-/* Charger Limiter
- * Charger Limiter provides API to limit charger IC input current and
- * battery charging current. It arbitrates the limitation from users and sets
- * limitation to charger driver via two API functions:
- *	set_chr_input_current_limit()
- *	set_bat_charging_current_limit()
- */
 int chrlmt_chr_input_curr_limit = -1; /**< -1 is unlimit, unit is mA. */
 int chrlmt_bat_chr_curr_limit = -1; /**< -1 is unlimit, unit is mA. */
 static bool chrlmt_is_lcmoff; /**0 is lcm on, 1 is lcm off */

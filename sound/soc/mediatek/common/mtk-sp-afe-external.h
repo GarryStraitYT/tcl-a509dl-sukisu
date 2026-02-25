@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk-sp-afe-external.h  --  Mediatek Smart Phone AFE API for External Module
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Kai Chieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MTK_SP_AFE_EXTERNAL_H_
 #define _MTK_SP_AFE_EXTERNAL_H_

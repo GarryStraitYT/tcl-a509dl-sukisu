@@ -1,31 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_offloadv2.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio offloadv2 playback
- *
- * Author:
- * -------
- * HY Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- *****************************************************/
 #include "mtk-auddrv-offloadcommon.h"
 #include <linux/compat.h>
 
@@ -53,9 +27,6 @@
 
 #define DEBUG_VERBOSE
 
-/**************************************************
-  * Variable Definition
-  **************************************************/
 
 #define USE_PERIODS_MAX        8192
 #define OFFLOAD_SIZE_BYTES         (USE_PERIODS_MAX << 9) /* 4M */
@@ -118,9 +89,6 @@ struct wakeup_source Offload_suspend_lock;
 struct mtk_base_dsp *dsp;
 
 #endif
-/*
- * Function  Declaration
- */
 #ifdef CONFIG_MTK_AUDIO_TUNNELING_SUPPORT
 static void offloadservice_ipicmd_received(struct ipi_msg_t *ipi_msg);
 static void offloadservice_task_unloaded_handling(void);
@@ -131,9 +99,6 @@ static int offloadservice_copydatatoram(void __user *buf, size_t count);
 static void mtk_compr_offload_int_wakelock(bool enable);
 #endif
 
-/*
- * Function Implementation
- */
 
 
 static void offloadservice_setwriteblocked(bool flag)
@@ -237,9 +202,6 @@ static const struct snd_kcontrol_new Audio_snd_dloffload_controls[] = {
 };
 
 
-/*
-  *                 O F F L O A D V 1   D R I V E R   O P E R A T I O N S
-  */
 #ifdef use_wake_lock
 static void mtk_compr_offload_int_wakelock(bool enable)
 {
@@ -816,13 +778,6 @@ static int mtk_compr_offload_pointer(struct snd_compr_stream *stream,
 }
 
 
-/*
-  *=======================================================================
-  *-----------------------------------------------------------------------
-  *||         O F F L O A D    TRIGGER   O P E R A T I O N S
-  *-----------------------------------------------------------------------
-  *=======================================================================
-  */
 static int mtk_compr_offload_start(struct snd_compr_stream *stream)
 {
 	afe_offload_block.state = OFFLOAD_STATE_PREPARE;
@@ -913,9 +868,6 @@ static int mtk_compr_offload_stop(struct snd_compr_stream *stream)
 	return ret;
 }
 
-/*****************************************************************************
-  * mtk_compr_offload_trigger
-  ****************************************************************************/
 static int mtk_compr_offload_trigger(struct snd_compr_stream *stream, int cmd)
 {
 	pr_debug("%s cmd:%x\n", __func__, cmd);

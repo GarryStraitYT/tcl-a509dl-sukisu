@@ -1,18 +1,3 @@
-/*
- * Driver for MediaTek SoC based RTC
- *
- * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
 
 #include <linux/clk.h>
 #include <linux/interrupt.h>
@@ -54,33 +39,16 @@
 #define MTK_RTC_INT		0x30
 #define RTC_INT_AL_STA		BIT(4)
 
-/*
- * Ranges from 0x40 to 0x78 provide RTC time setup for year, month,
- * day of month, day of week, hour, minute and second.
- */
 #define MTK_RTC_TREG(_t, _f)	(0x40 + (0x4 * (_f)) + ((_t) * 0x20))
 
 #define MTK_RTC_AL_CTL		0x7c
 #define	RTC_AL_EN		BIT(0)
 #define	RTC_AL_ALL		GENMASK(7, 0)
 
-/*
- * The offset is used in the translation for the year between in struct
- * rtc_time and in hardware register MTK_RTC_TREG(x,MTK_YEA)
- */
 #define MTK_RTC_TM_YR_OFFSET	100
 
-/*
- * The lowest value for the valid tm_year. RTC hardware would take incorrectly
- * tm_year 100 as not a leap year and thus it is also required being excluded
- * from the valid options.
- */
 #define MTK_RTC_TM_YR_L		(MTK_RTC_TM_YR_OFFSET + 1)
 
-/*
- * The most year the RTC can hold is 99 and the next to 99 in year register
- * would be wraparound to 0, for MT7622.
- */
 #define MTK_RTC_HW_YR_LIMIT	99
 
 /* The highest value for the valid tm_year */

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -28,10 +25,6 @@
 #endif
 #include <linux/mfd/mt6359/registers.h>
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 int mtktspmic_debug_log;
 /* Cali */
 static __s32 g_o_vts;
@@ -761,14 +754,6 @@ static int u_table[126] = {
 };
 #define MIN_TSX_TEMP (-40000)
 #define MAX_TSX_TEMP (+85000)
-/* Original formula is
- * u = auxadc raw * 2^16 / (2^32 - 1)
- * Because kernel is not able to deal with floating point
- * we changed the formula to
- * u = auxadc raw * 2^16 / 2^32
- * => u = auxadc raw / 2^16
- * => u * 2^16 = auxadc raw
- */
 
 static int tsx_u2t(int auxadc_raw)
 {

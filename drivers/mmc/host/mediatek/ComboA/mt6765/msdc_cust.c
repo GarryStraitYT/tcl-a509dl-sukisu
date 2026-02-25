@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -636,11 +633,6 @@ void msdc_dump_dvfs_reg(char **buff, unsigned long *size,
 {
 }
 
-/*
- * Power off card on the 2 bad card conditions:
- * 1. if dat pins keep high when pulled low or
- * 2. dat pins alway keeps high
- */
 int msdc_io_check(struct msdc_host *host)
 {
 	void __iomem *base = host->base;
@@ -1031,18 +1023,6 @@ void msdc_get_driving_by_id(u32 id, struct msdc_hw_driving *driving)
 	}
 }
 
-/* msdc pin config
- * MSDC0
- * PUPD/R1/R0
- * 0/0/0: High-Z
- * 0/1/0: Pull-up with 50Kohm
- * 0/0/1: Pull-up with 10Kohm
- * 0/1/1: Pull-up with 50Kohm//10Kohm
- * 1/0/0: High-Z
- * 1/1/0: Pull-down with 50Kohm
- * 1/0/1: Pull-down with 10Kohm
- * 1/1/1: Pull-down with 50Kohm//10Kohm
- */
 void msdc_pin_config_by_id(u32 id, u32 mode)
 {
 	if (id == 0) {
@@ -1093,10 +1073,6 @@ void msdc_pin_config_by_id(u32 id, u32 mode)
 /*            functions and variables used by it has already  */
 /*            been declared                                   */
 /**************************************************************/
-/*
- * parse pinctl settings
- * Driver strength
- */
 #if !defined(FPGA_PLATFORM)
 static int msdc_get_pinctl_settings(struct msdc_host *host,
 	struct device_node *np)
@@ -1148,10 +1124,6 @@ static int msdc_get_pinctl_settings(struct msdc_host *host,
 }
 #endif
 
-/* Get msdc register settings
- * 1. internal data delay for tuning, FIXME: can be removed when use data tune?
- * 2. sample edge
- */
 static int msdc_get_register_settings(struct msdc_host *host,
 	struct device_node *np)
 {
@@ -1174,11 +1146,6 @@ static int msdc_get_register_settings(struct msdc_host *host,
 	return 0;
 }
 
-/*
- *	msdc_of_parse() - parse host's device-tree node
- *	@host: host whose node should be parsed.
- *
- */
 
 int msdc_of_parse(struct platform_device *pdev, struct mmc_host *mmc)
 {

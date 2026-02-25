@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef _MTK_EEM_CONFIG_H_
 #define _MTK_EEM_CONFIG_H_
@@ -169,10 +166,6 @@
 #define DEVINFO_24 0xDB0AAF22
 
 #endif
-/*****************************************
- * eem sw setting
- ******************************************
- */
 #define NR_HW_RES_FOR_BANK	(10) /* real eem banks for efuse */
 #define EEM_INIT01_FLAG (0x0f) /* 0x0f=> [3]:GPU, [2]:CCI, [1]:B, [0]:L */
 #define EEM_CORNER_FLAG (0x30) /* 0x30=> [5]:VPU, [4]:MDLA */
@@ -191,17 +184,8 @@
 #define NR_FREQ_VPU 16
 #define NR_FREQ_CPU 16
 
-/*
- * 100 us, This is the EEM Detector sampling time as represented in
- * cycles of bclk_ck during INIT. 52 MHz
- */
 #define DETWINDOW_VAL		0xA28
 
-/*
- * mili Volt to config value. voltage = 600mV + val * 6.25mV
- * val = (voltage - 600) / 6.25
- * @mV:	mili volt
- */
 
 /* 1mV=>10uV */
 /* EEM */

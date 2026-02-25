@@ -1,28 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
-/*
- * This is IPC driver
- *
- * For communication between client OS and hypervisor-TEE OS, IPC driver
- * is provided, including:
- * 1. standard call interface for communication and entering hypervisor-TEE
- * 2. virtio for message/command passing by shared memory
- * 3. IPC driver
- */
 /* #define DEBUG */
 #include <linux/device.h>
 #include <linux/err.h>
@@ -137,11 +115,6 @@ static void trusty_task_adjust_pri_cpu(struct trusty_ctx *tctx,
 	struct trusty_task_info *task_info;
 	struct sched_param param;
 
-/*
- *	dev_info(tctx->dev, "%s mask/pri 0x%x/%d 0x%x/%d\n", __func__,
- *		mask[TRUSTY_TASK_KICK_ID], pri[TRUSTY_TASK_KICK_ID],
- *		mask[TRUSTY_TASK_CHK_ID], pri[TRUSTY_TASK_CHK_ID]);
- */
 
 	for (task_id = 0 ; task_id < TRUSTY_TASK_MAX_ID ; task_id++) {
 		task_info = &tctx->task_info[task_id];
@@ -157,10 +130,6 @@ static void trusty_task_adjust_pri_cpu(struct trusty_ctx *tctx,
 				cpumask_set_cpu(cpu, &task_cmask);
 		}
 
-/*
- *		dev_info(tctx->dev, "%s cmask[%d]=%*pbl\n", __func__, task_id,
- *					cpumask_pr_args(&task_cmask));
- */
 
 		need_bindcpu = !cpumask_empty(&task_cmask);
 		for (task_cnt = 0 ; task_cnt < task_max ; task_cnt++) {
@@ -1068,11 +1037,6 @@ static int trusty_virtio_probe(struct platform_device *pdev)
 		goto err_add_devices;
 	}
 
-/* 0 is no bind
- * 1 is kick only
- * 2 is kick + chk
- * default is 1
- */
 	trusty_task_default_bind(tctx, TRUSTY_TASK_DEFAULT_BIND_CPU);
 
 	dev_info(&pdev->dev, "initializing done\n");

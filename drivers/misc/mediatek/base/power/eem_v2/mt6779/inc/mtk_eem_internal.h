@@ -1,40 +1,22 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef _MTK_EEM_INTERNAL_H_
 #define _MTK_EEM_INTERNAL_H_
 
-/*
- * bit operation
- */
 #undef  BIT
 #define BIT(bit)	(1U << (bit))
 
 #define MSB(range)	(1 ? range)
 #define LSB(range)	(0 ? range)
-/**
- * Genearte a mask wher MSB to LSB are all 0b1
- * @r:	Range in the form of MSB:LSB
- */
 #define BITMASK(r)	\
 	(((unsigned int) -1 >> (31 - MSB(r))) & ~((1U << LSB(r)) - 1))
 
-/**
- * Set value at MSB:LSB. For example, BITS(7:3, 0x5A)
- * will return a value where bit 3 to bit 7 is 0x5A
- * @r:	Range in the form of MSB:LSB
- */
 /* BITS(MSB:LSB, value) => Set value at MSB:LSB  */
 #define BITS(r, val)	((val << LSB(r)) & BITMASK(r))
 
 #define GET_BITS_VAL(_bits_, _val_) \
 	(((_val_) & (BITMASK(_bits_))) >> ((0) ? _bits_))
 
-/*
- * LOG
- */
 #define EEM_TAG	 "[xxxxEEM] "
 #ifndef FIX_ME
 	#define eem_error(fmt, args...)		pr_notice(EEM_TAG fmt, ##args)
@@ -102,40 +84,19 @@
 		}	\
 	} while (0)
 
-/*
- * REG ACCESS
- */
 #define eem_read(addr)	__raw_readl((void __iomem *)(addr))/*DRV_Reg32(addr)*/
 #define eem_read_field(addr, range)	\
 	((eem_read(addr) & BITMASK(range)) >> LSB(range))
 #define eem_write(addr, val)	mt_reg_sync_writel(val, addr)
 
-/**
- * Write a field of a register.
- * @addr:	Address of the register
- * @range:	The field bit range in the form of MSB:LSB
- * @val:	The value to be written to the field
- */
 #define eem_write_field(addr, range, val)	\
 	eem_write(addr, (eem_read(addr) & ~BITMASK(range)) | BITS(range, val))
 
-/**
- * Helper macros
- */
-/**
- * iterate over list of detectors
- * @det:	the detector * to use as a loop cursor.
- */
 #define for_each_det(det) \
 		for (det = eem_detectors; \
 		det < (eem_detectors + ARRAY_SIZE(eem_detectors)); \
 		det++)
 
-/**
- * iterate over list of detectors and its controller
- * @det:	the detector * to use as a loop cursor.
- * @ctrl:	the eem_ctrl * to use as ctrl pointer of current det.
- */
 #define for_each_det_ctrl(det, ctrl)				\
 		for (det = eem_detectors,				\
 		ctrl = id_to_eem_ctrl(det->ctrl_id);		\
@@ -143,19 +104,11 @@
 		det++,						\
 		ctrl = id_to_eem_ctrl(det->ctrl_id))
 
-/**
- * iterate over list of controllers
- * @pos:	the eem_ctrl * to use as a loop cursor.
- */
 #define for_each_ctrl(ctrl) \
 		for (ctrl = eem_ctrls; \
 		ctrl < (eem_ctrls + ARRAY_SIZE(eem_ctrls)); \
 		ctrl++)
 
-/**
- * Given a eem_det * in eem_detectors. Return the id.
- * @det:	pointer to a eem_det in eem_detectors
- */
 #if ENABLE_LOO
 //#define det_to_id(det)	((det == &eem_detector_cci) ? EEM_DET_CCI
 //: ((det) - &eem_detectors[0]))
@@ -164,17 +117,8 @@
 #define det_to_id(det)	((det) - &eem_detectors[0])
 #endif
 
-/**
- * Given a eem_ctrl * in eem_ctrls. Return the id.
- * @det:	pointer to a eem_ctrl in eem_ctrls
- */
 #define ctrl_to_id(ctrl)	((ctrl) - &eem_ctrls[0])
 
-/**
- * Check if a detector has a feature
- * @det:	pointer to a eem_det to be check
- * @feature:	enum eem_features to be checked
- */
 #define HAS_FEATURE(det, feature)	((det)->features & feature)
 
 #define PERCENT(numerator, denominator)	\

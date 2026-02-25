@@ -1,12 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/*
- * @file    mt_hotplug_strategy.h
- * @brief   hotplug strategy(hps) - external header file
- */
 
 #ifndef __MT_HOTPLUG_STRATEGY_H__
 #define __MT_HOTPLUG_STRATEGY_H__

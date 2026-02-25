@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -64,12 +61,6 @@ static char g_bind7[20] = { 0 };
 static char g_bind8[20] = { 0 };
 static char g_bind9[20] = { 0 };
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5000;
@@ -182,22 +173,6 @@ static void pa_cal_stats(struct timer_list *t)
 #endif
 
 
-/*
- *struct md_info{
- *		char *attribute;
- *		int value;
- *		char *unit;
- *		int invalid_value;
- *		int index;
- *};
- *struct md_info g_pinfo_list[] =
- *{{"TXPWR_MD1", -127, "db", -127, 0},
- * {"TXPWR_MD2", -127, "db", -127, 1},
- * {"RFTEMP_2G_MD1", -32767, "¢XC", -32767, 2},
- * {"RFTEMP_2G_MD2", -32767, "¢XC", -32767, 3},
- * {"RFTEMP_3G_MD1", -32767, "¢XC", -32767, 4},
- * {"RFTEMP_3G_MD2", -32767, "¢XC", -32767, 5}};
- */
 static DEFINE_MUTEX(TSPA_lock);
 static int mtktspa_get_hw_temp(void)
 {
@@ -399,10 +374,6 @@ static struct thermal_zone_device_ops mtktspa_dev_ops = {
 	.get_crit_temp = mtktspa_get_crit_temp,
 };
 
-/*
- * cooling device callback functions (mtktspa_cooling_sysrst_ops)
- * 1 : ON and 0 : OFF
- */
 static int tspa_sysrst_get_max_state(
 struct thermal_cooling_device *cdev, unsigned long *state)
 {

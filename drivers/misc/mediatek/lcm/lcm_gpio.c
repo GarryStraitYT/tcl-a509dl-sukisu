@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #if defined(MTK_LCM_DEVICE_TREE_SUPPORT)
 #include <linux/string.h>

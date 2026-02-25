@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef _DT_BINDINGS_RESET_CONTROLLER_MT7629
 #define _DT_BINDINGS_RESET_CONTROLLER_MT7629

@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -807,17 +804,3 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek MT6370 PMU Fled");
 MODULE_VERSION(MT6370_PMU_FLED_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.3_MTK
- * (1) Print warnings when strobe mode with HZ=1 or CFO=0
- *
- * 1.0.2_MTK
- * (1) Add delay for strobe on/off
- *
- * 1.0.1_MTK
- * (1) Remove typedef
- *
- * 1.0.0_MTK
- * (1) Initial Release
- */

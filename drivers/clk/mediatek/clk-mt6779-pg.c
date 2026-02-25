@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Wendell Lin <wendell.lin@mediatek.com>
- */
 #include <linux/clk.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
@@ -85,9 +81,6 @@ void __iomem *clk_apu_conn_base;
 #define APU_VCORE_CG_CLR	(clk_apu_vcore_base + 0x0008)
 #define APU_CONN_CG_CLR	(clk_apu_conn_base + 0x0008)
 
-/*
- * MTCMOS
- */
 
 #define STA_POWER_DOWN	0
 #define STA_POWER_ON	1
@@ -894,12 +887,6 @@ static int first_conn = 1;
 static int DBG_ID;
 static int DBG_STA;
 static int DBG_STEP;
-/*
- * ram console data0 define
- * [31:24] : DBG_ID
- * [23:20] : DBG_STA
- * [7:0] : DBG_STEP
- */
 static void ram_console_update(void)
 {
 #ifdef CONFIG_MTK_AEE_IPANIC
@@ -4430,12 +4417,6 @@ int spm_mtcmos_ctrl_vde(int state)
 /* auto-gen end*/
 
 /* enable op*/
-/*
- *static int general_sys_enable_op(struct subsys *sys)
- *{
- *	return spm_mtcmos_power_on_general_locked(sys, 1, 0);
- *}
- */
 static int MD1_sys_enable_op(struct subsys *sys)
 {
 	return spm_mtcmos_ctrl_md1(STA_POWER_ON);
@@ -4562,12 +4543,6 @@ static int VPU_CONN_SHUTDOWN_sys_enable_op(struct subsys *sys)
 	return spm_mtcmos_ctrl_vpu_conn_shut_down(STA_POWER_ON);
 }
 /* disable op */
-/*
- *static int general_sys_disable_op(struct subsys *sys)
- *{
- *	return spm_mtcmos_power_off_general_locked(sys, 1, 0);
- *}
- */
 static int MD1_sys_disable_op(struct subsys *sys)
 {
 	return spm_mtcmos_ctrl_md1(STA_POWER_DOWN);
@@ -4719,13 +4694,6 @@ static int sys_get_conn_state_op(struct subsys *sys)
 }
 
 /* ops */
-/*
- *static struct subsys_ops general_sys_ops = {
- *	.enable = general_sys_enable_op,
- *	.disable = general_sys_disable_op,
- *	.get_state = sys_get_state_op,
- *};
- */
 
 static struct subsys_ops MD1_sys_ops = {
 	.enable = MD1_sys_enable_op,
@@ -5080,9 +5048,6 @@ static int disable_subsys(enum subsys_id id)
 	return r;
 }
 
-/*
- * power_gate
- */
 
 struct mt_power_gate {
 	struct clk_hw hw;
@@ -5373,9 +5338,6 @@ static void __init init_clk_scpsys(void __iomem *infracfg_reg,
 	}
 }
 
-/*
- * device tree support
- */
 
 /* TODO: remove this function */
 static struct clk_onecell_data *alloc_clk_data(unsigned int clk_num)

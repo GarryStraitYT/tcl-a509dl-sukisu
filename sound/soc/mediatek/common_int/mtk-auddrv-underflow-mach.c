@@ -1,32 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   AudDrv_devtree_parser.c
- *
- * Project:
- * --------
- *
- *
- * Description:
- * ------------
- *   AudDrv_devtree_parser
- *
- * Author:
- * -------
- *   Chipeng Chang (mtk02308)
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
 #include "mtk-auddrv-underflow-mach.h"
 #include <mt-plat/aee.h>
@@ -76,9 +49,6 @@ void Auddrv_Aee_Dump(void)
 	pr_debug("-%s\n", __func__);
 }
 
-/*
- *   dump underflow time in kernel
- */
 static void DumpUnderFlowTime(void)
 {
 	int i = 0;
@@ -88,9 +58,6 @@ static void DumpUnderFlowTime(void)
 		pr_debug("UnderflowTime[%d] = %llu\n", i, UnderflowTime[i]);
 }
 
-/*
- *    when pcm playback is close , need to call this function to clear record.
- */
 
 void Auddrv_Set_UnderFlow(void)
 {
@@ -106,9 +73,6 @@ void Auddrv_Set_UnderFlow(void)
 	}
 }
 
-/*
- * dump underflow time in kernel
- */
 
 static void ClearUnderFlowTime(void)
 {
@@ -119,19 +83,12 @@ static void ClearUnderFlowTime(void)
 	UnderflowCounter = 0;
 }
 
-/*
- * when InterruptSample or mDlSamplerate is change , nned to refine
- * mDL1InterruptInterval
- */
 
 void Auddrv_Set_Interrupt_Changed(bool bChange)
 {
 	bAudioInterruptChange = bChange;
 }
 
-/*
- * when pcm playback is close , need to call this function to clear record.
- */
 
 void Auddrv_Reset_Dump_State(void)
 {
@@ -140,9 +97,6 @@ void Auddrv_Reset_Dump_State(void)
 	ClearInterruptTiming();
 }
 
-/*
- * when in interrupt , call this function to check irq timing
- */
 void Auddrv_CheckInterruptTiming(void)
 {
 	if (Irq_time_t1 == 0) {
@@ -184,10 +138,6 @@ static void ClearInterruptTiming(void)
 	Irq_time_t2 = 0;
 }
 
-/*
- * when InterruptSample or mDlSamplerate is change , nned to refine
- * mDL1InterruptInterval
- */
 
 void RefineInterrruptInterval(void)
 {
@@ -199,9 +149,6 @@ void RefineInterrruptInterval(void)
 		__func__, mDL1InterruptInterval, mDL1_Interrupt_Interval_Limit);
 }
 
-/*
- *    function to set DL sampleRate
- */
 
 bool Auddrv_Set_DlSamplerate(unsigned int Samplerate)
 {
@@ -224,9 +171,6 @@ bool Auddrv_Set_InterruptSample(unsigned int count)
 	return true;
 }
 
-/*
- * function to enable / disable dump , only enable will arised aee
- */
 bool Auddrv_Enable_dump(bool bEnable)
 {
 	pr_debug("%s bEnable = %d\n", __func__, bEnable);

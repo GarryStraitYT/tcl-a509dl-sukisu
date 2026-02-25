@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_clk.h --  Mediatek ADSP clock control
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Celine Liu <Celine.liu@mediatek.com>
- */
 
 #ifndef ADSP_CLK_H
 #define ADSP_CLK_H

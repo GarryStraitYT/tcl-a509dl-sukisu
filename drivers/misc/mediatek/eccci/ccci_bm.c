@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/skbuff.h>
 #include <linux/wait.h>
@@ -328,9 +325,6 @@ void ccci_skb_queue_init(struct ccci_skb_queue *queue, unsigned int skb_size,
 }
 EXPORT_SYMBOL(ccci_skb_queue_init);
 
-/* may return NULL, caller should check, network should always use blocking
- * as we do not want it consume our own pool
- */
 struct sk_buff *ccci_alloc_skb(int size, unsigned char from_pool,
 	unsigned char blocking)
 {
@@ -478,22 +472,6 @@ static void __16_reload_work(struct work_struct *work)
 	}
 }
 
-/*
- * a write operation may block at 3 stages:
- * 1. ccci_alloc_req
- * 2. wait until the queue has available slot (threshold check)
- * 3. wait until the SDIO transfer is complete --> abandoned,
- * see the reason below.
- * the 1st one is decided by @blk1. and the 2nd and 3rd are decided by
- * @blk2, waiting on @wq.
- * NULL is returned if no available skb, even when you set blk1=1.
- *
- * we removed the wait_queue_head_t in ccci_request, so user can NOT wait
- * for certain request to be completed. this is because request will be
- * recycled and its state will be reset, so if a request is completed and
- * then used again, the poor guy who is waiting for it may never see
- * the state transition (FLYING->IDLE/COMPLETE->FLYING) and wait forever.
- */
 
 void ccci_mem_dump(int md_id, void *start_addr, int len)
 {

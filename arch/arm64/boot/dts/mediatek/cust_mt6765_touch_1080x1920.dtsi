@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- *
- */
 
 /* TOUCH start */
 #if 0
@@ -59,6 +55,16 @@
 	focaltech@38{
 		compatible = "mediatek,cap_touch_ft5446";
 		reg = <0x38>;
+		status = "okay";
+	};
+	chsc5xxx@2e {
+		compatible = "mediatek,chsc_cap_touch";
+		reg = <0x2e>;
+		status = "okay";
+	};
+	betterlife@44 {
+		compatible = "mediatek,cap_touch_betterlife";
+		reg = <0x2c>;
 		status = "okay";
 	};
 };

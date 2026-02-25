@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef __DVFSRC_COMMON_H
 #define __DVFSRC_COMMON_H
 

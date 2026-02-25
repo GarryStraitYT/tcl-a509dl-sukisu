@@ -1,16 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_SPM_SUSPEND_INTERNAL_H__
 #define __MTK_SPM_SUSPEND_INTERNAL_H__
 
 #include <mtk_spm_internal.h>
 
-/**************************************
- * SW code for suspend
- **************************************/
 #define SPM_SYSCLK_SETTLE       99	/* 3ms */
 #define WAIT_UART_ACK_TIMES     10	/* 10 * 10us */
 #define spm_is_wakesrc_invalid(wakesrc)     (!!((u32)(wakesrc) & 0xc0003803))
@@ -63,9 +57,6 @@ void spm_dump_world_clk_cntcv(void);
 void spm_suspend_pre_process(struct pwr_ctrl *pwrctrl);
 void spm_suspend_post_process(struct pwr_ctrl *pwrctrl);
 
-/**************************************
- * only for internal debug
- **************************************/
 #ifdef CONFIG_MTK_LDVT
 #define SPM_PWAKE_EN            0
 #define SPM_PCMWDT_EN           0
@@ -80,9 +71,6 @@ void spm_suspend_post_process(struct pwr_ctrl *pwrctrl);
 #define VCORE_LOW_POWER_MODE	0
 #endif
 
-/**************************************
- * External functions and variable
- **************************************/
 
 #ifdef CONFIG_MTK_TINYSYS_SCP_SUPPORT
 extern void mt_print_scp_ipi_id(void);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 /* system includes */
 #include <linux/kernel.h>
@@ -1269,9 +1266,6 @@ static struct platform_driver mtk_platform_cm_mgr_driver = {
 	.id_table = platform_cm_mgr_id_table,
 };
 
-/*
- * driver initialization entry point
- */
 static int __init platform_cm_mgr_init(void)
 {
 	return platform_driver_register(&mtk_platform_cm_mgr_driver);

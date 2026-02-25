@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Weijie Gao <weijie.gao@mediatek.com>
- */
 
 #ifndef _MT753X_H_
 #define _MT753X_H_
@@ -142,68 +138,6 @@ void mt753x_irq_enable(struct gsw_mt753x *gsw);
 
 #define MII_MMD_ADDR_DATA_REG		0x0e
 
-/* Procedure of MT753x Internal Register Access
- *
- * 1. Internal Register Address
- *
- *    The MT753x has a 16-bit register address and each register is 32-bit.
- *    This means the lowest two bits are not used as the register address is
- *    4-byte aligned.
- *
- *    Rest of the valid bits are divided into two parts:
- *      Bit 15..6 is the Page address
- *      Bit 5..2 is the low address
- *
- *    -------------------------------------------------------------------
- *    | 15  14  13  12  11  10   9   8   7   6 | 5   4   3   2 | 1   0  |
- *    |----------------------------------------|---------------|--------|
- *    |              Page Address              |    Address    | Unused |
- *    -------------------------------------------------------------------
- *
- * 2. MDIO access timing
- *
- *    The MT753x uses the following MDIO timing for a single register read
- *
- *      Phase 1: Write Page Address
- *    -------------------------------------------------------------------
- *    | ST | OP | PHY_ADDR | TYPE | RSVD | TA |  RSVD |    PAGE_ADDR    |
- *    -------------------------------------------------------------------
- *    | 01 | 01 |   11111  |   1  | 1111 | xx | 00000 | REG_ADDR[15..6] |
- *    -------------------------------------------------------------------
- *
- *      Phase 2: Write low Address & Read low word
- *    -------------------------------------------------------------------
- *    | ST | OP | PHY_ADDR | TYPE |    LOW_ADDR    | TA |      DATA     |
- *    -------------------------------------------------------------------
- *    | 01 | 10 |   11111  |   0  | REG_ADDR[5..2] | xx |  DATA[15..0]  |
- *    -------------------------------------------------------------------
- *
- *      Phase 3: Read high word
- *    -------------------------------------------------------------------
- *    | ST | OP | PHY_ADDR | TYPE | RSVD | TA |           DATA          |
- *    -------------------------------------------------------------------
- *    | 01 | 10 |   11111  |   1  | 0000 | xx |       DATA[31..16]      |
- *    -------------------------------------------------------------------
- *
- *    The MT753x uses the following MDIO timing for a single register write
- *
- *      Phase 1: Write Page Address (The same as read)
- *
- *      Phase 2: Write low Address and low word
- *    -------------------------------------------------------------------
- *    | ST | OP | PHY_ADDR | TYPE |    LOW_ADDR    | TA |      DATA     |
- *    -------------------------------------------------------------------
- *    | 01 | 01 |   11111  |   0  | REG_ADDR[5..2] | xx |  DATA[15..0]  |
- *    -------------------------------------------------------------------
- *
- *      Phase 3: write high word
- *    -------------------------------------------------------------------
- *    | ST | OP | PHY_ADDR | TYPE | RSVD | TA |           DATA          |
- *    -------------------------------------------------------------------
- *    | 01 | 01 |   11111  |   1  | 0000 | xx |       DATA[31..16]      |
- *    -------------------------------------------------------------------
- *
- */
 
 /* Internal Register Address fields */
 #define MT753X_REG_PAGE_ADDR_S		6

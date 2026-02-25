@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _AUTOK_CUST_H_
 #define _AUTOK_CUST_H_
@@ -270,9 +267,6 @@ struct AUTOK_PLAT_FUNC {
 		autok_top_ctrl.msdc1_rx_enhance_top = 1; \
 		autok_top_ctrl.msdc2_rx_enhance_top = 0; \
 	} while (0)
-/*
- * emmc_data_tx_tune:0 use cmd24;1 use cmd23+cmd25;2:use cmdq cmd
- */
 #define get_platform_func(autok_para_func) \
 	do { \
 		autok_para_func.new_path_hs400 = 1; \
@@ -295,15 +289,9 @@ struct AUTOK_PLAT_FUNC {
 #define MMC_SWITCH_CQ_EN 601
 #define MMC_SWITCH_CQ_DIS 600
 
-/*
- * reg define
- */
 #define AUTOK_SDC_RX_ENH_EN	(0x1  << 20) /* RW */
 #define AUTOK_TOP_SDC_RX_ENHANCE_EN (0x1 << 15) /* RW */
 
-/**********************************************************
- * Feature  Control Defination                            *
- **********************************************************/
 #define AUTOK_EMMC_OFFLINE_TUNE_TX_ENABLE 0
 #define AUTOK_SD_CARD_OFFLINE_TUNE_TX_ENABLE 0
 #define AUTOK_SDIO_OFFLINE_TUNE_TX_ENABLE 1

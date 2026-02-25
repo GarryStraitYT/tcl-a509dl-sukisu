@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *	mt-soc-pcm-voice-usb-echoref.c
- *
- * Project:
- * --------
- *	MT6797
- *
- * Description:
- * ------------
- *	Platform driver for usb phone call echo reference path
- *
- * Author:
- * -------
- *	Kai Chieh Chuang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-clk.h"
@@ -70,9 +37,6 @@ static void print_usb_dbg_log(void)
 	}
 }
 #endif
-/*
- *    function implementation
- */
 static bool usb_prepare_done[2] = {false, false};
 static bool usb_use_dram;
 static int usb_mem_blk[2] = {Soc_Aud_Digital_Block_MEM_DL1,

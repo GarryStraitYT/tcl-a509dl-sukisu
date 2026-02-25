@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * dts file for MediaTek MT6380 regulator
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chenglin Xu <chenglin.xu@mediatek.com>
- *	   Sean Wang <sean.wang@mediatek.com>
- */
 
 &pwrap {
 	regulators {

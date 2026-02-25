@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
-/******************************************************************************
- * camera_RSC.c - Linux RSC Device Driver
- *
- * DESCRIPTION:
- *     This file provid the other drivers RSC relative functions
- *
- ******************************************************************************/
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
@@ -58,9 +48,6 @@
 #include <linux/soc/mediatek/mtk-pm-qos.h>
 #endif
 
-/* Measure the kernel performance
- * #define __RSC_KERNEL_PERFORMANCE_MEASURE__
- */
 #ifdef __RSC_KERNEL_PERFORMANCE_MEASURE__
 #include <linux/met_drv.h>
 #include <linux/mtk_ftrace.h>
@@ -136,16 +123,8 @@ struct RSC_CLK_STRUCT rsc_clk;
 #define LOG_AST(format, args...) pr_info(MyTag format, ##args)
 
 bool g_RSC_PMState;
-/*******************************************************************************
- *
- ******************************************************************************/
-/* #define RSC_WR32(addr, data)    iowrite32(data, addr) // For other projects.
- */
 #define RSC_WR32(addr, data) mt_reg_sync_writel(data, addr)
 #define RSC_RD32(addr) ioread32(addr)
-/*******************************************************************************
- *
- ******************************************************************************/
 /* dynamic log level */
 #define RSC_DBG_DBGLOG (0x00000001)
 #define RSC_DBG_INFLOG (0x00000002)
@@ -154,16 +133,10 @@ bool g_RSC_PMState;
 #define RSC_DBG_WRITE_REG (0x00000010)
 #define RSC_DBG_TASKLET (0x00000020)
 
-/*
- *    CAM interrupt status
- */
 
 /* normal siganl : happens to be the same bit as register bit*/
 /*#define RSC_INT_ST           (1<<0)*/
 
-/*
- *   IRQ signal mask
- */
 
 #define INT_ST_MASK_RSC (RSC_INT_ST)
 
@@ -200,8 +173,6 @@ const struct ISR_TABLE RSC_IRQ_CB_TBL[RSC_IRQ_TYPE_AMOUNT] = {
 #endif
 };
 #endif
-/*
- */
 /*  */
 typedef void (*tasklet_cb)(unsigned long);
 struct Tasklet_table {
@@ -304,9 +275,6 @@ static struct RSC_CONFIG_STRUCT g_RscEnqueReq_Struct;
 static struct RSC_CONFIG_STRUCT g_RscDequeReq_Struct;
 static struct engine_requests rsc_reqs;
 static struct RSC_Request kRscReq;
-/******************************************************************************
- *
- ******************************************************************************/
 struct RSC_USER_INFO_STRUCT {
 	pid_t Pid;
 	pid_t Tid;
@@ -317,9 +285,6 @@ enum RSC_PROCESS_ID_ENUM {
 	RSC_PROCESS_ID_AMOUNT
 };
 
-/******************************************************************************
- *
- ******************************************************************************/
 struct RSC_IRQ_INFO_STRUCT {
 	unsigned int Status[RSC_IRQ_TYPE_AMOUNT];
 	signed int RscIrqCnt;
@@ -373,12 +338,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[RSC_IRQ_TYPE_AMOUNT];
 
-/*
- *   for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *   limited:
- *   each log must shorter than 512 bytes
- *  total log length in each irq/logtype can't over 1024 bytes
- */
 #define LOG_KEEPER
 #ifdef LOG_KEEPER
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {\
@@ -764,25 +723,16 @@ static struct SV_LOG_STR gSvLog[RSC_IRQ_TYPE_AMOUNT];
 #define RSC_DMA_DMA_DEBUG_SEL_REG      (ISP_RSC_BASE + 0x928)
 #define RSC_DMA_DMA_BW_SELF_TEST_REG   (ISP_RSC_BASE + 0x92C)
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int RSC_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int RSC_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int
 RSC_GetIRQState(unsigned int type, unsigned int userNumber, unsigned int stus,
 		enum RSC_PROCESS_ID_ENUM whichReq, int ProcessID)
@@ -806,9 +756,6 @@ RSC_GetIRQState(unsigned int type, unsigned int userNumber, unsigned int stus,
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int RSC_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
@@ -1060,9 +1007,6 @@ void cmdq_pm_qos_stop(struct TaskStruct *task, struct TaskStruct *task_list[],
 
 
 
-/*
- *
- */
 static signed int RSC_DumpReg(void)
 #if BYPASS_REG
 {
@@ -1171,9 +1115,6 @@ static inline void RSC_Disable_Unprepare_ccf_clock(void)
 }
 #endif
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void RSC_EnableClock(bool En)
 {
 #if defined(EP_NO_CLKMGR)
@@ -1251,9 +1192,6 @@ static void RSC_EnableClock(bool En)
 	}
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void RSC_Reset(void)
 {
 	LOG_DBG("- E.");
@@ -1281,9 +1219,6 @@ static inline void RSC_Reset(void)
 
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_ReadReg(struct RSC_REG_IO_STRUCT *pRegIo)
 {
 	unsigned int i;
@@ -1336,9 +1271,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_WriteRegToHw(struct RSC_REG_STRUCT *pReg,
 							unsigned int Count)
 {
@@ -1378,9 +1310,6 @@ static signed int RSC_WriteRegToHw(struct RSC_REG_STRUCT *pReg,
 
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_WriteReg(struct RSC_REG_IO_STRUCT *pRegIo)
 {
 	signed int Ret = 0;
@@ -1433,9 +1362,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_WaitIrq(struct RSC_WAIT_IRQ_STRUCT *WaitIrq)
 {
 
@@ -1612,9 +1538,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static long RSC_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
 	signed int Ret = 0;
@@ -2149,9 +2072,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int compat_get_RSC_read_register_data(
 			struct compat_RSC_REG_IO_STRUCT __user *data32,
 					struct RSC_REG_IO_STRUCT __user *data)
@@ -2374,9 +2294,6 @@ static long RSC_ioctl_compat(struct file *filp, unsigned int cmd,
 
 #endif
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_open(struct inode *pInode, struct file *pFile)
 {
 	signed int Ret = 0;
@@ -2476,9 +2393,6 @@ EXIT:
 
 }
 
-/******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_release(struct inode *pInode, struct file *pFile)
 {
 	struct RSC_USER_INFO_STRUCT *pUserInfo;
@@ -2526,49 +2440,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
-/*
-static signed int RSC_mmap(struct file *pFile, struct vm_area_struct *pVma)
-{
-	unsigned long length = 0;
-	unsigned int pfn = 0x0;
-
-	length = pVma->vm_end - pVma->vm_start;
-	pVma->vm_page_prot = pgprot_noncached(pVma->vm_page_prot);
-	pfn = pVma->vm_pgoff << PAGE_SHIFT;
-
-	LOG_INF(
-		"mmap:vm_pgoff(0x%lx) pfn(0x%x) phy(0x%lx) vm_start(0x%lx) vm_end(0x%lx) length(0x%lx)",
-		pVma->vm_pgoff, pfn, pVma->vm_pgoff << PAGE_SHIFT,
-			pVma->vm_start, pVma->vm_end, length);
-
-	switch (pfn) {
-	case RSC_BASE_HW:
-		if (length > RSC_REG_RANGE) {
-			LOG_ERR("mmap err:mod:0x%x len(0x%lx),REG_RANGE(0x%x)!",
-				pfn, length, RSC_REG_RANGE);
-			return -EAGAIN;
-		}
-		break;
-	default:
-		LOG_ERR("Illegal starting HW addr for mmap!");
-		return -EAGAIN;
-	}
-	if (remap_pfn_range
-	    (pVma, pVma->vm_start, pVma->vm_pgoff,
-					pVma->vm_end - pVma->vm_start,
-							pVma->vm_page_prot)) {
-		return -EAGAIN;
-	}
-
-	return 0;
-}
-*/
-/*******************************************************************************
- *
- ******************************************************************************/
 
 static dev_t RSCDevNo;
 static struct cdev *pRSCCharDrv;
@@ -2586,9 +2457,6 @@ static const struct file_operations RSCFileOper = {
 #endif
 };
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void RSC_UnregCharDev(void)
 {
 	LOG_DBG("- E.");
@@ -2602,9 +2470,6 @@ static inline void RSC_UnregCharDev(void)
 	unregister_chrdev_region(RSCDevNo, 1);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline signed int RSC_RegCharDev(void)
 {
 	signed int Ret = 0;
@@ -2644,9 +2509,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_probe(struct platform_device *pDev)
 {
 	signed int Ret = 0;
@@ -2841,9 +2703,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- * Called when the device is being detached from the driver
- ******************************************************************************/
 static signed int RSC_remove(struct platform_device *pDev)
 {
 	/*struct resource *pRes;*/
@@ -2881,9 +2740,6 @@ static signed int RSC_remove(struct platform_device *pDev)
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int bPass1_On_In_Resume_TG1;
 
 static signed int RSC_suspend(struct platform_device *pDev, pm_message_t Mesg)
@@ -2904,9 +2760,6 @@ static signed int RSC_suspend(struct platform_device *pDev, pm_message_t Mesg)
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int RSC_resume(struct platform_device *pDev)
 {
 	LOG_DBG("bPass1_On_In_Resume_TG1(%d).\n", bPass1_On_In_Resume_TG1);
@@ -2992,9 +2845,6 @@ const struct dev_pm_ops RSC_pm_ops = {
 };
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static struct platform_driver RSCDriver = {
 	.probe = RSC_probe,
 	.remove = RSC_remove,
@@ -3236,9 +3086,6 @@ static const struct file_operations rsc_reg_proc_fops = {
 #endif
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 int32_t RSC_ClockOnCallback(uint64_t engineFlag)
 {
@@ -3360,9 +3207,6 @@ static signed int __init RSC_Init(void)
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void __exit RSC_Exit(void)
 {
 	/*int i;*/
@@ -3381,9 +3225,6 @@ static void __exit RSC_Exit(void)
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 void RSC_ScheduleWork(struct work_struct *data)
 {
 	if (RSC_DBG_DBGLOG & RSCInfo.DebugMask)
@@ -3476,9 +3317,6 @@ static void logPrint(struct work_struct *data)
 	ISP_TaskletFunc_RSC(arg);
 }
 
-/******************************************************************************
- *
- ******************************************************************************/
 module_init(RSC_Init);
 module_exit(RSC_Exit);
 MODULE_DESCRIPTION("Camera RSC driver");

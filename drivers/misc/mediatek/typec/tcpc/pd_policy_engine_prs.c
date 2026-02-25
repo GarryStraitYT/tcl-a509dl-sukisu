@@ -1,17 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
 
-/*
- * [PD2.0] Figure 8-51:
- *      Dual-Role Port in Source to Sink Power Role Swap State Diagram
- */
 
 void pe_prs_src_snk_evaluate_pr_swap_entry(struct pd_port *pd_port)
 {
@@ -54,10 +47,6 @@ void pe_prs_src_snk_reject_pr_swap_entry(struct pd_port *pd_port)
 	pd_reply_wait_reject_msg(pd_port);
 }
 
-/*
- * [PD2.0] Figure 8-52:
- *      Dual-role Port in Sink to Source Power Role Swap State Diagram
- */
 
 void pe_prs_snk_src_evaluate_pr_swap_entry(struct pd_port *pd_port)
 {

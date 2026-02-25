@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/device.h>
@@ -42,9 +39,6 @@
 
 
 /*#define __WPE_EP_NO_CLKMGR__*/
-/* Measure the kernel performance
- * #define __WPE_KERNEL_PERFORMANCE_MEASURE__
- */
 #ifdef __WPE_KERNEL_PERFORMANCE_MEASURE__
 #include <linux/met_drv.h>
 #include <linux/mtk_ftrace.h>
@@ -145,17 +139,11 @@ pr_info(MyTag "[%s] " format, __func__, ##args)
 #define LOG_AST(format, args...) \
 pr_debug(MyTag "[%s] " format, __func__, ##args)
 
-/***********************************************************************
- *
- ***********************************************************************/
 /* #define WPE_WR32(addr, data)  iowrite32(data, addr) For other projects.*/
 
 #define WPE_WR32(addr, data)    mt_reg_sync_writel(data, addr)
 				/* For 89 Only.   // NEED_TUNING_BY_PROJECT */
 #define WPE_RD32(addr)          ioread32(addr)
-/***********************************************************************
- *
- ***********************************************************************/
 /* dynamic log level */
 #define WPE_DBG_DBGLOG              (0x00000001)
 #define WPE_DBG_INFLOG              (0x00000002)
@@ -167,20 +155,11 @@ pr_debug(MyTag "[%s] " format, __func__, ##args)
 
 /* /////////////////////////////////////////////////////////////////// */
 
-/***********************************************************************
- *
- ***********************************************************************/
 
-/*
- *    CAM interrupt status
- */
 /* normal siganl : happens to be the same bit as register bit*/
 /* #define WPE_INT_ST           (1<<0) */
 
 
-/*
- *    IRQ signal mask
- */
 
 #define INT_ST_MASK_WPE     ( \
 			WPE_INT_ST)
@@ -329,9 +308,6 @@ static struct WPE_CONFIG_STRUCT g_WpeEnqueReq_Struct;
 static struct WPE_CONFIG_STRUCT g_WpeDequeReq_Struct;
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 struct WPE_USER_INFO_STRUCT {
 	pid_t Pid;
 	pid_t Tid;
@@ -343,9 +319,6 @@ enum WPE_PROCESS_ID_ENUM {
 };
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 struct WPE_IRQ_INFO_STRUCT {
 	unsigned int Status[WPE_IRQ_TYPE_AMOUNT];
 	signed int WpeIrqCnt;
@@ -398,12 +371,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[WPE_IRQ_TYPE_AMOUNT];
 
-/*
- *    for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *    limited:
- *    each log must shorter than 512 bytes
- *    total log length in each irq/logtype can't over 1024 bytes
- */
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {                         \
 	char *ptr;                                                            \
 	char *pDes;                                                           \
@@ -889,25 +856,16 @@ static struct SV_LOG_STR gSvLog[WPE_IRQ_TYPE_AMOUNT];
 #define WPE_DMA_DEBUG_SEL_REG           (ISP_WPE_BASE + 0x050C)
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline unsigned int WPE_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline unsigned int WPE_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline unsigned int WPE_GetIRQState
 	(unsigned int type, unsigned int userNumber, unsigned int stus,
 		enum WPE_PROCESS_ID_ENUM whichReq, int ProcessID)
@@ -953,9 +911,6 @@ static inline unsigned int WPE_GetIRQState
 }
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline unsigned int WPE_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
@@ -2228,9 +2183,6 @@ static bool Check_WPE_Is_Busy(void)
 #endif
 
 
-/*
- *
- */
 static signed int WPE_DumpReg(void)
 {
 	signed int  Ret = 0;
@@ -2543,9 +2495,6 @@ static inline void WPE_Disable_Unprepare_ccf_clock(void)
 #define IMGSYS_REG_CG_CLR               (15020000 + 0x8)
 #define IMGSYS_REG_CG_SET               (15020000 + 0x4)
 
-/***********************************************************************
- *
- ***********************************************************************/
 static void WPE_EnableClock(bool En)
 {
 
@@ -2602,9 +2551,6 @@ static void WPE_EnableClock(bool En)
 	}
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline void WPE_Reset(void)
 {
 	int reset_timeout = 1000; /*1ms*/
@@ -2637,9 +2583,6 @@ static inline void WPE_Reset(void)
 
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int WPE_ReadReg(struct WPE_REG_IO_STRUCT *pRegIo)
 {
 	unsigned int i;
@@ -2695,9 +2638,6 @@ EXIT:
 }
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int WPE_WaitIrq(struct WPE_WAIT_IRQ_STRUCT *WaitIrq)
 {
 
@@ -2978,9 +2918,6 @@ static inline unsigned int WPE_GetFrameState(unsigned int WPEReadIdx)
 	return ret;
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static long WPE_ioctl(struct file *pFile,
 				unsigned int Cmd, unsigned long Param)
 {
@@ -3944,9 +3881,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/***********************************************************************
- *
- ***********************************************************************/
 static int compat_get_WPE_read_register_data(
 		struct compat_WPE_REG_IO_STRUCT __user *data32,
 		struct WPE_REG_IO_STRUCT __user *data)
@@ -4199,9 +4133,6 @@ static long WPE_ioctl_compat(
 
 #endif
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int WPE_open(struct inode *pInode, struct file *pFile)
 {
 	signed int Ret = 0;
@@ -4312,9 +4243,6 @@ EXIT:
 
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int WPE_release(struct inode *pInode, struct file *pFile)
 {
 	struct WPE_USER_INFO_STRUCT *pUserInfo;
@@ -4371,52 +4299,7 @@ EXIT:
 }
 
 
-/***********************************************************************
- *
- ***********************************************************************/
-/*
-static signed int WPE_mmap(
-	struct file *pFile, struct vm_area_struct *pVma)
-{
-	unsigned long length = 0;
-	unsigned int pfn = 0x0;
 
-	length = pVma->vm_end - pVma->vm_start;
-
-	pVma->vm_page_prot = pgprot_noncached(pVma->vm_page_prot);
-	pfn = pVma->vm_pgoff << PAGE_SHIFT;
-
-	LOG_INF("mmap:pVma->vm_pgoff(0x%lx),pfn(0x%x),phy(0x%lx)\n",
-		pVma->vm_pgoff, pfn, pVma->vm_pgoff << PAGE_SHIFT);
-	LOG_INF(
-		"mmap:pVmapVma->vm_start(0x%lx),pVma->vm_end(0x%lx),length(0x%lx)\n",
-		pVma->vm_start, pVma->vm_end, length);
-
-	switch (pfn) {
-	case WPE_BASE_HW:
-		if (length > WPE_REG_RANGE) {
-			LOG_ERR(
-				"mmap range error :module:0x%x length(0x%lx),WPE_REG_RANGE(0x%x)!",
-				pfn, length, WPE_REG_RANGE);
-			return -EAGAIN;
-		}
-		break;
-	default:
-		LOG_ERR("Illegal starting HW addr for mmap!");
-		return -EAGAIN;
-	}
-	if (remap_pfn_range
-	    (pVma, pVma->vm_start, pVma->vm_pgoff,
-		pVma->vm_end - pVma->vm_start, pVma->vm_page_prot)) {
-		return -EAGAIN;
-	}
-	return 0;
-}
-*/
-
-/***********************************************************************
- *
- ***********************************************************************/
 
 static dev_t WPEDevNo;
 static struct cdev *pWPECharDrv;
@@ -4434,9 +4317,6 @@ static const struct file_operations WPEFileOper = {
 #endif
 };
 
-/**************************************************************
- *
- **************************************************************/
 /*#ifdef CONFIG_MTK_IOMMU_V2*/
 /*enum mtk_iommu_callback_ret_t WPE_M4U_TranslationFault_callback(int port,*/
 /*	unsigned int mva, void *data)*/
@@ -4543,9 +4423,6 @@ enum m4u_callback_ret_t WPE_M4U_TranslationFault_callback(int port,
 }
 #endif
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline void WPE_UnregCharDev(void)
 {
 	LOG_DBG("- E.");
@@ -4559,9 +4436,6 @@ static inline void WPE_UnregCharDev(void)
 	unregister_chrdev_region(WPEDevNo, 1);
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static inline signed int WPE_RegCharDev(void)
 {
 	signed int Ret = 0;
@@ -4601,9 +4475,6 @@ EXIT:
 	return Ret;
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int WPE_probe(struct platform_device *pDev)
 {
 	signed int Ret = 0;
@@ -4804,9 +4675,6 @@ EXIT:
 	return Ret;
 }
 
-/***********************************************************************
- * Called when the device is being detached from the driver
- ***********************************************************************/
 static signed int WPE_remove(struct platform_device *pDev)
 {
 	/*struct resource *pRes; */
@@ -4834,9 +4702,6 @@ static signed int WPE_remove(struct platform_device *pDev)
 	return 0;
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int bPass1_On_In_Resume_TG1;
 
 static signed int WPE_suspend(
@@ -4859,9 +4724,6 @@ static signed int WPE_suspend(
 	return 0;
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static signed int WPE_resume(struct platform_device *pDev)
 {
 	/*LOG_DBG("bPass1_On_In_Resume_TG1(%d).\n", bPass1_On_In_Resume_TG1);*/
@@ -4922,10 +4784,6 @@ int WPE_pm_restore_noirq(struct device *device)
 #endif				/*CONFIG_PM */
 /*---------------------------------------------------------------------*/
 #ifdef CONFIG_OF
-/*
- * Note!!! The order and member of .compatible must be the same with that in
- *  "WPE_DEV_NODE_ENUM" in camera_WPE.h
- */
 static const struct of_device_id WPE_of_ids[] = {
 	{.compatible = "mediatek,wpe_a",},
 	{}
@@ -4943,9 +4801,6 @@ const struct dev_pm_ops WPE_pm_ops = {
 };
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 static struct platform_driver WPEDriver = {
 	.probe = WPE_probe,
 	.remove = WPE_remove,
@@ -5190,9 +5045,6 @@ static const struct file_operations WPE_reg_proc_fops = {
 };
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 
 int32_t WPE_ClockOnCallback(uint64_t engineFlag)
 {
@@ -5349,9 +5201,6 @@ static signed int __init WPE_Init(void)
 	return Ret;
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static void __exit WPE_Exit(void)
 {
 	/*int i; */
@@ -5371,9 +5220,6 @@ static void __exit WPE_Exit(void)
 	/*  */
 }
 
-/***********************************************************************
- *
- ***********************************************************************/
 static void WPE_ScheduleWork(struct work_struct *data)
 {
 	if (WPE_DBG_DBGLOG & WPEInfo.DebugMask)
@@ -5484,9 +5330,6 @@ static void ISP_TaskletFunc_WPE(unsigned long data)
 }
 
 
-/***********************************************************************
- *
- ***********************************************************************/
 module_init(WPE_Init);
 module_exit(WPE_Exit);
 MODULE_DESCRIPTION("Camera WPE driver");

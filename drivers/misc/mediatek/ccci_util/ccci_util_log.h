@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __CCCI_UTIL_LOG_H__
 #define __CCCI_UTIL_LOG_H__

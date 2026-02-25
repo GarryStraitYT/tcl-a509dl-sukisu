@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_SPM_RESOURCE_REQ_INTERNAL_H__
 #define __MTK_SPM_RESOURCE_REQ_INTERNAL_H__
@@ -30,17 +27,9 @@ bool spm_resource_req_init(void);
 void spm_resource_req_debugfs_init(void);
 
 
-/* Compulsory method for spm resource requirement.
- * This function's implementation depend on platform
- * File: mtk_spm_reource_req_console.c
- */
 int spm_resource_req_console(unsigned int req, unsigned int res_bitmask);
 int spm_resource_req_console_by_id(
 		int id, unsigned int req, unsigned int res_bitmask);
 
-/* Method for spm resource requirement status.
- * This function's implementation depend on platform
- * File: mtk_spm_reource_req_console.c
- */
 int spm_get_resource_req_console_status(unsigned int *res_bitmask);
 #endif /* __MTK_SPM_RESOURCE_REQ_INTERNAL_H__ */

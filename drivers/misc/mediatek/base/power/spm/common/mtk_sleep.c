@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -256,11 +253,6 @@ int spm_set_dpidle_wakesrc(u32 wakesrc, bool enable, bool replace)
 	return 0;
 }
 
-/*
- * wakesrc : WAKE_SRC_XXX
- * enable  : enable or disable @wakesrc
- * ck26m_on: if true, mean @wakesrc needs 26M to work
- */
 int slp_set_wakesrc(u32 wakesrc, bool enable, bool ck26m_on)
 {
 	int r;
@@ -304,9 +296,6 @@ unsigned int slp_get_wake_reason(void)
 }
 EXPORT_SYMBOL(slp_get_wake_reason);
 
-/*
- * debugfs
- */
 static ssize_t suspend_state_read(char *ToUserBuf, size_t sz, void *priv)
 {
 	char *p = ToUserBuf;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __DRV_CLK_MT6779_PG_H
 #define __DRV_CLK_MT6779_PG_H
@@ -58,12 +55,6 @@ extern unsigned int mt_get_ckgen_freq(unsigned int ID);
 extern void print_enabled_clks_once(void);
 extern void mtk_wcn_cmb_stub_clock_fail_dump(void);
 /*ram console api*/
-/*
- *[0] bus protect reg
- *[1] pwr_status
- *[2] pwr_status 2
- *[others] local function use
- */
 #ifdef CONFIG_MTK_AEE_IPANIC
 extern void aee_rr_rec_clk(int id, u32 val);
 #endif

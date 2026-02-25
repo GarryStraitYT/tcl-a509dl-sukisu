@@ -1,29 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
-/*
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See http://www.gnu.org/licenses/gpl-2.0.html for more details.
- */
 
-/**
- * @file	mtk_gpufreq_core
- * @brief   Driver for GPU-DVFS
- */
 
-/**
- * ===============================================
- * SECTION : Include files
- * ===============================================
- */
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -84,11 +62,6 @@
 #include "mt-plat/mboot_params.h"
 #endif
 
-/**
- * ===============================================
- * SECTION : Local functions declaration
- * ===============================================
- */
 static int __mt_gpufreq_pdrv_probe(struct platform_device *pdev);
 static void __mt_gpufreq_set(unsigned int freq_old, unsigned int freq_new,
 	unsigned int volt_old, unsigned int volt_new,
@@ -145,11 +118,6 @@ static inline void gpu_dvfs_oppidx_reset_footprint(void)
 }
 #endif
 
-/**
- * ===============================================
- * SECTION : Local variables definition
- * ===============================================
- */
 
 static struct mt_gpufreq_power_table_info *g_power_table;
 static struct g_opp_table_info *g_opp_table;
@@ -370,20 +338,12 @@ phys_addr_t gpu_fdvfs_virt_addr; /* for GED, legacy ?! */
 module_param(g_use_complete_volt_switch_solution, uint, 0644);
 module_param(g_enable_aging_test, uint, 0644);
 
-/**
- * ===============================================
- * SECTION : API definition
- * ===============================================
- */
 
 struct mt_gpufreq_power_table_info *pass_gpu_table_to_eara(void)
 {
 	return g_power_table;
 }
 
-/*
- * API : handle frequency change request
- */
 unsigned int mt_gpufreq_target(unsigned int idx)
 {
 	unsigned int target_freq;
@@ -510,9 +470,6 @@ unsigned int mt_gpufreq_target(unsigned int idx)
 }
 EXPORT_SYMBOL(mt_gpufreq_target);
 
-/*
- * enable MTCMOS
- */
 void mt_gpufreq_enable_MTCMOS(bool bEnableHWAPM)
 {
 #if ENABLE_MTCMOS_CONTROL
@@ -546,9 +503,6 @@ void mt_gpufreq_enable_MTCMOS(bool bEnableHWAPM)
 }
 EXPORT_SYMBOL(mt_gpufreq_enable_MTCMOS);
 
-/*
- * disable MTCMOS
- */
 void mt_gpufreq_disable_MTCMOS(bool bEnableHWAPM)
 {
 #if ENABLE_MTCMOS_CONTROL
@@ -569,11 +523,6 @@ void mt_gpufreq_disable_MTCMOS(bool bEnableHWAPM)
 }
 EXPORT_SYMBOL(mt_gpufreq_disable_MTCMOS);
 
-/*
- * API : GPU voltage on/off setting
- * 0 : off
- * 1 : on
- */
 unsigned int mt_gpufreq_voltage_enable_set(unsigned int enable)
 {
 #if ENABLE_BUCK_CONTROL
@@ -628,9 +577,6 @@ unsigned int mt_gpufreq_voltage_enable_set(unsigned int enable)
 }
 EXPORT_SYMBOL(mt_gpufreq_voltage_enable_set);
 
-/*
- * API : enable DVFS for PTPOD initializing
- */
 void mt_gpufreq_enable_by_ptpod(void)
 {
 	/* Freerun GPU DVFS */
@@ -659,9 +605,6 @@ void mt_gpufreq_enable_by_ptpod(void)
 	gpufreq_pr_debug("@%s: DVFS is enabled by ptpod\n", __func__);
 }
 
-/*
- * API : disable DVFS for PTPOD initializing
- */
 void mt_gpufreq_disable_by_ptpod(void)
 {
 	int i;
@@ -690,9 +633,6 @@ void mt_gpufreq_disable_by_ptpod(void)
 	gpufreq_pr_debug("@%s: DVFS is disabled by ptpod\n", __func__);
 }
 
-/*
- * API : update OPP and switch back to default voltage setting
- */
 void mt_gpufreq_restore_default_volt(void)
 {
 	int i;
@@ -718,10 +658,6 @@ void mt_gpufreq_restore_default_volt(void)
 	mutex_unlock(&mt_gpufreq_lock);
 }
 
-/*
- * API : update OPP and set voltage because
- * PTPOD modified voltage table by PMIC wrapper
- */
 unsigned int
 mt_gpufreq_update_volt(unsigned int pmic_volt[], unsigned int array_size)
 {
@@ -871,9 +807,6 @@ unsigned int mt_gpufreq_get_leakage_mw(void)
 #endif /* ifdef CONFIG_MTK_STATIC_POWER */
 }
 
-/*
- * API : get current segment max opp index
- */
 unsigned int mt_gpufreq_get_seg_max_opp_index(void)
 {
 	/* As mt6779 never hidden the opp-idx 0, 0 is the max opp idx */
@@ -881,9 +814,6 @@ unsigned int mt_gpufreq_get_seg_max_opp_index(void)
 }
 EXPORT_SYMBOL(mt_gpufreq_get_seg_max_opp_index);
 
-/*
- * API : get current Thermal/Power/PBM limited OPP table index
- */
 unsigned int mt_gpufreq_get_thermal_limit_index(void)
 {
 	gpufreq_pr_debug("@%s: current GPU Thermal/Power/PBM limit index is %d\n",
@@ -892,9 +822,6 @@ unsigned int mt_gpufreq_get_thermal_limit_index(void)
 }
 EXPORT_SYMBOL(mt_gpufreq_get_thermal_limit_index);
 
-/*
- * API : get current Thermal/Power/PBM limited OPP table frequency
- */
 unsigned int mt_gpufreq_get_thermal_limit_freq(void)
 {
 	gpufreq_pr_debug("@%s: current GPU thermal limit freq is %d MHz\n",
@@ -904,9 +831,6 @@ unsigned int mt_gpufreq_get_thermal_limit_freq(void)
 }
 EXPORT_SYMBOL(mt_gpufreq_get_thermal_limit_freq);
 
-/*
- * API : get current OPP table conditional index
- */
 unsigned int mt_gpufreq_get_cur_freq_index(void)
 {
 	gpufreq_pr_debug("@%s: current OPP table conditional index is %d\n",
@@ -918,9 +842,6 @@ unsigned int mt_gpufreq_get_cur_freq_index(void)
 }
 EXPORT_SYMBOL(mt_gpufreq_get_cur_freq_index);
 
-/*
- * API : get current OPP table frequency
- */
 unsigned int mt_gpufreq_get_cur_freq(void)
 {
 	gpufreq_pr_debug(
@@ -930,9 +851,6 @@ unsigned int mt_gpufreq_get_cur_freq(void)
 }
 EXPORT_SYMBOL(mt_gpufreq_get_cur_freq);
 
-/*
- * API : get current voltage
- */
 unsigned int mt_gpufreq_get_cur_volt(void)
 {
 	gpufreq_pr_debug(
@@ -941,9 +859,6 @@ unsigned int mt_gpufreq_get_cur_volt(void)
 	return (g_volt_enable_state) ? g_cur_opp_volt : 0;
 }
 EXPORT_SYMBOL(mt_gpufreq_get_cur_volt);
-/*
- * API : get current vsram voltage
- */
 unsigned int mt_gpufreq_get_cur_vsram(void)
 {
 	gpufreq_pr_debug(
@@ -963,9 +878,6 @@ int mt_gpufreq_get_cur_ceiling_idx(void)
 EXPORT_SYMBOL(mt_gpufreq_get_cur_ceiling_idx);
 
 #ifdef MT_GPUFREQ_BATT_OC_PROTECT
-/*
- * API : Over Currents(OC) Callback
- */
 void mt_gpufreq_batt_oc_callback(enum BATTERY_OC_LEVEL_TAG battery_oc_level)
 {
 	if (g_batt_oc_limited_ignore_state) {
@@ -996,9 +908,6 @@ void mt_gpufreq_batt_oc_callback(enum BATTERY_OC_LEVEL_TAG battery_oc_level)
 #endif /* ifdef MT_GPUFREQ_BATT_OC_PROTECT */
 
 #ifdef MT_GPUFREQ_BATT_PERCENT_PROTECT
-/*
- * API : Battery Percentage Callback
- */
 void
 mt_gpufreq_batt_percent_callback(enum BATTERY_PERCENT_LEVEL_TAG bat_percent_lv)
 {
@@ -1036,9 +945,6 @@ mt_gpufreq_batt_percent_callback(enum BATTERY_PERCENT_LEVEL_TAG bat_percent_lv)
 #endif /* ifdef MT_GPUFREQ_BATT_PERCENT_PROTECT */
 
 #ifdef MT_GPUFREQ_LOW_BATT_VOLT_PROTECT
-/*
- * API : Low Battery Volume Callback
- */
 void mt_gpufreq_low_batt_callback(enum LOW_BATTERY_LEVEL_TAG low_battery_level)
 {
 	if (g_low_batt_limited_ignore_state) {
@@ -1074,9 +980,6 @@ void mt_gpufreq_low_batt_callback(enum LOW_BATTERY_LEVEL_TAG low_battery_level)
 }
 #endif /* ifdef MT_GPUFREQ_LOW_BATT_VOLT_PROTECT */
 
-/*
- * API : set limited OPP table index for Thermal protection
- */
 void mt_gpufreq_thermal_protect(unsigned int limited_power)
 {
 	int i = -1;
@@ -1173,33 +1076,19 @@ void mt_gpufreq_set_power_limit_by_pbm(unsigned int limited_power)
 	mutex_unlock(&mt_gpufreq_power_lock);
 }
 
-/*
- * API : set GPU loading for SSPM
- */
 void mt_gpufreq_set_loading(unsigned int gpu_loading)
 {
 	/* legacy */
 }
 
-/*
- * API : register GPU power limited notifiction callback
- */
 void mt_gpufreq_power_limit_notify_registerCB(gpufreq_power_limit_notify pCB)
 {
 	/* legacy */
 }
 EXPORT_SYMBOL(mt_gpufreq_power_limit_notify_registerCB);
 
-/**
- * ===============================================
- * SECTION : PROCFS interface for debugging
- * ===============================================
- */
 
 #ifdef CONFIG_PROC_FS
-/*
- * PROCFS : show OPP table
- */
 static int mt_gpufreq_opp_dump_proc_show(struct seq_file *m, void *v)
 {
 	int i;
@@ -1227,9 +1116,6 @@ static int mt_gpufreq_opp_dump_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * PROCFS : show OPP power table
- */
 static int mt_gpufreq_power_dump_proc_show(struct seq_file *m, void *v)
 {
 	int i;
@@ -1244,9 +1130,6 @@ static int mt_gpufreq_power_dump_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * PROCFS : show important variables for debugging
- */
 static int g_cur_vcore_opp = VCORE_OPP_0;
 static int mt_gpufreq_var_dump_proc_show(struct seq_file *m, void *v)
 {
@@ -1288,9 +1171,6 @@ static int mt_gpufreq_var_dump_proc_show(struct seq_file *m, void *v)
 }
 
 #ifdef MT_GPUFREQ_OPP_STRESS_TEST
-/*
- * PROCFS : show current opp stress test state
- */
 static int mt_gpufreq_opp_stress_test_proc_show(struct seq_file *m, void *v)
 {
 	seq_printf(m, "g_opp_stress_test_state = %d\n",
@@ -1298,11 +1178,6 @@ static int mt_gpufreq_opp_stress_test_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * PROCFS : opp stress test message setting
- * 0 : disable
- * 1 : enable
- */
 static ssize_t mt_gpufreq_opp_stress_test_proc_write(struct file *file,
 	const char __user *buffer,
 	size_t count, loff_t *data)
@@ -1331,11 +1206,6 @@ out:
 }
 #endif /* ifdef MT_GPUFREQ_OPP_STRESS_TEST */
 
-/*
- * PROCFS : show Thermal/Power/PBM limited ignore state
- * 0 : consider
- * 1 : ignore
- */
 static int mt_gpufreq_power_limited_proc_show(struct seq_file *m, void *v)
 {
 	seq_puts(m, "GPU-DVFS power limited state ....\n");
@@ -1360,9 +1230,6 @@ static int mt_gpufreq_power_limited_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * PROCFS : ignore state or power value setting for Thermal/Power/PBM limit
- */
 static void mt_gpufreq_plim_proc_write_op(const char *tab, int n,
 	const char *str, bool *pV, int value, int idx, int *pRet)
 {
@@ -1484,9 +1351,6 @@ out:
 	return (ret < 0) ? ret : count;
 }
 
-/*
- * PROCFS : show current keeping OPP frequency state
- */
 static int mt_gpufreq_opp_freq_proc_show(struct seq_file *m, void *v)
 {
 	if (g_keep_opp_freq_state) {
@@ -1504,11 +1368,6 @@ static int mt_gpufreq_opp_freq_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * PROCFS : keeping OPP frequency setting
- * 0 : free run
- * 1 : keep OPP frequency
- */
 static ssize_t mt_gpufreq_opp_freq_proc_write(struct file *file,
 		const char __user *buffer, size_t count, loff_t *data)
 {
@@ -1548,9 +1407,6 @@ out:
 	return (ret < 0) ? ret : count;
 }
 
-/*
- * PROCFS : show current fixed freq & volt state
- */
 static int mt_gpufreq_fixed_freq_volt_proc_show(struct seq_file *m, void *v)
 {
 	if (g_fixed_freq_volt_state) {
@@ -1563,9 +1419,6 @@ static int mt_gpufreq_fixed_freq_volt_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * PROCFS : fixed freq & volt state setting
- */
 static ssize_t mt_gpufreq_fixed_freq_volt_proc_write(struct file *file,
 		const char __user *buffer, size_t count, loff_t *data)
 {
@@ -1610,9 +1463,6 @@ out:
 	return (ret < 0) ? ret : count;
 }
 
-/*
- * PROCFS : initialization
- */
 PROC_FOPS_RW(gpufreq_opp_stress_test);
 PROC_FOPS_RW(gpufreq_power_limited);
 PROC_FOPS_RO(gpufreq_opp_dump);
@@ -1656,17 +1506,7 @@ static int __mt_gpufreq_create_procfs(void)
 }
 #endif  /* ifdef CONFIG_PROC_FS */
 
-/**
- * ===============================================
- * SECTION : Local functions definition
- * ===============================================
- */
 
-/*
- * frequency ramp up/down handler
- * - frequency ramp up need to wait voltage settle
- * - frequency ramp down do not need to wait voltage settle
- */
 static void __mt_gpufreq_set(unsigned int freq_old, unsigned int freq_new,
 	unsigned int volt_old, unsigned int volt_new,
 	unsigned int vsram_old, unsigned int vsram_new)
@@ -1702,9 +1542,6 @@ static void __mt_gpufreq_set(unsigned int freq_old, unsigned int freq_new,
 		g_pre_pwr_off_opp_set = false;
 }
 
-/*
- * switch clock(frequency) via PLL
- */
 static void __mt_gpufreq_clock_switch(unsigned int freq_new)
 {
 	enum g_post_divider_power_enum post_divider_power;
@@ -1756,9 +1593,6 @@ static void __mt_gpufreq_clock_switch(unsigned int freq_new)
 
 }
 
-/*
- * switch to target clock source
- */
 static void __mt_gpufreq_switch_to_clksrc(enum g_clock_source_enum clksrc)
 {
 	int ret;
@@ -1785,9 +1619,6 @@ static void __mt_gpufreq_switch_to_clksrc(enum g_clock_source_enum clksrc)
 
 	clk_disable_unprepare(g_clk->clk_mux);
 }
-/*
- * switch voltage and vsram via PMIC
- */
 void __mt_gpufreq_volt_up(unsigned int vgpu_old,
 		unsigned int vgpu_new, unsigned int vsram_old,
 		unsigned int vsram_new)
@@ -1907,9 +1738,6 @@ static void __mt_gpufreq_volt_switch(unsigned int volt_old,
 	}
 }
 
-/*
- * switch VGPU voltage via PMIC
- */
 static void __mt_gpufreq_vgpu_volt_switch(
 	unsigned int volt_old, unsigned int volt_new)
 {
@@ -1929,12 +1757,6 @@ static void __mt_gpufreq_vgpu_volt_switch(
 	gpufreq_pr_debug("@%s: udelay us(%d)\n", __func__, delays);
 }
 
-/*
- * calculate springboard opp index
- * to avoid buck variation, the voltage between VGPU
- * and VSRAM must be in 100mV?~ 250mV
- * (Vgpu +- 6.25%, Vgpu_sram +- 47mV)
- */
 static void __mt_gpufreq_calculate_springboard_opp_index(void)
 {
 	g_opp_springboard_idx = 5;
@@ -1942,9 +1764,6 @@ static void __mt_gpufreq_calculate_springboard_opp_index(void)
 			__func__, g_opp_springboard_idx);
 }
 
-/*
- * enable bucks (VGPU)
- */
 static void __mt_gpufreq_bucks_enable(void)
 {
 	int ret;
@@ -1959,9 +1778,6 @@ static void __mt_gpufreq_bucks_enable(void)
 	gpufreq_pr_debug("@%s: VGPU enters to normal mode\n", __func__);
 }
 
-/*
- * disable bucks (VGPU)
- */
 static void __mt_gpufreq_bucks_disable(void)
 {
 	int ret;
@@ -1977,11 +1793,6 @@ static void __mt_gpufreq_bucks_disable(void)
 	gpufreq_pr_debug("@%s: VGPU enters to normal mode\n", __func__);
 }
 
-/*
- * set AUTO_MODE or PWM_MODE to PMIC(VGPU)
- * REGULATOR_MODE_FAST: PWM Mode
- * REGULATOR_MODE_NORMAL: Auto Mode
- */
 static void __mt_gpufreq_vgpu_set_mode(unsigned int mode)
 {
 	int ret;
@@ -1997,9 +1808,6 @@ static void __mt_gpufreq_vgpu_set_mode(unsigned int mode)
 		__func__, ret, mode);
 }
 
-/*
- * dds calculation for clock switching
- */
 static unsigned int __mt_gpufreq_calculate_dds(unsigned int freq_khz,
 		enum g_post_divider_power_enum post_divider_power)
 {
@@ -2058,18 +1866,6 @@ static void __mt_gpufreq_calculate_power(unsigned int idx,
 	g_power_table[idx].gpufreq_power = p_total;
 }
 
-/*
- * get post divider value
- * - VCO needs proper post divider value to get corresponding
- * dds value to adjust PLL value.
- * - e.g: In MT6758, VCO range is 2.0GHz - 4.0GHz, required frequency
- * is 900MHz, so post
- * divider could be 2(X), 4(3600/4), 8(X), 16(X).
- * - It may have special requiremt by DE in different efuse value
- * - e.g: In MT6779, efuse value(3'b001), VCO range is 1.5GHz - 3.8GHz,
- * required frequency
- * range is 375MHz - 900MHz, It can only use post divider 4, no post divider 2.
- */
 static enum g_post_divider_power_enum
 __mt_gpufreq_get_post_divider_power(unsigned int freq, unsigned int efuse)
 {
@@ -2102,9 +1898,6 @@ __mt_gpufreq_get_post_divider_power(unsigned int freq, unsigned int efuse)
 	return post_divider_power;
 }
 
-/*
- * get current frequency (KHZ)
- */
 static unsigned int __mt_gpufreq_get_cur_freq(void)
 {
 	unsigned long mfgpll = 0;
@@ -2129,9 +1922,6 @@ static unsigned int __mt_gpufreq_get_cur_freq(void)
 	return freq_khz;
 }
 
-/*
- * get current vmdla voltage (mV * 100)
- */
 static unsigned int __mt_gpufreq_get_cur_vmdla_volt(void)
 {
 	unsigned int volt = 0;
@@ -2145,9 +1935,6 @@ static unsigned int __mt_gpufreq_get_cur_vmdla_volt(void)
 	return volt;
 }
 
-/*
- * get current vapu voltage (mV * 100)
- */
 static unsigned int __mt_gpufreq_get_cur_vapu_volt(void)
 {
 	unsigned int volt = 0;
@@ -2161,9 +1948,6 @@ static unsigned int __mt_gpufreq_get_cur_vapu_volt(void)
 	return volt;
 }
 
-/*
- * get current vsram voltage (mV * 100)
- */
 static unsigned int __mt_gpufreq_get_cur_vsram_volt(void)
 {
 	unsigned int volt = 0;
@@ -2177,9 +1961,6 @@ static unsigned int __mt_gpufreq_get_cur_vsram_volt(void)
 	return volt;
 }
 
-/*
- * get current vgpu voltage (mV * 100)
- */
 static unsigned int __mt_gpufreq_get_cur_volt(void)
 {
 	unsigned int volt = 0;
@@ -2192,9 +1973,6 @@ static unsigned int __mt_gpufreq_get_cur_volt(void)
 	return volt;
 }
 
-/*
- * get current vcore voltage (mV * 100)
- */
 static unsigned int __mt_gpufreq_get_cur_vcore_volt(void)
 {
 	unsigned int volt = 0;
@@ -2204,9 +1982,6 @@ static unsigned int __mt_gpufreq_get_cur_vcore_volt(void)
 
 	return volt;
 }
-/*
- * get OPP table index by voltage (mV * 100)
- */
 static int __mt_gpufreq_get_opp_idx_by_volt(unsigned int volt)
 {
 	int i = g_opp_idx_num - 1;
@@ -2220,9 +1995,6 @@ EXIT:
 	return i+1;
 }
 
-/*
- * get limited frequency by limited power (mW)
- */
 static unsigned int
 __mt_gpufreq_get_limited_freq_by_power(unsigned int limited_power)
 {
@@ -2307,9 +2079,6 @@ static void __mt_gpufreq_update_max_limited_idx(void)
 }
 
 #ifdef MT_GPUFREQ_BATT_OC_PROTECT
-/*
- * limit OPP index for Over Currents (OC) protection
- */
 static void __mt_gpufreq_batt_oc_protect(unsigned int limited_idx)
 {
 	mutex_lock(&mt_gpufreq_power_lock);
@@ -2324,9 +2093,6 @@ static void __mt_gpufreq_batt_oc_protect(unsigned int limited_idx)
 #endif /* ifdef MT_GPUFREQ_BATT_OC_PROTECT */
 
 #ifdef MT_GPUFREQ_BATT_PERCENT_PROTECT
-/*
- * limit OPP index for Battery Percentage protection
- */
 static void __mt_gpufreq_batt_percent_protect(unsigned int limited_index)
 {
 	mutex_lock(&mt_gpufreq_power_lock);
@@ -2341,9 +2107,6 @@ static void __mt_gpufreq_batt_percent_protect(unsigned int limited_index)
 #endif /* ifdef MT_GPUFREQ_BATT_PERCENT_PROTECT */
 
 #ifdef MT_GPUFREQ_LOW_BATT_VOLT_PROTECT
-/*
- * limit OPP index for Low Battery Volume protection
- */
 static void __mt_gpufreq_low_batt_protect(unsigned int limited_index)
 {
 	mutex_lock(&mt_gpufreq_power_lock);
@@ -2357,9 +2120,6 @@ static void __mt_gpufreq_low_batt_protect(unsigned int limited_index)
 }
 #endif /* ifdef MT_GPUFREQ_LOW_BATT_VOLT_PROTECT */
 
-/*
- * kick Power Budget Manager(PBM) when OPP changed
- */
 
 static void __mt_gpufreq_kick_pbm(int enable)
 {
@@ -2426,9 +2186,6 @@ static void __mt_gpufreq_kick_pbm(int enable)
 }
 
 
-/*
- * (default) OPP table initialization
- */
 static void __mt_gpufreq_setup_opp_table(struct g_opp_table_info *freqs,
 	int num)
 {
@@ -2467,9 +2224,6 @@ static void __mt_gpufreq_setup_opp_table(struct g_opp_table_info *freqs,
 	__mt_gpufreq_setup_opp_power_table(num);
 }
 
-/*
- * OPP power table initialization
- */
 static void __mt_gpufreq_setup_opp_power_table(int num)
 {
 	int i = 0;
@@ -2513,9 +2267,6 @@ static void __mt_gpufreq_setup_opp_power_table(int num)
 #endif /* ifdef CONFIG_MTK_LEGACY_THERMAL */
 }
 
-/*
- *Set default OPP index at driver probe function
- */
 static void __mt_gpufreq_set_initial(void)
 {
 	unsigned int cur_volt = 0;
@@ -2557,9 +2308,6 @@ static void __mt_gpufreq_set_initial(void)
 	mutex_unlock(&mt_gpufreq_lock);
 }
 
-/*
- * gpufreq driver probe
- */
 static int __mt_gpufreq_pdrv_probe(struct platform_device *pdev)
 {
 	struct device_node *apmixed_node;
@@ -2838,9 +2586,6 @@ static int __mt_gpufreq_pdrv_probe(struct platform_device *pdev)
 	return 0;
 }
 
-/*
- * register the gpufreq driver
- */
 static int __init __mt_gpufreq_init(void)
 {
 	int ret = 0;
@@ -2872,9 +2617,6 @@ out:
 	return ret;
 }
 
-/*
- * unregister the gpufreq driver
- */
 static void __exit __mt_gpufreq_exit(void)
 {
 	platform_driver_unregister(&g_gpufreq_pdrv);

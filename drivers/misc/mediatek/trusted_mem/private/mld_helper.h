@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef TMEM_MEMORY_LEAK_DETECTION_HELPER_H
 #define TMEM_MEMORY_LEAK_DETECTION_HELPER_H

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <asm/segment.h>
 #include <linux/uaccess.h>
@@ -962,12 +959,6 @@ int emmc_runtime_autok_merge(u32 opcode)
 }
 #endif
 
-/*
- * Vcore dvfs module MUST ensure having executed
- * the function before mmcblk0 inited + 3s,
- * otherwise will fail because of entering runtime
- * supsend.
- */
 int emmc_autok(void)
 {
 #if !defined(FPGA_PLATFORM) && defined(VCOREFS_READY)
@@ -1061,9 +1052,6 @@ int emmc_autok(void)
 }
 EXPORT_SYMBOL(emmc_autok);
 
-/* FIX ME: Since card can be insert at any time but this is invoked only once
- * when DVFS ready, this function is not suitable for card insert after boot
- */
 int sd_autok(void)
 {
 	struct msdc_host *host = mtk_msdc_host[1];

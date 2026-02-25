@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __ION_DRV_H__
 #define __ION_DRV_H__
@@ -246,13 +243,7 @@ struct ion_handle *ion_drv_get_handle(struct ion_client *client,
 				      int from_kernel);
 int ion_drv_put_kernel_handle(void *kernel_handle);
 
-/**
- * ion_mm_heap_total_memory() - get mm heap total buffer size.
- */
 size_t ion_mm_heap_total_memory(void);
-/**
- * ion_mm_heap_total_memory() - get mm heap buffer detail info.
- */
 void ion_mm_heap_memory_detail(void);
 int ion_drv_create_FB_heap(ion_phys_addr_t fb_base, size_t fb_size);
 

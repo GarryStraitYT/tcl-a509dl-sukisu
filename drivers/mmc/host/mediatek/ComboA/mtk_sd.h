@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef MT_SD_H
 #define MT_SD_H
 
@@ -602,9 +599,6 @@ static inline unsigned int uffs(unsigned int x)
 #define msdc_fifo_read8()       MSDC_READ8(MSDC_RXDATA)
 
 /* can modify to read h/w register.*/
-/* #define is_card_present(h) \
- *			((MSDC_READ32(MSDC_PS) & MSDC_PS_CDSTS) ? 0 : 1);
- */
 #define is_card_present(h)      (((struct msdc_host *)(h))->card_inserted)
 #define is_card_sdio(h)         (((struct msdc_host *)(h))->hw->register_pm)
 

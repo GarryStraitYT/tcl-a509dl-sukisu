@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * drivers/staging/android/mtk_ion/compat_ion.c
- *
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/compat.h>
 #include <linux/fs.h>

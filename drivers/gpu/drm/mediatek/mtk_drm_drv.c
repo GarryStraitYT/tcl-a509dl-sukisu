@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- * Author: YT SHEN <yt.shen@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <drm/drmP.h>
 #include <drm/drm_atomic.h>
@@ -358,10 +345,6 @@ static const struct file_operations mtk_drm_fops = {
 	.compat_ioctl = drm_compat_ioctl,
 };
 
-/*
- * We need to override this because the device used to import the memory is
- * not dev->dev, as drm_gem_prime_import() expects.
- */
 struct drm_gem_object *mtk_drm_gem_prime_import(struct drm_device *dev,
 						struct dma_buf *dma_buf)
 {

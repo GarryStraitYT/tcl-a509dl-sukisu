@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MediaTek UART APDMA driver.
- *
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Long Cheng <long.cheng@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/dmaengine.h>
@@ -43,11 +37,6 @@
 #define VFF_INT_EN_CLR_B	0
 #define VFF_4G_SUPPORT_CLR_B	0
 #define VFF_ORI_ADDR_BITS_NUM    32
-/*
- * interrupt trigger level for tx
- * if threshold is n, no polling is required to start tx.
- * otherwise need polling VFF_FLUSH.
- */
 #define VFF_TX_THRE(n)		(n)
 /* interrupt trigger level for rx */
 #define VFF_RX_THRE(n)		((n) * 3 / 4)
@@ -333,10 +322,6 @@ static enum dma_status mtk_uart_apdma_tx_status(struct dma_chan *chan,
 	return ret;
 }
 
-/*
- * dmaengine_prep_slave_single will call the function. and sglen is 1.
- * 8250 uart using one ring buffer, and deal with one sg.
- */
 static struct dma_async_tx_descriptor *mtk_uart_apdma_prep_slave_sg
 	(struct dma_chan *chan, struct scatterlist *sgl,
 	unsigned int sglen, enum dma_transfer_direction dir,

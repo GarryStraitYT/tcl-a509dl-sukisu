@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -135,9 +132,6 @@ static mmp_event dprec_mmp_event_spy(enum DPREC_LOGGER_ENUM l)
 		return ddp_mmp_get_events()->esd_recovery;
 	case DPREC_LOGGER_ESD_CMDQ:
 		return ddp_mmp_get_events()->esd_cmdq;
-/*	case DPREC_LOGGER_DSI_EXT_TE:
- *		return ddp_mmp_get_events()->dsi_te;
- */
 	}
 #endif
 	return 0xffff;

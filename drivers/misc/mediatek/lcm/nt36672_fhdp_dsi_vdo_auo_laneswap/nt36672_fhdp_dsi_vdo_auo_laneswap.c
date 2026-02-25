@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #define LOG_TAG "LCM"
 
@@ -357,12 +354,6 @@ static struct LCM_setting_table init_setting_cmd[] = {
 	{0x29, 0, {} },
 	/*{REGFLAG_DELAY, 200, {} },*/
 	/* ///////////////////CABC SETTING///////// */
-/*
- *	{0x51, 1, {0x00} },
- *	{0x5E, 1, {0x00} },
- *	{0x53, 1, {0x24} },
- *	{0x55, 1, {0x00} },
- */
 };
 
 static struct LCM_setting_table init_setting_vdo[] = {
@@ -608,12 +599,6 @@ static struct LCM_setting_table init_setting_vdo[] = {
 	{0x29, 0, {} },
 	/*{REGFLAG_DELAY, 200, {} },*/
 	/* ///////////////////CABC SETTING///////// */
-/*
- *	{0x51, 1, {0x00} },
- *	{0x5E, 1, {0x00} },
- *	{0x53, 1, {0x24} },
- *	{0x55, 1, {0x00} },
- */
 };
 
 static struct LCM_setting_table bl_level[] = {
@@ -971,10 +956,6 @@ static void lcm_setbacklight_cmdq(void *handle, unsigned int level)
 static void *lcm_switch_mode(int mode)
 {
 #ifndef BUILD_LK
-/* customization:
- * 1. V2C config 2 values, C2V config 1 value;
- * 2. config mode control register
- */
 	if (mode == 0) {	/* V2C */
 		lcm_switch_mode_cmd.mode = CMD_MODE;
 		lcm_switch_mode_cmd.addr = 0xBB;	/* mode control addr */
@@ -996,11 +977,6 @@ static void *lcm_switch_mode(int mode)
 
 #if (LCM_DSI_CMD_MODE)
 
-/* partial update restrictions:
- * 1. roi width must be 1080 (full lcm width)
- * 2. vertical start (y) must be multiple of 16
- * 3. vertical height (h) must be multiple of 16
- */
 static void lcm_validate_roi(int *x, int *y, int *width, int *height)
 {
 	unsigned int y1 = *y;

@@ -26,11 +26,6 @@
 
 
 
-/*
- * =============================================================================
- *                     log
- * =============================================================================
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -38,20 +33,10 @@
 #define pr_fmt(fmt) "[IPI][TASK_Q] %s(), " fmt "\n", __func__
 
 
-/*
- * =============================================================================
- *                     MACRO
- * =============================================================================
- */
 
 #define MAX_IPI_MSG_QUEUE_SIZE (16)
 
 
-/*
- * =============================================================================
- *                     typedef
- * =============================================================================
- */
 
 struct queue_element_t {
 	struct ipi_msg_t *msg;
@@ -77,21 +62,11 @@ struct msg_queue_t {
 };
 
 
-/*
- * =============================================================================
- *                     private global members
- * =============================================================================
- */
 
 static struct ipi_queue_handler_t g_ipi_queue_handler[TASK_SCENE_SIZE];
 
 
 
-/*
- * =============================================================================
- *                     private function declaration
- * =============================================================================
- */
 
 static struct msg_queue_t *create_msg_queue(const uint8_t task_scene);
 static void destroy_msg_queue(struct msg_queue_t *msg_queue);
@@ -102,11 +77,6 @@ static int process_message_in_queue(
 	int idx_msg);
 
 
-/*
- * =============================================================================
- *                     utilities
- * =============================================================================
- */
 
 inline bool check_queue_empty(const struct msg_queue_t *msg_queue);
 inline bool check_queue_to_be_full(const struct msg_queue_t *msg_queue);
@@ -130,11 +100,6 @@ inline bool check_ack_msg_valid(
 	const struct ipi_msg_t *p_ipi_msg_ack);
 
 
-/*
- * =============================================================================
- *                     create/destroy/init/deinit functions
- * =============================================================================
- */
 
 struct ipi_queue_handler_t *create_ipi_queue_handler(const uint8_t task_scene)
 {
@@ -294,11 +259,6 @@ int flush_ipi_queue_handler(struct ipi_queue_handler_t *handler)
 }
 
 
-/*
- * =============================================================================
- *                     main functions
- * =============================================================================
- */
 
 int send_message(
 	struct ipi_queue_handler_t *handler,
@@ -666,11 +626,6 @@ static int process_message_in_queue(
 }
 
 
-/*
- * =============================================================================
- *                     utilities
- * =============================================================================
- */
 
 inline bool check_queue_empty(const struct msg_queue_t *msg_queue)
 {

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- * Author: Mac Lu <mac.lu@mediatek.com>
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 

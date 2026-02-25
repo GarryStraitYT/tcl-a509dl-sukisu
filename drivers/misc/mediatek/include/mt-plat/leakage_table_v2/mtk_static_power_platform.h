@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __MTK_STATIC_POWER_MTK6779_H__
 #define __MTK_STATIC_POWER_MTK6779_H__

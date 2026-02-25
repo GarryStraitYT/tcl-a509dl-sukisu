@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _DDP_REG_DSI_H_
 #define _DDP_REG_DSI_H_
@@ -658,9 +655,6 @@ struct DSI_REGS {
 	struct DSI_SHADOW_STA_REG DSI_SHADOW_STA;	/* 0194 */
 };
 
-/* 0~1 TYPE ,2 BTA,3 HS, 4 CL,5 TE,6~7 RESV,
- * 8~15 DATA_ID,16~23 DATA_0,24~31 DATA_1
- */
 struct DSI_CMDQ {
 	unsigned char byte0;
 	unsigned char byte1;

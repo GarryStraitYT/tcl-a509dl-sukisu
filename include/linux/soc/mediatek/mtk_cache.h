@@ -1,21 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_CACHE__
 #define __MTK_CACHE__
 
-/*
- * Be careful!!
- *
- * functions here are used for limited drivers which need
- * special cache operation.
- * please make sure you need these non-standard operations
- * Anything in doubt, please discuss with the system service
- * member.
- *
- */
 void __inner_flush_dcache_L1(void);
 void __inner_flush_dcache_L2(void);
 void __inner_flush_dcache_all(void);

@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef SEC_OSAL_LIGHT_H
 #define SEC_OSAL_LIGHT_H
 
-/**************************************************************************
- *  INCLUDE HEADERS
- **************************************************************************/
 #include <linux/string.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

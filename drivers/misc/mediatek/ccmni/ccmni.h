@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 
 #ifndef __CCCI_CCMNI_H__
@@ -25,12 +22,6 @@
 #include <linux/dma-mapping.h>
 #include "mt-plat/mtk_ccci_common.h"
 
-/*
- * normal workqueue:   MODEM_CAP_NAPI=0, ENABLE_NAPI_GRO=0, ENABLE_WQ_GRO=0
- * workqueue with GRO: MODEM_CAP_NAPI=0, ENABLE_NAPI_GRO=0, ENABLE_WQ_GRO=1
- * NAPI without GRO:   MODEM_CAP_NAPI=1, ENABLE_NAPI_GRO=0, ENABLE_WQ_GRO=0
- * NAPI with GRO:      MODEM_CAP_NAPI=1, ENABLE_NAPI_GRO=1, ENABLE_WQ_GRO=0
- */
 /* #define ENABLE_NAPI_GRO */
 #ifdef CONFIG_MTK_ECCCI_C2K
 #define ENABLE_WQ_GRO

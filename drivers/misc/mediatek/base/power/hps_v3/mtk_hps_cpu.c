@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -15,15 +12,9 @@
 
 #include "mtk_hps_internal.h"
 
-/*
- * static
- */
 #define STATIC
 /* #define STATIC static */
 
-/*
- * hps cpu interface - cpumask
- */
 int hps_cpu_is_cpu_big(int cpu)
 {
 	if (!cpumask_empty(&hps_ctxt.big_cpumask)) {
@@ -81,9 +72,6 @@ unsigned int num_online_big_cpus(void)
 /* return ARCH_TYPE_NOT_READY; */
 /* } */
 
-/*
- * hps cpu interface - scheduler
- */
 unsigned int hps_cpu_get_percpu_load(int cpu, int get_abs)
 {
 #ifdef CONFIG_MTK_SCHED_RQAVG_US
@@ -119,9 +107,6 @@ int hps_cpu_get_tlp(unsigned int *avg, unsigned int *iowait_avg)
 #endif
 }
 
-/*
- * init
- */
 int hps_cpu_init(void)
 {
 	int r = 0;
@@ -229,9 +214,6 @@ int hps_cpu_init(void)
 	return r;
 }
 
-/*
- * deinit
- */
 int hps_cpu_deinit(void)
 {
 	int r = 0;

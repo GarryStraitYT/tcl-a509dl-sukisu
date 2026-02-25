@@ -1,21 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- *
- * Author: Light Hsieh <light.hsieh@mediatek.com>
- *
- */
 
 #include <linux/module.h>
 #include "pinctrl-mtk-mt6765.h"
 #include "pinctrl-paris.h"
 
-/* MT6765 have multiple bases to program pin configuration listed as the below:
- * gpio:0x10005000,     iocfg_lt:0x10002000, iocfg_lm:0x10002200,
- * iocfg_lb:0x10002400, iocfg_bl:0x10002600, iocfg_rr:0x10002800,
- * iocfg_rb:0x10002A00, iocfg_rt:0x10002C00
- * _i_based could be used to indicate what base the pin should be mapped into.
- */
 
 #define PIN_FIELD_BASE(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits) \
 	PIN_FIELD_CALC(s_pin, e_pin, i_base, s_addr, x_addrs, s_bit, x_bits, \

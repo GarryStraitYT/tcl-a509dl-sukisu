@@ -1,41 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_fmtx.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio fmtx data1 playback
- *
- * Author:George
- *
- * -------
- *
- *
- *------------------------------------------------------------------------------
- **
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include <linux/dma-mapping.h>
 #include <sound/pcm_params.h>
@@ -55,9 +21,6 @@ static struct snd_dma_buffer *FMTX_Playback_dma_buf;
 static unsigned int mPlaybackDramState;
 static struct device *mDev;
 
-/*
- *    function implementation
- */
 
 static int mtk_fmtx_probe(struct platform_device *pdev);
 static int mtk_pcm_fmtx_close(struct snd_pcm_substream *substream);

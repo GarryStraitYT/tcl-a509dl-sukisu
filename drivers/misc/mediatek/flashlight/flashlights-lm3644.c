@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -109,9 +106,6 @@ struct lm3644_chip_data {
 };
 
 
-/******************************************************************************
- * Pinctrl configuration
- *****************************************************************************/
 static int lm3644_pinctrl_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -172,9 +166,6 @@ static int lm3644_pinctrl_set(int pin, int state)
 }
 
 
-/******************************************************************************
- * lm3644 operations
- *****************************************************************************/
 static const int lm3644_current[LM3644_LEVEL_NUM] = {
 	 22,  46,  70,  93, 116, 140, 163, 187,  210, 234,
 	257, 281, 304, 327, 351, 374, 398, 421,  445, 468,
@@ -460,9 +451,6 @@ int lm3644_uninit(void)
 }
 
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer lm3644_timer_ch1;
 static struct hrtimer lm3644_timer_ch2;
 static unsigned int lm3644_timeout_ms[LM3644_CHANNEL_NUM];
@@ -520,9 +508,6 @@ static int lm3644_timer_cancel(int channel)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int lm3644_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -660,9 +645,6 @@ static struct flashlight_operations lm3644_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int lm3644_chip_init(struct lm3644_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.
@@ -828,9 +810,6 @@ static struct i2c_driver lm3644_i2c_driver = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int lm3644_probe(struct platform_device *pdev)
 {
 	struct lm3644_platform_data *pdata = dev_get_platdata(&pdev->dev);

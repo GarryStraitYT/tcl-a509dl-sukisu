@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * drivers/staging/android/mtk_ion/ion_page_pool.c
- *
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
@@ -17,11 +12,6 @@
 
 static unsigned long long last_alloc_ts;
 
-/*
- * We avoid atomic_long_t to minimize cache flushes at the cost of possible
- * race which would result in a small accounting inaccuracy that we can
- * tolerate.
- */
 static long nr_total_pages;
 
 static void *ion_page_pool_alloc_pages(struct ion_page_pool *pool)

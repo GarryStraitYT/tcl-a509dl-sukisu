@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -95,11 +92,6 @@ int mm_freq_table[HRT_DRAMC_TYPE_NUM][HRT_OPP_LEVEL_NUM] = {
 #endif
 };
 
-/**
- * The layer mapping table define ovl layer dispatch rule for both
- * primary and secondary display.Each table has 16 elements which
- * represent the layer mapping rule by the number of input layers.
- */
 #ifndef CONFIG_MTK_ROUND_CORNER_SUPPORT
 static int layer_mapping_table[HRT_TB_NUM][TOTAL_OVL_LAYER_NUM] = {
 	/* HRT_TB_TYPE_GENERAL */
@@ -132,17 +124,10 @@ static int layer_mapping_table[HRT_TB_NUM][TOTAL_OVL_LAYER_NUM] = {
 	0x0003001F, 0x0003001F, 0x0003001F, 0x0003001F},
 };
 #endif
-/**
- * The larb mapping table represent the relation between LARB and OVL.
- */
 static int larb_mapping_table[HRT_TB_NUM] = {
 	0x00010010, 0x00010010, 0x00010010, 0x00010010,
 };
 
-/**
- * The OVL mapping table is used to get the OVL index of correcponding layer.
- * The bit value 1 means the position of the last layer in OVL engine.
- */
 #ifndef CONFIG_MTK_ROUND_CORNER_SUPPORT
 static int ovl_mapping_table[HRT_TB_NUM] = {
 	0x00020022, 0x00020022, 0x00020022, 0x00020022,

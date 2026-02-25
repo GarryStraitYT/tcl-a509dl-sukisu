@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -57,9 +54,6 @@ struct led191_platform_data {
 };
 
 
-/******************************************************************************
- * Pinctrl configuration
- *****************************************************************************/
 static int led191_pinctrl_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -121,9 +115,6 @@ static int led191_pinctrl_set(int pin, int state)
 }
 
 
-/******************************************************************************
- * led191 operations
- *****************************************************************************/
 /* flashlight enable function */
 static int led191_enable(void)
 {
@@ -174,9 +165,6 @@ static int led191_uninit(void)
 	return led191_pinctrl_set(pin, state);
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer led191_timer;
 static unsigned int led191_timeout_ms;
 
@@ -193,9 +181,6 @@ static enum hrtimer_restart led191_timer_func(struct hrtimer *timer)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int led191_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -304,9 +289,6 @@ static struct flashlight_operations led191_ops = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int led191_chip_init(void)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.

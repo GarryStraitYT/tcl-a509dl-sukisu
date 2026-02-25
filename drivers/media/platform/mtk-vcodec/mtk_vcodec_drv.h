@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MTK_VCODEC_DRV_H_
 #define _MTK_VCODEC_DRV_H_
@@ -33,23 +30,11 @@
 #define SUSPEND_TIMEOUT_CNT     5000
 #define MTK_MAX_CTRLS_HINT      64
 
-/**
- * enum mtk_instance_type - The type of an MTK Vcodec instance.
- */
 enum mtk_instance_type {
 	MTK_INST_DECODER                = 0,
 	MTK_INST_ENCODER                = 1,
 };
 
-/**
- * enum mtk_instance_state - The state of an MTK Vcodec instance.
- * @MTK_STATE_FREE - default state when instance is created
- * @MTK_STATE_INIT - vcodec instance is initialized
- * @MTK_STATE_HEADER - vdec had sps/pps header parsed or venc
- *                      had sps/pps header encoded
- * @MTK_STATE_FLUSH - vdec is flushing. Only used by decoder
- * @MTK_STATE_ABORT - vcodec should be aborted
- */
 enum mtk_instance_state {
 	MTK_STATE_FREE = 0,
 	MTK_STATE_INIT = 1,
@@ -58,9 +43,6 @@ enum mtk_instance_state {
 	MTK_STATE_ABORT = 4,
 };
 
-/**
- * struct mtk_encode_param - General encoding parameters type
- */
 enum mtk_encode_param {
 	MTK_ENCODE_PARAM_NONE = 0,
 	MTK_ENCODE_PARAM_BITRATE = (1 << 0),
@@ -83,14 +65,6 @@ enum mtk_encode_param {
 	MTK_ENCODE_PARAM_NONREFPFREQ = (1 << 17),
 };
 
-/*
- * enum venc_yuv_fmt - The type of input yuv format
- * (VCU related: If you change the order, you must also update the VCU codes.)
- * @VENC_YUV_FORMAT_I420: I420 YUV format
- * @VENC_YUV_FORMAT_YV12: YV12 YUV format
- * @VENC_YUV_FORMAT_NV12: NV12 YUV format
- * @VENC_YUV_FORMAT_NV21: NV21 YUV format
- */
 enum venc_yuv_fmt {
 	VENC_YUV_FORMAT_I420 = 3,
 	VENC_YUV_FORMAT_YV12 = 5,
@@ -116,17 +90,11 @@ enum venc_yuv_fmt {
 	VENC_YUV_FORMAT_NV12_10B_AFBC = 28,
 };
 
-/**
- * struct mtk_q_type - Type of queue
- */
 enum mtk_q_type {
 	MTK_Q_DATA_SRC = 0,
 	MTK_Q_DATA_DST = 1,
 };
 
-/**
- * struct mtk_q_data - Structure used to store information about queue
- */
 struct mtk_q_data {
 	unsigned int    visible_width;
 	unsigned int    visible_height;
@@ -170,25 +138,6 @@ struct mtk_dec_params {
 	unsigned int	queued_frame_buf_count;
 };
 
-/**
- * struct mtk_enc_params - General encoding parameters
- * @bitrate: target bitrate in bits per second
- * @num_b_frame: number of b frames between p-frame
- * @rc_frame: frame based rate control
- * @rc_mb: macroblock based rate control
- * @seq_hdr_mode: H.264 sequence header is encoded separately or joined
- *                with the first frame
- * @intra_period: I frame period
- * @gop_size: group of picture size, it's used as the intra frame period
- * @framerate_num: frame rate numerator. ex: framerate_num=30 and
- *                 framerate_denom=1 menas FPS is 30
- * @framerate_denom: frame rate denominator. ex: framerate_num=30 and
- *                   framerate_denom=1 menas FPS is 30
- * @h264_max_qp: Max value for H.264 quantization parameter
- * @h264_profile: V4L2 defined H.264 profile
- * @h264_level: V4L2 defined H.264 level
- * @force_intra: force/insert intra frame
- */
 struct mtk_enc_params {
 	unsigned int    bitrate;
 	unsigned int    num_b_frame;
@@ -225,22 +174,6 @@ struct mtk_enc_params {
 	unsigned int    nonrefpfreq;
 };
 
-/*
- * struct venc_enc_prm - encoder settings for VENC_SET_PARAM_ENC used in
- *                                        venc_if_set_param()
- * @input_fourcc: input yuv format
- * @h264_profile: V4L2 defined H.264 profile
- * @h264_level: V4L2 defined H.264 level
- * @width: image width
- * @height: image height
- * @buf_width: buffer width
- * @buf_height: buffer height
- * @frm_rate: frame rate in fps
- * @intra_period: intra frame period
- * @bitrate: target bitrate in bps
- * @gop_size: group of picture size
- * @sizeimage: image size for each plane
- */
 struct venc_enc_param {
 	enum venc_yuv_fmt input_yuv_fmt;
 	unsigned int profile;
@@ -278,11 +211,6 @@ struct venc_enc_param {
 	unsigned int nonrefpfreq;
 };
 
-/*
- * struct venc_frm_buf - frame buffer information used in venc_if_encode()
- * @fb_addr: plane frame buffer addresses
- * @num_planes: frmae buffer plane num
- */
 struct venc_frm_buf {
 	struct mtk_vcodec_mem fb_addr[MTK_VCODEC_MAX_PLANES];
 	unsigned int num_planes;
@@ -293,50 +221,6 @@ struct venc_frm_buf {
 	dma_addr_t meta_addr;
 };
 
-/**
- * struct mtk_vcodec_ctx - Context (instance) private data.
- *
- * @type: type of the instance - decoder or encoder
- * @dev: pointer to the mtk_vcodec_dev of the device
- * @list: link to ctx_list of mtk_vcodec_dev
- * @fh: struct v4l2_fh
- * @m2m_ctx: pointer to the v4l2_m2m_ctx of the context
- * @q_data: store information of input and output queue
- *          of the context
- * @id: index of the context that this structure describes
- * @state: state of the context
- * @dec_param_change: indicate decode parameter type
- * @dec_params: decoding parameters
- * @param_change: indicate encode parameter type
- * @enc_params: encoding parameters
- * @dec_if: hooked decoder driver interface
- * @enc_if: hoooked encoder driver interface
- * @drv_handle: driver handle for specific decode/encode instance
- *
- * @picinfo: store picture info after header parsing
- * @dpb_size: store dpb count after header parsing
- * @int_cond: variable used by the waitqueue
- * @int_type: type of the last interrupt
- * @queue: waitqueue that can be used to wait for this context to
- *         finish
- * @irq_status: irq status
- *
- * @ctrl_hdl: handler for v4l2 framework
- * @decode_work: worker for the decoding
- * @encode_work: worker for the encoding
- * @last_decoded_picinfo: pic information get from latest decode
- * @dec_flush_buf: a fake size-1 output buffer that indicates flush
- * @enc_flush_buf: a fake size-1 output buffer that indicates flush
- * @oal_vcodec: 1: oal encoder, 0:non-oal encoder
- * @pend_src_buf: pending source buffer
- *
- * @colorspace: enum v4l2_colorspace; supplemental to pixelformat
- * @ycbcr_enc: enum v4l2_ycbcr_encoding, Y'CbCr encoding
- * @quantization: enum v4l2_quantization, colorspace quantization
- * @xfer_func: enum v4l2_xfer_func, colorspace transfer function
- * @lock: protect variables accessed by V4L2 threads and worker thread such as
- *        mtk_video_dec_buf.
- */
 struct mtk_vcodec_ctx {
 	enum mtk_instance_type type;
 	struct mtk_vcodec_dev *dev;
@@ -399,42 +283,6 @@ struct mtk_vcodec_ctx {
 	int use_slbc;
 };
 
-/**
- * struct mtk_vcodec_dev - driver data
- * @v4l2_dev: V4L2 device to register video devices for.
- * @vfd_dec: Video device for decoder
- * @vfd_enc: Video device for encoder.
- *
- * @m2m_dev_dec: m2m device for decoder
- * @m2m_dev_enc: m2m device for encoder.
- * @plat_dev: platform device
- * @vcu_plat_dev: mtk vcu platform device
- * @ctx_list: list of struct mtk_vcodec_ctx
- * @irqlock: protect data access by irq handler and work thread
- * @curr_ctx: The context that is waiting for codec hardware
- *
- * @reg_base: Mapped address of MTK Vcodec registers.
- *
- * @id_counter: used to identify current opened instance
- *
- * @encode_workqueue: encode work queue
- *
- * @int_cond: used to identify interrupt condition happen
- * @int_type: used to identify what kind of interrupt condition happen
- * @dev_mutex: video_device lock
- * @queue: waitqueue for waiting for completion of device commands
- *
- * @dec_irq: decoder irq resource
- * @enc_irq: h264 encoder irq resource
- * @enc_lt_irq: vp8 encoder irq resource
- *
- * @dec_sem: decoder hw lock. Use sem for gce different thread lock unlock
- * @enc_sem: encoder hw lock. Use sem for gce different thread lock unlock
- *
- * @pm: power management control
- * @dec_capability: used to identify decode capability, ex: 4k
- * @enc_capability: used to identify encode capability
- */
 struct mtk_vcodec_dev {
 	struct v4l2_device v4l2_dev;
 	struct video_device *vfd_dec;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/mm.h>
@@ -86,9 +83,6 @@
 #if defined(MTK_FB_SHARE_WDMA0_SUPPORT)
 static int idle_flag = 1;
 static int smartovl_flag;
-/* wfd connected(session is existing whereas ext mode or dcm mode),
- * or screenrecord
- */
 static int has_memory_session;
 #endif
 
@@ -182,9 +176,6 @@ int disp_mgr_has_mem_session(void)
 #endif
 }
 
-/**
- * return value: 0 on success, -1 on failure
- */
 int disp_create_session(struct disp_session_config *config)
 {
 	int ret = 0;
@@ -271,9 +262,6 @@ static int release_session_buffer(unsigned int session)
 	return 0;
 }
 
-/**
- * return value: 0 on success, -1 on failure
- */
 int disp_destroy_session(struct disp_session_config *config)
 {
 	int ret = -1;

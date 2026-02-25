@@ -256,13 +256,6 @@ static inline u32 copy_from_adsp_shared_memory(void *buf, u32 offset,
 	return copy_from_buffer(buf, -1, mem_addr, mem_size, offset, size);
 }
 
-/*
- * this function need ADSP to keeping awaken
- * adsp_crash_dump: dump adsp tcm info.
- * @param MemoryDump:   adsp dump struct
- * @param adsp_core_id:  core id
- * @return:             adsp dump size
- */
 static u32 adsp_crash_dump(struct MemoryDump *pMemoryDump,
 				    enum adsp_core_id id)
 {
@@ -288,12 +281,6 @@ static u32 adsp_crash_dump(struct MemoryDump *pMemoryDump,
 	return n;
 }
 
-/*
- * generate aee argument with adsp register dump
- * @param aed_str:  exception description
- * @param aed:      struct to store argument for aee api
- * @param id:       identify adsp core id
- */
 static void adsp_prepare_aed_dump(void)
 {
 	struct MemoryDump *pMemoryDump = NULL;
@@ -309,10 +296,6 @@ static void adsp_prepare_aed_dump(void)
 	}
 }
 
-/*
- * generate an exception according to exception type
- * @param type: exception type
- */
 void adsp_aed(enum adsp_excep_id type, enum adsp_core_id id)
 {
 	char detail[ADSP_AED_STR_LEN];
@@ -391,13 +374,6 @@ void adsp_aed(enum adsp_excep_id type, enum adsp_core_id id)
 	mutex_unlock(&adsp_excep_mutex);
 }
 
-/*
- * callback function for work struct
- * generate an exception and reset adsp
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void adsp_aed_reset_ws(struct work_struct *ws)
 {
 	struct adsp_work_t *sws = container_of(ws, struct adsp_work_t, work);
@@ -410,10 +386,6 @@ static void adsp_aed_reset_ws(struct work_struct *ws)
 	adsp_aed(type, id);
 }
 
-/*
- * schedule a work to generate an exception and reset adsp
- * @param type: exception type
- */
 void adsp_aed_reset(enum adsp_excep_id type, enum adsp_core_id id)
 {
 	adsp_aed_work.flags = (unsigned int) type;
@@ -609,9 +581,6 @@ struct attribute_group adsp_excep_attr_group = {
 	.bin_attrs = adsp_excep_bin_attrs,
 };
 
-/*
- * init a work struct
- */
 int adsp_excep_init(void)
 {
 	mutex_init(&adsp_excep_mutex);
@@ -631,9 +600,6 @@ int adsp_excep_init(void)
 	return 0;
 }
 
-/*
- * cleanup adsp exception
- */
 void adsp_excep_cleanup(void)
 {
 	vfree(adsp_A_dump_buffer);

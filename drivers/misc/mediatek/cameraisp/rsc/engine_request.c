@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/stddef.h>
@@ -13,9 +10,6 @@
 #include <linux/irqflags.h>
 #include "engine_request.h"
 
-/*
- * module control
- */
 #define TODO
 MODULE_DESCRIPTION("Stand Alone Engine Request");
 MODULE_AUTHOR("MM3SW5");
@@ -54,9 +48,6 @@ MODULE_PARM_DESC(egn_debug, " activates debug info");
 	} while (0)
 
 
-/*
- * Single ring ctl init
- */
 signed int init_ring_ctl(struct ring_ctrl *rctl)
 {
 	if (!rctl)
@@ -91,9 +82,6 @@ signed int init_frame(struct frame *frame)
 	return 0;
 }
 
-/*
- * single request init
- */
 signed int init_request(struct request *req)
 {
 	int f;
@@ -113,9 +101,6 @@ signed int init_request(struct request *req)
 	return 0;
 }
 
-/*
- * per-frame data init
- */
 signed int set_frame_data(struct frame *f, void *engine)
 {
 	if (!f) {
@@ -128,11 +113,6 @@ signed int set_frame_data(struct frame *f, void *engine)
 	return 0;
 }
 
-/*
- * TOP : per-sub-engine
- * Size Limitaion: eng_reqs : [MAX_REQUEST_SIZE_PER_ENGINE]
- *	     data : [MAX_REQUEST_SIZE_PER_ENGINE][MAX_FRAMES_PER_REQUEST]
- */
 signed int register_requests(struct engine_requests *eng, size_t size)
 {
 	int f, r, d;
@@ -301,9 +281,6 @@ ERROR:
 }
 EXPORT_SYMBOL(enque_request);
 
-/* ConfigWMFERequest / ConfigOCCRequest abstraction
- * TODO: locking should be here NOT camera_owe.c
- */
 signed int request_handler(struct engine_requests *eng, spinlock_t *lock)
 {
 	unsigned int f, fn;

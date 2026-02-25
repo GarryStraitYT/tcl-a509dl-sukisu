@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -338,11 +335,6 @@ static unsigned int spm_output_wake_reason(struct wake_status *wakesta)
 	return wr;
 }
 
-/*
- * wakesrc: WAKE_SRC_XXX
- * enable : enable or disable @wakesrc
- * replace: if true, will replace the default setting
- */
 int spm_set_sleep_wakesrc(u32 wakesrc, bool enable, bool replace)
 {
 	unsigned long flags;
@@ -371,9 +363,6 @@ int spm_set_sleep_wakesrc(u32 wakesrc, bool enable, bool replace)
 	return 0;
 }
 
-/*
- * wakesrc: WAKE_SRC_XXX
- */
 u32 spm_get_sleep_wakesrc(void)
 {
 	return SMC_CALL(GET_PWR_CTRL_ARGS,

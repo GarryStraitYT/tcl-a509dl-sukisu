@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #define PFX "CAM_CAL"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__
 
@@ -34,9 +31,6 @@
 static DEFINE_SPINLOCK(g_spinLock);
 
 
-/************************************************************
- * I2C read function (Common)
- ************************************************************/
 static struct i2c_client *g_pstI2CclientG;
 
 /* add for linux-4.4 */

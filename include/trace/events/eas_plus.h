@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifdef CONFIG_MTK_SCHED_EXTENSION
 
@@ -62,9 +59,6 @@ TRACE_EVENT(sched_select_task_rq,
 
 );
 
-/*
- * Tracepoint for task migrations.
- */
 TRACE_EVENT(sched_migrate,
 
 	TP_PROTO(struct task_struct *tsk, int src, int dest, int force),
@@ -94,9 +88,6 @@ TRACE_EVENT(sched_migrate,
 );
 
 #ifdef CONFIG_MTK_SCHED_CPU_PREFER
-/*
- * Tracepoint for set task cpu prefer
- */
 TRACE_EVENT(sched_set_cpuprefer,
 
 	TP_PROTO(struct task_struct *tsk),
@@ -121,9 +112,6 @@ TRACE_EVENT(sched_set_cpuprefer,
 #endif
 
 #ifdef CONFIG_MTK_SCHED_BIG_TASK_MIGRATE
-/*
- * Tracepoint for big task migration
- */
 TRACE_EVENT(sched_big_task_migration,
 
 	TP_PROTO(int pid, int src_cpu, int dst_cpu),
@@ -146,9 +134,6 @@ TRACE_EVENT(sched_big_task_migration,
 		__entry->pid, __entry->src_cpu, __entry->dst_cpu)
 );
 
-/*
- * Tracepoint for big task rotation
- */
 TRACE_EVENT(sched_big_task_rotation,
 
 	TP_PROTO(int src_cpu, int dst_cpu, int src_pid, int dst_pid,
@@ -198,16 +183,6 @@ TRACE_EVENT(sched_big_task_rotation_reset,
 		__entry->set_uclamp)
 );
 #endif
-/**
- * sched_isolate - called when cores are isolated/unisolated
- *
- * @acutal_mask: mask of cores actually isolated/unisolated
- * @req_mask: mask of cores requested isolated/unisolated
- * @online_mask: cpu online mask
- * @time: amount of time in us it took to isolate/unisolate
- * @isolate: 1 if isolating, 0 if unisolating
- *
- */
 TRACE_EVENT(sched_isolate,
 
 	TP_PROTO(unsigned int requested_cpu, unsigned int isolated_cpus,

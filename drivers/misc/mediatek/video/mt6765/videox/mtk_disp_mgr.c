@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/mm.h>
@@ -81,9 +78,6 @@
 #if defined MTK_FB_SHARE_WDMA0_SUPPORT
 static int idle_flag = 1;
 static int smartovl_flag;
-/* wfd connected(session is existing whereas ext mode or dcm mode),
- * or screenrecord
- */
 static int has_memory_session;
 #endif
 /* #define NO_PQ_IOCTL */

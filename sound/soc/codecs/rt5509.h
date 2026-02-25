@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: CY Huang <cy_huang@richtek.com>
- */
 
 #ifndef __RT5509_H
 #define __RT5509_H

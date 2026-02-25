@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #ifndef __LINUX_TA_VDM_H
@@ -40,11 +37,6 @@ static inline bool mtk_check_pe_ready_snk(void)
 
 #ifdef CONFIG_TCPC_CLASS
 
-/* tcpc_is_usb_connect
- * return PD_USB_NOT_SUPPORT : not support
- * return PD_USB_DISCONNECT : usb disconnect
- * return PD_USB_CONNECT : usb connect
- */
 int tcpc_is_usb_connect(void);
 bool mtk_is_pd_chg_ready(void);
 bool mtk_is_ta_typec_only(void);
@@ -85,52 +77,22 @@ enum { /* charge status */
 #define MTK_VDM_SW_BUSY	(1)
 
 
-/* mtk_direct_charge_vdm_init
- *	1. get tcpc_device handler
- *	2. init mutex & wakelock
- *	3. register tcp notifier
- *	4. add debugfs node
- */
 extern int mtk_direct_charge_vdm_init(void);
 
-/* mtk_vdm_config_dfp
- *	only DFP can use vdm request, this function will check your mode.
- *	if mode == DFP, return 0
- *	if mode != DFP, try to request data swap
- *	return 0 --> mode now = DFP
- *	reutrn <0 --> config fail
- */
 extern int mtk_vdm_config_dfp(void);
 
-/* mtk_get_ta_id
- * return id or MTK_VDM_FAIL
- */
 extern int mtk_get_ta_id(struct tcpc_device *tcpc);
 
-/* mtk_get_ta_charger_status
- *	return RT7207_CC_MODE/RT7207_CV_MODE/MTK_VDM_FAIL
- */
 extern int mtk_get_ta_charger_status(
 		struct tcpc_device *tcpc, struct pd_ta_stat *ta);
 
 
-/* mtk_get_ta_temperature
- *	return temperature/MTK_VDM_FAIL
- */
 extern int mtk_get_ta_temperature(struct tcpc_device *tcpc, int *temp);
 
-/* mtk_set_ta_boundary_cap
- *	use mtk_vdm_ta_cap to pass target voltage & current
- *	return MTK_VDM_SUCCESS/MTK_VDM_FAIL
- */
 extern int mtk_set_ta_boundary_cap(
 	struct tcpc_device *tcpc, struct mtk_vdm_ta_cap *cap);
 
 
-/* mtk_set_ta_uvlo
- *	set uvlo voltage threshold
- *	return MTK_VDM_SUCCESS/MTK_VDM_FAIL
- */
 extern int mtk_set_ta_uvlo(struct tcpc_device *tcpc, int mv);
 
 extern int mtk_get_ta_current_cap(struct tcpc_device *tcpc,
@@ -151,8 +113,6 @@ extern int mtk_get_ta_cap(struct tcpc_device *tcpc,
 extern int mtk_monitor_ta_inform(struct tcpc_device *tcpc,
 					struct mtk_vdm_ta_cap *cap);
 
-/* mtk_enable_direct_charge
- */
 extern int mtk_enable_direct_charge(struct tcpc_device *tcpc, bool en);
 
 extern int mtk_enable_ta_dplus_dect(

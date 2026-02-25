@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: CY Huang <cy_huang@richtek.com>
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -13,15 +9,6 @@
 #include "rt5509.h"
 
 #ifdef CONFIG_RT_REGMAP
-/* ---------------------------------------------------------------------
- * Create RT5509 register map
- *
- * RT_REG_DECL(_addr, _reg_length, _reg_type, _mask_...)
- * @ _addr : reigster address
- * @ _reg_length : register byte length
- * @ _reg_type : reigster type (RT_NORMAL, RT_VOLATILE, RT_WBITS)
- * @ _mask : register write bits mask
- */
 
 /* WBITS will and mask, to check the writable bits */
 /* NORMAL ignore mask */
@@ -541,10 +528,6 @@ EXPORT_SYMBOL(rt5509_calculate_total_size);
 #endif /* #if RT5509_SIMULATE_DEVICE */
 #endif /* #ifdef CONFIG_RT_REGMAP */
 
-/* ---------------------------------------------------------------------
- * RT5509 register map related function
- *
- */
 struct rt_regmap_device *rt5509_regmap_register(
 	struct rt_regmap_fops *regmap_ops,
 	struct device *parent, void *client, void *drvdata)

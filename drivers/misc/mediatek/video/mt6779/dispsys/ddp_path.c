@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #define LOG_TAG "ddp_path"
@@ -1082,11 +1079,6 @@ unsigned int get_smi_larb_ostd(enum DISP_MODULE_ENUM module)
 	}
 }
 
-/* check the following things
- * 1. OVL state is at h_w_rst
- * 2. OVL RDMAx SMI busy
- * 3. SMI OSTD for OVL is zero
- */
 bool ovl_need_mmsys_sw_reset(enum DISP_MODULE_ENUM module)
 {
 	unsigned int ovl_smi_busy = 0, ovl_state;

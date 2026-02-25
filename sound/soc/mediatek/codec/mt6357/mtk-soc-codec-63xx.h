@@ -1,30 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- * Filename:
- * ---------
- *  mtk-soc-codec-63xx.h
- *
- * Project:
- * --------
- *    Audio codec header file
- *
- * Description:
- * ------------
- *   Audio codec function
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *-----------------------------------------------------------------------------
- *
- *****************************************************************************/
 
 #ifndef _AUDIO_CODEC_63xx_H
 #define _AUDIO_CODEC_63xx_H

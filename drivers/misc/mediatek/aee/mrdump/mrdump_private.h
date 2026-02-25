@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #if !defined(__MRDUMP_PRIVATE_H__)
 #define __MRDUMP_PRIVATE_H__
@@ -64,9 +61,6 @@ extern void mrdump_mini_per_cpu_regs(int cpu, struct pt_regs *regs,
 extern void mrdump_mini_ke_cpu_regs(struct pt_regs *regs);
 extern int mrdump_task_info(unsigned char *buffer, size_t sz_buf);
 
-/* for WDT timeout case : dump timer/schedule/irq/softirq etc...
- * debug information
- */
 #if IS_ENABLED(CONFIG_SCHED_DEBUG)
 extern void sysrq_sched_debug_show_at_AEE(void);
 #endif

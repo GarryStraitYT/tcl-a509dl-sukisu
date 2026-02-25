@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sean Wang <sean.wang@mediatek.com>
- */
 
 #include <linux/mfd/syscon.h>
 #include <linux/of.h>

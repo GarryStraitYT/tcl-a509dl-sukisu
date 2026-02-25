@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
@@ -66,9 +63,6 @@
 #include <linux/soc/mediatek/mtk-pm-qos.h>
 #include <mmdvfs_pmqos.h>
 #define CONFIG_MTK_QOS_SUPPORT_ENABLE
-/***************************************************************************
- *
- **************************************************************************/
 
 #define CCU_DEV_NAME            "ccu"
 
@@ -1034,9 +1028,6 @@ static int ccu_release(struct inode *inode, struct file *flip)
 }
 
 
-/*******************************************************************************
- *
- *******************************************************************************/
 static int ccu_mmap(struct file *flip,
 		    struct vm_area_struct *vma)
 {
@@ -1110,9 +1101,6 @@ static int ccu_mmap(struct file *flip,
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static dev_t ccu_devt;
 static struct cdev *ccu_chardev;
 static struct class *ccu_class;
@@ -1164,9 +1152,6 @@ EXIT:
 	return ret;
 }
 
-/*****************************************************************************
- * platform_driver
- ****************************************************************************/
 
 static int ccu_read_platform_info_from_dt(struct device_node
 		*node)
@@ -1423,9 +1408,6 @@ static int ccu_resume(struct platform_device *pdev)
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int __init CCU_INIT(void)
 {
 	int ret = 0;
@@ -1481,9 +1463,6 @@ static void __exit CCU_EXIT(void)
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 module_init(CCU_INIT);
 module_exit(CCU_EXIT);
 MODULE_DESCRIPTION("MTK CCU Driver");

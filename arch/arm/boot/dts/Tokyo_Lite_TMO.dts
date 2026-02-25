@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- *
- */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/interrupt-controller/irq.h>
@@ -466,13 +462,6 @@
 	};
 	accdet_pins_eint_as_int: accdeteint@0 {
 //Begin modify by lanying.he for task 8997872 on 2020/03/16
-/*
-        pins_cmd_dat {
-            pinmux = <PINMUX_GPIO9__FUNC_GPIO9>;
-            slew-rate = <0>;
-            bias-disable;
-        };
-*/
 //End modify by lanying.he for task 8997872 on 2020/03/16
 	};
 };

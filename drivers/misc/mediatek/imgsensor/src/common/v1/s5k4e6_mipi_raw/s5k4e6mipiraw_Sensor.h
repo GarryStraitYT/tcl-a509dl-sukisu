@@ -1,28 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 OV5693mipi_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- * Author:
- * -------
- * Dream Yeh (MTK08783)
- *
- *
- ****************************************************************************/
 #ifndef _S5K4E6MIPI_SENSOR_H
 #define _S5K4E6MIPI_SENSOR_H
 

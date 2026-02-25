@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 #include "ccci_core.h"
 #include "ccci_platform.h"
 
@@ -15,12 +12,6 @@
 
 #define RAnd2W(a, b, c)  ccci_write32(a, b, (ccci_read32(a, b)&c))
 
-/*
- * This file is generated.
- * From 20181114_Latife_MDReg_remap.xlsx
- * With ap_md_reg_dump_code_gentool.py v0.1
- * Date 2018-11-14 13:02:08.882000
- */
 static void internal_md_dump_debug_register(unsigned int md_index)
 {
 	void __iomem *dump_reg0;

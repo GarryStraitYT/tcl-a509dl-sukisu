@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #include <linux/version.h>
@@ -24,10 +21,6 @@
 #include <linux/mm_types.h>
 #include <linux/uaccess.h>
 
-/*=============================================================
- *Macro definition
- *=============================================================
- */
 #define CLVR_FPS_LOG_TAG	"[Cooler_VR_FPS]"
 
 #define clVR_FPS_dprintk(fmt, args...)   \
@@ -38,10 +31,6 @@
 	} while (0)
 
 #define clVR_FPS_printk(fmt, args...) pr_notice(CLVR_FPS_LOG_TAG fmt, ##args)
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static unsigned int clVR_FPS_debug_log;
 
 static unsigned int cl_dev_VR_FPS_state;
@@ -50,8 +39,6 @@ static struct thermal_cooling_device *cl_dev_VR_FPS;
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static struct proc_dir_entry *clVR_FPS_status;
-/*=============================================================
- */
 static ssize_t clVR_FPS_status_write(
 struct file *file, const char __user *buffer, size_t count, loff_t *data)
 {
@@ -112,10 +99,6 @@ static const struct file_operations clVR_FPS_status_fops = {
 	.release = single_release,
 };
 
-/*
- * cooling device callback functions (clVR_FPS_cooling_VR_FPS_ops)
- * 1 : ON and 0 : OFF
- */
 static int clVR_FPS_get_max_state(
 struct thermal_cooling_device *cdev, unsigned long *state)
 {

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_RSC_H
 #define _MT_RSC_H
@@ -14,9 +11,6 @@
 #include <linux/compat.h>
 #endif
 
-/*
- *   enforce kernel log enable
- */
 #define KERNEL_LOG		/* enable debug log flag if defined */
 
 #define _SUPPORT_MAX_RSC_FRAME_REQUEST_ 6
@@ -24,9 +18,6 @@
 
 
 #define SIG_ERESTARTSYS 512	/* ERESTARTSYS */
-/*
- *
- */
 #define RSC_DEV_MAJOR_NUMBER    251
 
 #define RSC_MAGIC               'r'
@@ -35,9 +26,6 @@
 
 #define RSC_BASE_HW   0x1b003000
 
-/*This macro is for setting irq status represnted
- * by a local variable,RSCInfo.IrqInfo.Status[RSC_IRQ_TYPE_INT_RSC_ST]
- */
 #define RSC_INT_ST                 (1<<0)
 
 
@@ -52,9 +40,6 @@ struct RSC_REG_IO_STRUCT {
 	unsigned int Count;	/* count */
 };
 
-/*
- *   interrupt clear type
- */
 enum RSC_IRQ_CLEAR_ENUM {
 	RSC_IRQ_CLEAR_NONE,	/* non-clear wait, clear after wait */
 	RSC_IRQ_CLEAR_WAIT,	/* clear wait, clear before and after wait */
@@ -65,11 +50,6 @@ enum RSC_IRQ_CLEAR_ENUM {
 };
 
 
-/*
- *   module's interrupt , each module should have its own isr.
- *   note:
- *	mapping to isr table,ISR_TABLE when using no device tree
- */
 enum RSC_IRQ_TYPE_ENUM {
 	RSC_IRQ_TYPE_INT_RSC_ST,	/* RSC */
 	RSC_IRQ_TYPE_AMOUNT
@@ -139,9 +119,6 @@ struct RSC_Config {
 	unsigned int RSC_STA_0;
 };
 
-/*
- *
- */
 enum RSC_CMD_ENUM {
 	RSC_CMD_RESET,		/* Reset */
 	RSC_CMD_DUMP_REG,	/* Dump RSC Register */

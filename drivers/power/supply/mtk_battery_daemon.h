@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #define MAX_NL_LEN_SND	4096
 #define MAX_NL_LEN_RCV	9200

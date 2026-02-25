@@ -1,15 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __TSCPU_TSENSE_SETTINGS_H__
 #define __TSCPU_TSENSE_SETTINGS_H__
 
-/*=============================================================
- * Chip related
- *=============================================================
- */
 /* TSCON1 bit table */
 #define TSCON0_bit_6_7_00 0x00  /* TSCON0[7:6]=2'b00*/
 #define TSCON0_bit_6_7_01 0x40  /* TSCON0[7:6]=2'b01*/
@@ -65,10 +58,6 @@
 #define TEMPADC_MCU9    ((0x30&TSCON1_bit_4_5_00)|(0x0F&TSCON1_bit_0_3_1001))
 #define TEMPADC_ABB     ((0x30&TSCON1_bit_4_5_01)|(0x0F&TSCON1_bit_0_3_0000))
 
-/*******************************************************************************
- * Thermal Controller Register Definition
- *****************************************************************************
- */
 #define TEMPMONCTL0		(THERM_CTRL_BASE_2 + 0x800)
 #define TEMPMONCTL1		(THERM_CTRL_BASE_2 + 0x804)
 #define TEMPMONCTL2		(THERM_CTRL_BASE_2 + 0x808)

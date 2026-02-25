@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * The MT7629 driver based on Linux generic pinctrl binding.
- *
- * Copyright (C) 2018 MediaTek Inc.
- * Author: Ryder Lee <ryder.lee@mediatek.com>
- */
 
 #include "pinctrl-moore.h"
 
@@ -193,10 +187,6 @@ static const struct mtk_pin_desc mt7629_pins[] = {
 	MT7629_PIN(78, "WF0_2G_HB6", 78),
 };
 
-/* List all groups consisting of these pins dedicated to the enablement of
- * certain hardware block and the corresponding mode for all of the pins.
- * The hardware probably has multiple combinations of these pinouts.
- */
 
 /* LED for EPHY */
 static int mt7629_ephy_leds_pins[] = { 12, 13, 14, 15, 16, 17, 18, };
@@ -353,9 +343,6 @@ static const struct group_desc mt7629_groups[] = {
 	PINCTRL_PIN_GROUP("spi_nor", mt7629_snor),
 };
 
-/* Joint those groups owning the same capability in user point of view which
- * allows that people tend to use through the device tree.
- */
 static const char *mt7629_ethernet_groups[] = { "mdc_mdio", };
 static const char *mt7629_i2c_groups[] = { "i2c_0", "i2c_1", };
 static const char *mt7629_led_groups[] = { "ephy_leds", "ephy_led0",

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #ifndef AUDIO_SPKPROTECT_MSG_ID_H
 #define AUDIO_SPKPROTECT_MSG_ID_H

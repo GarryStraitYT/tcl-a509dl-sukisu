@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 
@@ -85,11 +82,7 @@ void WR_I2C(unsigned char slvadr, unsigned char size, unsigned char *dat)
 /*  */
 /* <Description> */
 /* if size == 1 */
-/* [S][SlaveAdr][W]+[dat[0]]+         [RS][SlaveAdr][R]+[RD_DAT0]+[RD_DAT1][P]
- */
 /* if size == 2 */
-/* [S][SlaveAdr][W]+[dat[0]]+[dat[1]]+[RS][SlaveAdr][R]+[RD_DAT0]+[RD_DAT1][P]
- */
 /*  */
 /* ********************************************************* */
 unsigned short int RD_I2C(unsigned char slvadr, unsigned char size,

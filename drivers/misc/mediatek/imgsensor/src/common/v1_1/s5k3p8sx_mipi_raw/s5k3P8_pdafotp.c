@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define PFX "S5K3P8_pdafotp"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__

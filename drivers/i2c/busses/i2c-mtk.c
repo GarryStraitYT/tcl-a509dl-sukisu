@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -1231,16 +1228,6 @@ static inline void mt_i2c_copy_from_dma(struct mt_i2c *i2c,
 		memcpy(msg->buf, i2c->dma_buf.vaddr, msg->len);
 }
 
-/*
- * In MTK platform the STOP will be issued after each
- * message was transferred which is not flow the clarify
- * for i2c_transfer(), several I2C devices tolerate the STOP,
- * but some device need Repeat-Start and do not compatible with STOP
- * MTK platform has WRRD mode which can write then read with
- * Repeat-Start between two message, so we combined two
- * messages into one transaction.
- * The max read length is 4096
- */
 static bool mt_i2c_should_combine(struct i2c_msg *msg)
 {
 	struct i2c_msg *next_msg = msg + 1;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __CCCI_FSM_SYS_H__
 #define __CCCI_FSM_SYS_H__

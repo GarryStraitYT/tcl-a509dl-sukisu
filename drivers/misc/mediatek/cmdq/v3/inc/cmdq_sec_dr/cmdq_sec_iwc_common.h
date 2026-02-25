@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __CMDQ_SEC_IWC_COMMON_H__
 #define __CMDQ_SEC_IWC_COMMON_H__
 
-/* shared DRAM
- * bit x = 1 means thread x raise IRQ
- */
 #define CMDQ_SEC_SHARED_IRQ_RAISED_OFFSET	0
 #define CMDQ_SEC_SHARED_THR_CNT_OFFSET		0x100
 #define CMDQ_SEC_SHARED_TASK_VA_OFFSET		0x200
@@ -311,16 +305,6 @@ enum cmdq_iwc_meta_idx {
 	CMDQ_IWC_MSG2 = 2,
 };
 
-/* linex kernel and mobicore has their own MMU tables,
- * the latter's is used to map world shared memory and physical address
- * so mobicore dose not understand linux virtual address mapping.
- * if we want to transact a large buffer in TCI/DCI, there are 2 method
- * (both need 1 copy):
- * 1. use mc_map, to map normal world buffer to WSM, and pass secure_virt_addr
- *    in TCI/DCI buffer
- * note mc_map implies a memcopy to copy content from normal world to WSM
- * 2. declare a fixed length array in TCI/DCI struct, and its size must be < 1M
- */
 struct iwcCmdqMessage_t {
 	union {
 		uint32_t cmd;	/* [IN] command id */

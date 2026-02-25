@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -73,9 +70,6 @@ struct rt4505_chip_data {
 };
 
 
-/******************************************************************************
- * rt4505 operations
- *****************************************************************************/
 static const int rt4505_current[RT4505_LEVEL_NUM] = {
 	 49,  93,  140,  187,  281,  375,  468,  562, 656, 750,
 	843, 937, 1031, 1125, 1218, 1312, 1406, 1500
@@ -191,9 +185,6 @@ int rt4505_uninit(void)
 	return 0;
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer rt4505_timer;
 static unsigned int rt4505_timeout_ms;
 
@@ -210,9 +201,6 @@ static enum hrtimer_restart rt4505_timer_func(struct hrtimer *timer)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int rt4505_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -344,9 +332,6 @@ static struct flashlight_operations rt4505_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int rt4505_chip_init(struct rt4505_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define DEBUG 1
 #include <linux/version.h>
@@ -78,10 +75,6 @@
 #if !defined(LVTS_VALID_DATA_TIME_PROFILING)
 #define LVTS_VALID_DATA_TIME_PROFILING	0
 #endif
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static DEFINE_SEMAPHORE(sem_mutex);
@@ -198,10 +191,6 @@ struct regulator *vcore_reg_id;
 struct platform_device *tscpu_pdev;
 EXPORT_SYMBOL_GPL(tscpu_pdev);
 
-/*=============================================================
- * Local function definition
- *=============================================================
- */
 
 #if (CONFIG_THERMAL_AEE_RR_REC == 1)
 static void _mt_thermal_aee_init(void)
@@ -253,10 +242,6 @@ EXPORT_SYMBOL(tscpu_met_unlock);
 static int g_is_temp_valid;
 static void temp_valid_lock(unsigned long *flags);
 static void temp_valid_unlock(unsigned long *flags);
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 	unsigned int  __attribute__((weak))
 mt_gpufreq_get_max_power(void)
 {
@@ -803,28 +788,6 @@ void tscpu_set_GPIO_toggle_for_monitor(void)
 
 }
 
-/*
- * For example:
- * GPIO_BASE :0x10005000
- *
- * GPIO118_MODE = 0 (change to GPIO mode)
- * 0x0770	GPIO_MODE24	16	GPIO Mode Control Register 24
- * 11	9	GPIO118_MODE	RW	Public	3'd1	"0: GPIO118 (IO)1:
- *					UTXD3 (O)2: URXD3 (I)3: MD_UTXD (O)
- * 4: LTE_UTXD (O)5: TDD_TXD (O)6: Reserved7: DBG_MON_A_10_ (IO)"
- *							Selects GPIO 118 mode
- *
- * GPIO118_DIR =1  (output)
- * 0x0070	GPIO_DIR8	16	GPIO Direction Control Register 8
- * 6	6	GPIO118_DIR	RW	Public	1'b0	"0: Input1: Output"
- *						GPIO 118 direction control
- *
- * GPIO118_DOUT=1/0 (hi or low)
- * 0x0470	GPIO_DOUT8	16	GPIO Data Output Register 8
- * 6	6	GPIO118_DOUT	RW	Public	1'b0	"0: Output 01: Output 1"
- *						GPIO 118 data output value
- *
- */
 static int tscpu_read_GPIO_out(struct seq_file *m, void *v)
 {
 

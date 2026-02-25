@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/of.h>
@@ -59,15 +56,6 @@ static void aee_flush_reboot(void)
 		aee_exception_reboot();
 }
 
-/*save stack as binary into buf,
- *return value
-
-    -1: bottom unaligned
-    -2: bottom out of kernel addr space
-    -3 top out of kernel addr addr
-    -4: buff len not enough
-    >0: used length of the buf
- */
 int aee_dump_stack_top_binary(char *buf, int buf_len, unsigned long bottom,
 		unsigned long top)
 {

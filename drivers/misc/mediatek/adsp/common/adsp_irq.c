@@ -15,10 +15,6 @@
 #include "adsp_excep.h"
 #include "adsp_dvfs.h"
 
-/*
- * handler for wdt irq for adsp
- * dump adsp register
- */
 
 #define DRV_Reg32(addr)           readl(addr)
 #define DRV_WriteReg32(addr, val) writel(val, addr)
@@ -69,12 +65,6 @@ static void adsp_wdt_counter_reset(struct timer_list *t)
 }
 #endif
 
-/*
- * dispatch adsp irq
- * reset adsp and generate exception if needed
- * @param irq:      irq id
- * @param dev_id:   should be NULL
- */
 irqreturn_t adsp_A_irq_handler(int irq, void *dev_id)
 {
 	adsp_A_ipi_handler();
@@ -85,9 +75,6 @@ irqreturn_t adsp_A_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-/*
- * adsp irq initialize
- */
 void adsp_A_irq_init(void)
 {
 	writel(ADSP_IRQ_ADSP2HOST, ADSP_A_TO_HOST_REG); /* clear adsp irq */

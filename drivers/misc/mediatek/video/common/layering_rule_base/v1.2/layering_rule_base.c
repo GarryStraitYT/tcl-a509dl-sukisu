@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -256,13 +253,6 @@ static inline bool is_extended_over_limit(int ext_cnt)
 	return false;
 }
 
-/**
- * check if continuous ext layers are overlapped with each other
- * also need to check the below nearest phy layer
- * which these ext layers will be attached to
- * 1. check all ext layers, if overlapped with any one, change it to phy layer
- * 2. if more than 1 ext layer exist, need to check the phy layer
- */
 static int is_continuous_ext_layer_overlap(struct layer_config *configs,
 					   int curr)
 {
@@ -1241,10 +1231,6 @@ static bool has_hrt_limit(struct disp_layer_info *disp_info, int disp_idx)
 	return true;
 }
 
-/**
- * Return the HRT layer weight.
- * If the layer_info is NULL, return GLES layer weight.
- */
 static int get_layer_weight(int disp_idx, struct layer_config *layer_info)
 {
 	int bpp, weight;
@@ -1488,9 +1474,6 @@ static int calc_hrt_num(struct disp_layer_info *disp_info)
 	return overlap_num;
 }
 
-/**
- * dispatch which one layer could be ext layer
- */
 static int ext_layer_grouping(struct disp_layer_info *disp_info)
 {
 	int cont_ext_layer_cnt = 0, ext_idx = 0;

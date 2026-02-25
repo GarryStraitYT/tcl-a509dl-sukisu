@@ -1,27 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *   rps_perf.c
- *
- * Project:
- * --------
- *
- *
- * Description:
- * ------------
- *   network performance interface
- *
- * Author:
- * -------
- *   Anny.Hu(mtk80401)
- *
- ****************************************************************************/
 #include <linux/netdevice.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include <linux/delay.h>
@@ -81,10 +78,6 @@ static struct cmdq_pkt *cmdq_sec_irq_pkt;
 
 /* internal control */
 
-/* Set 1 to open once for each process context, because of below reasons:
- * 1. mc_open_session is too slow (major)
- * 2. we entry secure world for config and trigger GCE, and wait in normal world
- */
 #define CMDQ_OPEN_SESSION_ONCE (1)
 
 struct cmdq_task {
@@ -631,9 +624,6 @@ int32_t cmdq_sec_fill_iwc_cancel_msg_unlocked(
 	return 0;
 }
 
-/******************************************************************************
- * context handle
- *****************************************************************************/
 s32 cmdq_sec_setup_context_session(struct cmdqSecContextStruct *handle)
 {
 	s32 status;
@@ -1284,12 +1274,6 @@ s32 cmdq_sec_insert_backup_cookie(struct cmdq_pkt *pkt)
 	return 0;
 }
 
-/*
- * Insert instruction to back secure threads' cookie count to normal world
- * Return:
- *     < 0, return the error code
- *     >=0, okay case, return number of bytes for inserting instruction
- */
 s32 cmdq_sec_insert_backup_cookie_instr(struct cmdqRecStruct *task, s32 thread)
 {
 	struct cmdq_client *cl;
@@ -1564,9 +1548,6 @@ const struct cmdq_controller *cmdq_sec_get_controller(void)
 
 #endif				/* CMDQ_SECURE_PATH_SUPPORT */
 
-/******************************************************************************
- * common part: for general projects
- *****************************************************************************/
 int32_t cmdq_sec_create_shared_memory(
 	struct cmdqSecSharedMemoryStruct **pHandle, const uint32_t size)
 {
@@ -1743,9 +1724,6 @@ s32 cmdq_sec_get_secure_thread_exec_counter(const s32 thread)
 
 }
 
-/******************************************************************************
- * common part: SecContextHandle handle
- *****************************************************************************/
 struct cmdqSecContextStruct *cmdq_sec_context_handle_create(
 	uint32_t tgid)
 {
@@ -1766,9 +1744,6 @@ struct cmdqSecContextStruct *cmdq_sec_context_handle_create(
 	return handle;
 }
 
-/******************************************************************************
- * common part: init, deinit, path
- *****************************************************************************/
 void cmdq_sec_lock_secure_path(void)
 {
 	mutex_lock(&gCmdqSecExecLock);

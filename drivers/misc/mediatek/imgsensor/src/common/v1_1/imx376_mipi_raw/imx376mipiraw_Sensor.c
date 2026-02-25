@@ -1,27 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 IMX376mipi_Sensor.c
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 Source code of Sensor driver
- *
- *
- *------------------------------------------------------------------------------
- * Upper this line, this part is controlled by CC/CQ. DO NOT MODIFY!!
- *============================================================================
- ****************************************************************************/
 
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
@@ -49,23 +27,11 @@
 
 /* Add by LiuBin for register device info at 20160616 */
 #define DEVICE_VERSION_IMX376     "imx376"
-/* extern
- * void register_imgsensor_deviceinfo(char *name, char *version, u8 module_id);
- */
 
 /* static uint8_t deviceInfo_register_value = 0x00; */
 
-/* #define LOG_WRN(format, args...)
- * xlog_printk(ANDROID_LOG_WARN ,PFX, "[%S] " format, __FUNCTION__, ##args)
- */
 
-/* #defineLOG_INF(format, args...)
- * xlog_printk(ANDROID_LOG_INFO ,PFX, "[%s] " format, __FUNCTION__, ##args)
- */
 
-/* #define LOG_DBG(format, args...)
- * xlog_printk(ANDROID_LOG_DEBUG ,PFX, "[%S] " format, __FUNCTION__, ##args)
- */
 #define LOG_INF(format, args...) pr_debug(PFX "[%s] " format, __func__, ##args)
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
 
@@ -396,22 +362,6 @@ static void write_shutter(kal_uint16 shutter)
 
 
 
-/*************************************************************************
- * FUNCTION
- *	set_shutter
- *
- * DESCRIPTION
- *	This function set e-shutter of sensor to change exposure time.
- *
- * PARAMETERS
- *	iShutter : exposured lines
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static void set_shutter(kal_uint16 shutter)
 {
 	unsigned long flags;
@@ -438,22 +388,6 @@ static kal_uint16 gain2reg(const kal_uint16 gain)
 }
 
 
-/*************************************************************************
- * FUNCTION
- *	set_gain
- *
- * DESCRIPTION
- *	This function is to set global gain to sensor.
- *
- * PARAMETERS
- *	iGain : sensor global gain(base: 0x40)
- *
- * RETURNS
- *	the actually gain set to sensor.
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint16 set_gain(kal_uint16 gain)
 {
 	kal_uint16 reg_gain;
@@ -512,22 +446,6 @@ static void set_mirror_flip(kal_uint8 image_mirror)
 	}
 }
 
-/*************************************************************************
- * FUNCTION
- *	night_mode
- *
- * DESCRIPTION
- *	This function night mode of sensor.
- *
- * PARAMETERS
- *	bEnable: KAL_TRUE -> enable night mode, otherwise, disable night mode
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 #if 0
 static void night_mode(kal_bool enable)
 {
@@ -1019,9 +937,6 @@ static void preview_setting(void)
 /* $Rev$: Revision 0.00 */
 /* $Date$: 20151201 */
 /* ==================================================== */
-/* $MV1[MCLK:24,Width:2304,Height:1728,Format:MIPI_RAW10,mipi_lane:4
- * ,mipi_datarate:720,pvi_pclk_inverse:0]
- */
 
 /* Pll Setting - VCO = 280Mhz */
 
@@ -1305,22 +1220,6 @@ static void slim_video_setting(void)
 	preview_setting();
 }
 
-/*************************************************************************
- * FUNCTION
- *	get_imgsensor_id
- *
- * DESCRIPTION
- *	This function get the sensor ID
- *
- * PARAMETERS
- *	*sensorID : return the sensor ID
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 {
 	kal_uint8 i = 0;
@@ -1367,22 +1266,6 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 	return ERROR_NONE;
 }
 
-/*************************************************************************
- * FUNCTION
- *	open
- *
- * DESCRIPTION
- *	This function initialize the registers of CMOS sensor
- *
- * PARAMETERS
- *	None
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 open(void)
 {
 	kal_uint8 i = 0;
@@ -1447,22 +1330,6 @@ static kal_uint32 open(void)
 
 
 
-/*************************************************************************
- * FUNCTION
- *	close
- *
- * DESCRIPTION
- *
- *
- * PARAMETERS
- *	None
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 close(void)
 {
 	LOG_INF("E\n");
@@ -1472,23 +1339,6 @@ static kal_uint32 close(void)
 }	/*	close  */
 
 
-/*************************************************************************
- * FUNCTION
- * preview
- *
- * DESCRIPTION
- *	This function start the sensor preview.
- *
- * PARAMETERS
- *	*image_window : address pointer of pixel numbers in one period of HSYNC
- *  *sensor_config_data : address pointer of line numbers in one period of VSYNC
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 				MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {
@@ -1508,21 +1358,6 @@ static kal_uint32 preview(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 	return ERROR_NONE;
 }	/*	preview   */
 
-/*************************************************************************
- * FUNCTION
- *	capture
- *
- * DESCRIPTION
- *	This function setup the CMOS sensor in capture MY_OUTPUT mode
- *
- * PARAMETERS
- *
- * RETURNS
- *	None
- *
- * GLOBALS AFFECTED
- *
- *************************************************************************/
 static kal_uint32 capture(MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT *image_window,
 				MSDK_SENSOR_CONFIG_STRUCT *sensor_config_data)
 {

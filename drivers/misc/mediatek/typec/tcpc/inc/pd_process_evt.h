@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef PD_PROCESS_EVT_H_
 #define PD_PROCESS_EVT_H_
@@ -30,10 +27,6 @@ struct pe_state_reaction {
 		.state_transition = state##_state_transition,\
 	}
 
-/*-----------------------------------------------------------------------------
- * Sink & Source Common Event
- *---------------------------------------------------------------------------
- */
 
 bool pd_process_protocol_error(
 	struct pd_port *pd_port, struct pd_event *pd_event);

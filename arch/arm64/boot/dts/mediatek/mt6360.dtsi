@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 &i2c5 {
 	subpmic_mtk:subpmic@34 {
 		compatible = "mediatek,subpmic";

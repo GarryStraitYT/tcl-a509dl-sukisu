@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
-/**
- * @file	mtk_gpu_bw
- * @brief   Driver for GPU BW Prediction
- */
 
 #include <linux/pm_qos.h>
 #include <sspm_ipi.h>

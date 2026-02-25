@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk-sp-common.h  --  Mediatek Smart Phone Common
- *
- * Copyright (c) 2017 MediaTek Inc.
- * Author: Kai Chieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MTK_SP_COMMON_H_
 #define _MTK_SP_COMMON_H_

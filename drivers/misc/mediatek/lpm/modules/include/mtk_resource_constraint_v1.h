@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #ifndef __MTK_RESOURCE_CONSTRAINT_V1_H__
@@ -39,32 +36,14 @@ enum MT_SPM_RM_RC_TYPE {
 #define MT_RM_CONSTRAINT_ALLOW_INFRA_PDN	(1<<6L)
 #define MT_RM_CONSTRAINT_ALLOW_26M_OFF		(1<<7L)
 
-/*
- * 1. 26m clk	[OFF]
- * 2. infra pwr	[ON]
- * 3. mainpll	[OFF]
- * 4. vcore low power mode
- */
 #define VCORE_LP_CLK_26M_OFF (\
 	MT_RM_CONSTRAINT_ALLOW_VCORE_LP\
 	| MT_RM_CONSTRAINT_ALLOW_26M_OFF)
 
-/*
- * 1. 26m clk	[ON]
- * 2. infra pwr	[ON]
- * 3. mainpll	[OFF]
- * 4. vcore low power mode
- */
 #define VCORE_LP_CLK_26M_ON (\
 	MT_RM_CONSTRAINT_ALLOW_VCORE_LP\
 	| MT_RM_CONSTRAINT_ALLOW_26M_EVENT)
 
-/*
- * 1. 26m clk	[OFF]
- * 2. mainpll	[OFF]
- * 3. infra pwr	[OFF]
- * 4. vcore low power mode
- */
 #define VCORE_LP_CLK_26M_INFRA_PDN (\
 	MT_RM_CONSTRAINT_ALLOW_VCORE_LP\
 	| MT_RM_CONSTRAINT_ALLOW_INFRA_PDN\

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/file.h>
 #include <linux/fs.h>
@@ -328,12 +325,6 @@ static int __init amms_init(void)
 	return ret;
 }
 
-/**
- *	vmap_reserved_mem - map reserved memory into virtually contiguous space
- *	@start:		start of reserved memory
- *	@size:		size of reserved memory
- *	@prot:		page protection for the mapping
- */
 void *vmap_reserved_mem(phys_addr_t start, phys_addr_t size, pgprot_t prot)
 {
 	long i;

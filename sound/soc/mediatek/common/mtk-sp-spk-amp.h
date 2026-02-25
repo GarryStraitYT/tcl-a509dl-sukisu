@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #ifndef _MTK_SP_SPK_AMP_H
 #define _MTK_SP_SPK_AMP_H

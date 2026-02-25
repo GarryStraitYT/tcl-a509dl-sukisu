@@ -1,37 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_mod_dai.c
- *
- * Project:
- * --------
- *   Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio MOD DAI path
- *
- *
- *------------------------------------------------------------------------------
- *
- *
- ****************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -47,9 +17,6 @@ struct afe_mem_control_t *MOD_DAI_Control_context;
 static struct snd_dma_buffer *Capture_dma_buf;
 static bool mModDaiUseSram;
 
-/*
- *    function implementation
- */
 
 static int mtk_mod_dai_probe(struct platform_device *pdev);
 static int mtk_mod_dai_pcm_close(struct snd_pcm_substream *substream);

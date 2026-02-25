@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Device Tree Source for MediaTek X20 Development Board
- *
- * Copyright (C) 2018, Linaro Ltd.
- *
- */
 
 /dts-v1/;
 

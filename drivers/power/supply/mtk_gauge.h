@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #ifndef __MTK_GAUGE_INTF_H__
 #define __MTK_GAUGE_INTF_H__
@@ -104,7 +100,8 @@ enum gauge_property {
 	GAUGE_PROP_VBAT2_DETECT_COUNTER,
 	GAUGE_PROP_BAT_TEMP_FROZE_EN,
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	GAUGE_PROP_ISENSE_VOLTAGE,
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
@@ -249,7 +246,8 @@ struct mtk_gauge {
 	struct iio_channel *chan_ptim_bat_voltage;
 	struct iio_channel *chan_ptim_r;
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	struct iio_channel *chan_isense;
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */

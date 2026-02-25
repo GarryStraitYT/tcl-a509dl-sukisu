@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __MBOOT_PARAMS_INTERNAL_H__
 #define __MBOOT_PARAMS_INTERNAL_H__

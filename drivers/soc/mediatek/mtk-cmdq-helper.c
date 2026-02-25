@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/completion.h>
 #include <linux/errno.h>
@@ -329,21 +326,6 @@ void cmdq_mbox_buf_free(struct device *dev, void *va, dma_addr_t pa)
 	dma_free_coherent(dev, CMDQ_BUF_ALLOC_SIZE, va, pa);
 }
 
-/* parse event from dts
- *
- * Example
- *
- * dts:
- * gce-event-names = "disp_rdma0_sof",
- *	"disp_rdma1_sof",
- *	"mdp_rdma0_sof";
- * gce-events = <&gce_mbox CMDQ_EVENT_DISP_RDMA0_SOF>,
- *	<&gce_mbox CMDQ_EVENT_DISP_RDMA1_SOF>,
- *	<&gce_mbox CMDQ_EVENT_MDP_RDMA0_SOF>;
- *
- * call:
- * s32 rdma0_sof_event_id = cmdq_dev_get_event(dev, "disp_rdma0_sof");
- */
 s32 cmdq_dev_get_event(struct device *dev, const char *name)
 {
 	s32 index = 0;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __CCU_CMN_H__
 #define __CCU_CMN_H__
@@ -69,33 +66,14 @@ struct ccu_user_s {
 		/*struct list_head link; \*/
 /*} type ## _list*/
 
-/*
- * vlist_node_of - get the pointer to the node which has specific vlist
- * @ptr:        the pointer to struct list_head
- * @type:        the type of list node
- */
 #define vlist_node_of(ptr, type) ({ \
 		const struct list_head *__mptr = (ptr); \
 		(type *)((char *)__mptr - offsetof(type ## _list, link)); })
 
-/*
- * vlist_link - get the pointer to struct list_head
- * @ptr:        the pointer to struct vlist
- * @type:        the type of list node
- */
 #define vlist_link(ptr, type) (&((type ## _list *)ptr)->link)
 
-/*
- * vlist_type - get the type of struct vlist
- * @type:        the type of list node
- */
 #define vlist_type(type) type ## _list
 
-/*
- * vlist_node - get the pointer to the node of vlist
- * @ptr:        the pointer to struct vlist
- * @type:        the type of list node
- */
 #define vlist_node(ptr, type)  ((type *) ptr)
 
 
@@ -116,60 +94,26 @@ struct ccu_cmd_s_list {
 
 /* ======================== define in ccu_hw.c  ========================= */
 
-/**
- * ccu_init_hw - init the procedure related to hw,
- *               include irq register and enque thread
- * @device:     the pointer of ccu_device.
- */
 int ccu_init_hw(struct ccu_device_s *device);
 
-/**
- * ccu_uninit_hw - close resources related to hw module
- */
 int ccu_uninit_hw(struct ccu_device_s *device);
 
-/**
- * ccu_mmap_hw - mmap kernel memory to user
- */
 int ccu_mmap_hw(struct file *filp, struct vm_area_struct *vma);
 
-/**
- * ccu_send_command - send command, and it will block until done.
- * @cmd:        the pointer to command
- */
 int ccu_send_command(struct ccu_cmd_s *pCmd);
 int ccu_kenrel_fast_cmd_enque(struct ccu_cmd_s *cmd);
 struct ccu_cmd_s *ccu_kenrel_fast_cmd_deque(void);
 
-/**
- * ccu_power - config ccu power.
- * @s:          the pointer to power relative settings.
- */
 int ccu_power(struct ccu_power_s *power);
 
-/**
- * ccu_force_powerdown - force CCU to stop & shutdown
- */
 int ccu_force_powerdown(void);
 
-/**
- * ccu_run - start running ccu .
- */
 int ccu_run(void);
 
-/**
- * ccu_irq - interrupt wait.
- * @s:          wait mode.
- */
 int ccu_waitirq(struct CCU_WAIT_IRQ_STRUCT *WaitIrq);
 
 int ccu_flushLog(int argc, int *argv);
 
-/**
- * ccu_i2c_ctrl - i2c control.
- * @argc:          TBD.
- * @argv:          TBD.
- */
 int ccu_i2c_ctrl(unsigned char i2c_write_id, int transfer_len);
 
 int ccu_get_i2c_dma_buf_addr(uint32_t *mva, uint32_t *pa_h,
@@ -192,56 +136,25 @@ int ccu_query_power_status(void);
 
 /* ======================== define in ccu_drv.c  ======================== */
 
-/**
- * ccu_create_user - create ccu user, and add to user list
- * @ruser:      return the created user.
- */
 int ccu_create_user(struct ccu_user_s **ruser);
 
-/**
- * ccu_delete_user - delete ccu user, and remove it from user list
- * @user:       the pointer to user.
- */
 int ccu_delete_user(struct ccu_user_s *user);
 
 int ccu_lock_user_mutex(void);
 
 int ccu_unlock_user_mutex(void);
 
-/**
- * ccu_push_command_to_queue - add a command to user's queue
- * @user:       the pointer to user.
- * @cmd:        the command to be added to user's queue.
- */
 int ccu_push_command_to_queue(struct ccu_user_s *user, struct ccu_cmd_s *cmd);
 
 
-/**
- * ccu_pop_command_from_queue - remove a command from user's queue
- * @user:       the pointer to user.
- * @rcmd:      return the command to be removed.
- */
 int ccu_pop_command_from_queue(struct ccu_user_s *user,
 	struct ccu_cmd_s **rcmd);
 
 
-/**
- * ccu_flush_commands_from_queue - flush all commands of user's queue
- * @user:       the pointer to user.
- *
- * It's a blocking call, and waits for the processing command done.
- * And push all remaining enque to the deque.
- */
 int ccu_flush_commands_from_queue(struct ccu_user_s *user);
 
-/**
- * ccu_clock_enable - Set CCU clock on
- */
 int ccu_clock_enable(void);
 
-/**
- * ccu_clock_disable - Set CCU clock off
- */
 void ccu_clock_disable(void);
 
 /* LOG & AEE */

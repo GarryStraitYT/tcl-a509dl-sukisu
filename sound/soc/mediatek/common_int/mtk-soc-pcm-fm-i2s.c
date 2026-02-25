@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_fm_i2s.c
- *
- * Project:
- * --------
- *    merge interface rx
- *
- * Description:
- * ------------
- *   Audio fm i2s playback
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -49,9 +16,6 @@
 
 /* static DEFINE_SPINLOCK(auddrv_fm_i2s_lock); */
 
-/*
- *    function implementation
- */
 
 static int mtk_fm_i2s_probe(struct platform_device *pdev);
 static int mtk_pcm_fm_i2s_close(struct snd_pcm_substream *substream);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -18,9 +15,6 @@
 
 #include "mtk_spm_internal.h"
 
-/***********************************************************
- * Local definitions
- ***********************************************************/
 
 static void __iomem *infrasys_base;    /* INFRA_REG, INFRA_SW_CG_x_STA */
 static void __iomem *mmsys_base;       /* MM_REG, DISP_CG_CON_x */
@@ -58,13 +52,7 @@ static void __iomem *apmixedsys_base;  /* APMIXEDSYS */
 #define PWRSTA_BIT_INFRA    (1U << 6)
 #define PWRSTA_BIT_ALL		(0xffffffff)
 
-/***********************************************************
- * Functions for external modules
- ***********************************************************/
 
-/***********************************************************
- * Check clkmux registers
- ***********************************************************/
 #define CLK_CFG(id) TOPCK_REG(0x40+id*0x10)
 
 enum {
@@ -126,9 +114,6 @@ static bool check_clkmux_pdn(unsigned int clkmux_id)
 	return false;
 }
 
-/***********************************************************
- * Check cg idle condition for dp/sodi/sodi3
- ***********************************************************/
 /* Local definitions */
 struct idle_cond_info {
 	/* check SPM_PWR_STATUS for bit definition */
@@ -188,9 +173,6 @@ static unsigned int idle_cond_mask[NR_IDLE_TYPES][NR_CG_GRPS] = {
 static unsigned int idle_block_mask[NR_IDLE_TYPES][NR_CG_GRPS+1];
 static unsigned int idle_value[NR_CG_GRPS];
 
-/***********************************************************
- * Check pll idle condition
- ***********************************************************/
 
 #define PLL_MFGPLL  APMIXEDSYS(0x24C)
 #define PLL_MMPLL   APMIXEDSYS(0x25C)
@@ -300,36 +282,6 @@ void mtk_idle_cg_monitor(int sel)
 	spin_unlock_irqrestore(&cgmon_spin_lock, flags);
 }
 
-/* FIXME
-#define TRACE_CGMON(_g, _n, _cond)\
-	trace_idle_cg(_g * 32 + _n, ((1 << _n) & _cond) ? 1 : 0)
-
-static void mtk_idle_cgmon_trace_log(void)
-{
-	// Note: trace tag is defined at trace/events/mtk_idle_event.h
-	#if MTK_IDLE_TRACE_TAG_ENABLE
-	unsigned int diff, block, g, n;
-
-	if (cgmon_sel == IDLE_TYPE_DP ||
-		cgmon_sel == IDLE_TYPE_SO3 ||
-		cgmon_sel == IDLE_TYPE_SO) {
-
-		for (g = 0; g < NR_CG_GRPS + 1; g++) {
-			block = (g < NR_CG_GRPS) ?
-				idle_block_mask[cgmon_sel][g] :
-				idle_pll_block_mask[cgmon_sel];
-			diff = cgmon_sta[g] ^ block;
-			if (diff) {
-				cgmon_sta[g] = block;
-				for (n = 0; n < 32; n++)
-					if (diff & (1U << n))
-						TRACE_CGMON(g, n, cgmon_sta[g]);
-			}
-		}
-	}
-	#endif
-}
-*/
 /* update secure cg state by secure call */
 static void update_secure_cg_state(unsigned int clk[NR_CG_GRPS])
 {
@@ -403,17 +355,11 @@ bool mtk_idle_cond_check(int idle_type)
 	return ret;
 }
 
-/***********************************************************
- * Clock mux check for vcore low power mode
- ***********************************************************/
 bool mtk_idle_cond_vcore_lp_mode(int idle_type)
 {
 	return true;
 }
 
-/***********************************************************
- * Fundamental build up functions
- ***********************************************************/
 static void get_cg_addrs(void)
 {
 	/* Assign cg address to idle_cg_info */

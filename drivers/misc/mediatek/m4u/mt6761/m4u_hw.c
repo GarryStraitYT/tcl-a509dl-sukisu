@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include <linux/interrupt.h>
@@ -1874,10 +1871,6 @@ static void m4u_isr_restart(struct timer_list *unused)
 static int m4u_isr_pause_timer_init(void)
 {
 	timer_setup(&m4u_isr_pause_timer, m4u_isr_restart, 0);
-/*
- * init_timer(&m4u_isr_pause_timer);
- * m4u_isr_pause_timer.function = m4u_isr_restart;
- */
 	return 0;
 }
 

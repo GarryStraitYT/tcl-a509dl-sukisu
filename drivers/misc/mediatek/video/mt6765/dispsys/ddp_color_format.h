@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __H_DDP_COLOR_FORMAT__
 #define __H_DDP_COLOR_FORMAT__

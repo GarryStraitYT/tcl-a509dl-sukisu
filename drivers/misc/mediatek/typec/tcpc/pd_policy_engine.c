@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
@@ -1035,9 +1032,6 @@ static int pd_handle_event(
 	return 1;
 }
 
-/*
- * Get Next Event
- */
 
 enum PE_NEW_EVT_TYPE {
 	PE_NEW_EVT_NULL = 0,
@@ -1166,18 +1160,6 @@ static inline bool pd_check_pd20_tx_ready(struct pd_port *pd_port)
 }
 #endif	/* ndef CONFIG_USB_PD_REV30 */
 
-/**
- * pd_check_tx_ready
- *
- * Check PE is ready to initiate an active event (AMS).
- *
- * For revision 2, checking the PE state is in Ready.
- * For revision 3, checking SinkTx besides above description.
- *
- * If PR=SRC and CC=SinkTxOK, change CC to SinkTxNG;
- *
- * Returns a boolean value to present PE is available or not.
- */
 
 static inline bool pd_check_tx_ready(struct pd_port *pd_port)
 {
@@ -1192,14 +1174,6 @@ static inline bool pd_check_tx_ready(struct pd_port *pd_port)
 #endif	/* CONFIG_USB_PD_REV30 */
 }
 
-/**
- * pd_try_get_deferred_tcp_event
- *
- * Get a pending TCPM event from the event queue
- *
- * Returns TCP_DPM_EVT_ID if succeeded,
- * otherwise returns DPM_READY_REACTION_BUSY.
- */
 
 static inline uint8_t pd_try_get_deferred_tcp_event(struct pd_port *pd_port)
 {
@@ -1215,16 +1189,6 @@ static inline uint8_t pd_try_get_deferred_tcp_event(struct pd_port *pd_port)
 	return pd_port->tcp_event_id_1st;
 }
 
-/**
- * pd_try_get_active_event
- *
- * Get a pending active event if TX is available
- *
- * Event Priority :
- *	DPM reactions, TCPM request.
- *
- * Returns PE_NEW_EVT_TYPE.
- */
 
 static inline uint8_t pd_try_get_active_event(
 	struct tcpc_device *tcpc_dev, struct pd_event *pd_event)
@@ -1264,17 +1228,6 @@ static inline uint8_t pd_try_get_active_event(
 	return PE_NEW_EVT_PD;
 }
 
-/**
- * pd_try_get_next_event
- *
- * Get a pending event
- *
- * Event Priority :
- *	PD state machine's event, VDM state machine's event,
- *	Active event (DPM reactions, TCPM request)
- *
- * Returns PE_NEW_EVT_TYPE.
- */
 
 static inline uint8_t pd_try_get_next_event(
 	struct tcpc_device *tcpc_dev, struct pd_event *pd_event)
@@ -1288,9 +1241,6 @@ static inline uint8_t pd_try_get_next_event(
 	return pd_try_get_active_event(tcpc_dev, pd_event);
 }
 
-/*
- * Richtek Policy Engine
- */
 
 static inline int pd_handle_dpm_immediately(
 	struct pd_port *pd_port, struct pd_event *pd_event)

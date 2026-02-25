@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: HsinYi Chang <hsin-yi.chang@mediatek.com>
- */
 
 #ifndef __ADSP_HELPER_H__
 #define __ADSP_HELPER_H__

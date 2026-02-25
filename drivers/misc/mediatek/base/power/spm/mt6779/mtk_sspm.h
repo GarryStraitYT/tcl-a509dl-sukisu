@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 
 #ifndef __MTK_SSPM_H__
@@ -47,9 +44,6 @@ struct spm_data {
 	} u;
 };
 
-/**************************************
- * mtk_sspm.c
- **************************************/
 int spm_to_sspm_command(u32 cmd, struct spm_data *spm_d);
 int spm_to_sspm_command_async(u32 cmd, struct spm_data *spm_d);
 int spm_to_sspm_command_async_wait(u32 cmd);

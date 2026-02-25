@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -66,9 +63,6 @@ struct mt6336_platform_data {
 };
 
 
-/******************************************************************************
- * mt6336 operations
- *****************************************************************************/
 static const int mt6336_current[MT6336_LEVEL_NUM] = {
 	  25,   50,   75,  100,  125,  150,  175,  200,  250,  300,
 	 350,  400,  450,  500,  550,  600,  650,  700,  750,  800,
@@ -482,9 +476,6 @@ int mt6336_uninit(void)
 }
 
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 void mt6336_isr_short_ch1(void)
 {
 	schedule_work(&mt6336_work_ch1);
@@ -495,9 +486,6 @@ void mt6336_isr_short_ch2(void)
 	schedule_work(&mt6336_work_ch2);
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static void mt6336_work_disable_ch1(struct work_struct *data)
 {
 	pr_debug("ht work queue callback\n");
@@ -550,9 +538,6 @@ static int mt6336_timer_cancel(int channel)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operation wrapper function
- *****************************************************************************/
 static int mt6336_operate(int channel, int enable)
 {
 	ktime_t ktime;
@@ -618,9 +603,6 @@ static int mt6336_operate(int channel, int enable)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int mt6336_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -755,9 +737,6 @@ static struct flashlight_operations mt6336_ops = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int mt6336_parse_dt(struct device *dev,
 		struct mt6336_platform_data *pdata)
 {

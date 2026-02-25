@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/linkage.h>
 #include <linux/init.h>
@@ -11,15 +8,6 @@
 
 #include "proc-macros.S"
 
-/*
- *      __xxxx_dcache_user_area(start,size)
- *
- *      Ensure that any D-cache lines for the interval [start, start+size)
- *      are cleaned or/and invalidated to the PoC.
- *
- *      - start        - virtual start address of region (EL0/EL1)
- *      - size         - size in question
- */
 
 
 
@@ -136,15 +124,6 @@ __disable_dcache:
 	MCR p15,0,r0,c1,c0,0
 	dsb
 	isb
-/*
- * Erratum:794322,An instruction fetch can be allocated into
- * the L2 cache after the cache is disabled Status
- * This erratum can be avoided by inserting both of the following
- * after the SCTLR.C bit is cleared to 0,
- * and before the caches are cleaned or invalidated:
- * 1) A TLBIMVA operation to any address.
- * 2) A DSB instruction.
- */
 	MCR p15,0,r0,c8,c7,1
 	dsb
 	isb
@@ -160,15 +139,6 @@ __disable_cache:
 	BIC r0,r0,#C1_IBIT
 	BIC r0,r0,#C1_CBIT
 	MCR p15,0,r0,c1,c0,0
-/*
- * Erratum:794322,An instruction fetch can be allocated
- * into the L2 cache after the cache is disabled Status
- * This erratum can be avoided by inserting both of the
- * following after the SCTLR.C bit is cleared to 0,
- * and before the caches are cleaned or invalidated:
- * 1) A TLBIMVA operation to any address.
- * 2) A DSB instruction.
- */
 	MCR p15,0,r0,c8,c7,1
 	dsb
 	BX lr
@@ -670,34 +640,16 @@ L2_inv_finished:
 	bx      lr
 
 __disable_dcache__inner_flush_dcache_L1:
-/*******************************************************************************
- * push stack                                                                  *
- ******************************************************************************/
 	push    {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
-/*******************************************************************************
- * __disable_dcache                                                            *
- ******************************************************************************/
 	MRC p15,0,r0,c1,c0,0
 	BIC r0,r0,#C1_CBIT
 	dsb
 	MCR p15,0,r0,c1,c0,0
 	dsb
 	isb
-/*
- * Erratum:794322,An instruction fetch can be allocated
- * into the L2 cache after the cache is disabled Status
- * This erratum can be avoided by inserting both of the
- * following after the SCTLR.C bit is cleared to 0,
- * and before the caches are cleaned or invalidated:
- * 1) A TLBIMVA operation to any address.
- * 2) A DSB instruction.
- */
 	MCR p15,0,r0,c8,c7,1
 	dsb
 	isb
-/*******************************************************************************
- * __inner_flush_dcache_L1                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -749,41 +701,20 @@ DF1_L1_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * pop  stack                                                                  *
- ******************************************************************************/
 	pop     {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
 	bx      lr
 
 __disable_dcache__inner_flush_dcache_L1__inner_flush_dcache_L2:
-/*******************************************************************************
- * push stack                                                                  *
- ******************************************************************************/
 	push    {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
-/*******************************************************************************
- * __disable_dcache                                                            *
- ******************************************************************************/
 	MRC p15,0,r0,c1,c0,0
 	BIC r0,r0,#C1_CBIT
 	dsb
 	MCR p15,0,r0,c1,c0,0
 	dsb
 	isb
-/*
- * Erratum:794322,An instruction fetch can be allocated
- * into the L2 cache after the cache is disabled Status
- * This erratum can be avoided by inserting both of the
- * following after the SCTLR.C bit is cleared to 0,
- * and before the caches are cleaned or invalidated:
- * 1) A TLBIMVA operation to any address.
- * 2) A DSB instruction.
- */
 	MCR p15,0,r0,c8,c7,1
 	dsb
 	isb
-/*******************************************************************************
- * __inner_flush_dcache_L1                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -835,13 +766,7 @@ DF1F2_L1_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * clrex                                                                       *
- ******************************************************************************/
 	clrex
-/*******************************************************************************
- * __inner_flush_dcache_L2                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -886,42 +811,21 @@ DF1F2_L2_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * pop stack                                                                   *
- ******************************************************************************/
 	pop     {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
 	bx      lr
 
 dis_D_inner_fL1L2:
 __disable_dcache__inner_flush_dcache_L1__inner_clean_dcache_L2:
-/*******************************************************************************
- * push stack                                                                  *
- ******************************************************************************/
 	push    {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
-/*******************************************************************************
- * __disable_dcache                                                            *
- ******************************************************************************/
 	MRC p15,0,r0,c1,c0,0
 	BIC r0,r0,#C1_CBIT
 	dsb
 	MCR p15,0,r0,c1,c0,0
 	dsb
 	isb
-/*
- * Erratum:794322,An instruction fetch can be allocated
- * into the L2 cache after the cache is disabled Status
- * This erratum can be avoided by inserting both of the
- * following after the SCTLR.C bit is cleared to 0,
- * and before the caches are cleaned or invalidated:
- * 1) A TLBIMVA operation to any address.
- * 2) A DSB instruction.
- */
 	MCR p15,0,r0,c8,c7,1
 	dsb
 	isb
-/*******************************************************************************
- * __inner_flush_dcache_L1                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -973,13 +877,7 @@ DF1C2_L1_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * clrex                                                                       *
- ******************************************************************************/
 	clrex
-/*******************************************************************************
- * __inner_clean_dcache_L2                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -1024,21 +922,12 @@ DF1C2_L2_cl_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * pop  stack                                                                  *
- ******************************************************************************/
 	pop     {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
 	bx      lr
 
 
 d_i_dis_flush_all:
-/*******************************************************************************
- * push stack                                                                  *
- ******************************************************************************/
 	push    {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
-/*******************************************************************************
- * __disable_dcache                                                            *
- ******************************************************************************/
 	MRC p15,0,r0,c1,c0,0
 	BIC r0,r0,#C1_CBIT
 	BIC r0,r0,#C1_IBIT
@@ -1046,21 +935,9 @@ d_i_dis_flush_all:
 	MCR p15,0,r0,c1,c0,0
 	dsb
 	isb
-/*
- * Erratum:794322,An instruction fetch can be allocated
- * into the L2 cache after the cache is disabled Status
- * This erratum can be avoided by inserting both of the
- * following after the SCTLR.C bit is cleared to 0,
- * and before the caches are cleaned or invalidated:
- * 1) A TLBIMVA operation to any address.
- * 2) A DSB instruction.
- */
 	MCR p15,0,r0,c8,c7,1
 	dsb
 	isb
-/*******************************************************************************
- * __inner_flush_dcache_L1                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -1112,13 +989,7 @@ DIF1F2_L1_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * clrex                                                                       *
- ******************************************************************************/
 	clrex
-/*******************************************************************************
- * __inner_flush_dcache_L2                                                     *
- ******************************************************************************/
 	dmb                                     @
 	mrc     p15, 1, r0, c0, c0, 1           @
 	ands    r3, r0, #0x7000000              @
@@ -1163,9 +1034,6 @@ DIF1F2_L2_finished:
 	mcr     p15, 2, r10, c0, c0, 0          @
 	dsb
 	isb
-/*******************************************************************************
- * pop stack                                                                   *
- ******************************************************************************/
 	pop     {r0,r1,r2,r3,r4,r5,r7,r9,r10,r11,r14}
 	bx      lr
 

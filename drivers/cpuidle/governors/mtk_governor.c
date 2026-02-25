@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/cpuidle.h>
@@ -33,11 +30,6 @@ void __attribute__((weak)) mt_cpuidle_framework_init(void)
 
 }
 
-/*
- * mtk_governor_select - selects the next idle state to enter
- * @drv: cpuidle driver containing state data
- * @dev: the CPU
- */
 static int mtk_governor_select(struct cpuidle_driver *drv,
 				struct cpuidle_device *dev, bool *stop_tick)
 {
@@ -49,24 +41,11 @@ static int mtk_governor_select(struct cpuidle_driver *drv,
 	return state;
 }
 
-/*
- * mtk_governor_reflect - records that data structures need update
- * @dev: the CPU
- * @index: the index of actual entered state
- *
- * NOTE: it's important to be fast here because this operation will add to
- *       the overall exit latency.
- */
 static void mtk_governor_reflect(struct cpuidle_device *dev, int index)
 {
 	/* TODO: implement actions for MTK governor & replace it */
 }
 
-/*
- * mtk_governor_enable_device - scans a CPU's states and does setup
- * @drv: cpuidle driver
- * @dev: the CPU
- */
 static int mtk_governor_enable_device(struct cpuidle_driver *drv,
 				struct cpuidle_device *dev)
 {
@@ -86,9 +65,6 @@ static struct cpuidle_governor mtk_governor = {
 	.reflect =	mtk_governor_reflect,
 };
 
-/*
- * init_mtk_governor - initializes the governor
- */
 static int __init init_mtk_governor(void)
 {
 	/* TODO: check if debugfs_create_file() failed */

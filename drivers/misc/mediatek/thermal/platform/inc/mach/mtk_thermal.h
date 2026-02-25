@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT6763_THERMAL_H__
 #define __MT6763_THERMAL_H__
@@ -18,10 +15,6 @@
 #include "mtk_gpufreq.h"
 #endif
 
-/*=============================================================
- * LVTS SW Configs
- *=============================================================
- */
 #define CFG_THERM_LVTS				(0)
 
 #if CFG_THERM_LVTS
@@ -222,10 +215,6 @@ extern int mtk_thermal_get_tpcb_target(void);
 extern void thermal_set_big_core_speed(
 unsigned int tempMonCtl1, unsigned int tempMonCtl2, unsigned int tempAhbPoll);
 
-/*
- * return value(1): cooler of abcct/abcct_lcmoff is deactive,
- * and no thermal current limit.
- */
 extern int mtk_cooler_is_abcct_unlimit(void);
 
 #endif /* __MT6763_THERMAL_H__ */

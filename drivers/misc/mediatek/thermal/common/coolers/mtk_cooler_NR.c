@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #include <linux/version.h>
@@ -24,10 +21,6 @@
 #include <linux/mm_types.h>
 #include <linux/uaccess.h>
 
-/*=============================================================
- *Macro definition
- *=============================================================
- */
 #define CLNR_LOG_TAG	"[Cooler_NR]"
 
 #define clNR_dprintk(fmt, args...)   \
@@ -38,10 +31,6 @@
 	} while (0)
 
 #define clNR_printk(fmt, args...) pr_notice(CLNR_LOG_TAG fmt, ##args)
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static unsigned int clNR_debug_log = 1;
 
 static unsigned int cl_dev_NR_state;
@@ -51,8 +40,6 @@ static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static struct proc_dir_entry *clNR_status;
 static char *clNR_mmap;
-/*=============================================================
- */
 
 static vm_fault_t mmap_fault(struct vm_fault *vmf)
 {
@@ -160,10 +147,6 @@ static const struct file_operations clNR_status_fops = {
 	.mmap = clNR_status_mmap,
 };
 
-/*
- * cooling device callback functions (clNR_cooling_NR_ops)
- * 1 : ON and 0 : OFF
- */
 static int clNR_get_max_state(
 struct thermal_cooling_device *cdev, unsigned long *state)
 {

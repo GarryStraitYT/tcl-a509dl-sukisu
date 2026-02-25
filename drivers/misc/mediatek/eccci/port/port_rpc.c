@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 #include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
@@ -1291,9 +1288,6 @@ static void rpc_msg_handler(struct port_t *port, struct sk_buff *skb)
 	ccci_free_skb(skb);
 }
 
-/*
- * define character device operation for rpc_u
- */
 static const struct file_operations rpc_dev_fops = {
 	.owner = THIS_MODULE,
 	.open = &port_dev_open, /*use default API*/

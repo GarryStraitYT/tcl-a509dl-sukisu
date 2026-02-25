@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/of.h>
 #include <linux/of_irq.h>
@@ -60,11 +57,6 @@ g_smi_common_backup_reg_offset[SMI_COMMON_BACKUP_REG_NUM] = {
 };
 
 #else
-/*
- * SMI COMMON register list to be backuped
- * for some socs which do not have some register, it's OK to read and write to
- * the non-exist offset.
- */
 static unsigned short
 g_smi_common_backup_reg_offset[SMI_COMMON_BACKUP_REG_NUM] = {
 	0x200, 0x204, 0x208, 0x20c, 0x210,
@@ -131,10 +123,6 @@ struct mtk_smi_larb {
 	struct clk		*clk_smi;
 	struct device		*smi;
 };
-/*
- * static void smi_dumpLarb(unsigned int index);
- * static void smi_dumpCommon(void);
- */
 static int _mtk_smi_larb_get(struct device *larbdev, bool pm);
 static void _mtk_smi_larb_put(struct device *larbdev, bool pm);
 
@@ -145,9 +133,6 @@ static long MTK_SMI_COMPAT_ioctl(struct file *filp,
 #define MTK_SMI_COMPAT_ioctl  NULL
 #endif
 
-/* Use this function to get base address of Larb resgister
- * to support error checking
- */
 static unsigned long get_larb_base_addr(int larb_id)
 {
 	if (!smi_data || larb_id >= smi_data->larb_nr || larb_id < 0)
@@ -1442,9 +1427,6 @@ void smi_dumpDebugMsg(void)
 
 #if IS_ENABLED(CONFIG_COMPAT)
 /* 32 bits process ioctl support: */
-/* This is prepared for the future extension
- * since currently the sizes of 32 bits
- */
 /* and 64 bits smi parameters are the same. */
 
 struct MTK_SMI_COMPAT_BWC_CONFIG {

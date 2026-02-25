@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
@@ -490,10 +485,6 @@ static int mtu3_remove(struct platform_device *pdev)
 	return 0;
 }
 
-/*
- * when support dual-role mode, we reject suspend when
- * it works as device mode;
- */
 static int __maybe_unused mtu3_suspend(struct device *dev)
 {
 	struct ssusb_mtk *ssusb = dev_get_drvdata(dev);

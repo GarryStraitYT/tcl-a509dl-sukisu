@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 OV8856mipi_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *	Dream
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _OV8856MIPI_SENSOR_H
 #define _OV8856MIPI_SENSOR_H
 

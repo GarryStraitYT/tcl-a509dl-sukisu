@@ -1,39 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *  mt_sco_afe_connection.c
- *
- * Project:
- * --------
- *   MT6797  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *----------------------------------------------------------------------------
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-soc-afe-connection.h"
 #include "mtk-auddrv-afe.h"
@@ -71,9 +39,6 @@
 /* mutex lock */
 static DEFINE_MUTEX(afe_connection_mutex);
 
-/*
- * connection of register
- */
 const unsigned int
 	mConnectionReg[Soc_Aud_InterConnectionOutput_Num_Output] = {
 	AFE_CONN0, AFE_CONN1, AFE_CONN2, AFE_CONN3, AFE_CONN4,
@@ -99,9 +64,6 @@ const unsigned int
 	AFE_CONN35_1, AFE_CONN36_1, AFE_CONN37_1, AFE_CONN38_1, AFE_CONN39_1
 };
 
-/*
- * connection state of register
- */
 static char mConnectionState
 		[Soc_Aud_InterConnectionInput_Num_Input]
 		[Soc_Aud_InterConnectionOutput_Num_Output] = { {0} };

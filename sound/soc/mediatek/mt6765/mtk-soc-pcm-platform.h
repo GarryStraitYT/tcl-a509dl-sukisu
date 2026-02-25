@@ -1,32 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_platform
- *
- * Project:
- * --------
- *   mt_soc_pcm_platform function
- *
- * Description:
- * ------------
- *   Common function
- *
- * Author:
- * -------
- *   Chipeng Chang (MTK02308)
- *
- *---------------------------------------------------------------------------
- *
- ******************************************************************************
- */
 
 #ifndef AUDIO_MT6765_SOUND_H
 #define AUDIO_MT6765_SOUND_H

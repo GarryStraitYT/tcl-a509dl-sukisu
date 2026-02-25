@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/io.h>
@@ -1124,11 +1121,6 @@ void ged_log_dump(GED_LOG_BUF_HANDLE hLogBuf)
 static unsigned long __read_mostly tracing_mark_write_addr;
 static inline void __mt_update_tracing_mark_write_addr(void)
 {
-/*
- * kallsyms_lookup_name can only be used by build-in module in
- * kernel-4.19, and it cause build error in gki flavor, so we check
- * CONFIG_MTK_GPU_SUPPORT=y
- */
 #ifdef CONFIG_MTK_GPU_SUPPORT
 	if (unlikely(tracing_mark_write_addr == 0)) {
 		tracing_mark_write_addr =
@@ -1179,10 +1171,6 @@ void ged_log_perf_trace_counter(char *name, long long count, int pid,
 {
 	if (ged_log_perf_trace_enable) {
 		__mt_update_tracing_mark_write_addr();
-/*
- * event_trace_printk cause build error in gki flavor, so we also check
- * CONFIG_MTK_GPU_SUPPORT=y
- */
 #if (defined(CONFIG_EVENT_TRACING) && defined(CONFIG_MTK_GPU_SUPPORT))
 		preempt_disable();
 		event_trace_printk(tracing_mark_write_addr,

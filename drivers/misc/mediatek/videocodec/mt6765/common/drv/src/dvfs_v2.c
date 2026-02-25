@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/time.h>
 #include <linux/ktime.h>
@@ -50,11 +47,6 @@ long long div_64(long long a, long long b)
 }
 
 
-/**
- * get_time_us - Get current time in us
- *
- * To prevent overflow, long long is used for return value
- */
 long long get_time_us(void)
 {
 	struct timeval tv;
@@ -63,12 +55,6 @@ long long get_time_us(void)
 	return (1000000LL * tv.tv_sec + tv.tv_usec);
 }
 
-/**
- * new_hist_to_end - add a new blank codec_history to end of list
- *
- * The newly added codec_history is returned and user is expected to
- * fill required information
- */
 struct codec_history *new_hist_to_end(struct codec_history **head)
 {
 	struct codec_history *hist;
@@ -93,12 +79,6 @@ struct codec_history *new_hist_to_end(struct codec_history **head)
 	return hist;
 }
 
-/**
- * free_next_hist - free next codec_history and shift next next one forward
- *                  (not used)
- *
- * Returns the new next codec_history element.
- */
 struct codec_history *free_next_hist(struct codec_history *cur_hist)
 {
 	struct codec_history *next;
@@ -115,12 +95,6 @@ struct codec_history *free_next_hist(struct codec_history *cur_hist)
 	return cur_hist->next;
 }
 
-/**
- * free_hist - remove target codec_history from list and free its memory
- *
- * Return 0 if free successfully
- *        -1 means there is error and nothing is changed
- */
 int free_hist_(struct codec_history **head, struct codec_history *target)
 {
 	struct codec_history *temp;
@@ -152,12 +126,6 @@ int free_hist_(struct codec_history **head, struct codec_history *target)
 	return 0;
 }
 
-/**
- * free_hist - Scan through the history list and free unused ones
- *
- * Return 0 for success
- *        -1 if error
- */
 int free_hist(struct codec_history **head, int only_unused)
 {
 	struct codec_history *chk_hist; /* history item to check */
@@ -201,12 +169,6 @@ int free_hist(struct codec_history **head, int only_unused)
 }
 
 
-/**
- * find_hist = find a codec_history from the list by handle
- *
- * Returns the codec_history
- *         0 if not found
- */
 struct codec_history *find_hist(void *handle, struct codec_history *head)
 {
 	while (head != 0 && head->handle != handle)
@@ -215,13 +177,6 @@ struct codec_history *find_hist(void *handle, struct codec_history *head)
 	return head;
 }
 
-/**
- * find_calc_idx - helper function to find the starting (first_idx) and
- *                 previous (prev_idx) index of current history
- *
- * Return 0 if found indices
- *         -1 if there is no codec_history or history is empty
- */
 int find_calc_idx(struct codec_history *hist, int *first_idx, int *prev_idx)
 {
 	if (hist == 0 || hist->cur_cnt == 0)
@@ -239,14 +194,6 @@ int find_calc_idx(struct codec_history *hist, int *first_idx, int *prev_idx)
 	return 0;
 }
 
-/**
- * est_next_submit - estimate next submission time by previous history
- *                   This function is called when a new job is submitted but
- *                   not yet completed & added to history. So the estimation
- *                   is really for the next next job.
- *
- * Return time in us. 0 means no history available, treat it as coming now
- */
 long long est_next_submit(struct codec_history *hist)
 {
 	int first_idx, prev_idx;
@@ -283,11 +230,6 @@ long long est_next_submit(struct codec_history *hist)
 	return hist->submit[prev_idx] + next_submit;
 }
 
-/**
- * est_new_kcy - Estimate cycles required
- *
- * Return estimate k(10^3) cycles for new job
- */
 int est_new_kcy(struct codec_history *hist)
 {
 	if (hist == 0)
@@ -297,13 +239,6 @@ int est_new_kcy(struct codec_history *hist)
 }
 
 
-/**
- * est_next_job - Estimate next job's required finish time and clock frequency
- * required
- *
- * Return 0 for success
- *        -1 for error
- */
 int est_next_job(long long now_us, long long *t_us, int *kcy, int *min_mhz,
 		struct codec_job *job, struct codec_history *head)
 {
@@ -377,12 +312,6 @@ int est_next_job(long long now_us, long long *t_us, int *kcy, int *min_mhz,
 	return est_next_job(now_us, t_us, kcy, min_mhz, job->next, head);
 }
 
-/**
- * update_hist_item - Use a completed job to update a history item
- *
- * Return 1 if previous history is cleared & only new job info stays
- *        0 if new job info is added to history
- */
 int update_hist_item(struct codec_job *job, struct codec_history *hist)
 {
 	int hist_idx;
@@ -461,13 +390,6 @@ int update_hist_item(struct codec_job *job, struct codec_history *hist)
 	return 0;
 }
 
-/**
- * update_hist - Use a completed job to update corresponding history
- *
- * Return 0 for success
- *        1 for clear old history and update success
- *        -1 for not updated due to error
- */
 int update_hist(struct codec_job *job, struct codec_history **head)
 {
 	struct codec_history *target;
@@ -497,12 +419,6 @@ int update_hist(struct codec_job *job, struct codec_history **head)
 }
 
 
-/**
- * add_job - Add a new job to job queue
- *
- * Return total job count after add
- *        -1 if error
- */
 int add_job_(struct codec_job *job, struct codec_job **head)
 {
 	int job_cnt;
@@ -535,12 +451,6 @@ int add_job_(struct codec_job *job, struct codec_job **head)
 	return job_cnt;
 }
 
-/**
- * add_job - Add a new job with only the handle when entering lock hw
- *
- * Return new job just added
- *        0 if failed to add
- */
 struct codec_job *add_job(void *handle, struct codec_job **head)
 {
 	struct codec_job *new_job;
@@ -565,13 +475,6 @@ struct codec_job *add_job(void *handle, struct codec_job **head)
 	return new_job;
 }
 
-/**
- * move_job_to_head - Move the target job to head for faster access next time
- *                    (most recently used)
- *
- * Return pointer to the moved job (should now be the head)
- *        0 if job not found
- */
 struct codec_job *move_job_to_head(void *handle, struct codec_job **head)
 {
 	struct codec_job *prev_job;
@@ -603,12 +506,6 @@ struct codec_job *move_job_to_head(void *handle, struct codec_job **head)
 	return target_job;
 }
 
-/**
- * est_freq - Estimate minimum running frequency that provides enough
- *            performance
- *
- * Return minimum required mhz to finish all jobs in time
- */
 int est_freq(void *handle, struct codec_job **job, struct codec_history *head)
 {
 	long long cur_time;
@@ -648,11 +545,6 @@ int est_freq(void *handle, struct codec_job **job, struct codec_history *head)
 	return min_mhz;
 }
 
-/**
- * match_freq - Match estimated vcodec frequency with available frequencies
- *
- * Match requested mhz to available mhz
- */
 u64 match_freq(int target_mhz, u64 *freq_list, u32 freq_cnt)
 {
 	u64 res_mhz = DEFAULT_MHZ;

@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Wendell Lin <wendell.lin@mediatek.com>
- */
 
 #ifndef _DT_BINDINGS_CLK_MT6779_H
 #define _DT_BINDINGS_CLK_MT6779_H
@@ -509,10 +505,6 @@
 #define SCP_NR_SYSS			26
 
 
-/*
- * compatible with CLK name define in kernel-4.9,
- * using new clk name redefine old one.
- */
 
 /* TOPCKGEN */
 #define TOP_MUX_AXI			CLK_TOP_AXI

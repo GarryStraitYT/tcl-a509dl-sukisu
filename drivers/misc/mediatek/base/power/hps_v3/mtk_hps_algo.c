@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -13,23 +10,14 @@
 #include <asm-generic/bug.h>
 
 #include "mtk_hps_internal.h"
-/*
- *#include <trace/events/mtk_events.h>
- */
 
 #ifdef CONFIG_MTK_ICCS_SUPPORT
 #include <mtk_iccs.h>
 #endif
 
-/*
- * static
- */
 #define STATIC
 /* #define STATIC static */
 
-/*
- * New hotpug strategy
- */
 void hps_set_break_en(int hps_break_en)
 {
 	mutex_lock(&hps_ctxt.break_lock);

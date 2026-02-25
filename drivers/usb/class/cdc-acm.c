@@ -1,19 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * cdc-acm.c
- *
- * Copyright (c) 1999 Armin Fuerst	<fuerst@in.tum.de>
- * Copyright (c) 1999 Pavel Machek	<pavel@ucw.cz>
- * Copyright (c) 1999 Johannes Erdfelt	<johannes@erdfelt.com>
- * Copyright (c) 2000 Vojtech Pavlik	<vojtech@suse.cz>
- * Copyright (c) 2004 Oliver Neukum	<oliver@neukum.name>
- * Copyright (c) 2005 David Kubicek	<dave@awk.cz>
- * Copyright (c) 2011 Johan Hovold	<jhovold@gmail.com>
- *
- * USB Abstract Control Model driver for USB modems and ISDN adapters
- *
- * Sponsored by SuSE
- */
 
 #undef DEBUG
 #undef VERBOSE_DEBUG
@@ -53,14 +38,7 @@ static DEFINE_MUTEX(acm_minors_lock);
 static void acm_tty_set_termios(struct tty_struct *tty,
 				struct ktermios *termios_old);
 
-/*
- * acm_minors accessors
- */
 
-/*
- * Look up an ACM structure by minor. If found and not disconnected, increment
- * its refcount and return it with its mutex held.
- */
 static struct acm *acm_get_by_minor(unsigned int minor)
 {
 	struct acm *acm;
@@ -81,9 +59,6 @@ static struct acm *acm_get_by_minor(unsigned int minor)
 	return acm;
 }
 
-/*
- * Try to find an available minor number and if found, associate it with 'acm'.
- */
 static int acm_alloc_minor(struct acm *acm)
 {
 	int minor;
@@ -103,9 +78,6 @@ static void acm_release_minor(struct acm *acm)
 	mutex_unlock(&acm_minors_lock);
 }
 
-/*
- * Functions for ACM control messages.
- */
 
 static int acm_ctrl_msg(struct acm *acm, int request, int value,
 							void *buf, int len)
@@ -130,9 +102,6 @@ static int acm_ctrl_msg(struct acm *acm, int request, int value,
 	return retval < 0 ? retval : 0;
 }
 
-/* devices aren't required to support these requests.
- * the cdc acm descriptor tells whether they do...
- */
 static inline int acm_set_control(struct acm *acm, int control)
 {
 	if (acm->quirks & QUIRK_CONTROL_LINE_STATE)
@@ -158,10 +127,6 @@ static void acm_kill_urbs(struct acm *acm)
 		usb_kill_urb(acm->read_urbs[i]);
 }
 
-/*
- * Write buffer management.
- * All of these assume proper locks taken by the caller.
- */
 
 static int acm_wb_alloc(struct acm *acm)
 {
@@ -196,9 +161,6 @@ static int acm_wb_is_avail(struct acm *acm)
 	return n;
 }
 
-/*
- * Finish write. Caller must hold acm->write_lock
- */
 static void acm_write_done(struct acm *acm, struct acm_wb *wb)
 {
 	wb->use = 0;
@@ -206,11 +168,6 @@ static void acm_write_done(struct acm *acm, struct acm_wb *wb)
 	usb_autopm_put_interface_async(acm->control);
 }
 
-/*
- * Poke write.
- *
- * the caller is responsible for locking
- */
 
 static int acm_start_wb(struct acm *acm, struct acm_wb *wb)
 {
@@ -233,9 +190,6 @@ static int acm_start_wb(struct acm *acm, struct acm_wb *wb)
 	return rc;
 }
 
-/*
- * attributes exported through sysfs
- */
 static ssize_t bmCapabilities_show
 (struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -268,9 +222,6 @@ static ssize_t iCountryCodeRelDate_show
 }
 
 static DEVICE_ATTR_RO(iCountryCodeRelDate);
-/*
- * Interrupt handlers for various ACM device responses
- */
 
 static void acm_process_notification(struct acm *acm, unsigned char *buf)
 {
@@ -599,9 +550,6 @@ static void acm_softint(struct work_struct *work)
 		tty_port_tty_wakeup(&acm->port);
 }
 
-/*
- * TTY handlers
- */
 
 static int acm_tty_install(struct tty_driver *driver, struct tty_struct *tty)
 {
@@ -1131,9 +1079,6 @@ static const struct tty_port_operations acm_port_ops = {
 	.destruct = acm_port_destruct,
 };
 
-/*
- * USB probe and disconnect routines.
- */
 
 /* Little helpers: write/read buffers free */
 static void acm_write_buffers_free(struct acm *acm)
@@ -1715,9 +1660,6 @@ static int acm_pre_reset(struct usb_interface *intf)
 		USB_CLASS_COMM, USB_CDC_SUBCLASS_ACM, \
 		USB_CDC_ACM_PROTO_VENDOR)
 
-/*
- * USB driver structure.
- */
 
 static const struct usb_device_id acm_ids[] = {
 	/* quirky and broken devices */
@@ -1983,9 +1925,6 @@ static struct usb_driver acm_driver = {
 	.disable_hub_initiated_lpm = 1,
 };
 
-/*
- * TTY driver structures.
- */
 
 static const struct tty_operations acm_ops = {
 	.install =		acm_tty_install,
@@ -2006,9 +1945,6 @@ static const struct tty_operations acm_ops = {
 	.get_icount =		acm_tty_get_icount,
 };
 
-/*
- * Init / exit.
- */
 
 static int __init acm_init(void)
 {

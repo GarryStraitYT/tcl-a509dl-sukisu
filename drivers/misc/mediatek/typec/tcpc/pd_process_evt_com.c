@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/tcpci_event.h"
 #include "inc/pd_process_evt.h"
 #include "inc/pd_dpm_core.h"
 
-/*
- * [BLOCK] DRP (dr_swap, pr_swap, vconn_swap)
- */
 
 #ifdef CONFIG_USB_PD_DR_SWAP
 static inline bool pd_evaluate_reject_dr_swap(struct pd_port *pd_port)
@@ -117,9 +111,6 @@ static inline bool pd_process_ctrl_msg_vconn_swap(
 	return true;
 }
 
-/*
- * [BLOCK] BIST
- */
 
 static inline bool pd_process_data_msg_bist(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -160,9 +151,6 @@ static inline bool pd_process_data_msg_bist(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess Ctrl MSG
- */
 
 static void pd_cancel_dpm_reaction(struct pd_port *pd_port)
 {
@@ -283,9 +271,6 @@ static inline bool pd_process_ctrl_msg(
 	return ret;
 }
 
-/*
- * [BLOCK] Porcess Data MSG
- */
 
 static inline bool pd_process_data_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -330,9 +315,6 @@ static inline bool pd_process_data_msg(
 	return ret;
 }
 
-/*
- * [BLOCK] Porcess Extend MSG
- */
 
 #ifdef CONFIG_USB_PD_REV30
 static inline bool pd_process_ext_msg(
@@ -419,9 +401,6 @@ static inline bool pd_process_ext_msg(
 }
 #endif	/* CONFIG_USB_PD_REV30 */
 
-/*
- * [BLOCK] Porcess DPM MSG
- */
 
 static inline bool pd_process_dpm_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -450,9 +429,6 @@ static inline bool pd_process_dpm_msg(
 	return ret;
 }
 
-/*
- * [BLOCK] Porcess HW MSG
- */
 
 static inline bool pd_process_recv_hard_reset(
 		struct pd_port *pd_port, struct pd_event *pd_event)
@@ -516,9 +492,6 @@ static inline bool pd_process_hw_msg(
 	};
 }
 
-/*
- * [BLOCK] Porcess Timer MSG
- */
 
 #ifdef CONFIG_USB_PD_CHECK_RX_PENDING_IF_SRTOUT
 static inline bool pd_check_rx_pending(struct pd_port *pd_port)

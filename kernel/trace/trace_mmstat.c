@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author: Chinwen Chang <chinwen.chang@mediatek.com>
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -132,9 +128,6 @@ static struct zone *mmstat_next_zone(struct zone *zone)
 	return zone;
 }
 
-/*
- * Record basic memory information
- */
 static void mmstat_trace_meminfo(void)
 {
 	unsigned long meminfo[NR_MEMINFO_ITEMS] = {0};
@@ -184,9 +177,6 @@ static void mmstat_trace_meminfo(void)
 			NR_MEMINFO_ITEMS);
 }
 
-/*
- * Entry for recording vmstat - record partial VM status
- */
 static void mmstat_trace_vmstat(void)
 {
 	int cpu;
@@ -213,9 +203,6 @@ static void mmstat_trace_vmstat(void)
 			NR_VMSTAT_PARTIAL_ITEMS);
 }
 
-/*
- * Record buddy information
- */
 static void mmstat_trace_buddyinfo(void)
 {
 	struct zone *zone;
@@ -276,9 +263,6 @@ static bool filter_out_process(struct task_struct *p, pid_t pid,
 	return false;
 }
 
-/*
- * Record process information
- */
 static void mmstat_trace_procinfo(void)
 {
 #define PROC_SET_SIZE	NR_PROC_ITEMS
@@ -336,9 +320,6 @@ static void mmstat_trace_procinfo(void)
 #undef PROC_SET_SIZE
 }
 
-/*
- * Main entry of recording information
- */
 static void trace_mmstat_entry(void)
 {
 	/* basic memory information */

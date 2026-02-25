@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 SET_BWL_CEN_REG(BWL_ENV_LPDDR3_1CH, BWL_SCN_VPWFD, 0x00000100, 0x4020524f)
 SET_BWL_CEN_REG(BWL_ENV_LPDDR3_1CH, BWL_SCN_VPWFD, 0x00000108, 0x4020504f)

@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -334,11 +331,3 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek MT6370 PMU Vib LDO");
 MODULE_VERSION(MT6370_PMU_LDO_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.1_MTK
- * (1) Remove force OSC on/off for enable/disable LDO
- *
- * 1.0.0_MTK
- * Initial release
- */

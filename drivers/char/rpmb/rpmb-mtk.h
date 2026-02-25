@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef _EMMC_RPMB_H
 #define _EMMC_RPMB_H
@@ -13,11 +10,6 @@
 extern struct msdc_host *mtk_msdc_host[];
 #endif
 
-/************************************************************************
- *
- * RPMB IOCTL interface.
- *
- ***********************************************************************/
 #define RPMB_IOCTL_PROGRAM_KEY  1
 #define RPMB_IOCTL_WRITE_DATA   3
 #define RPMB_IOCTL_READ_DATA    4

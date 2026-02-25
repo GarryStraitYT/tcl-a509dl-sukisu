@@ -1,16 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_WPE_H
 #define _MT_WPE_H
 
 #include <linux/ioctl.h>
 
-/*
- *   enforce kernel log enable
- */
 #define KERNEL_LOG  /* enable debug log flag if defined */
 
 #define _SUPPORT_MAX_WPE_FRAME_REQUEST_ 32
@@ -18,22 +12,13 @@
 
 
 #define SIG_ERESTARTSYS 512 /* ERESTARTSYS */
-/***********************************************************************
- *
- ***********************************************************************/
 #define WPE_DEV_MAJOR_NUMBER    251
 /*TODO: r selected*/
 #define WPE_MAGIC               'w'
 
 #define WPE_REG_RANGE           (0x1000)
-/*TODO: WPE base address : 0x15011000
- *       for GCE to access physical register addresses
- */
 #define WPE_BASE_HW     0x15011000
 
-/*This macro is for setting irq status represnted
- * by a local variable,WPEInfo.IrqInfo.Status[WPE_IRQ_TYPE_INT_WPE_ST]
- */
 #define WPE_INT_ST                 (1<<0)
 
 
@@ -48,9 +33,6 @@ struct WPE_REG_IO_STRUCT {
 	unsigned int Count;  /* count */
 };
 
-/*
- *    interrupt clear type
- */
 enum WPE_IRQ_CLEAR_ENUM {
 	WPE_IRQ_CLEAR_NONE,
 	/* non-clear wait, clear after wait */
@@ -65,11 +47,6 @@ enum WPE_IRQ_CLEAR_ENUM {
 };
 
 
-/*
- *    module's interrupt , each module should have its own isr.
- *    note:
- *        mapping to isr table,ISR_TABLE when using no device tree
- */
 enum WPE_IRQ_TYPE_ENUM {
 	WPE_IRQ_TYPE_INT_WPE_ST,    /* WPE */
 	WPE_IRQ_TYPE_AMOUNT
@@ -294,9 +271,6 @@ struct WPE_Config {
 	unsigned int WPE_DMA_DEBUG_SEL;
 };
 
-/***********************************************************************
- *
- ***********************************************************************/
 enum WPE_CMD_ENUM {
 	WPE_CMD_RESET,            /* Reset */
 	WPE_CMD_DUMP_REG,         /* Dump WPE Register */

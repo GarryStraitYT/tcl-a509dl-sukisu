@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __MT_EMI_BW_LIMITER__
 #define __MT_EMI_BW_LIMITER__
@@ -10,9 +6,6 @@
 #include <linux/io.h>
 #include <linux/types.h>
 
-/*
- * Define EMI hardware registers.
- */
 
 #define EMI_CONA		(EMI_BASE_ADDR + 0x0000)
 #define EMI_CONB		(EMI_BASE_ADDR + 0x0008)
@@ -122,9 +115,6 @@ extern unsigned int get_dram_data_rate(void);
 
 
 
-/*
- * Define constants.
- */
 
 /* define supported DRAM types */
 enum {
@@ -151,18 +141,12 @@ enum {
 #define EN_CON_SCE_STR "ON"
 #define DIS_CON_SCE_STR "OFF"
 
-/*
- * Define data structures.
- */
 
 /* define control table entry */
 struct emi_bwl_ctrl {
 	unsigned int ref_cnt;
 };
 
-/*
- * Define function prototype.
- */
 
 extern int mtk_mem_bw_ctrl(int sce, int op);
 extern int get_ddr_type(void);

@@ -1,19 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 
 
 #include <gz-trusty/smcnr_table.h>
@@ -21,11 +8,6 @@
 
 #define SMC_UNDEFINED 0xFFFFFFFF
 
-/* gz_smcnr_table:
- * Select SMC number by looking up gz_smcnr_table.
- * This table is introduced to support more TEEs and drive them with the same
- * code.
- */
 static const uint32_t gz_smcnr_table[SMCF_END][TEE_ID_END] = {
 	[SMCF_FC_RESERVED] = {
 		SMC_FC_GZ_RESERVED, SMC_FC_GZ_RESERVED },

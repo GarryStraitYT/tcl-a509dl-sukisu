@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #include <dt-bindings/pinctrl/mt65xx.h>
 #include <linux/device.h>
@@ -19,16 +13,6 @@
 #include "mtk-eint.h"
 #include "pinctrl-mtk-common-v2.h"
 
-/**
- * struct mtk_drive_desc - the structure that holds the information
- *			    of the driving current
- * @min:	the minimum current of this group
- * @max:	the maximum current of this group
- * @step:	the step current of this group
- * @scal:	the weight factor
- *
- * formula: output = ((input) / step - 1) * scal
- */
 struct mtk_drive_desc {
 	u8 min;
 	u8 max;
@@ -574,11 +558,6 @@ int mtk_pinconf_bias_get_rev1(struct mtk_pinctrl *hw,
 }
 EXPORT_SYMBOL_GPL(mtk_pinconf_bias_get_rev1);
 
-/* Combo for the following pull register type:
- * 1. PU + PD
- * 2. PULLSEL + PULLEN
- * 3. PUPD + R0 + R1
- */
 static int mtk_pinconf_bias_set_pu_pd(struct mtk_pinctrl *hw,
 				const struct mtk_pin_desc *desc,
 				u32 pullup, u32 arg)

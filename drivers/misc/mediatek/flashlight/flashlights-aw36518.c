@@ -1,17 +1,3 @@
-/*
-* Copyright (C) 2019 MediaTek Inc.
-*
-* Version: v1.0.0
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License version 2 as
-* published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*/
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -94,13 +80,6 @@ static int use_count;
 /* define i2c */
 static struct i2c_client *aw36518_i2c_client;
 
-/* platform data
-* torch_pin_enable: TX1/TORCH pin isa hardware TORCH enable
-* pam_sync_pin_enable: TX2 Mode The ENVM/TX2 is a PAM Sync. on input
-* thermal_comp_mode_enable: LEDI/NTC pin in Thermal Comparator Mode
-* strobe_pin_disable: STROBE Input disabled
-* vout_mode_enable: Voltage Out Mode enable
-*/
 struct aw36518_platform_data {
 	u8 torch_pin_enable;
 	u8 pam_sync_pin_enable;
@@ -118,9 +97,6 @@ struct aw36518_chip_data {
 	u8 no_pdata;
 };
 
-/******************************************************************************
- * aw36518 operations
- *****************************************************************************/
 static const unsigned char aw36518_torch_level[AW36518_LEVEL_NUM] = {
 	0x06, 0x1F, 0x27, 0x3F, 0x57, 0x7F, 0x8F, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -371,9 +347,6 @@ return 0;
 
 
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer aw36518_timer_ch1;
 static unsigned int aw36518_timeout_ms[AW36518_CHANNEL_NUM];
 
@@ -415,9 +388,6 @@ int aw36518_timer_cancel(int channel)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int aw36518_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -530,9 +500,6 @@ static struct flashlight_operations aw36518_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int aw36518_chip_init(struct aw36518_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to
@@ -711,9 +678,6 @@ static struct i2c_driver aw36518_i2c_driver = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int aw36518_probe(struct platform_device *dev)
 {
 	pr_info("%s Probe start.\n", __func__);

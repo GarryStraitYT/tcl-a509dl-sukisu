@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/**
- * @file    mt_hotplug_strategy_cpu.c
- * @brief   hotplug strategy(hps) - cpu
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>	/* MODULE_DESCRIPTION, MODULE_LICENSE */
@@ -46,9 +39,6 @@
 #define B_NUM_LIMIT_CUSTOM2		8
 #endif
 
-/*
- * hps cpu interface - cpumask
- */
 int hps_cpu_is_cpu_big(int cpu)
 {
 	if (!cpumask_empty(&hps_ctxt.big_cpumask)) {
@@ -137,9 +127,6 @@ unsigned int num_base_big_cpus(void)
 	return max_of_all(v, ARRAY_SIZE(v));
 }
 
-/*
- * hps cpu interface - scheduler
- */
 unsigned int hps_cpu_get_percpu_load(int cpu)
 {
 #ifdef CONFIG_MTK_SCHED_RQAVG_US
@@ -231,9 +218,6 @@ int hps_cpu_down(unsigned int cpu)
 	return r;
 }
 
-/*
- * init
- */
 int hps_cpu_init(void)
 {
 	int r = 0;
@@ -324,9 +308,6 @@ int hps_cpu_init(void)
 	return r;
 }
 
-/*
- * deinit
- */
 int hps_cpu_deinit(void)
 {
 	int r = 0;

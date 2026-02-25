@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define PFX "s5k2l7_camera_pdaf"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__
@@ -33,10 +30,6 @@
 
 
 /* #define LOG_1 pr_debug("s5k2l7,MIPI 4LANE\n") */
-/* #define LOG_2 pr_debug
- * ("preview 2096*1552@30fps,640Mbps/lane; video 4192*3104@30fps,1.2Gbps/lane;
- * capture 13M@30fps,1.2Gbps/lane\n")
- */
 /****************************   Modify end  ***********************************/
 
 

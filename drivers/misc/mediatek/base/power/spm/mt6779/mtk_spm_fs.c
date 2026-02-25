@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 
 #include <linux/kernel.h>
@@ -15,9 +12,6 @@
 #include <mtk_spm_resource_req_internal.h>
 #include <mtk_idle_fs/mtk_idle_sysfs.h>
 
-/**************************************
- * Macro and Inline
- **************************************/
 #define DEFINE_ATTR_RO(_name)			\
 	static struct kobj_attribute _name##_attr = {	\
 		.attr	= {				\
@@ -418,9 +412,6 @@ static char *pwr_ctrl_str[PW_MAX_COUNT] = {
 		"mp0_cpu7_wfi_en",
 };
 
-/**************************************
- * xxx_ctrl_show Function
- **************************************/
 /* code gen by spm_pwr_ctrl_atf.pl, need struct pwr_ctrl */
 static ssize_t show_pwr_ctrl(int id,
 			const struct pwr_ctrl *pwrctrl,
@@ -479,9 +470,6 @@ static ssize_t spmfw_version_show(struct kobject *kobj,
 	return get_spmfw_version(buf, PAGE_SIZE, NULL);
 }
 
-/**************************************
- * xxx_ctrl_store Function
- **************************************/
 /* code gen by spm_pwr_ctrl_atf.pl, need struct pwr_ctrl */
 #define SET_SPM_PWR_CASE(idx, ctrl_reg, val) \
 	{/* fallthrough */\
@@ -995,9 +983,6 @@ static ssize_t spmfw_version_store(struct kobject *kobj,
 	return 0;
 }
 
-/**************************************
- * fm_suspend Function
- **************************************/
 static ssize_t fm_suspend_show(struct kobject *kobj,
 	struct kobj_attribute *attr, char *buf)
 {
@@ -1007,9 +992,6 @@ static ssize_t fm_suspend_show(struct kobject *kobj,
 	return p - buf;
 }
 
-/**************************************
- * Init Function
- **************************************/
 DEFINE_ATTR_RW(suspend_ctrl);
 DEFINE_ATTR_RW(dpidle_ctrl);
 DEFINE_ATTR_RW(sodi3_ctrl);

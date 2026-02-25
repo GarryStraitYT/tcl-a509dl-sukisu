@@ -1,17 +1,3 @@
-/*
- * Copyright (c) 2015-2016 MediaTek Inc.
- * Author: Houlong Wei <houlong.wei@mediatek.com>
- *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/device.h>
 #include <linux/errno.h>
@@ -28,15 +14,6 @@
 #include "mtk_vpu.h"
 
 
-/**
- *  struct mtk_mdp_pix_limit - image pixel size limits
- *  @org_w: source pixel width
- *  @org_h: source pixel height
- *  @target_rot_dis_w: pixel dst scaled width with the rotator is off
- *  @target_rot_dis_h: pixel dst scaled height with the rotator is off
- *  @target_rot_en_w: pixel dst scaled width with the rotator is on
- *  @target_rot_en_h: pixel dst scaled height with the rotator is on
- */
 struct mtk_mdp_pix_limit {
 	u16 org_w;
 	u16 org_h;

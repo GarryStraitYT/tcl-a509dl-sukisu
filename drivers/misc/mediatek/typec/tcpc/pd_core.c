@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/of.h>
 #include <linux/slab.h>
@@ -1390,9 +1387,6 @@ int pd_update_connect_state(struct pd_port *pd_port, uint8_t state)
 
 #ifdef CONFIG_USB_PD_REV30
 
-/*
- * Collision Avoidance : check tx ok
- */
 
 #ifndef MIN
 #define MIN(a, b)       ((a < b) ? (a) : (b))

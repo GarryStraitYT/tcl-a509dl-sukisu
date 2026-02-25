@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/list.h>
 #include <linux/device.h>
@@ -67,11 +64,6 @@ struct hif_dpmaif_ctrl *dpmaif_ctrl;
 static unsigned int g_dp_uid_mask_count;
 
 #ifdef CCCI_KMODULE_ENABLE
-/*
- * for debug log:
- * 0 to disable; 1 for print to ram; 2 for print to uart
- * other value to desiable all log
- */
 #ifndef CCCI_LOG_LEVEL /* for platform override */
 #define CCCI_LOG_LEVEL CCCI_LOG_CRITICAL_UART
 #endif
@@ -83,12 +75,6 @@ static inline struct device *ccci_md_get_dev_by_id(int md_id)
 }
 #endif
 
-/* =======================================================
- *
- * Descriptions: Debug part
- *
- * ========================================================
- */
 #ifndef CCCI_KMODULE_ENABLE
 #if defined(CCCI_SKB_TRACE)
 TRACE_EVENT(ccci_skb_rx,
@@ -460,12 +446,6 @@ static void dpmaif_traffic_monitor_func(struct timer_list *t)
 }
 #endif
 
-/* =======================================================
- *
- * Descriptions: common part
- *
- * ========================================================
- */
 
 static int dpmaif_queue_broadcast_state(struct hif_dpmaif_ctrl *hif_ctrl,
 	enum HIF_STATE state, enum DIRECTION dir, unsigned char index)
@@ -543,12 +523,6 @@ static unsigned int ringbuf_releasable(unsigned int  total_cnt,
 	return pkt_cnt;
 }
 
-/* =======================================================
- *
- * Descriptions: RX part start
- *
- * ========================================================
- */
 
 static int dpmaif_net_rx_push_thread(void *arg)
 {
@@ -1213,15 +1187,6 @@ static int dpmaifq_rx_notify_hw(struct dpmaif_rx_queue *rxq,
 	return ret;
 }
 
-/*
- * #define GET_PKT_INFO_PTR(rxq, pit_idx)  \
- * ((struct dpmaifq_normal_pit *)rxq->pit_base + pit_idx)
-
- * #define GET_BUF_ADDR_PTR(bat_table, bat_idx)  \
- * ((struct dpmaif_bat_t *)bat_table->bat_base + bat_idx)
- * #define GET_BUF_SKB_PTR(bat_table, bat_idx) \
- *	((struct dpmaif_bat_skb_t *)bat_table->bat_skb_ptr + bat_idx)
- */
 #define NOTIFY_RX_PUSH(rxq)  wake_up_all(&rxq->rx_wq)
 
 static int dpmaif_rx_start(struct dpmaif_rx_queue *rxq, unsigned short pit_cnt,
@@ -1370,9 +1335,6 @@ static unsigned int dpmaifq_poll_rx_pit(struct dpmaif_rx_queue *rxq)
 	return pit_cnt;
 }
 
-/*
- * DPMAIF E1 SW Workaround: add pit/bat in full interrupt
- */
 #ifdef _E1_SB_SW_WORKAROUND_
 static void dpmaifq_rel_dl_pit_hw_entry(unsigned char q_num)
 {
@@ -1425,10 +1387,6 @@ void dpmaifq_set_dl_bat_hw_entry(unsigned char q_num)
 }
 #endif
 
-/*
- * may be called from workqueue or NAPI or tasklet context,
- * NAPI and tasklet with blocking=false
- */
 static int dpmaif_rx_data_collect(struct hif_dpmaif_ctrl *hif_ctrl,
 		unsigned char q_num, int budget, int blocking)
 {
@@ -1552,12 +1510,6 @@ static void dpmaif_rxq0_tasklet(unsigned long data)
 	CCCI_DEBUG_LOG(hif_ctrl->md_id, TAG, "rxq0 tasklet result %d\n", ret);
 }
 
-/* =======================================================
- *
- * Descriptions:  TX part start
- *
- * ========================================================
- */
 
 static unsigned int dpmaifq_poll_tx_drb(unsigned char q_num)
 {
@@ -2034,12 +1986,6 @@ __EXIT_FUN:
 	return ret;
 }
 
-/* =======================================================
- *
- * Descriptions: ISR part start
- *
- * ========================================================
- */
 
 static void dpmaif_enable_irq(struct hif_dpmaif_ctrl *hif_ctrl)
 {
@@ -2155,14 +2101,6 @@ static void dpmaif_irq_cb(struct hif_dpmaif_ctrl *hif_ctrl)
 	if (L2TISAR0) {
 		L2TISAR0 &= ~(L2TIMR0);
 		DPMA_WRITE_PD_MISC(DPMAIF_PD_AP_UL_L2TISAR0, L2TISAR0);
-/* 0x1100: not error, just information
- * #define DPMAIF_UL_INT_MD_NOTREADY_MSK (0x0F << UL_INT_MD_NOTRDY_OFFSET)
- * bit 8: resource not ready: md buffer(meta table)
- * not ready[virtual ring buffer][URB], or buffer full.
- * #define DPMAIF_UL_INT_MD_PWR_NOTREADY_MSK (0x0F << UL_INT_PWR_NOTRDY_OFFSET)
- * bit 12: MD_PWR: read md, L2 subsys auto power on/off, (LHIF) auto power off,
- * receive data auto power on, and send inerrupt.
- */
 		if (L2TISAR0 &
 			(DPMAIF_UL_INT_MD_NOTREADY_MSK |
 			DPMAIF_UL_INT_MD_PWR_NOTREADY_MSK))
@@ -2259,12 +2197,6 @@ static irqreturn_t dpmaif_isr(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(RX) -- 1.1.2 rx sw init
- *
- * ========================================================
- */
 
 static int dpmaif_bat_init(struct dpmaif_bat_request *bat_req,
 		unsigned char q_num, int buf_type)
@@ -2350,12 +2282,6 @@ static int dpmaif_rx_buf_init(struct dpmaif_rx_queue *rxq)
 	return ret;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(RX) -- 1.1.1 rx hw init
- *
- * ========================================================
- */
 
 static void dpmaif_rx_hw_init(struct dpmaif_rx_queue *rxq)
 {
@@ -2436,12 +2362,6 @@ static void dpmaif_rx_hw_init(struct dpmaif_rx_queue *rxq)
 #endif
 	}
 }
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(RX) -- 1.1.0 rx init
- *
- * =======================================================
- */
 static int dpmaif_rxq_init(struct dpmaif_rx_queue *queue)
 {
 	int ret = -1;
@@ -2472,12 +2392,6 @@ static int dpmaif_rxq_init(struct dpmaif_rx_queue *queue)
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(TX) -- 1.2.2 tx sw init
- *
- * ========================================================
- */
 static int dpmaif_tx_buf_init(struct dpmaif_tx_queue *txq)
 {
 	int ret = 0;
@@ -2517,12 +2431,6 @@ static int dpmaif_tx_buf_init(struct dpmaif_tx_queue *txq)
 	return ret;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(TX) -- 1.2.1 tx hw init
- *
- * ========================================================
- */
 static void dpmaif_tx_hw_init(struct dpmaif_tx_queue *txq)
 {
 	struct dpmaif_tx_queue *p_ul_que = txq;
@@ -2552,12 +2460,6 @@ static void dpmaif_tx_hw_init(struct dpmaif_tx_queue *txq)
 	}
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(TX) -- 1.2.0 tx init
- *
- * ========================================================
- */
 
 static int dpmaif_txq_init(struct dpmaif_tx_queue *txq)
 {
@@ -2588,12 +2490,6 @@ static int dpmaif_txq_init(struct dpmaif_tx_queue *txq)
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(1/3): init(ISR) -- 1.3
- *
- * ========================================================
- */
 
 /* we put initializations which takes too much time here: SW init only */
 int dpmaif_late_init(unsigned char hif_id)
@@ -2679,12 +2575,6 @@ int dpmaif_late_init(unsigned char hif_id)
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(2/3): Start -- 2.
- *
- * ========================================================
- */
 void ccci_hif_dpmaif_set_clk(unsigned int on)
 {
 	int ret = 0;
@@ -2794,12 +2684,6 @@ int dpmaif_start(unsigned char hif_id)
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(3/3): Stop -- 3.
- *
- * ========================================================
- */
 void dpmaif_stop_hw(void)
 {
 	struct dpmaif_rx_queue *rxq;
@@ -3148,12 +3032,6 @@ int dpmaif_stop(unsigned char hif_id)
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(4/3): Misc -- 4.
- *
- * ========================================================
- */
 static int dpmaif_stop_queue(unsigned char hif_id, unsigned char qno,
 		enum DIRECTION dir)
 {
@@ -3166,12 +3044,6 @@ static int dpmaif_start_queue(unsigned char hif_id, unsigned char qno,
 	return 0;
 }
 
-/* =======================================================
- *
- * Descriptions: State part start(5/3): Resume -- 5.
- *
- * ========================================================
- */
 static int dpmaif_resume(unsigned char hif_id)
 {
 	struct hif_dpmaif_ctrl *hif_ctrl = dpmaif_ctrl;
@@ -3227,12 +3099,6 @@ static void dpmaif_sysresume(void)
 
 	dpmaif_resume(dpmaif_ctrl->hif_id);
 }
-/* =======================================================
- *
- * Descriptions: State part start(6/6): Suspend -- 6.
- *
- * ========================================================
- */
 static int dpmaif_suspend(unsigned char hif_id __maybe_unused)
 {
 	if (dpmaif_ctrl->dpmaif_state != HIFDPMAIF_STATE_PWRON &&
@@ -3294,12 +3160,6 @@ static struct syscore_ops dpmaif_sysops = {
 	.resume = dpmaif_sysresume,
 };
 
-/* =======================================================
- *
- * Descriptions: State Module part End
- *
- * ========================================================
- */
 static u64 dpmaif_dmamask = DMA_BIT_MASK(36);
 int ccci_dpmaif_hif_init(struct device *dev)
 {

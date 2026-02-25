@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "conn_md.h"
 #include "conn_md_dbg.h"
@@ -655,10 +652,6 @@ static void conn_md_exit(void)
 
 /*---------------------------------------------------------------------------*/
 
-/*
- * module_init(conn_md_init);
- * module_exit(conn_md_exit);
- */
 subsys_initcall(conn_md_init);
 module_exit(conn_md_exit);
 /*---------------------------------------------------------------------------*/

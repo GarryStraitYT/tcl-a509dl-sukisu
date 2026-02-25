@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
@@ -299,17 +296,6 @@ static void i3c_reg_dump(struct mtk_i3c_master *master)
 }
 
 
-/**
- * Calculate i3c port speed
- *
- * Hardware design:
- * i3c_bus_freq = parent_clk / (clock_div * 2 * sample_cnt * step_cnt)
- * clock_div: fixed in hardware, but may be various in different SoCs
- *
- * The calculation want to pick the highest bus frequency that is still
- * less than or equal to master->speed_hz. The calculation try to get
- * sample_cnt and step_cn
- */
 static int mtk_i3c_calculate_speed(struct mtk_i3c_master *master,
 				   unsigned int clk_src,
 				   unsigned int target_speed,

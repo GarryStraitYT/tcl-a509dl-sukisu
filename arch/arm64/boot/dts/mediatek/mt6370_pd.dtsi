@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Owen Chen <owen.chen@mediatek.com>
- */
 
 / {
 	mt6370_typec: type_c_port0 {

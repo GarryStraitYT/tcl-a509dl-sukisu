@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mt6797-afe-common.h  --  Mediatek 6797 audio driver definitions
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MT_6797_AFE_COMMON_H_
 #define _MT_6797_AFE_COMMON_H_

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MSDC_IO_H_
 #define _MSDC_IO_H_
@@ -102,9 +99,6 @@ void msdc_clk_enable_and_stable(struct msdc_host *host);
 /**************************************************************/
 /* Section 4: GPIO and Pad                                    */
 /**************************************************************/
-/*******************************************************************************
- *PINMUX and GPIO definition
- ******************************************************************************/
 #define MSDC_PIN_PULL_NONE      (0)
 #define MSDC_PIN_PULL_DOWN      (1)
 #define MSDC_PIN_PULL_UP        (2)

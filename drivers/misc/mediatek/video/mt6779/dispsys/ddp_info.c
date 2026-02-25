@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "INFO"
 #include "ddp_info.h"
@@ -12,24 +9,6 @@
 
 static const char reg_magic[] = "no_regs_info";
 
-/**
- * {
- *  module_id,
- *  module_type,
- *  module_name,
- *  can_connect,
- *  module_driver,
- *
- *  {
- *   reg_dt_name,
- *   reg_pa_check,
- *   reg_irq_check,
- *   irq_max_bit,
- *   reg_va,
- *   reg_irq
- *  }
- * },
- */
 struct ddp_module ddp_modules[DISP_MODULE_NUM] = {
 	[DISP_MODULE_OVL0] = {
 		DISP_MODULE_OVL0,

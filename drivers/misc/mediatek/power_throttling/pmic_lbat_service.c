@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/list.h>
@@ -202,9 +199,6 @@ static void modify_lbat_list(enum lbat_thd_type type, struct lbat_thd_t *thd)
 	}
 }
 
-/*
- * After execute lbat_user's callback, set next thd node to wait event
- */
 static void lbat_set_next_thd(struct lbat_user *user, struct lbat_thd_t *thd)
 {
 	if (thd == user->hv_thd) {
@@ -218,10 +212,6 @@ static void lbat_set_next_thd(struct lbat_user *user, struct lbat_thd_t *thd)
 	}
 }
 
-/*
- * Execute user's callback and set its next threshold if reach deb_times,
- * otherwise ignore this event and reset lbat_list
- */
 static void lbat_deb_handler(struct work_struct *work)
 {
 	enum lbat_thd_type type;

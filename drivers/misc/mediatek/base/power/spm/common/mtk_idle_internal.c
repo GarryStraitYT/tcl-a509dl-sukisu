@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 #include <linux/ratelimit.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -20,10 +17,6 @@
 #endif
 #include <mt-plat/mtk_boot.h>
 
-/* --------------------------------------
- *   mtk idle scenario footprint definitions
- *  --------------------------------------
- */
 
 enum idle_fp_step {
 	IDLE_FP_ENTER = 0x1,
@@ -62,9 +55,6 @@ static idle_footprint_t fp[NR_IDLE_TYPES] = {
 #endif /* CONFIG_MTK_AEE_IPANIC */
 
 
-/************************************************************
- * Weak functions for chip dependent flow.
- ************************************************************/
 /* [ByChip] Internal weak functions: implemented in mtk_spm_idle.c */
 int __attribute__((weak)) mtk_idle_trigger_wfi(
 	int idle_type, unsigned int idle_flag, int cpu)
@@ -114,9 +104,6 @@ void __attribute__((weak)) mtk_idle_power_post_process_async_wait(
 /* External weak functions: implemented in clkbuf and thermal module */
 uint32_t __attribute__((weak)) clk_buf_bblpm_enter_cond(void) { return -1; }
 
-/***********************************************************
- * local functions
- ***********************************************************/
 
 /* local definitions */
 static void mtk_idle_notifier_call_chain(unsigned long val);
@@ -221,9 +208,6 @@ static void mtk_idle_post_handler(int idle_type)
 	mtk_idle_notifier_call_chain(idle_notify_leave[idle_type]);
 }
 
-/************************************************************
- * mtk idle flow for dp/so3/so
- ************************************************************/
 
 int mtk_idle_enter(
 	int idle_type, int cpu, unsigned int op_cond, unsigned int idle_flag)
@@ -350,9 +334,6 @@ RESTORE_UART:
 }
 
 
-/*****************************************************
- *  mtk idle notification
- *****************************************************/
 
 /* mtk_idle_notifier */
 static RAW_NOTIFIER_HEAD(mtk_idle_notifier);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/semaphore.h>
 #include <linux/time.h>
@@ -241,9 +238,6 @@ module_param(enable_cpu_boost, uint, 0644);
 module_param(enable_gpu_boost, uint, 0644);
 module_param(is_GED_KPI_enabled, uint, 0644);
 module_param(ap_self_frc_detection_rate, uint, 0644);
-/* for calculating remained time budgets of CPU and GPU:
- *		time budget: the buffering time that prevents fram drop
- */
 struct GED_KPI_HEAD *main_head;
 struct GED_KPI_HEAD *prev_main_head;
 /* end */

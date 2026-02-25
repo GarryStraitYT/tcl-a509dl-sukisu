@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __MODEM_DPMAIF_DRV_H__
 #define __MODEM_DPMAIF_DRV_H__
@@ -37,9 +34,6 @@ int drv_dpmaif_ul_add_wcnt(unsigned char q_num, unsigned short drb_wcnt);
 #define  drv_dpmaif_get_dl_interrupt_mask() \
 	DPMA_READ_PD_MISC(DPMAIF_PD_AP_DL_L2TIMR0)
 
-/* use ao domain:
- * (DPMA_READ_AO_DL(DPMAIF_AO_DL_RDY_CHK_THRES)&DPMAIF_AO_DL_ISR_MSK)
- */
 #define  drv_dpmaif_ul_get_ul_interrupt_mask() \
 	DPMA_READ_PD_MISC(DPMAIF_PD_AP_UL_L2TIMR0)
 void drv_dpmaif_clear_ip_busy(void);

@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define  MET_USER_EVENT_SUPPORT /*Turn met user event*/
 
@@ -39,10 +36,6 @@ static struct mutex profile_mutex;
 static int profiling_counter;
 static int stop_result;
 static int vpu_counter[MTK_VPU_CORE][4];
-/*
- * mini trace system
- * [KATRACE] mini trace system
- */
 #define KATRACE_MESSAGE_LENGTH 1024
 
 static noinline int tracing_mark_write(const char *buf)
@@ -51,9 +44,6 @@ static noinline int tracing_mark_write(const char *buf)
 	return 0;
 }
 
-/*
- * [KATRACE] Begin-End
- */
 #define KATRACE_BEGIN(name) katrace_begin_body(name)
 void katrace_begin_body(const char *name)
 {
@@ -92,18 +82,12 @@ inline void katrace_end(void)
 	tracing_mark_write(buf); \
 }
 
-/*
- * [KATRACE] Counter Integer
- */
 #define KATRACE_INT(name, value) katrace_int_body(name, value)
 void katrace_int_body(const char *name, int32_t value)
 {
 	WRITE_MSG("C|%d|", "|%d", COUNTER_PID, name, value);
 }
 
-/*
- * [KATRACE] Async Begin-End
- */
 #define KATRACE_ASYNC_BEGIN(name, cookie) \
 	katrace_async_begin_body(name, cookie)
 void katrace_async_begin_body(const char *name, int32_t cookie)
@@ -118,9 +102,6 @@ void katrace_async_end_body(const char *name, int32_t cookie)
 }
 
 
-/*
- * VPU event based MET funcs
- */
 void vpu_met_event_enter(int core, int algo_id, int dsp_freq)
 {
 	#if defined(VPU_MET_READY)
@@ -143,9 +124,6 @@ void vpu_met_packet(long long wclk, char action, int core, int pid,
 	#endif
 }
 
-/*
- * VPU event based MET funcs
- */
 void vpu_met_event_dvfs(int vcore_opp,
 	int dsp_freq, int ipu_if_freq, int dsp1_freq, int dsp2_freq)
 {
@@ -154,9 +132,6 @@ void vpu_met_event_dvfs(int vcore_opp,
 	#endif
 }
 
-/*
- * VPU counter reader
- */
 static void vpu_profile_core_read(int core_s)
 {
 	int i;
@@ -191,9 +166,6 @@ static void vpu_profile_register_read(void)
 			vpu_profile_core_read(i);
 }
 
-/*
- * VPU Polling Function
- */
 static enum hrtimer_restart vpu_profile_polling(struct hrtimer *timer)
 {
 	LOG_DBG("%s +\n", __func__);

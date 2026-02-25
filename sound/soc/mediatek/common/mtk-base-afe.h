@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk-base-afe.h  --  Mediatek base afe structure
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Garlic Tseng <garlic.tseng@mediatek.com>
- */
 
 #ifndef _MTK_BASE_AFE_H_
 #define _MTK_BASE_AFE_H_

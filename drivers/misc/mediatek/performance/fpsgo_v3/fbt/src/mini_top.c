@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/sched.h>
 #include <linux/mutex.h>
@@ -174,9 +171,6 @@ void fpsgo_comp2minitop_queue_update(unsigned long long ts)
 	mutex_unlock(&minitop_qlock);
 }
 
-/**
- * __warmup_mask - return a mask involving configurable parameter
- */
 static inline unsigned int __warmup_mask(void)
 {
 	return (unsigned int)((0x1 << __warmup_order) - 1);
@@ -692,9 +686,6 @@ void fpsgo_sched_nominate(pid_t *tid, int *util)
 		minitop_put_work(mw);
 }
 
-/**
- * FBT (Frame Budget Tunner) supports
- */
 int fpsgo_fbt2minitop_start(int count, struct fpsgo_loading *fl)
 {
 	int i;

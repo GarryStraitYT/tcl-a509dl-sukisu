@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <asm/cacheflush.h>
 #include <linux/slab.h>
@@ -84,15 +81,6 @@ static inline unsigned int m4u_get_pt_type_size(int type)
 		return -1;
 }
 
-/* print pte info to log or sequncial file
- *    if data is NULL, info is out put to kernel log by pr log
- *    if pte is valid, we will print like va->pgd->pte->pa
- *    if pte is invalid, we print as many info as we can.
- * @return NULL
- * @remark
- * @see
- * @author K Zhang      @date 2013/11/18
- */
 void *__m4u_print_pte(struct m4u_pte_info *info, void *data)
 {
 	if (info->valid) {
@@ -201,18 +189,6 @@ int m4u_get_pte_info(struct m4u_domain *domain,
 
 typedef void *(m4u_pte_fn_t) (struct m4u_pte_info *pte_info, void *data);
 
-/* interate all pte, and call fn for each pte.
- * @param   domain
- * @param   fn       -- to be called for each pte
- * @param   data     -- private data for fn
- *
- * @return NULL of success, non-NULL if interrupted by fn.
- * @remark
- *	1. fn will only be called when pte is valid.
- *	2. if fn return non-NULL, the iteration will return imediately.
- * @see
- * @author K Zhang      @date 2013/11/18
- */
 void *m4u_for_each_pte(struct m4u_domain *domain, m4u_pte_fn_t *fn, void *data)
 {
 	unsigned int mva = 0;
@@ -240,9 +216,6 @@ void *m4u_for_each_pte(struct m4u_domain *domain, m4u_pte_fn_t *fn, void *data)
 	return NULL;
 }
 
-/* dump pte info for mva, no matter it's valid or not
- * this function doesn't lock pgtable lock.
- */
 void m4u_dump_pte_nolock(struct m4u_domain *domain, unsigned int mva)
 {
 	struct m4u_pte_info pte_info;
@@ -276,13 +249,6 @@ unsigned long m4u_get_pte(struct m4u_domain *domain, unsigned int mva)
 }
 
 /***********************************************************/
-/* dump pagetable to sequncial file or kernel log.
- * @param   domain   -- domain to dump
- * @param   seq      -- seq file. if NULL, we will dump to kernel log
- *
- * @remark  this func will lock pgtable_lock, it may sleep.
- * @author K Zhang      @date 2013/11/18
- */
 void m4u_dump_pgtable(struct m4u_domain *domain, struct seq_file *seq)
 {
 	M4U_PRINT_SEQ(seq, "m4u dump pgtable start ==============>\n");
@@ -296,11 +262,6 @@ static inline unsigned int m4u_prot_fixup(unsigned int prot)
 
 	/* don't support read/write protect */
 
-/*	if(unlikely(!(prot & (M4U_PROT_READ|M4U_PROT_WRITE))))
- *		prot |= M4U_PROT_READ|M4U_PROT_WRITE;
- *	if(unlikely((prot&M4U_PROT_WRITE) && !(prot&M4U_PROT_READ)))
- *		prot |= M4U_PROT_WRITE;
- */
 
 	if (prot & M4U_PROT_CACHE)
 		prot |= M4U_PROT_SHARE;
@@ -308,14 +269,6 @@ static inline unsigned int m4u_prot_fixup(unsigned int prot)
 	return prot;
 }
 
-/* convert m4u_prot to hardware pgd/pte attribute
- * @param   prot   -- m4u_prot flags
- *
- * @return  pgd or pte attribute
- * @remark
- * @see
- * @author K Zhang      @date 2013/11/18
- */
 static inline unsigned int __m4u_get_pgd_attr_16M(unsigned int prot)
 {
 	unsigned int pgprot;
@@ -375,11 +328,6 @@ static inline unsigned int __m4u_get_pte_attr_4K(unsigned int prot)
 	return pgprot;
 }
 
-/* cache flush for modified pte.
- *   notes: because pte is allocated using slab, cache sync is needed.
- *
- * @author K Zhang      @date 2013/11/18
- */
 int m4u_clean_pte(struct m4u_domain *domain, unsigned int mva,
 			unsigned int size)
 {
@@ -448,18 +396,6 @@ int m4u_pte_allocator_init(void)
 	return 0;
 }
 
-/* allocate a new pte
- * @param   domain
- * @param   pgd      -- pgd to allocate for
- * @param   pgprot
- *
- * @return   0  -- pte is allocated
- *	     1  -- pte is not allocated, because it's allocated by others
- *	     <0 -- error
- * @remark
- * @see
- * @author K Zhang      @date 2013/11/18
- */
 int m4u_alloc_pte(struct m4u_domain *domain, struct imu_pgd *pgd,
 			unsigned int pgprot)
 {
@@ -526,14 +462,6 @@ int m4u_free_pte(struct m4u_domain *domain, struct imu_pgd *pgd)
 	return 0;
 }
 
-/* m4u_map_XX functions.
- *    map mva<->pa
- * notes: these function doesn't clean pte and invalid tlb
- *	for performance concern.
- *       callers should clean pte + invalid tlb after mapping.
- *
- * @author K Zhang      @date 2013/11/19
- */
 int m4u_map_16M(struct m4u_domain *m4u_domain, unsigned int mva, phys_addr_t pa,
 			unsigned int prot)
 {
@@ -816,18 +744,6 @@ static inline int m4u_map_phys_align(struct m4u_domain *m4u_domain,
 	return ret;
 }
 
-/* map a physical continuous memory to iova (mva).
- * @param   m4u_domain   domain
- * @param   iova         -- iova (mva)
- * @param   paddr        -- physical address
- * @param   size         -- size
- * @param   prot         -- m4u_prot
- *
- * @return   0 on success, others on fail
- * @remark
- * @see     refer to kernel/drivers/iommu/iommu.c iommu_map()
- * @author K Zhang      @date 2013/11/19
- */
 int m4u_map_phys_range(struct m4u_domain *m4u_domain, unsigned int iova,
 		       phys_addr_t paddr, unsigned int size, unsigned int prot)
 {

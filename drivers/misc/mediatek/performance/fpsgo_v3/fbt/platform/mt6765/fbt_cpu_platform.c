@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "mt-plat/eas_ctrl.h"
 #include "fbt_cpu_platform.h"

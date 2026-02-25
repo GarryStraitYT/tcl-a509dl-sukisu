@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "dump"
 
@@ -303,22 +300,6 @@ static char *ddp_clock_0(int bit)
 }
 
 /* mt6765 no need ddp_clock_1 */
-/*
- *
- *	static char *ddp_clock_1(int bit)
- *	{
- *		switch (bit) {
- *		case 0:
- *			return "dsi0_mm(cg), ";
- *		case 1:
- *			return "dsi0_interface(cg), ";
- *		case 7:
- *			return "26M, ";
- *		default:
- *			return NULL;
- *		}
- *	}
- */
 
 static void mutex_dump_reg(void)
 {
@@ -804,18 +785,6 @@ static void mmsys_config_dump_analysis(void)
 	}
 
 /* mt6765 no need ddp_clock_1 */
-/*
- *	reg = DISP_REG_GET(DISP_REG_CONFIG_MMSYS_CG_CON1);
- *	for (i = 0; i < 32; i++) {
- *		if ((reg & (1 << i)) == 0) {
- *			name = ddp_clock_1(i);
- *			if (name)
- *				strncat(clock_on, name,
- *					(sizeof(clock_on) -
- *					strlen(clock_on) - 1));
- *		}
- *	}
- */
 	DDPDUMP("clock on modules:%s\n", clock_on);
 
 	DDPDUMP("valid0=0x%x,valid1=0x%x,ready0=0x%x,ready1=0x%x,greq=0%x\n",

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _EXTENSION_EAS_PLUS_H
 #define _EXTENSION_EAS_PLUS_H
@@ -120,9 +117,6 @@ extern struct task_rotate_reset_uclamp_work task_rotate_reset_uclamp_works;
 extern bool set_uclamp;
 #endif
 
-/**
- *for isolation
- */
 extern struct cpumask cpu_all_masks;
 
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
@@ -149,9 +143,6 @@ void nohz_balance_clear_nohz_mask(int cpu);
 int __sched_deisolate_cpu_unlocked(int cpu);
 int _sched_isolate_cpu(int cpu);
 int _sched_deisolate_cpu(int cpu);
-/*
- * for sched_boost
- */
 #ifdef CONFIG_MTK_SCHED_CPU_PREFER
 int task_cs_cpu_perfer(struct task_struct *task);
 #endif

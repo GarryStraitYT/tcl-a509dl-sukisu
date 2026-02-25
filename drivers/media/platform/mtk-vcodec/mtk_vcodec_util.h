@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MTK_VCODEC_UTIL_H_
 #define _MTK_VCODEC_UTIL_H_
@@ -25,13 +22,6 @@ struct mtk_vcodec_mem {
 	__s64 buf_fd;
 };
 
-/**
- * enum flags  - decoder different operation types
- * @NO_CAHCE_FLUSH	: no need to proceed cache flush
- * @NO_CAHCE_INVALIDATE	: no need to proceed cache invalidate
- * @CROP_CHANGED	: frame buffer crop changed
- * @REF_FREED	: frame buffer is reference freed
- */
 enum mtk_vcodec_flags {
 	NO_CAHCE_CLEAN = 1,
 	NO_CAHCE_INVALIDATE = 1 << 1,

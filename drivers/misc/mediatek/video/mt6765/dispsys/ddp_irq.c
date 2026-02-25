@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #define LOG_TAG "IRQ"
@@ -222,10 +219,6 @@ irqreturn_t disp_irq_handler(int irq, void *dev_id)
 
 	} else if (irq == ddp_get_module_irq(DISP_MODULE_OVL0) ||
 		irq == ddp_get_module_irq(DISP_MODULE_OVL0_2L)) {
-/*
- *		mt6765 not use this module
- *		irq == ddp_get_module_irq(DISP_MODULE_OVL1_2L)) {
- */
 		module = disp_irq_to_module(irq);
 		index = ovl_to_index(module);
 		reg_val = DISP_REG_GET(DISP_REG_OVL_INTSTA +

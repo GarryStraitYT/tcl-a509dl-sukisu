@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author: Argus Lin <argus.lin@mediatek.com>
- */
 
 #ifndef _MT6359_H_
 #define _MT6359_H_

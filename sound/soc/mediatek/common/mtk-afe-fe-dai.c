@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtk-afe-fe-dais.c  --  Mediatek afe fe dai operator
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Garlic Tseng <garlic.tseng@mediatek.com>
- */
 
 #include <linux/io.h>
 #include <linux/module.h>

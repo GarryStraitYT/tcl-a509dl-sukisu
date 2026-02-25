@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Samuel Hsieh <samuel.hsieh@mediatek.com>
- */
 
 #include <linux/interrupt.h>
 #include <linux/mfd/mt6357/registers.h>
@@ -110,9 +106,6 @@ static void exec_battery_oc_callback(enum BATTERY_OC_LEVEL_TAG battery_oc_level)
 	}
 }
 
-/*****************************************************************************
- * battery OC protect UT
- ******************************************************************************/
 static ssize_t battery_oc_protect_ut_show(
 		struct device *pdev, struct device_attribute *attr,
 		char *buf)
@@ -151,9 +144,6 @@ static ssize_t battery_oc_protect_ut_store(
 
 static DEVICE_ATTR_RW(battery_oc_protect_ut);
 
-/*****************************************************************************
- * battery OC protect stop
- ******************************************************************************/
 static ssize_t battery_oc_protect_stop_show(
 		struct device *pdev, struct device_attribute *attr,
 		char *buf)
@@ -189,9 +179,6 @@ static ssize_t battery_oc_protect_stop_store(
 
 static DEVICE_ATTR_RW(battery_oc_protect_stop);
 
-/*****************************************************************************
- * battery OC protect level
- ******************************************************************************/
 static ssize_t battery_oc_protect_level_show(
 		struct device *pdev, struct device_attribute *attr,
 		char *buf)
@@ -217,10 +204,6 @@ static ssize_t battery_oc_protect_level_store(
 
 static DEVICE_ATTR_RW(battery_oc_protect_level);
 
-/*
- * 65535 - (I_mA * 1000 * r_fg_value / DEFAULT_RFG * 1000000 / car_tune_value
- * / UNIT_FGCURRENT * CURRENT_CONVERT_RATIO / 100)
- */
 static unsigned int to_fg_code(struct battery_oc_priv *priv, u64 cur_mA)
 {
 	cur_mA = div_u64(cur_mA * 1000 * priv->r_fg_value, priv->default_rfg);

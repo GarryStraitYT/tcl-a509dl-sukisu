@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/list.h>
 #include <linux/device.h>
@@ -22,11 +19,6 @@
 #endif
 
 static void *dev_class;
-/*
- * for debug log:
- * 0 to disable; 1 for print to ram; 2 for print to uart
- * other value to desiable all log
- */
 #ifndef CCCI_LOG_LEVEL /* for platform override */
 #define CCCI_LOG_LEVEL CCCI_LOG_CRITICAL_UART
 #endif

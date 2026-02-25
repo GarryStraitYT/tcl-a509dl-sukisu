@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Mediatek ALSA SoC AFE platform driver for 2701
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Garlic Tseng <garlic.tseng@mediatek.com>
- *	   Ir Lian <ir.lian@mediatek.com>
- *	   Ryder Lee <ryder.lee@mediatek.com>
- */
 
 #include <linux/delay.h>
 #include <linux/module.h>

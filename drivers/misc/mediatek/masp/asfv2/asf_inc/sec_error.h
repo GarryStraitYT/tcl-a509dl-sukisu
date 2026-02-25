@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef SEC_ERROR_H
 #define SEC_ERROR_H
 
-/**************************************************************************
- *  COMPILE ASSERT
- **************************************************************************/
 #define COMPILE_ASSERT(condition) ((void)sizeof(char[1 - 2*!!!(condition)]))
 
 #define SEC_OK                                  0x0000

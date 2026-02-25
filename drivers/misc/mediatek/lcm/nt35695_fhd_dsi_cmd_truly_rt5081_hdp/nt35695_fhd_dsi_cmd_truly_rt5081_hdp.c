@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "LCM"
 
@@ -1606,9 +1603,6 @@ static void lcm_setbacklight_cmdq(void *handle, unsigned int level)
 static void *lcm_switch_mode(int mode)
 {
 #ifndef BUILD_LK
-/* customization: 1. V2C config 2 values, C2V config 1 value;
- * 2. config mode control register
- */
 	if (mode == 0) {	/* V2C */
 		lcm_switch_mode_cmd.mode = CMD_MODE;
 		/* mode control addr */

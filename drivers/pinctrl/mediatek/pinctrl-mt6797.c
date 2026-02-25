@@ -1,24 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Based on pinctrl-mt6765.c
- *
- * Copyright (C) 2018 MediaTek Inc.
- *
- * Author: ZH Chen <zh.chen@mediatek.com>
- *
- * Copyright (C) Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
- *
- */
 
 #include "pinctrl-mtk-mt6797.h"
 #include "pinctrl-paris.h"
 
-/*
- * MT6797 have multiple bases to program pin configuration listed as the below:
- * gpio:0x10005000, iocfg[l]:0x10002000, iocfg[b]:0x10002400,
- * iocfg[r]:0x10002800, iocfg[t]:0x10002C00.
- * _i_base could be used to indicate what base the pin should be mapped into.
- */
 
 static const struct mtk_pin_field_calc mt6797_pin_mode_range[] = {
 	PIN_FIELD(0, 261, 0x300, 0x10, 0, 4),

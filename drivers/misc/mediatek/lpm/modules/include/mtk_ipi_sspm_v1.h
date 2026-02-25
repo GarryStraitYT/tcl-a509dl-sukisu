@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_IPI_SSPM_V1__
 #define __MTK_IPI_SSPM_V1__

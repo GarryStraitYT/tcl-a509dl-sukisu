@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
@@ -13,9 +10,6 @@ static inline void *pd_get_tcp_event_data_object(struct pd_port *pd_port)
 	return pd_port->tcp_event.tcp_dpm_data.data_object;
 }
 
-/*
- * Policy Engine General State Activity
- */
 
 static void pe_idle_reset_data(struct pd_port *pd_port)
 {
@@ -122,9 +116,6 @@ void pe_bist_carrier_mode_2_exit(struct pd_port *pd_port)
 	pd_disable_bist_mode2(pd_port);
 }
 
-/*
- * Policy Engine Share State Activity
- */
 
 #ifdef CONFIG_USB_PD_REV30
 static inline uint8_t pe30_power_ready_entry(struct pd_port *pd_port)
@@ -185,9 +176,6 @@ void pe_power_ready_entry(struct pd_port *pd_port)
 
 #ifdef CONFIG_USB_PD_REV30
 
-/*
- * [PD3.0] Figure 8-85 Get Battery Capabilities State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_BAT_CAP_REMOTE
 void pe_get_battery_cap_entry(struct pd_port *pd_port)
@@ -206,9 +194,6 @@ void pe_get_battery_cap_exit(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_BAT_CAP_REMOTE */
 
-/*
- * [PD3.0] Figure 8-86 Give Battery Capabilities State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_BAT_CAP_LOCAL
 void pe_give_battery_cap_entry(struct pd_port *pd_port)
@@ -219,9 +204,6 @@ void pe_give_battery_cap_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_BAT_CAP_LOCAL */
 
-/*
- * [PD3.0] Figure 8-87 Get Battery Status State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_BAT_STATUS_REMOTE
 void pe_get_battery_status_entry(struct pd_port *pd_port)
@@ -240,9 +222,6 @@ void pe_get_battery_status_exit(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_BAT_STATUS_REMOTE */
 
-/*
- * [PD3.0] Figure 8-88 Give Battery Status State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_BAT_STATUS_LOCAL
 void pe_give_battery_status_entry(struct pd_port *pd_port)
@@ -253,9 +232,6 @@ void pe_give_battery_status_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_BAT_STATUS_LOCAL */
 
-/*
- * [PD3.0] Figure 8-89 Get Manufacturer Information State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_MFRS_INFO_REMOTE
 
@@ -276,9 +252,6 @@ void pe_get_manufacturer_info_exit(struct pd_port *pd_port)
 
 #endif	/* CONFIG_USB_PD_REV30_MFRS_INFO_REMOTE */
 
-/*
- * [PD3.0] Figure 8-90 Give Manufacturer Information State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_MFRS_INFO_LOCAL
 
@@ -291,9 +264,6 @@ void pe_give_manufacturer_info_entry(struct pd_port *pd_port)
 
 #endif	/* CONFIG_USB_PD_REV30_MFRS_INFO_LOCAL */
 
-/*
- * [PD3.0] Figure 8-91 Get Country Codes State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_COUNTRY_CODE_REMOTE
 void pe_get_country_codes_entry(struct pd_port *pd_port)
@@ -309,9 +279,6 @@ void pe_get_country_codes_exit(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_COUNTRY_CODE_REMOTE */
 
-/*
- * [PD3.0] Figure 8-92 Give Country Codes State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_COUNTRY_CODE_LOCAL
 void pe_give_country_codes_entry(struct pd_port *pd_port)
@@ -322,9 +289,6 @@ void pe_give_country_codes_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_COUNTRY_CODE_LOCAL */
 
-/*
- * [PD3.0] Figure 8-93 Get Country Information State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_COUNTRY_INFO_REMOTE
 void pe_get_country_info_entry(struct pd_port *pd_port)
@@ -343,9 +307,6 @@ void pe_get_country_info_exit(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_COUNTRY_INFO_REMOTE */
 
-/*
- * [PD3.0] Figure 8-94 Give Country Information State Diagram
- */
 
 #ifdef CONFIG_USB_PD_REV30_COUNTRY_INFO_LOCAL
 void pe_give_country_info_entry(struct pd_port *pd_port)
@@ -356,9 +317,6 @@ void pe_give_country_info_entry(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_REV30_COUNTRY_INFO_LOCAL */
 
-/*
- * [PD3.0] Unsupported, Unrecognized UVDM and Unsupported SVDM.
- */
 
 void pe_vdm_not_supported_entry(struct pd_port *pd_port)
 {

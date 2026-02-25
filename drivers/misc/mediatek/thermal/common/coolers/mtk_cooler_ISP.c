@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -27,10 +24,6 @@
 #include <mmdvfs_pmqos.h>
 
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static unsigned int clVR_ISP_debug_log;
 
 static unsigned int cl_dev_VR_ISP_state;
@@ -40,12 +33,6 @@ static struct thermal_cooling_device *cl_dev_VR_ISP;
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static struct proc_dir_entry *clVR_ISP_status;
-/*=============================================================
- */
-/*=============================================================
- *Macro definition
- *=============================================================
- */
 #define CLVR_ISP_LOG_TAG	"[Thermal/CL/ISP]"
 
 #define clVR_ISP_dprintk(fmt, args...)   \
@@ -128,10 +115,6 @@ static const struct file_operations clVR_ISP_status_fops = {
 	.release = single_release,
 };
 
-/*
- * cooling device callback functions (clVR_FPS_cooling_VR_ISP_ops)
- * 1 : ON and 0 : OFF
- */
 static int clVR_ISP_get_max_state(
 struct thermal_cooling_device *cdev, unsigned long *state)
 {

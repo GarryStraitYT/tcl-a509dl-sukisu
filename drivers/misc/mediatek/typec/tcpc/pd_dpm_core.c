@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/kthread.h>
@@ -106,9 +103,6 @@ int dpm_check_supported_modes(void)
 	return found_error ? -EFAULT : 0;
 }
 
-/*
- * DPM Init
- */
 
 static void pd_dpm_update_pdos_flags(struct pd_port *pd_port, uint32_t pdo)
 {
@@ -1436,9 +1430,6 @@ void pd_dpm_dfp_inform_uvdm(struct pd_port *pd_port, bool ack)
 #endif	/* CONFIG_USB_PD_CUSTOM_VDM */
 
 
-/*
- * DRP : Inform Source/Sink Cap
- */
 
 void pd_dpm_dr_inform_sink_cap(struct pd_port *pd_port)
 {
@@ -1485,9 +1476,6 @@ void pd_dpm_dr_inform_source_cap(struct pd_port *pd_port)
 	dpm_reaction_clear(pd_port, reaction_clear);
 }
 
-/*
- * DRP : Data Role Swap
- */
 
 #ifdef CONFIG_USB_PD_DR_SWAP
 
@@ -1517,9 +1505,6 @@ void pd_dpm_drs_change_role(struct pd_port *pd_port, uint8_t role)
 
 #endif	/* CONFIG_USB_PD_DR_SWAP */
 
-/*
- * DRP : Power Role Swap
- */
 
 #ifdef CONFIG_USB_PD_PR_SWAP
 
@@ -1550,15 +1535,6 @@ static bool pd_dpm_evaluate_source_cap_match(pd_port_t *pd_port)
 }
 #endif /* NEVER */
 
-/*
- * Rules:
- * External Sources -> EXS
- * Provider/Consumers -> PC
- * Consumers/Provider -> CP
- * 1.  PC (with EXS) shall always deny PR_SWAP from CP (without EXS)
- * 2.  PC (without EXS) shall always acppet PR_SWAP from CP (with EXS)
- * unless the requester isn't able to provide PDOs.
- */
 
 int dpm_check_good_power(struct pd_port *pd_port)
 {
@@ -1657,9 +1633,6 @@ void pd_dpm_prs_change_role(struct pd_port *pd_port, uint8_t role)
 
 #endif	/* CONFIG_USB_PD_PR_SWAP */
 
-/*
- * DRP : Vconn Swap
- */
 
 #ifdef CONFIG_USB_PD_VCONN_SWAP
 
@@ -1700,9 +1673,6 @@ void pd_dpm_vcs_enable_vconn(struct pd_port *pd_port, uint8_t role)
 
 #endif	/* CONFIG_USB_PD_VCONN_SWAP */
 
-/*
- * PE : PD3.0
- */
 
 #ifdef CONFIG_USB_PD_REV30
 
@@ -2047,9 +2017,6 @@ void pd_dpm_inform_not_support(struct pd_port *pd_port)
 
 #endif	/* CONFIG_USB_PD_REV30 */
 
-/*
- * PE : Dynamic Control Vconn
- */
 
 void pd_dpm_dynamic_enable_vconn(struct pd_port *pd_port)
 {
@@ -2100,9 +2067,6 @@ void pd_dpm_dynamic_disable_vconn(struct pd_port *pd_port)
 #endif	/* CONFIG_TCPC_VCONN_SUPPLY_MODE */
 }
 
-/*
- * PE : Notify DPM
- */
 
 int pd_dpm_notify_pe_startup(struct pd_port *pd_port)
 {
@@ -2193,9 +2157,6 @@ int pd_dpm_notify_pe_hardreset(struct pd_port *pd_port)
 	return 0;
 }
 
-/*
- * SVDM
- */
 
 static inline bool dpm_register_svdm_ops(struct pd_port *pd_port,
 	struct svdm_svid_data *svid_data, const struct svdm_svid_ops *ops)
@@ -2262,9 +2223,6 @@ bool svdm_notify_pe_startup(struct pd_port *pd_port)
 	return true;
 }
 
-/*
- * dpm_core_init
- */
 
 int pd_dpm_core_init(struct pd_port *pd_port)
 {

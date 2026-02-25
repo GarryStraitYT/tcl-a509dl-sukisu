@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_DIP_H
 #define _MT_DIP_H
@@ -17,16 +14,10 @@ extern void mt_irq_set_polarity
 enum m4u_callback_ret_t DIP_M4U_TranslationFault_callback
 	(int port, unsigned int mva, void *data);
 
-/**
- * enforce kernel log enable
- */
 #define KERNEL_LOG
 #define ISR_LOG_ON
 
 #define SIG_ERESTARTSYS 512
-/**************************************************************
- *
- **************************************************************/
 #define DIP_DEV_MAJOR_NUMBER    251
 #define DIP_MAGIC               'D'
 
@@ -61,9 +52,6 @@ enum DIP_DEV_NODE_ENUM {
 	DIP_DEV_NODE_NUM
 };
 
-/**
- * interrupt clear type
- */
 enum DIP_IRQ_CLEAR_ENUM {
 	DIP_IRQ_CLEAR_NONE, /* non-clear wait, clear after wait */
 	DIP_IRQ_CLEAR_WAIT, /* clear wait, clear before and after wait */
@@ -71,11 +59,6 @@ enum DIP_IRQ_CLEAR_ENUM {
 	DIP_IRQ_CLEAR_ALL /* clear all status */
 };
 
-/**
- * module's interrupt , each module should have its own isr.
- * note:
- * mapping to isr table,ISR_TABLE when using no device tree
- */
 enum DIP_IRQ_TYPE_ENUM {
 	DIP_IRQ_TYPE_INT_DIP_A_ST,
 	DIP_IRQ_TYPE_AMOUNT
@@ -252,9 +235,6 @@ enum DIP_P2_BUFQUE_MATCH_TYPE {
 };
 
 
-/**************************************************************
- *
- **************************************************************/
 
 enum DIP_CMD_ENUM {
 	DIP_CMD_RESET_BY_HWMODULE,

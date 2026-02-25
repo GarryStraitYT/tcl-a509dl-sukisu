@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/io.h>
 #include <linux/module.h>
@@ -14,10 +11,6 @@
 #include <linux/bug.h>
 #include <linux/suspend.h>
 #include <asm/cacheflush.h>
-/*
- *#include <mt-plat/mtk_secure_api.h>
- *#include <mt-plat/mtk_auxadc_intf.h>
- */
 #include <linux/topology.h>
 #include "mtk_hps_internal.h"
 #if defined(CONFIG_MACH_MT6799) || defined(CONFIG_MACH_MT6759) \

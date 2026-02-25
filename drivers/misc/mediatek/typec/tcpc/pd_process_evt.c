@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/tcpci_event.h"
 #include "inc/pd_process_evt.h"
 #include "inc/pd_dpm_core.h"
 
-/*
- * [BLOCK] print event
- */
 
 #if PE_EVENT_DBG_ENABLE
 static const char * const pd_ctrl_msg_name[] = {
@@ -498,11 +492,6 @@ static inline void pd_copy_msg_data_from_evt(
 
 /*---------------------------------------------------------------------------*/
 
-/*
- *
- * @ true : valid message
- * @ false : invalid message, pe should drop the message
- */
 
 static inline bool pe_is_valid_pd_msg_id(struct pd_port *pd_port,
 			struct pd_event *pd_event, struct pd_msg *pd_msg)

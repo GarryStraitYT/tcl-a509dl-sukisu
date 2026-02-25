@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <media/v4l2-event.h>
 #include <media/v4l2-mem2mem.h>
@@ -618,9 +615,6 @@ static struct mtk_q_data *mtk_venc_get_q_data(struct mtk_vcodec_ctx *ctx,
 	return &ctx->q_data[MTK_Q_DATA_DST];
 }
 
-/* V4L2 specification suggests the driver corrects the format struct if any of
- * the dimensions is unsupported
- */
 static int vidioc_try_fmt(struct v4l2_format *f, struct mtk_video_fmt *fmt,
 			  struct mtk_vcodec_ctx *ctx)
 {
@@ -2143,14 +2137,6 @@ void mtk_venc_check_queue_cnt(struct mtk_vcodec_ctx *ctx, struct vb2_queue *vq)
 		done_list_cnt, rdy_q_cnt, vq->num_buffers);
 }
 
-/*
- * v4l2_m2m_streamoff() holds dev_mutex and waits mtk_venc_worker()
- * to call v4l2_m2m_job_finish().
- * If mtk_venc_worker() tries to acquire dev_mutex, it will deadlock.
- * So this function must not try to acquire dev->dev_mutex.
- * This means v4l2 ioctls and mtk_venc_worker() can run at the same time.
- * mtk_venc_worker() should be carefully implemented to avoid bugs.
- */
 static void mtk_venc_worker(struct work_struct *work)
 {
 	struct mtk_vcodec_ctx *ctx = container_of(work, struct mtk_vcodec_ctx,

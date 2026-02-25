@@ -1,15 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- */
 
 #include <linux/leds.h>
 #include <mtk_leds_hal.h>
 
-/****************************************************************************
- * LED DRV functions
- ***************************************************************************/
 
 #ifdef CONTROL_BL_TEMPERATURE
 int setMaxbrightness(int max_level, int enable);

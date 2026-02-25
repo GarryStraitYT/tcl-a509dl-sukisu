@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mt6797-reg.h  --  Mediatek 6797 audio driver reg definition
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
- */
 
 #ifndef _MT6797_REG_H_
 #define _MT6797_REG_H_

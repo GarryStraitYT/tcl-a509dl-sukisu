@@ -1,22 +1,4 @@
-/*
-* Copyright(C)2014 MediaTek Inc.
-* Modification based on code covered by the below mentioned copyright
-* and/or permission notice(S).
-*/
 
-/* akm09911.c - akm09911 compass driver
- *
- *
- * This software is licensed under the terms of the GNU General Public
- * License version 2, as published by the Free Software Foundation, and
- * may be copied, distributed, and modified under those terms.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * history01  Modified by lanying.he for XR5451486 on 2017/11/27 for deviceinfo
- */
 
 #include "cust_mag.h"
 #include "akm09918.h"
@@ -661,16 +643,6 @@ static int akm09911_ReadChipInfo(char *buf, int bufsize)
 }
 
 /*----------------------------shipment test------------------------------------------------*/
-/*!
- *@return If @a testdata is in the range of between @a lolimit and @a hilimit,
- *the return value is 1, otherwise -1.
- *@param[in] testno   A pointer to a text string.
- *@param[in] testname A pointer to a text string.
- *@param[in] testdata A data to be tested.
- *@param[in] lolimit  The maximum allowable value of @a testdata.
- *@param[in] hilimit  The minimum allowable value of @a testdata.
- *@param[in,out] pf_total
- */
 int TEST_DATA(const char testno[], const char testname[], const int testdata,
 	      const int lolimit, const int hilimit, int *pf_total)
 {
@@ -950,12 +922,6 @@ int FST_AK8963(void)
 
 
 
-/*!
- *Execute "Onboard Function Test" (NOT includes "START" and "END" command).
- *@retval 1 The test is passed successfully.
- *@retval -1 The test is failed.
- *@retval 0 The test is aborted by kind of system error.
- */
 int FST_AK09911(void)
 {
 	int pf_total;		/* p/f flag for this subtest */
@@ -1120,12 +1086,6 @@ int FST_AK09911(void)
 	return pf_total;
 }
 
-/*!
- *Execute "Onboard Function Test" (includes "START" and "END" command).
- *@retval 1 The test is passed successfully.
- *@retval -1 The test is failed.
- *@retval 0 The test is aborted by kind of system error.
- */
 int FctShipmntTestProcess_Body(void)
 {
 	int pf_total = 1;

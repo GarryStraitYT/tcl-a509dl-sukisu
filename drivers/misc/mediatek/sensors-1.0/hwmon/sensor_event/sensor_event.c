@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "<sensor_event> " fmt
 
@@ -30,9 +27,6 @@ struct sensor_event_obj {
 };
 static struct sensor_event_obj *event_obj;
 static struct lock_class_key buffer_lock_key[ID_SENSOR_MAX_HANDLE + 1];
-/*
- * sensor_input_event only support process context.
- */
 int sensor_input_event(unsigned char handle, const struct sensor_event *event)
 {
 	struct sensor_event_client *client = &event_obj->client[handle];

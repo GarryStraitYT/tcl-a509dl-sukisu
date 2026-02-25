@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __MMPROFILE_FUNCTION_H__
 #define __MMPROFILE_FUNCTION_H__
@@ -42,13 +38,6 @@ void mmprofile_get_dump_buffer(unsigned int start, unsigned long *p_addr,
 	unsigned int *p_size);
 #endif
 
-/*
- * if in kernel config CONFIG_MMPROFILE is not set,
- * and the kernel makefile had define
- * obj-$(CONFIG_MMPROFILE) += mmp/
- * , the mmp/ driver is compiled but not built-in.
- * Put dummy API implementation here.
- */
 #ifndef CONFIG_MMPROFILE
 static inline mmp_event mmprofile_register_event(mmp_event parent,
 	const char *name)

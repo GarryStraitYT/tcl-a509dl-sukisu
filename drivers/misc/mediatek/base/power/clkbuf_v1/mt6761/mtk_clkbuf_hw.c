@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
-/*
- * @file    mtk_clk_buf_hw.c
- * @brief   Driver for clock buffer control of each platform
- *
- */
 #include <linux/regmap.h>
 
 #include <mtk_spm.h>
@@ -270,12 +262,6 @@ void clk_buf_control_bblpm(bool on)
 #endif
 }
 
-/*
- * Baseband Low Power Mode (BBLPM) for PMIC clkbuf
- * Condition: XO_CELL/XO_NFC/XO_WCN/XO_EXT OFF
- * Caller: deep idle, SODI2.5
- * Return: 0 if all conditions are matched & ready to enter BBLPM
- */
 u32 clk_buf_bblpm_enter_cond(void)
 {
 	u32 bblpm_cond = 0;

@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_dl1_bt.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio dl1 data1 playback
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include <linux/dma-mapping.h>
 #include <sound/pcm_params.h>
@@ -96,9 +63,6 @@ static const struct snd_kcontrol_new mtk_dl1bt_control[] = {
 		     dl1bt_memif_select_get, dl1bt_memif_select_set),
 };
 
-/*
- *    function implementation
- */
 
 static int mtk_dl1bt_probe(struct platform_device *pdev);
 static int mtk_Dl1Bt_close(struct snd_pcm_substream *substream);

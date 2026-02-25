@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT_PWM_PRV_H__
 #define __MT_PWM_PRV_H__
@@ -15,14 +12,7 @@ extern void __iomem *pwm_infracfg_base;
 #define PWM_INFRACFG_BASE pwm_infracfg_base
 #endif
 
-/* This variable is for pwm hw new change.
- * 1. change 8G DRAM enable from PERICFG domain to PWM internal register
- * 2. change 26M clock source to use INFRA domain control
- */
 #define PWM_HW_V_1_0
-/***********************************
- * PWM register address
- ************************************/
 #define PWM_ENABLE (PWM_BASE+0x0000)
 
 #define PWM_3DLCM	(PWM_BASE+0x1D0)

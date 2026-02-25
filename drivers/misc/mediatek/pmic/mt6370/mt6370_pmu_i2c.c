@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -365,17 +362,3 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek MT6370 PMU");
 MODULE_VERSION(MT6370_PMU_I2C_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.3_MTK
- * (1) disable_irq()/enable_irq() in suspend()/resume()
- *
- * 1.0.2_MTK
- * (1) Add support for MT6372
-
- * 1.0.1_MTK
- * (1) Replace rt_mutex with mutex
- *
- * 1.0.0_MTK
- * (1) Initial Release
- */

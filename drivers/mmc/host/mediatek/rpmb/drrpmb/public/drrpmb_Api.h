@@ -1,13 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
-/**
- * @file   drrpmb_Api.h
- * @brief  Contains DCI command definitions and data structures
- *
- */
 
 #ifndef __DRRPMBAPI_H__
 #define __DRRPMBAPI_H__
@@ -15,9 +7,6 @@
 #include "dci.h"
 
 
-/*
- * Command ID's
- */
 #define DCI_RPMB_CMD_READ_DATA      1
 #define DCI_RPMB_CMD_GET_WCNT       2
 #define DCI_RPMB_CMD_WRITE_DATA     3
@@ -26,29 +15,17 @@
 
 /*... add more command ids when needed */
 
-/**
- * command message.
- *
- * @param len Length of the data to process.
- * @param data Data to be processed
- */
 struct cmd_t {
 	struct dciCommandHeader_t header;     /**< Command header */
 	uint32_t            len;        /**< Length of data to process */
 };
 
-/**
- * Response structure
- */
 struct rsp_t {
 	struct dciResponseHeader_t header;     /**< Response header */
 	uint32_t            len;
 };
 
 
-/*
- * Alternative access flow to improve performance. (this is customization)
- */
 #define RPMB_MULTI_BLOCK_ACCESS 1
 
 #if RPMB_MULTI_BLOCK_ACCESS
@@ -70,9 +47,6 @@ struct rpmb_req_t {
 	uint16_t result;
 };
 
-/*
- * DCI message data.
- */
 struct dciMessage_t {
 	union {
 		struct cmd_t  command;
@@ -83,9 +57,6 @@ struct dciMessage_t {
 
 };
 
-/*
- * Driver UUID. Update accordingly after reserving UUID
- */
 #define RPMB_UUID { { 7, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
 
 #endif

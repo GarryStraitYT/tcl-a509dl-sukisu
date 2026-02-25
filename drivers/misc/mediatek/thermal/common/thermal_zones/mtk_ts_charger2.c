@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -66,18 +63,9 @@ static struct thermal_cooling_device *cl_dev_sysrst;
 
 static int mtktscharger2_debug_log;
 
-/* This is to preserve last temperature readings from charger driver.
- * In case mtk_ts_charger.c fails to read temperature.
- */
 static unsigned long prev_temp = 30000;
 
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5000;
@@ -116,15 +104,6 @@ static struct power_supply *get_charger2_handle(void)
 }
 
 #define MAIN_CHARGER 0
-/**
- * Use new GM30 API to get charger temperatures.
- * When nothing is defined, main charger temperature is read.
- * When PEP30 is defined, direct charger temperature is read.
- * When Dual Charging is defined, slave charger temperature is read.
- * If main charger is not PMIC, it is necessary to create another TZ
- * for main charger
- * in both PEP30 and dual charging cases.
- */
 static int mtktscharger2_get_hw_temp(void)
 {
 	int ret = -1;

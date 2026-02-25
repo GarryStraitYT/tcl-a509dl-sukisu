@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -70,11 +67,6 @@ struct rt_debug_st {
 #endif /* CONFIG_DEBUG_FS */
 
 
-/* rt_regmap_device
- *
- * Richtek regmap device. One for each rt_regmap.
- *
- */
 struct rt_regmap_device {
 	struct rt_regmap_properties props;
 	struct rt_regmap_fops *rops;
@@ -232,10 +224,6 @@ err_cache_sync:
 }
 EXPORT_SYMBOL(rt_regmap_cache_sync);
 
-/* rt_regmap_cache_write_back - write current cache data to chip
- * @rd: rt_regmap_device pointer.
- * @reg: register map address
- */
 void rt_regmap_cache_write_back(struct rt_regmap_device *rd, u32 reg)
 {
 	struct reg_index_offset rio;
@@ -265,10 +253,6 @@ err_cache_chip_write:
 }
 EXPORT_SYMBOL(rt_regmap_cache_write_back);
 
-/* rt_is_reg_volatile - check register map is volatile or not
- * @rd: rt_regmap_device pointer.
- * reg: register map address.
- */
 int rt_is_reg_volatile(struct rt_regmap_device *rd, u32 reg)
 {
 	struct reg_index_offset rio;
@@ -285,10 +269,6 @@ int rt_is_reg_volatile(struct rt_regmap_device *rd, u32 reg)
 }
 EXPORT_SYMBOL(rt_is_reg_volatile);
 
-/* rt_reg_regsize - get register map size for specific register
- * @rd: rt_regmap_device pointer.
- * reg: register map address
- */
 int rt_get_regsize(struct rt_regmap_device *rd, u32 reg)
 {
 	struct reg_index_offset rio;
@@ -712,11 +692,6 @@ void rt_regmap_cache_backup(struct rt_regmap_device *rd)
 }
 EXPORT_SYMBOL(rt_regmap_cache_backup);
 
-/* _rt_regmap_reg_write - write data to specific register map
- * only support 1, 2, 4 bytes regisetr map
- * @rd: rt_regmap_device pointer.
- * @rrd: rt_reg_data pointer.
- */
 static int _rt_regmap_reg_write(struct rt_regmap_device *rd,
 				struct rt_reg_data *rrd)
 {
@@ -1019,12 +994,6 @@ int rt_regmap_update_bits(struct rt_regmap_device *rd,
 }
 EXPORT_SYMBOL(rt_regmap_update_bits);
 
-/* rt_regmap_block_write - block write data to register
- * @rd: rt_regmap_device pointer
- * @reg: register address
- * bytes: leng for write
- * src: source data
- */
 int rt_regmap_block_write(struct rt_regmap_device *rd, u32 reg,
 				int bytes, const void *src)
 {
@@ -1050,12 +1019,6 @@ int rt_asyn_regmap_block_write(struct rt_regmap_device *rd, u32 reg,
 };
 EXPORT_SYMBOL(rt_asyn_regmap_block_write);
 
-/* rt_regmap_block_read - block read data form register
- * @rd: rt_regmap_device pointer
- * @reg: register address
- * @bytes: read length
- * @dst: destination for read data
- */
 int rt_regmap_block_read(struct rt_regmap_device *rd, u32 reg,
 				int bytes, void *dst)
 {
@@ -1068,11 +1031,6 @@ int rt_regmap_block_read(struct rt_regmap_device *rd, u32 reg,
 };
 EXPORT_SYMBOL(rt_regmap_block_read);
 
-/* _rt_regmap_reg_read - register read for specific register map
- * only support 1, 2, 4 bytes register map.
- * @rd: rt_regmap_device pointer.
- * @rrd: rt_reg_data pointer.
- */
 static int _rt_regmap_reg_read(
 		struct rt_regmap_device *rd, struct rt_reg_data *rrd)
 {
@@ -1257,15 +1215,6 @@ int rt_regmap_cache_reload(struct rt_regmap_device *rd)
 }
 EXPORT_SYMBOL(rt_regmap_cache_reload);
 
-/* rt_regmap_add_debubfs - add user own debugfs node
- * @rd: rt_regmap_devcie pointer.
- * @name: a pointer to a string containing the name of the file to create.
- * @mode: the permission that the file should have.
- * @data: a pointer to something that the caller will want to get to later on.
- *	The inode.i_private pointer will point this value on the open() call.
- * @fops: a pointer to a struct file_operations that should be used for
- *	this file.
- */
 int rt_regmap_add_debugfs(struct rt_regmap_device *rd, const char *name,
 			  umode_t mode, void *data,
 			  const struct file_operations *fops)
@@ -2245,9 +2194,3 @@ MODULE_DESCRIPTION("Richtek regmap Driver");
 MODULE_AUTHOR("Jeff Chang <jeff_chang@richtek.com>");
 MODULE_VERSION(RT_REGMAP_VERSION);
 MODULE_LICENSE("GPL");
-/* Version Note
- * 1.1.15
- *	Fix potential NULL pointer dereference in general_write()
- * 1.1.14
- *	Fix Coverity by Mandatory's
- */

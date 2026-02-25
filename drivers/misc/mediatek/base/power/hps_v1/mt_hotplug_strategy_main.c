@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/**
- * @file    mt_hotplug_strategy_main.c
- * @brief   hotplug strategy(hps) - main
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>		/* MODULE_DESCRIPTION, MODULE_LICENSE */
@@ -72,9 +65,6 @@ struct hps_ctxt_struct hps_ctxt = {
 
 DEFINE_PER_CPU(struct hps_cpu_ctxt_struct, hps_percpu_ctxt);
 
-/*
- * hps struct hps_ctxt_struct control interface
- */
 void hps_ctxt_reset_stas_nolock(void)
 {
 	hps_ctxt.up_loads_sum = 0;
@@ -103,9 +93,6 @@ void hps_ctxt_reset_stas(void)
 	mutex_unlock(&hps_ctxt.lock);
 }
 
-/*
- * hps struct hps_ctxt_struct print interface
- */
 void hps_ctxt_print_basic(int toUart)
 {
 	log_info("hps_ctxt.init_state: %u\n", hps_ctxt.init_state);
@@ -209,9 +196,6 @@ void hps_ctxt_print_algo_stats_tlp(int toUart)
 	log_alog2("hps_ctxt.rush_count: %u\n", hps_ctxt.rush_count);
 }
 
-/*
- * module init function
- */
 static int __init hps_init(void)
 {
 	int r = 0;
@@ -237,9 +221,6 @@ static int __init hps_init(void)
 }
 module_init(hps_init);
 
-/*
- * module exit function
- */
 static void __exit hps_exit(void)
 {
 	int r = 0;

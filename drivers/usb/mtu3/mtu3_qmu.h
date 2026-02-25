@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_qmu.h - Queue Management Unit driver header
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #ifndef __MTK_QMU_H__
 #define __MTK_QMU_H__

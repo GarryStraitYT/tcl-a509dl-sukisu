@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
@@ -24,9 +21,6 @@
 #define DPM_REACTION_COND_ONE_SHOT			(1<<6)
 #define DPM_REACTION_COND_LIMITED_RETRIES		(1<<7)
 
-/*
- * DPM flow delay reactions
- */
 
 #ifdef CONFIG_USB_PD_UFP_FLOW_DELAY
 static uint8_t dpm_reaction_ufp_flow_delay(struct pd_port *pd_port)
@@ -58,9 +52,6 @@ static uint8_t dpm_reaction_vconn_stable_delay(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_VCONN_STABLE_DELAY */
 
-/*
- * DPM get cap reaction
- */
 
 #ifdef CONFIG_USB_PD_REV30
 static uint8_t dpm_reaction_get_source_cap_ext(struct pd_port *pd_port)
@@ -87,9 +78,6 @@ static uint8_t dpm_reaction_attemp_get_flag(struct pd_port *pd_port)
 	return TCP_DPM_EVT_GET_SINK_CAP;
 }
 
-/*
- * DPM swap reaction
- */
 
 #ifdef CONFIG_USB_PD_PR_SWAP
 static uint8_t dpm_reaction_request_pr_swap(struct pd_port *pd_port)
@@ -139,9 +127,6 @@ static uint8_t dpm_reaction_request_dr_swap(struct pd_port *pd_port)
 #endif	/* #ifdef CONFIG_USB_PD_DR_SWAP */
 
 
-/*
- * DPM DiscoverCable reaction
- */
 
 #ifdef CONFIG_TCPC_VCONN_SUPPLY_MODE
 static uint8_t dpm_reaction_dynamic_vconn(struct pd_port *pd_port)
@@ -208,9 +193,6 @@ static uint8_t dpm_reaction_return_vconn_source(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_DISCOVER_CABLE_RETURN_VCONN */
 
-/*
- * DPM EnterMode reaction
- */
 
 #ifdef CONFIG_USB_PD_ATTEMP_DISCOVER_ID
 static uint8_t dpm_reaction_discover_id(struct pd_port *pd_port)
@@ -236,9 +218,6 @@ static uint8_t dpm_reaction_mode_operation(struct pd_port *pd_port)
 }
 #endif	/* CONFIG_USB_PD_MODE_OPERATION */
 
-/*
- * DPM Local/Remote Alert reaction
- */
 
 #ifdef CONFIG_USB_PD_REV30
 
@@ -342,9 +321,6 @@ static uint8_t dpm_reaction_handle_alert(struct pd_port *pd_port)
 
 #endif	/* CONFIG_USB_PD_REV30 */
 
-/*
- * DPM Idle reaction
- */
 
 static inline uint8_t dpm_get_pd_connect_state(struct pd_port *pd_port)
 {
@@ -412,9 +388,6 @@ static uint8_t dpm_reaction_update_pe_ready(struct pd_port *pd_port)
 	return 0;
 }
 
-/*
- * DPM reaction declaration
- */
 
 typedef uint8_t (*dpm_reaction_fun)(struct pd_port *pd_port);
 
@@ -617,13 +590,6 @@ static const struct dpm_ready_reaction dpm_reactions[] = {
 		dpm_reaction_update_pe_ready),
 };
 
-/**
- * dpm_get_reaction_env
- *
- * Get current reaction's environmental conditions.
- *
- * Returns environmental conditions.
- */
 
 static inline uint8_t dpm_get_reaction_env(struct pd_port *pd_port)
 {
@@ -642,15 +608,6 @@ static inline uint8_t dpm_get_reaction_env(struct pd_port *pd_port)
 	return conditions;
 }
 
-/**
- * dpm_check_reaction_busy
- *
- * check this reaction is still keep busy
- *
- * @ reaction : which reaction is checked.
- *
- * Return Boolean to indicate busy or not.
- */
 
 static inline bool dpm_check_reaction_busy(struct pd_port *pd_port,
 		const struct dpm_ready_reaction *reaction)
@@ -662,19 +619,6 @@ static inline bool dpm_check_reaction_busy(struct pd_port *pd_port,
 			pd_port, DPM_REACTION_CAP_READY_ONCE);
 }
 
-/**
- * dpm_check_reaction_available
- *
- * check this reaction is available.
- *
- * @ env : Environmental conditions of reaction table
- * @ reaction : which reaction is checked.
- *
- * Returns TCP_DPM_EVT_ID if available;
- * Returns Zero to indicate if not available.
- * Returns DPM_READY_REACTION_BUSY to indicate
- *	this reaction is waiting for being finished.
- */
 
 static inline uint8_t dpm_check_reaction_available(struct pd_port *pd_port,
 	uint8_t env, const struct dpm_ready_reaction *reaction)
@@ -699,20 +643,6 @@ static inline uint8_t dpm_check_reaction_available(struct pd_port *pd_port,
 	return ret;
 }
 
-/**
- * dpm_check_reset_reaction
- *
- * Once trigger one reaction,
- * check if automatically clear this reaction flag.
- *
- * For the following reactions type:
- *	DPM_REACTION_COND_ONE_SHOT,
- *	DPM_REACTION_COND_LIMITED_RETRIES
- *
- * @ reaction : which reaction is triggered.
- *
- * Return Boolean to indicate automatically clear or not.
- */
 
 static inline bool dpm_check_clear_reaction(struct pd_port *pd_port,
 	const struct dpm_ready_reaction *reaction)

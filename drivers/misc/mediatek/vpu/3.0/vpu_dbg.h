@@ -1,18 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __VPU_DBG_H__
 #define __VPU_DBG_H__
 
-/*
- * level 2: open log to monitor d2d period
- * level 3: open log to monitor load algp period
- * level 5: open per-frame log
- * level 9: dump log buffer
- */
 extern int g_vpu_log_level;
 extern int g_vpu_internal_log_level;
 extern unsigned int g_func_mask;

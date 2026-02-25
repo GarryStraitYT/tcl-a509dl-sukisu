@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef TCPM_H_
 #define TCPM_H_
@@ -14,9 +11,6 @@
 
 struct tcpc_device;
 
-/*
- * Type-C Port Notify Chain
- */
 
 enum typec_attach_type {
 	TYPEC_UNATTACHED = 0,
@@ -292,12 +286,6 @@ struct tcp_ny_uvdm {
 	uint32_t *uvdm_data;
 };
 
-/*
- * TCP_NOTIFY_HARD_RESET_STATE
- *
- * Please don't expect that every signal will have a corresponding result.
- * The signal can be generated multiple times before receiving a result.
- */
 
 enum {
 	/* HardReset finished because recv GoodCRC or TYPE-C only */
@@ -365,9 +353,6 @@ struct tcp_notify {
 	};
 };
 
-/*
- * Type-C Port Control I/F
- */
 
 enum tcpm_error_list {
 	TCPM_SUCCESS = 0,
@@ -1145,25 +1130,6 @@ extern bool tcpm_inquire_during_pps_charge(struct tcpc_device *tcpc);
 
 #ifdef CONFIG_USB_PD_REV30_BAT_INFO
 
-/**
- * tcpm_update_bat_status
- *
- * Update current capacity and charging status of the specified battery
- *
- * If the battery's real capacity in not known,
- *	all batteries's capacity can be updated with SoC.
- *
- * If the battery status is only update when a noticiation is received,
- *	using no_mutex version, otherwise it will cause deadlock.
- *
- * This function may trigger DPM to send alert message
- *
- * @ ref : Specifies which battery to update
- * @ status : refer to BSDO_BAT_INFO, idle, charging, discharging
- * @ wh : current capacity, unit 1/10 wh
- * @ soc : current soc, unit: 0.1 %
- *
- */
 
 extern int tcpm_update_bat_status_wh(struct tcpc_device *tcpc,
 	enum pd_battery_reference ref, uint8_t status, uint16_t wh);
@@ -1177,18 +1143,6 @@ extern int tcpm_update_bat_status_soc(struct tcpc_device *tcpc,
 extern int tcpm_update_bat_status_soc_no_mutex(struct tcpc_device *tcpc,
 	enum pd_battery_reference ref, uint8_t status, uint16_t soc);
 
-/**
- * tcpm_update_bat_last_full
- *
- * Update last full capacity of the specified battery
- *
- * If the battery status is only update when a noticiation is received,
- *	using no_mutex version, otherwise it will cause deadlock.
- *
- * @ ref : Specifies which battery to update
- * @ wh : current capacity, unit 1/10 wh
- *
- */
 
 extern int tcpm_update_bat_last_full(struct tcpc_device *tcpc,
 	enum pd_battery_reference ref, uint16_t wh);
@@ -1201,30 +1155,6 @@ extern int tcpm_update_bat_last_full_no_mutex(struct tcpc_device *tcpc,
 
 #ifdef CONFIG_USB_PD_REV30_STATUS_LOCAL
 
-/**
- * tcpm_update_pd_status
- *
- * Update local status: temperature, power input,  and OT/OC/OV event.
- *
- * This function may trigger DPM to send alert message
- *
- * @ ptf :
- *	Present Temperature Flag
- * @ temperature :
- *	0 = feature not supported
- *	1 = temperature is less than 2 degree c.
- *	2-255 = temperature in degree c.
- *
- * @ input/input_mask :
- *	refer to pd_status.present_input
- *
- * @ bat_in / bat_in_mask :
- *	refer to pd_status.present_battey_input
- *	This function will auto_update INT_POWER_BAT
- *
- * @ evt :
- *	refer to pd_status.event_flags
- */
 
 extern int tcpm_update_pd_status_temp(struct tcpc_device *tcpc,
 	enum pd_present_temperature_flag ptf, uint8_t temperature);

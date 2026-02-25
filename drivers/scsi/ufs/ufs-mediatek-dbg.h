@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef _UFS_MEDIATEK_DBG_H
 #define _UFS_MEDIATEK_DBG_H
@@ -10,11 +7,6 @@
 #include <linux/seq_file.h>
 #include <linux/types.h>
 
-/*
- * snprintf may return a value of size or "more" to indicate
- * that the output was truncated, thus be careful of "more"
- * case.
- */
 #define SPREAD_PRINTF(buff, size, evt, fmt, args...) \
 do { \
 	if (buff && size && *(size)) { \

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -50,9 +47,6 @@ struct sd_state {
 static struct thermal_cooling_device
 *cl_shutdown_dev[MAX_NUM_INSTANCE_MTK_COOLER_SHUTDOWN] = { 0 };
 
-/* static unsigned long cl_shutdown_state[MAX_NUM_INSTANCE_MTK_COOLER_SHUTDOWN]
- * = { 0 };
- */
 
 static struct sd_state cl_sd_state[MAX_NUM_INSTANCE_MTK_COOLER_SHUTDOWN];
 

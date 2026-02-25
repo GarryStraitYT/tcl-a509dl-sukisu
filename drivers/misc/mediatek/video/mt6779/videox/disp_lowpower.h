@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __DISP_LOWPOWER_H__
 #define __DISP_LOWPOWER_H__
@@ -19,10 +15,6 @@ void kick_logger_dump(char *string);
 void kick_logger_dump_reset(void);
 char *get_kick_dump(void);
 unsigned int get_kick_dump_size(void);
-/**
- * return 0: display is not idle trigger now
- * return 1: display is idle
- */
 int primary_display_is_idle(void);
 void primary_display_idlemgr_kick(const char *source, int need_lock);
 void enter_share_sram(enum CMDQ_EVENT_ENUM resourceEvent);
@@ -42,10 +34,6 @@ unsigned long long disp_lp_set_idle_check_interval(
 	unsigned long long new_interval);
 
 /************************** for met ***********************************/
-/**
- * return 0: not enter ultra lowpower state which means mipi pll is enabled
- * return 1: enter ultra lowpower state whicn means mipi pll is disabled
- */
 unsigned int is_mipi_enterulps(void);
 
 /* read dsi regs to calculate clk */

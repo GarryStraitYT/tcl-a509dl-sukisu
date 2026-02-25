@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __H_DDP_INFO__
 #define __H_DDP_INFO__
@@ -18,10 +14,6 @@
 #include "graphics-base-v1.0.h"
 #include "graphics-base-v1.1.h"
 
-/**
- * bit  25  24  17    16  15     10        9       8  0
- *     rsv|RGB|bpp|BLOCK|VDO|FORMAT|BYTESWAP|RGBSWAP|ID
- */
 #define _UFMT_ID_SHIFT 0
 #define _UFMT_ID_WIDTH 8
 #define _UFMT_RGBSWAP_SHIFT (_UFMT_ID_SHIFT+_UFMT_ID_WIDTH)

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_dpm_pdo_select.h"
 
@@ -98,9 +95,6 @@ static inline int dpm_calc_src_cap_power_uw(
 	return uw;
 }
 
-/*
- * Select PDO from VSafe5V
- */
 
 static bool dpm_select_pdo_from_vsafe5v(
 	struct dpm_select_info_t *select_info,
@@ -124,9 +118,6 @@ static bool dpm_select_pdo_from_vsafe5v(
 	return false;
 }
 
-/*
- * Select PDO from Direct Charge
- */
 
 #ifdef CONFIG_USB_PD_ALT_MODE_RTDC
 static bool dpm_select_pdo_from_direct_charge(
@@ -159,9 +150,6 @@ static bool dpm_select_pdo_from_direct_charge(
 }
 #endif	/* CONFIG_USB_PD_ALT_MODE_RTDC */
 
-/*
- * Select PDO from Custom
- */
 
 static bool dpm_select_pdo_from_custom(
 	struct dpm_select_info_t *select_info,
@@ -171,9 +159,6 @@ static bool dpm_select_pdo_from_custom(
 	return dpm_select_pdo_from_vsafe5v(select_info, sink, source);
 }
 
-/*
- * Select PDO from Max Power
- */
 
 static inline bool dpm_is_valid_pdo_pair(struct dpm_pdo_info_t *sink,
 	struct dpm_pdo_info_t *source, uint32_t policy)
@@ -233,9 +218,6 @@ static bool dpm_select_pdo_from_max_power(
 	return false;
 }
 
-/*
- * Select PDO from PPS
- */
 
 #ifdef CONFIG_USB_PD_REV30_PPS_SINK
 static bool dpm_select_pdo_from_pps(
@@ -288,9 +270,6 @@ static bool dpm_select_pdo_from_pps(
 }
 #endif	/* CONFIG_USB_PD_REV30_PPS_SINK */
 
-/*
- * Select PDO from defined rule ...
- */
 
 typedef bool (*dpm_select_pdo_fun)(
 	struct dpm_select_info_t *select_info,

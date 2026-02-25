@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Owen Chen <owen.chen@mediatek.com>
- */
 
 #ifndef __DRV_CLK_MT6761_PG_H
 #define __DRV_CLK_MT6761_PG_H

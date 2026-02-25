@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 
 #include <linux/clk-provider.h>
 #include <linux/of.h>

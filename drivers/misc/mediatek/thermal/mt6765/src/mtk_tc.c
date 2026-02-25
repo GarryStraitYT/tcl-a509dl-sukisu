@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -36,9 +33,6 @@
 #define __MT_MTK_TS_CPU_C__
 #include <tscpu_settings.h>
 
-/* 1: turn on RT kthread for thermal protection in this sw module;
- * 0: turn off
- */
 #if MTK_TS_CPU_RT
 #include <linux/sched.h>
 #include <linux/kthread.h>
@@ -60,39 +54,13 @@
 #endif
 
 static struct device *tscpu_dev;
-/*=============================================================
- * Local variable definition
- *=============================================================
- */
 
 
-/*
- *Bank0: MP0(TSMCU1)   (LL)
- *Bank1: MP1(TSMCU2)   (L)
- *Bank2: CCI(TSMCU1,TSMCU2)
- *Bank3: GPU(TSMCU3)
- *Bank4: SOC(TSMCU4,TSMCU5)
- */
-/*
- * TC0: (TS_MCU1, TS_MCU2, TS_MCU3)
- * TC1: (TS_MCU5, TS_MCU4)
- */
 
 int tscpu_ts_temp[TS_ENUM_MAX];
 int tscpu_ts_temp_r[TS_ENUM_MAX];
 
 /* chip dependent */
-/*
- * TO-DO: I assume AHB bus frequecy is 78MHz.
- * Please confirm it.
- */
-/*
- * The tscpu_g_tc structure controls the polling rates and sensor mapping table
- * of all thermal controllers.  If HW thermal controllers are more than you
- * actually needed, you should pay attention to default setting of unneeded
- * thermal controllers.  Otherwise, these unneeded thermal controllers will be
- * initialized and work unexpectedly.
- */
 struct thermal_controller tscpu_g_tc[THERMAL_CONTROLLER_NUM] = {
 	[0] = {
 		.ts = {TS_MCU1, TS_MCU2, TS_MCU3},
@@ -154,11 +122,6 @@ static __u32 calefuse1;
 static __u32 calefuse2;
 static __u32 calefuse3;
 
-/**
- * If curr_temp >= tscpu_polling_trip_temp1, use interval else if cur_temp >=
- * tscpu_polling_trip_temp2 && curr_temp < tscpu_polling_trip_temp1, use
- * interval*tscpu_polling_factor1 else, use interval*tscpu_polling_factor2
- */
 /* chip dependent */
 int tscpu_polling_trip_temp1 = 40000;
 int tscpu_polling_trip_temp2 = 20000;
@@ -166,10 +129,6 @@ int tscpu_polling_factor1 = 1;
 int tscpu_polling_factor2 = 4;
 
 #if MTKTSCPU_FAST_POLLING
-/* Combined fast_polling_trip_temp and fast_polling_factor,
- *it means polling_delay will be 1/5 of original interval
- *after mtktscpu reports > 65C w/o exit point
- */
 int fast_polling_trip_temp = 60000;
 int fast_polling_trip_temp_high = 60000; /* deprecaed */
 int fast_polling_factor = 2;
@@ -178,11 +137,6 @@ int tscpu_next_fp_factor = 1;
 #endif
 
 #if PRECISE_HYBRID_POWER_BUDGET
-/*	tscpu_prev_cpu_temp: previous CPUSYS temperature
- *	tscpu_curr_cpu_temp: current CPUSYS temperature
- *	tscpu_prev_gpu_temp: previous GPUSYS temperature
- *	tscpu_curr_gpu_temp: current GPUSYS temperature
- */
 int tscpu_prev_cpu_temp = 0, tscpu_prev_gpu_temp = 0;
 int tscpu_curr_cpu_temp = 0, tscpu_curr_gpu_temp = 0;
 #endif
@@ -199,18 +153,10 @@ __u32 lvts_golden_temp2;
 __u32 lvts_golden_temp3;
 #endif
 
-/*=============================================================
- * Local function declartation
- *=============================================================
- */
 static __s32 temperature_to_raw_room(__u32 ret, enum thermal_sensor ts_name);
 static void set_tc_trigger_hw_protect
 	(int temperature, int temperature2, int tc_num);
 
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 	void __attribute__ ((weak))
 mt_ptp_lock(unsigned long *flags)
 {
@@ -708,17 +654,6 @@ int get_immediate_none_wrap(void)
 
 
 
-/*
- *Bank0: MP0(TSMCU1)   (LL)
- *Bank1: MP1(TSMCU2)   (L)
- *Bank2: CCI(TSMCU1,TSMCU2)
- *Bank3: GPU(TSMCU3)
- *Bank4: SOC(TSMCU4,TSMCU5)
- */
-/*
- * TC0: (TS_MCU1, TS_MCU2, TS_MCU3)
- * TC1: (TS_MCU5, TS_MCU4)
- */
 
 /* chip dependent */
 int get_immediate_cpuB_wrap(void)
@@ -793,17 +728,6 @@ int (*max_temperature_in_bank[THERMAL_BANK_NUM])(void) = {
 
 
 
-/*
- *Bank0: MP0(TSMCU1)   (LL)
- *Bank1: MP1(TSMCU2)   (L)
- *Bank2: CCI(TSMCU1,TSMCU2)
- *Bank3: GPU(TSMCU3)
- *Bank4: SOC(TSMCU4,TSMCU5)
- */
-/*
- * TC0: (TS_MCU1, TS_MCU2, TS_MCU3)
- * TC1: (TS_MCU5, TS_MCU4)
- */
 
 
 /* chip dependent */
@@ -1038,10 +962,6 @@ static void thermal_reset_and_initial(int tc_num)
 	mt_reg_sync_writel(0x0, offset + TEMPADCVOLTAGESHIFT);
 }
 
-/**
- *  temperature2 to set the middle threshold for interrupting CPU.
- *  -275000 to disable it.
- */
 static void set_tc_trigger_hw_protect
 (int temperature, int temperature2, int tc_num)
 {
@@ -1557,13 +1477,6 @@ int tscpu_read_temperature_info(struct seq_file *m, void *v)
 }
 
 
-/*
- * Bank0: MP0(TSMCU4)   (LL)
- * Bank1: MP1(TSMCU5)   (L)
- * Bank2: GPU(TSMCU3)
- * Bank3: CCI(TSMCU4,TSMCU5)
- * Bank4: SOC(TSMCU2)
- */
 int tscpu_get_curr_temp(void)
 {
 	tscpu_update_tempinfo();
@@ -1593,9 +1506,6 @@ int tscpu_get_curr_temp(void)
 	return tscpu_curr_max_ts_temp;
 }
 
-/**
- * this only returns latest stored max ts temp but not updated from TC.
- */
 int tscpu_get_curr_max_ts_temp(void)
 {
 	return tscpu_curr_max_ts_temp;

@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
-/*
- * Author: Xiao Wang <xiao.wang@mediatek.com>
- */
 #include <linux/platform_device.h>
 #include <linux/device.h>
 #include <linux/module.h>

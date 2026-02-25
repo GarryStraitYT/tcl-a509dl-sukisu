@@ -1,27 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     s5k2l7_setting_mode3.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor setting file
- *
- * Setting Release Date:
- * ------------
- *     2016.09.01
- *
- ****************************************************************************/
 #ifndef _s5k2l7MIPI_SETTING_MODE3_V2_H_
 #define _s5k2l7MIPI_SETTING_MODE3_V2_H_
 
@@ -136,10 +114,6 @@ static struct imgsensor_info_struct _imgsensor_info_m3_v2 =		      \
 	.i2c_speed = 300,                                                     \
 }
 
-/* full_w; full_h; x0_offset; y0_offset; w0_size; h0_size; scale_w; scale_h;
- * x1_offset;  y1_offset;  w1_size;  h1_size;
- * x2_tg_offset;	 y2_tg_offset;	w2_tg_size;  h2_tg_size;
- */
 #define struct_SENSOR_WINSIZE_INFO struct SENSOR_WINSIZE_INFO_STRUCT
 #define _S5K2L7_MODE3_V2_WINSIZE_INFO_                                        \
 static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
@@ -166,13 +140,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 initial setting
- *
- ****************************************************************************/
 #define _S5K2L7_MODE3_INIT_MODULE_V2_ do {         \
 	write_cmos_sensor_twobyte(0X6028, 0X2000); \
 	write_cmos_sensor_twobyte(0X602A, 0XBBF4); \
@@ -271,15 +238,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 preview setting
- *     M3 setting, RZ8_V1.0settings
- *     Bining 30fps
- *
- ****************************************************************************/
 #define _S5K2L7_MODE3_PREVIEW_MODULE_V2_ do {          \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -510,15 +468,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 capture setting
- *     M3 setting, RZ8_V1.0settings
- *     Full 30fps
- *
- ****************************************************************************/
 #define _S5K2L7_MODE3_CAPTURE_MODULE_V2_ do {          \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -749,15 +698,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 high speed video setting
- *     M3 setting, RZ8_V1.0settings
- *     Slim 30fps
- *
- ****************************************************************************/
 #define _S5K2L7_MODE3_HS_VIDEO_MODULE_V2_ do {         \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -986,15 +926,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
 	write_cmos_sensor_twobyte(0X6218, 0X79F0);     \
 } while (0)
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 slim video setting
- *     M3 setting, RZ8_V1.0settings
- *     Slim 30fps
- *
- ****************************************************************************/
 #define _S5K2L7_MODE3_SLIM_VIDEO_MODULE_V2_ do {       \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \
@@ -1223,15 +1154,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3_v2[5] =          \
 	write_cmos_sensor_twobyte(0X6218, 0X79F0);     \
 } while (0)
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 cpature with WDR setting
- *     M3 setting, RZ8_V1.0settings
- *     Full 30fps
- *
- ****************************************************************************/
 #define _S5K2L7_MODE3_CAPTURE_WDR_MODULE_V2_ do {      \
 	write_cmos_sensor_twobyte(0X6028, 0X4000);     \
 	write_cmos_sensor_twobyte(0X6214, 0X7970);     \

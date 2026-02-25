@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_SPM_SLEEP_H__
 #define __MTK_SPM_SLEEP_H__
@@ -9,9 +6,6 @@
 #include <linux/kernel.h>
 #include <mtk_spm.h>
 
-/*
- * for suspend
- */
 extern bool spm_is_md_sleep(void);
 extern bool spm_is_md1_sleep(void);
 extern bool spm_is_md2_sleep(void);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -1226,13 +1223,3 @@ MODULE_DESCRIPTION("Richtek RT9458 Charger driver");
 MODULE_AUTHOR("CY Huang <cy_huang@richtek.com>");
 MODULE_VERSION(RT9458_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.1
- * (1) Replace unsigned long/char with u32/u8
- * (2) Fix setting AICR to 1A ends in no limit
- * (3) Show (no limit) for unlimited AICR in rt9458_charger_dump_registers
- *
- * 1.0.0
- * (1) Initial released
- */

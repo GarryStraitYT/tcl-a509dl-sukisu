@@ -1,29 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     OV12a10mipi_Sensor.c
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 Source code of Sensor driver
- *
- * Setting version:
- * ------------
- *   update full pd setting for OV12a10EB_03B
- *---------------------------------------------------------------------------
- * Upper this line, this part is controlled by CC/CQ. DO NOT MODIFY!!
- *============================================================================
- ****************************************************************************/
 
 #define PFX "ov12a10_camera_sensor"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__

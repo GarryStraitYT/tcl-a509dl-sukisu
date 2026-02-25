@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #ifndef __MTK_MCDI_CPC_H__
 #define __MTK_MCDI_CPC_H__
@@ -11,10 +8,6 @@
 
 #define CPC_LAT_NAME_SIZE 36
 
-/**
- * number of profile type :
- *  - (number of cpu type) * (cpu/cluster state) + mcusys
- */
 #define PROF_TYPE_NUM (NF_CPU_TYPE * 2 + 1)
 
 enum prof_distribute {

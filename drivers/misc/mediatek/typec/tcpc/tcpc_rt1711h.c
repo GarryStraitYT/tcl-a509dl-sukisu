@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -1330,12 +1327,6 @@ static int rt_parse_dt(struct rt1711_chip *chip, struct device *dev)
 	return ret < 0 ? ret : 0;
 }
 
-/*
- * In some platform pr_info may spend too much time on printing debug message.
- * So we use this function to test the printk performance.
- * If your platform cannot not pass this check function, please config
- * PD_DBG_INFO, this will provide the threaded debug message for you.
- */
 #if TCPC_ENABLE_ANYMSG
 static void check_printk_performance(void)
 {
@@ -1742,17 +1733,3 @@ MODULE_AUTHOR("Jeff Chang <jeff_chang@richtek.com>");
 MODULE_DESCRIPTION("RT1711 TCPC Driver");
 MODULE_VERSION(RT1711H_DRV_VERSION);
 
-/**** Release Note ****
- * 2.0.3_MTK
- * (1) Single Rp as Attatched.SRC for Ellisys TD.4.9.4
- *
- * 2.0.2_MTK
- * (1) Replace wake_lock with wakeup_source
- * (2) Move down the shipping off
- * (3) Add support for NoRp.SRC
- * (4) Reg0x71[7] = 1'b1 to workaround unstable VDD Iq in low power mode
- * (5) Add get_alert_mask of tcpc_ops
- *
- * 2.0.1_MTK
- * First released PD3.0 Driver on MTK platform
- */

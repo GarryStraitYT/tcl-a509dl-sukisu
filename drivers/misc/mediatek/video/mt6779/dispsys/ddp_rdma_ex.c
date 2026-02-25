@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "RDMA"
 #include "ddp_log.h"
@@ -413,9 +410,6 @@ void rdma_cal_golden_setting(unsigned int idx, unsigned int bpp,
 	gs[GS_RDMA_RSZ_FIFO_SIZE] = 1536;
 }
 
-/* Set register with value from rdma_cal_golden_setting.
- * Do not do any math here!
- */
 static void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 			     struct golden_setting_context *gsc)
 {

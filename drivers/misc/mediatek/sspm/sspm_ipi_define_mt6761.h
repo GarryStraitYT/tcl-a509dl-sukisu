@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __SSPM_IPI_DEFINE_H__
 #define __SSPM_IPI_DEFINE_H__
@@ -62,9 +59,6 @@
 #error "MBOX2 cannot hold all pin definitions"
 #endif
 
-/* mutex_send, sema_ack, mbox, slot, size,
- * shared, retdata, lock, share_grp, polling, unused
- */
 struct _pin_send mt6761_send_pintable[] = {
 	{{{0} }, {0}, 0, PINS_OFFSET_PLATFORM, PINS_SIZE_PLATFORM,
 	 0, 1, 0, 0, 0, 0},

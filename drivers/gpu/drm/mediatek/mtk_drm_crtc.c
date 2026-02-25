@@ -1,15 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <asm/barrier.h>
 #include <drm/drmP.h>
@@ -26,17 +14,6 @@
 #include "mtk_drm_gem.h"
 #include "mtk_drm_plane.h"
 
-/**
- * struct mtk_drm_crtc - MediaTek specific crtc structure.
- * @base: crtc object.
- * @enabled: records whether crtc_enable succeeded
- * @planes: array of 4 drm_plane structures, one for each overlay plane
- * @pending_planes: whether any plane has pending changes to be applied
- * @config_regs: memory mapped mmsys configuration register space
- * @mutex: handle to one of the ten disp_mutex streams
- * @ddp_comp_nr: number of components in ddp_comp
- * @ddp_comp: array of pointers the mtk_ddp_comp structures used by this crtc
- */
 struct mtk_drm_crtc {
 	struct drm_crtc			base;
 	bool				enabled;

@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_I2S0dl1.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio I2S0dl1 and Dl1 playback
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include <linux/dma-mapping.h>
 #include <sound/pcm_params.h>
@@ -55,9 +22,6 @@ static unsigned int mPlaybackDramState;
 
 static bool vcore_dvfs_enable;
 
-/*
- *    function implementation
- */
 
 static int mtk_I2S0dl1_probe(struct platform_device *pdev);
 static int mtk_pcm_I2S0dl1_close(struct snd_pcm_substream *substream);

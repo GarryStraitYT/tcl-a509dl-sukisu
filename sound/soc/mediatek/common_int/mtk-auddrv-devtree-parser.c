@@ -1,32 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *   AudDrv_devtree_parser.c
- *
- * Project:
- * --------
- *
- *
- * Description:
- * ------------
- *   AudDrv_devtree_parser
- *
- * Author:
- * -------
- *   Chipeng Chang (mtk02308)
- *
- *-----------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 #include "mtk-auddrv-devtree-parser.h"
 
 static int bAuddrv_Dev_Tree_Init;

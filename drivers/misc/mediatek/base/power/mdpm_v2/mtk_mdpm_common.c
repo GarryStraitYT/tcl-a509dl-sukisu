@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 
 #include <linux/kernel.h>
@@ -134,9 +131,6 @@ static int mt_mdpm_debug_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * enable debug message
- */
 static ssize_t mt_mdpm_debug_proc_write
 (struct file *file, const char __user *buffer, size_t count, loff_t *data)
 {

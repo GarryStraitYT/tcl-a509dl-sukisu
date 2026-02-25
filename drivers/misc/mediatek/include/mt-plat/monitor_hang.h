@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #if !defined(__MONITOR_HANG_H__)
 #define __MONITOR_HANG_H__

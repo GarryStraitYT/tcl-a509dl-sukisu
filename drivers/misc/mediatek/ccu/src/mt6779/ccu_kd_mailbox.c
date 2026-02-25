@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #include <linux/io.h>
 
@@ -15,9 +12,6 @@ static struct ccu_mailbox_t *_apmcu_mailbox;
 
 static enum mb_result _mailbox_write_to_buffer(struct ccu_msg *task);
 
-/*******************************************************************************
-* Public functions
-********************************************************************************/
 enum mb_result mailbox_init(struct ccu_mailbox_t *apmcu_mb_addr, struct ccu_mailbox_t *ccu_mb_addr)
 {
 		_ccu_mailbox = ccu_mb_addr;
@@ -96,9 +90,6 @@ enum mb_result mailbox_receive_cmd(struct ccu_msg *task)
 }
 
 
-/*******************************************************************************
-* Private functions
-********************************************************************************/
 static int ccu_msg_copy(struct ccu_msg *dest, struct ccu_msg *src)
 {
 		/*LOG_DBG("src->msg_id: %d\n", src->msg_id);*/

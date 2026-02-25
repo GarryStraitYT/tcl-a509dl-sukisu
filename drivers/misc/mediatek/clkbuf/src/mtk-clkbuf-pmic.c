@@ -1,14 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: owen.chen <owen.chen@mediatek.com>
- */
 
-/*
- * @file    mtk-clk-buf-hw.c
- * @brief   Driver for clock buffer control of each platform
- *
- */
 #include <linux/kobject.h>
 #include <linux/slab.h>
 #include <linux/string.h>

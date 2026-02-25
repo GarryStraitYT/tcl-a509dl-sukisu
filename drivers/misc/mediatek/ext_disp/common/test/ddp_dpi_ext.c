@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "dpi_dvt_test.h"
 
@@ -412,54 +409,6 @@ int enableAndGetChecksum(void)
 	return checkSumNum;
 }
 
-/*
- * int enableAndGetChecksumCmdq(struct cmdqRecStruct *cmdq_handle)
-{
-	DPI_EXT_LOG_PRINT("enableAndGetChecksumCmdq\n");
-
-	//loop
-	{
-		//poll vsync status
-		cmdqRecPoll(cmdq_handle, DPI_PHY_ADDR+0xC, 0x1, 0x1);
-
-		//stop DPI
-		cmdqRecWrite(cmdq_handle, DPI_PHY_ADDR, 0x0, 0x1);
-
-		//wait a token,
-		//wait vsync isr to read checksum and then set token
-		cmdqRecWait(cmdq_handle, CMDQ_SYNC_TOKEN_STREAM_EOF);
-		cmdqRecClearEventToken(cmdq_handle, CMDQ_SYNC_TOKEN_STREAM_EOF);
-
-		//start DPI
-		cmdqRecWrite(cmdq_handle, DPI_PHY_ADDR, 0x1, 0x1);
-
-		//wait a token,
-		//wait vsync isr to read checksum and then set token
-		cmdqRecWait(cmdq_handle, CMDQ_SYNC_TOKEN_STREAM_EOF);
-		cmdqRecClearEventToken(cmdq_handle, CMDQ_SYNC_TOKEN_STREAM_EOF);
-
-		//enable checksum
-		cmdqRecWrite(cmdq_handle, DPI_PHY_ADDR+0x48,
-				0x80000000, 0x80000000);
-		DPI_EXT_LOG_PRINT("DISPSYS_DPI_BASE+0x48: 0x%x\n",
-				DISPSYS_DPI_BASE+0x48);
-
-		//poll checksum status
-		cmdqRecPoll(cmdq_handle, DPI_PHY_ADDR+0x48,
-			0x40000000, 0x40000000);
-
-		// dump trigger loop instructions
-	    cmdqRecDumpCommand(cmdq_handle);
-
-		cmdqRecStartLoop(cmdq_handle);
-
-		CMDQ_Handle = cmdq_handle;
-		s_isCmdqInited = true;
-	}
-
-	return 0;
-}
-*/
 
 unsigned int configDpiRepetition(void)
 {

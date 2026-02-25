@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 
@@ -1065,6 +1062,10 @@ static ssize_t LCM_info_show(struct device *dev,struct device_attribute *attr, c
 		ret=strlcpy(retstr,"ILI9881D:TDT:720x1440",sizeof(retstr));
 	}else if (!strncmp(lcm_name, "bangkok_coe_gc9702p_hd_dsi_vdo",sizeof(lcm_name))) {
 		ret=strlcpy(retstr,"GC9702P:COE:720x1440",sizeof(retstr));
+	}else if (!strncmp(lcm_name, "bangkok_ykl_xm96120_hd_dsi_vdo",sizeof(lcm_name))) {
+		ret=strlcpy(retstr,"XM96120:YKL:720x1440",sizeof(retstr));
+	}else if (!strncmp(lcm_name, "bangkok_coe_gh1001_hd_dsi_vdo",sizeof(lcm_name))) {
+		ret=strlcpy(retstr,"GH1001:COE:720x1440",sizeof(retstr));
 	}else{
 		ret=strlcpy(retstr,"NA:NA:NA",sizeof(retstr));
 	}
@@ -1102,6 +1103,8 @@ static ssize_t LCM_info_show(struct device *dev,struct device_attribute *attr, c
 		ret=strcpy(retstr,"ILI9881D:TDT:720x1440");
 	}else if (!strcmp(lcm_name, "bangkok_coe_gc9702p_hd_dsi_vdo")) {
 		ret=strcpy(retstr,"GC9702P:COE:720x1440");
+	}else if (!strcmp(lcm_name, "bangkok_ykl_xm96120_hd_dsi_vdo")) {
+		ret=strcpy(retstr,"XM96120:YKL:720x1440");
 	//bangkok tf end
      //begin add by yusen.ke.sz for show lcm information on 2020/12/24
      }else if (!strcmp(lcm_name, "tokyolitetmo_nt36525bh_hd_dsi_vdo")) {

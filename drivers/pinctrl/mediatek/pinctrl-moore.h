@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017-2018 MediaTek Inc.
- *
- * Author: Sean Wang <sean.wang@mediatek.com>
- *
- */
 #ifndef __PINCTRL_MOORE_H
 #define __PINCTRL_MOORE_H
 

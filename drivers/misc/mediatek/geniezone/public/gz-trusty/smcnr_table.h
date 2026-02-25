@@ -1,19 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
 
 
 #ifndef __SMCALL_TABLE_H__
@@ -22,17 +9,6 @@
 #include <gz-trusty/smcall_mtee.h>
 #include <gz-trusty/trusty.h>
 
-/* enum smc_functions:
- * Define all SMC functions of GenieZone.
- * SMCF means SMC Function.
- * The value of this enum corresponds to the array index of gz_smcnr_table.
- * Steps of adding a new SMC number:
- *   1. Define SMC number in smcall_mtee.h.
- *   2. Create an element which should be named as SMCF_[SC/FC]_[function name]
- *      in this enum.
- *   2. Insert an element to gz_smcnr_table and set the SMC number for TEEs.
- *   3. Access the SMC number by MTEE_SMCNR_TID or MTEE_SMCNR.
- */
 enum smc_functions {
 	SMCF_NONE = 0,
 	SMCF_FC_RESERVED,

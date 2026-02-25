@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/vmalloc.h>         /* needed by vmalloc */
 #include <linux/sysfs.h>
@@ -265,9 +262,6 @@ void scp_sub_header_init(void *bufp)
 	scp_sub_head->scp_head_magic_end = 0xDEADBEEF;
 }
 
-/*
- * return last lr for debugging
- */
 uint32_t scp_dump_lr(void)
 {
 	if (is_scp_ready(SCP_A_ID))
@@ -276,9 +270,6 @@ uint32_t scp_dump_lr(void)
 		return 0xFFFFFFFF;
 }
 
-/*
- * return last pc for debugging
- */
 uint32_t scp_dump_pc(void)
 {
 	if (is_scp_ready(SCP_A_ID))
@@ -287,9 +278,6 @@ uint32_t scp_dump_pc(void)
 		return 0xFFFFFFFF;
 }
 
-/*
- * dump scp register for debugging
- */
 void scp_A_dump_regs(void)
 {
 	uint32_t tmp;
@@ -329,10 +317,6 @@ void scp_A_dump_regs(void)
 	pr_debug("[SCP]BUS:PC LATCH,  0x%x\n", readl(SCP_DEBUG_IRQ_INFO));
 }
 
-/*
- * save scp register when scp crash
- * these data will be used to generate EE
- */
 void scp_aee_last_reg(void)
 {
 	pr_debug("[SCP] %s begins\n", __func__);
@@ -347,13 +331,6 @@ void scp_aee_last_reg(void)
 	pr_debug("[SCP] %s ends\n", __func__);
 }
 
-/*
- * this function need SCP to keeping awaken
- * scp_crash_dump: dump scp tcm info.
- * @param MemoryDump:   scp dump struct
- * @param scp_core_id:  core id
- * @return:             scp dump size
- */
 static unsigned int scp_crash_dump(struct MemoryDump *pMemoryDump,
 		enum scp_core_id id)
 {
@@ -437,11 +414,6 @@ static unsigned int scp_crash_dump(struct MemoryDump *pMemoryDump,
 
 	return scp_dump_size;
 }
-/*
- * generate aee argument without dump scp register
- * @param aed_str:  exception description
- * @param aed:      struct to store argument for aee api
- */
 static void scp_prepare_aed(char *aed_str, struct scp_aed_cfg *aed)
 {
 	char *detail, *log;
@@ -478,12 +450,6 @@ static void scp_prepare_aed(char *aed_str, struct scp_aed_cfg *aed)
 	pr_debug("[SCP] %s ends\n", __func__);
 }
 
-/*
- * generate aee argument with scp register dump
- * @param aed_str:  exception description
- * @param aed:      struct to store argument for aee api
- * @param id:       identify scp core id
- */
 static void scp_prepare_aed_dump(char *aed_str,
 		struct scp_aed_cfg *aed,
 		enum scp_core_id id)
@@ -559,10 +525,6 @@ static void scp_prepare_aed_dump(char *aed_str,
 	pr_debug("[SCP] %s ends\n", __func__);
 }
 
-/*
- * generate an exception according to exception type
- * @param type: exception type
- */
 void scp_aed(enum scp_excep_id type, enum scp_core_id id)
 {
 	struct scp_aed_cfg aed;
@@ -625,12 +587,6 @@ void scp_aed(enum scp_excep_id type, enum scp_core_id id)
 	mutex_unlock(&scp_excep_mutex);
 }
 
-/*
- * generate an exception and reset scp right now
- * NOTE: this function may be blocked and
- * should not be called in interrupt context
- * @param type: exception type
- */
 void scp_aed_reset_inplace(enum scp_excep_id type, enum scp_core_id id)
 {
 	pr_debug("[SCP] %s begins\n", __func__);
@@ -655,13 +611,6 @@ void scp_aed_reset_inplace(enum scp_excep_id type, enum scp_core_id id)
 #endif
 }
 
-/*
- * callback function for work struct
- * generate an exception and reset scp
- * NOTE: this function may be blocked
- * and should not be called in interrupt context
- * @param ws:   work struct
- */
 static void scp_aed_reset_ws(struct work_struct *ws)
 {
 	struct scp_work_struct *sws = container_of(ws,
@@ -675,10 +624,6 @@ static void scp_aed_reset_ws(struct work_struct *ws)
 }
 
 
-/*
- * schedule a work to generate an exception and reset scp
- * @param type: exception type
- */
 void scp_aed_reset(enum scp_excep_id type, enum scp_core_id id)
 {
 	scp_aed_work.flags = (unsigned int) type;
@@ -719,9 +664,6 @@ struct bin_attribute bin_attr_scp_dump = {
 
 
 
-/*
- * init a work struct
- */
 int scp_excep_init(void)
 {
 	int dram_size = 0;
@@ -771,11 +713,6 @@ _err:
 }
 
 
-/******************************************************************************
- * This function is called in the interrupt context. Note that scp_region_info
- * was initialized in scp_region_info_init() which must be called before this
- * function is called.
- *****************************************************************************/
 void scp_ram_dump_init(void)
 {
 #if SCP_RECOVERY_SUPPORT
@@ -786,9 +723,6 @@ void scp_ram_dump_init(void)
 }
 
 
-/*
- * cleanup scp exception
- */
 void scp_excep_cleanup(void)
 {
 	vfree(scp_A_detail_buffer);

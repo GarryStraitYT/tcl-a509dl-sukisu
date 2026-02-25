@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __TSPMIC_SETTINGS_H__
 #define __TSPMIC_SETTINGS_H__
@@ -9,10 +6,6 @@
 #include <mach/upmu_hw.h>
 #include <mach/mtk_pmic_wrap.h>
 
-/*=============================================================
- * Genernal
- *=============================================================
- */
 #define MIN(_a_, _b_) ((_a_) > (_b_) ? (_b_) : (_a_))
 #define MAX(_a_, _b_) ((_a_) > (_b_) ? (_a_) : (_b_))
 #define _BIT_(_bit_)		(unsigned int)(1 << (_bit_))

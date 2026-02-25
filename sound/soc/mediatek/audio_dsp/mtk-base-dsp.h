@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk-base-dsp.h --  Mediatek ADSP dsp base
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chipeng <Chipeng.chang@mediatek.com>
- */
 
 
 

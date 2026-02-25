@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <mt-plat/mtk_pwm_hal_pub.h>
@@ -16,9 +13,6 @@
 #include <linux/of_irq.h>
 #endif
 
-/**********************************
- * Global  data
- ***********************************/
 enum {
 	PWM_CON,
 	PWM_HDURATION,
@@ -501,17 +495,11 @@ void pwm_debug_show_hal(void)
 }
 
 /*----------3dLCM support-----------*/
-/*
- *base pwm2, select pwm3&4&5 same as pwm2 or inversion of pwm2
- */
 void mt_set_pwm_3dlcm_enable_hal(u8 enable)
 {
 	SETREG32(PWM_3DLCM, 1 << PWM_3DLCM_ENABLE_OFFSET);
 }
 
-/*
- *set "pwm_no" inversion of pwm base or not
- */
 void mt_set_pwm_3dlcm_inv_hal(u32 pwm_no, u8 inv)
 {
 	/*set "pwm_no" as auxiliary first */

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT_PWM_H__
 #define __MT_PWM_H__
@@ -102,9 +99,6 @@ void mt_pwm_disable(u32 pwm_no, u8 pmic_pad);
 
 /*----------3dLCM support-----------*/
 void mt_set_pwm_3dlcm_enable(u8 enable);
-/*
- * set "pwm_no" inversion of pwm base or not
- */
 void mt_set_pwm_3dlcm_inv(u32 pwm_no, u8 inv);
 /* void mt_set_pwm_3dlcm_base(u32 pwm_no); */
 

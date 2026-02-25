@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Authors:
- *	Perry Hsu <perry.hsu@mediatek.com>
- *	Stanley Chu <stanley.chu@mediatek.com>
- */
 
 #define DEBUG 1
 #define SECTOR_SHIFT 12
@@ -351,11 +345,6 @@ void ufs_mtk_biolog_check(unsigned long req_mask)
 	mtk_btag_klog(ufs_mtk_btag, tr);
 }
 
-/*
- * snprintf may return a value of size or "more" to indicate
- * that the output was truncated, thus be careful of "more"
- * case.
- */
 #define SPREAD_PRINTF(buff, size, evt, fmt, args...) \
 do { \
 	if (buff && size && *(size)) { \

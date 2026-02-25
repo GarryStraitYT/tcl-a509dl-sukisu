@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -1199,9 +1196,6 @@ static tcpc_hrtimer_call tcpc_timer_call[PD_TIMER_NR] = {
 #endif
 };
 
-/*
- * [BLOCK] Control Timer
- */
 
 static void __tcpc_enable_wakeup_timer(struct tcpc_device *tcpc, bool en)
 {

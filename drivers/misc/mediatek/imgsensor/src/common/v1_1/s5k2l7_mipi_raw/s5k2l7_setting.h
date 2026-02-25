@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     s5k2l7_setting.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor setting file
- *
- ****************************************************************************/
 #ifndef _s5k2l7MIPI_SETTING_H_
 #define _s5k2l7MIPI_SETTING_H_
 

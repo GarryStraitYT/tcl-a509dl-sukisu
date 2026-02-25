@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #include <linux/of.h>
 #include <linux/of_address.h>
@@ -364,10 +361,6 @@ int sync_dcm_set_cpu_div(unsigned int cci, unsigned int mp0,
 	return 0;
 }
 
-/*****************************************
- * following is implementation per DCM module.
- * 1. per-DCM function is 1-argu with ON/OFF/MODE option.
- *****************************************/
 int dcm_topckg(int on)
 {
 	return 0;

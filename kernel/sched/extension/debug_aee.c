@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef CONFIG_MTK_AEE_IPANIC
 /* for turn on/off debug.c's log */
@@ -16,10 +13,6 @@
 #include <linux/delay.h>
 #include <linux/sched/signal.h>
 
-/*
- * from kernel/sched/debug.c
- * Ease the printing of nsec fields:
- */
 static long long nsec_high(unsigned long long nsec)
 {
 	if ((long long)nsec < 0) {

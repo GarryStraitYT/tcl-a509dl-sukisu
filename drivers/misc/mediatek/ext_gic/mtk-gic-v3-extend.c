@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -163,12 +160,6 @@ u32 mt_irq_get_pol(u32 irq)
 	return mt_irq_get_pol_hw(hwirq);
 }
 
-/*
- * mt_irq_mask_all: disable all interrupts
- * @mask: pointer to struct mtk_irq_mask for storing the original mask value.
- * Return 0 for success; return negative values for failure.
- * (This is ONLY used for the idle current measurement by the factory mode.)
- */
 int mt_irq_mask_all(struct mtk_irq_mask *mask)
 {
 	void __iomem *dist_base;
@@ -215,12 +206,6 @@ int mt_irq_mask_all(struct mtk_irq_mask *mask)
 	}
 }
 
-/*
- * mt_irq_mask_restore: restore all interrupts
- * @mask: pointer to struct mtk_irq_mask for storing the original mask value.
- * Return 0 for success; return negative values for failure.
- * (This is ONLY used for the idle current measurement by the factory mode.)
- */
 int mt_irq_mask_restore(struct mtk_irq_mask *mask)
 {
 	void __iomem *dist_base;
@@ -368,11 +353,6 @@ void mt_irq_unmask_for_sleep_ex(unsigned int virq)
 	mb();
 }
 
-/*
- * mt_irq_unmask_for_sleep: enable an interrupt for the sleep manager's use
- * @irq: interrupt id
- * (THIS IS ONLY FOR SLEEP FUNCTION USE. DO NOT USE IT YOURSELF!)
- */
 void mt_irq_unmask_for_sleep(unsigned int hwirq)
 {
 	void __iomem *dist_base;
@@ -391,11 +371,6 @@ void mt_irq_unmask_for_sleep(unsigned int hwirq)
 	mb();
 }
 
-/*
- * mt_irq_mask_for_sleep: disable an interrupt for the sleep manager's use
- * @irq: interrupt id
- * (THIS IS ONLY FOR SLEEP FUNCTION USE. DO NOT USE IT YOURSELF!)
- */
 void mt_irq_mask_for_sleep(unsigned int irq)
 {
 	void __iomem *dist_base;

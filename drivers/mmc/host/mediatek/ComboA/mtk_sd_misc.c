@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <generated/autoconf.h>
 #include <linux/module.h>
@@ -43,9 +40,6 @@
 #define MMC_IOCTL_PR_DBG(fmt, args...)
 #endif
 
-/*
- * For simple_sd_ioctl
- */
 #define FORCE_IN_DMA            (0x11)
 #define FORCE_IN_PIO            (0x10)
 #define FORCE_NOTHING           (0x0)
@@ -743,9 +737,6 @@ end:
 }
 
 #ifdef CONFIG_PWR_LOSS_MTK_TEST
-/* These definitiona and functions are coded by reference to
- * mmc_blk_issue_discard_rq()@block.c
- */
 #define INAND_CMD38_ARG_EXT_CSD  113
 #define INAND_CMD38_ARG_ERASE    0x00
 #define INAND_CMD38_ARG_TRIM     0x01

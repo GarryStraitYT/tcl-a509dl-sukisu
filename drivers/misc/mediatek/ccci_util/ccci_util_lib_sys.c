@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 //#include <mt-plat/sync_write.h>
 #include "mt-plat/mtk_ccci_common.h"
@@ -246,9 +243,6 @@ static ssize_t ccci_lk_load_md_show(char *buf)
 CCCI_ATTR(lk_md, 0444, &ccci_lk_load_md_show, NULL);
 
 /* Sys -- get ccci private feature info */
-/* If platform has special feature setting,
- * platform code will implemet this function
- */
 int __attribute__((weak)) ccci_get_plat_ft_inf(char buf[], int size)
 {
 	return (ssize_t)snprintf(buf, size, "ft_inf_ver:1");

@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_hw_regs.h - MediaTek USB3 DRD register and field definitions
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #ifndef _SSUSB_HW_REGS_H_
 #define _SSUSB_HW_REGS_H_

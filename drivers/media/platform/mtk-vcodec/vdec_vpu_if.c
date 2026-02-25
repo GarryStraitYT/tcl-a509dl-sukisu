@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "mtk_vcodec_drv.h"
 #include "mtk_vcodec_util.h"
@@ -23,10 +20,6 @@ static void handle_init_ack_msg(struct vdec_vpu_ipi_init_ack *msg)
 	mtk_vcodec_debug(vpu, "- vcu_inst_addr = 0x%x", vpu->inst_addr);
 }
 
-/*
- * This function runs in interrupt context and it means there's an IPI MSG
- * from VPU.
- */
 void vpu_dec_ipi_handler(void *data, unsigned int len, void *priv)
 {
 	struct vdec_vpu_ipi_ack *msg = data;

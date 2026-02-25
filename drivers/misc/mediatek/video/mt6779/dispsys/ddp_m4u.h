@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __DSI_M4U_H__
 #define __DSI_M4U_H__
@@ -21,10 +17,6 @@
 extern "C" {
 #endif
 
-/**
- * display m4u port wrapper
- * -- by chip
- */
 #if defined(CONFIG_MTK_M4U)
 /* larb 0 */
 /* TODO: PVRIC, postmask, fake engine */
@@ -92,13 +84,17 @@ void disp_ion_cache_flush(struct ion_client *client, struct ion_handle *handle,
 #endif
 void disp_ion_destroy(struct ion_client *client);
 
-#ifdef CONFIG_MTK_IOMMU_V2
+int disp_hal_allocate_framebuffer(phys_addr_t pa_start, phys_addr_t pa_end,
+				  unsigned long *va, unsigned long *mva);
+
 #ifdef MTKFB_M4U_SUPPORT
 int disp_allocate_mva(struct m4u_client_t *client, enum DISP_MODULE_ENUM module,
 		      unsigned long va, struct sg_table *sg_table,
 		      unsigned int size, unsigned int prot, unsigned int flags,
 		      unsigned int *pMva);
 #endif
+
+#ifdef CONFIG_MTK_IOMMU_V2
 int disp_aosp_set_dev(struct device *dev);
 int disp_aosp_release_reserved_area(phys_addr_t pa_start,
 		     phys_addr_t pa_end);
@@ -107,13 +103,9 @@ int disp_aosp_alloc_iova(struct device *dev, phys_addr_t pa_start,
 		     unsigned long *va,
 		     dma_addr_t *iova);
 
-#ifdef CONFIG_MTK_IOMMU_V2
+
 int disp_aosp_mmap(struct vm_area_struct *vma, unsigned long va,
 	unsigned long mva, unsigned int size);
-#endif
-
-int disp_hal_allocate_framebuffer(phys_addr_t pa_start, phys_addr_t pa_end,
-				  unsigned long *va, unsigned long *mva);
 #endif
 
 #ifdef __cplusplus

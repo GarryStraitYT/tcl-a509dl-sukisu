@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Samuel Hsieh <samuel.hsieh@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/mutex.h>

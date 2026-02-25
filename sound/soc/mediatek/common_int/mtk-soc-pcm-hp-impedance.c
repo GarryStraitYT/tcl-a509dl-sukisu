@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_hp_impedance.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio dl1 impedance setting
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -58,9 +25,6 @@ static struct afe_mem_control_t *pHp_impedance_MemControl;
 
 static struct snd_dma_buffer *Dl1_Hp_Playback_dma_buf;
 
-/*
- *    function implementation
- */
 
 static int mtk_soc_hp_impedance_probe(struct platform_device *pdev);
 static int mtk_soc_pcm_hp_impedance_close(struct snd_pcm_substream *substream);

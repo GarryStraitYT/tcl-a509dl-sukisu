@@ -1,27 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- *
- * Filename:
- * ---------
- *    mtk_charger.c
- *
- * Project:
- * --------
- *   Android_Software
- *
- * Description:
- * ------------
- *   This Module defines functions of Battery charging
- *
- * Author:
- * -------
- * Wy Chuang
- *
- */
 #include <linux/init.h>		/* For init/exit macros */
 #include <linux/module.h>	/* For MODULE_ marcros  */
 #include <linux/fs.h>
@@ -464,13 +442,6 @@ int pe4_hal_enable_charger(struct chg_alg_device *alg,
 }
 
 
-/**
- *
- * RETURNS:
- * 0: success
- * 1: not support
- * other: error
- */
 int pe40_hal_get_adapter_output(struct chg_alg_device *alg,
 	struct pe4_pps_status *pe4_status)
 {

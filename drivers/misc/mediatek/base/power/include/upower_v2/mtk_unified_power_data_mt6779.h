@@ -1,16 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 /* Lafite_TPPA_FY_0817 */
 
-/**********************************************
- * unified_power_data.h
- * This header file includes:
- * 1. Macros of SRAM related address
- * 2. Raw datas of unified power tables for each bank
- **********************************************/
 
 #ifndef UNIFIED_POWER_DATA_H
 #define UNIFIED_POWER_DATA_H

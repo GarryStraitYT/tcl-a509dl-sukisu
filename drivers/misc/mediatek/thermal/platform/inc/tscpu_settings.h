@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __TSCPU_SETTINGS_H__
 #define __TSCPU_SETTINGS_H__
@@ -17,10 +14,6 @@
 #include "tscpu_tsense_config.h"
 #include "tscpu_lvts_config.h"
 
-/*=============================================================
- * Genernal
- *=============================================================
- */
 #define MIN(_a_, _b_) ((_a_) > (_b_) ? (_b_) : (_a_))
 #define MAX(_a_, _b_) ((_a_) > (_b_) ? (_a_) : (_b_))
 #define _BIT_(_bit_)		(unsigned int)(1 << (_bit_))
@@ -49,10 +42,6 @@
 		}	\
 	} while (0)
 
-/*=============================================================
- * CONFIG (SW related)
- *=============================================================
- */
 /*Enable thermal controller CG*/
 #define THERMAL_EBABLE_TC_CG
 
@@ -76,11 +65,6 @@
 /* 1: turn on supports to MET logging; 0: turn off */
 #define CONFIG_SUPPORT_MET_MTKTSCPU				(0)
 
-/*
- * Thermal controller HW filtering function.
- * Only 1, 2, 4, 8, 16 are valid values,
- * they means one reading is a avg of X samples
- */
 #define THERMAL_CONTROLLER_HW_FILTER			(2) /* 1, 2, 4, 8, 16 */
 
 /* 1: turn on thermal controller HW thermal protection; 0: turn off */
@@ -108,10 +92,6 @@
 /* 1: thermal driver update temp to MET directly, use hrtimer; 0: turn off */
 #define THERMAL_DRV_UPDATE_TEMP_DIRECT_TO_MET	(1)
 
-/* Define this in tscpu_settings.h enables this feature.
- * It polls CPU TS in hrtimer and
- * run ATM in RT 98 kthread. This is for MT6799 only.
- */
 #define FAST_RESPONSE_ATM						(1)
 #define THERMAL_INIT_VALUE						(0xDA1)
 #define CLEAR_TEMP 26111
@@ -156,10 +136,6 @@
 #define DUMP_VCORE_VOLTAGE (0)
 #endif
 #define LVTS_VALID_DATA_TIME_PROFILING (0)
-/*=============================================================
- *REG ACCESS
- *=============================================================
- */
 /* double check */
 #define TS_CONFIGURE		TS_CON1_TM	/* depend on CPU design*/
 #define TS_CONFIGURE_P		TS_CON1_P	/* depend on CPU design*/
@@ -193,21 +169,10 @@
 #define THERMAL_DCM	(therm_clk_infracfg_ao_base + 0x70)
 #endif
 
-/*=============================================================
- * Common Structure and Enum
- *=============================================================
- */
 #if (CONFIG_THERMAL_AEE_RR_REC == 1)
 #define THERMAL_AEE_SELECTED_TS
 
 #if defined(THERMAL_AEE_SELECTED_TS)
-/* AEE reserved 10 slots of thermal zone temperature
- * in drivers/misc/mediatek/ram_console/mtk_ram_console.c
- *    #define THERMAL_RESERVED_TZS (10)
- *
- * So, THERMAL_AEE_MAX_SELECTED_TS should not larger than
- * THERMAL_RESERVED_TZS
- */
 #define THERMAL_AEE_MAX_SELECTED_TS (10)
 extern int (*get_aee_selected_tsX[THERMAL_AEE_MAX_SELECTED_TS])(void);
 #endif
@@ -234,10 +199,6 @@ struct mtk_cpu_power_info {
 	unsigned int cpufreq_power;
 };
 
-/*=============================================================
- * Tsense Structure and Enum
- *=============================================================
- */
 
 /* private thermal sensor enum */
 enum tsmcu_sensor_enum {
@@ -276,10 +237,6 @@ struct thermal_controller {
 	struct thermal_controller_speed tc_speed;
 };
 
-/*=============================================================
- * LVTS Structure and Enum
- *=============================================================
- */
 #if CFG_THERM_LVTS
 /* private thermal sensor enum */
 enum lvts_sensor_enum {
@@ -319,10 +276,6 @@ struct lvts_thermal_controller {
 };
 #endif
 
-/*=============================================================
- * Shared variables
- *=============================================================
- */
 #ifdef CONFIG_OF
 extern u32 thermal_irq_number;
 extern void __iomem *thermal_base;
@@ -338,18 +291,10 @@ extern int pericfg_phy_base;
 #endif
 
 #if PRECISE_HYBRID_POWER_BUDGET
-/*	tscpu_prev_cpu_temp: previous CPUSYS temperature
- *	tscpu_curr_cpu_temp: current CPUSYS temperature
- *	tscpu_prev_gpu_temp: previous GPUSYS temperature
- *	tscpu_curr_gpu_temp: current GPUSYS temperature
- */
 extern int tscpu_curr_cpu_temp;
 extern int tscpu_curr_gpu_temp;
 #endif
 
-/*
- * In src/mtk_tc.c
- */
 extern int temp_eUART;
 extern int temp_dUART;
 
@@ -361,22 +306,13 @@ extern int tscpu_polling_trip_temp2;
 extern int tscpu_polling_factor1;
 extern int tscpu_polling_factor2;
 
-/*
- * temperature array to store both tsmcu and lvts (if exist) and export them
- */
 extern int tscpu_ts_temp[TS_ENUM_MAX];
 extern int tscpu_ts_temp_r[TS_ENUM_MAX]; /* raw data */
 
-/*
- * temperature array to store temp of tsmcu sensor
- */
 extern int tscpu_ts_mcu_temp[L_TS_MCU_NUM];
 extern int tscpu_ts_mcu_temp_r[L_TS_MCU_NUM]; /* raw data */
 
 #if CFG_THERM_LVTS
-/*
- * temperature array to store temp of lvts sensor
- */
 extern int tscpu_ts_lvts_temp[L_TS_LVTS_NUM];
 extern int tscpu_ts_lvts_temp_r[L_TS_LVTS_NUM]; /* raw data */
 #endif
@@ -390,17 +326,11 @@ extern struct regulator *vcore_reg_id;
 #endif
 #if LVTS_VALID_DATA_TIME_PROFILING
 extern unsigned long long SODI3_count, noValid_count;
-/* If isTempValid is 0, it means no valid temperature data
- * between two SODI3 entry points.
- */
 extern int isTempValid;
 extern long long start_timestamp;
 /* count if start_timestamp is bigger than end_timestamp */
 extern int diff_error_count;
 #endif
-/*
- * support LVTS
- */
 #if CFG_THERM_LVTS
 extern int lvts_rawdata_debug_log;
 extern int lvts_debug_log;
@@ -409,10 +339,6 @@ lvts_tscpu_g_tc[LVTS_CONTROLLER_NUM];
 #endif
 
 #if MTKTSCPU_FAST_POLLING
-/* Combined fast_polling_trip_temp and fast_polling_factor,
- * it means polling_delay will be 1/5 of original interval
- * after mtktscpu reports > 65C w/o exit point
- */
 extern int fast_polling_trip_temp;
 extern int fast_polling_trip_temp_high;
 extern int fast_polling_factor;
@@ -463,10 +389,6 @@ extern void atm_restart_hrtimer(void);
 extern unsigned int static_cpu_power_limit;
 extern unsigned int static_gpu_power_limit;
 extern int tscpu_cpu_dmips[CPU_COOLER_NUM];
-/*=============================================================
- * Shared functions
- *=============================================================
- */
 /*In mtk_tc_wrapper.c */
 extern int tscpu_get_curr_max_ts_temp(void);
 extern int tscpu_max_temperature(void);
@@ -505,9 +427,6 @@ extern int (*max_temperature_in_bank[THERMAL_BANK_NUM])(void);
 extern void thermal_disable_all_periodoc_temp_sensing(void);
 extern void read_all_tc_tsmcu_temperature(void);
 
-/*
- * Support LVTS
- */
 #if CFG_THERM_LVTS
 extern int lvts_get_io_reg_base(void);
 extern int lvts_max_temperature(void);
@@ -540,15 +459,7 @@ extern int lvts_tscpu_dump_cali_info(struct seq_file *m, void *v);
 extern void lvts_sodi3_release_thermal_controller(void);
 #endif
 
-/*
- * In drivers/misc/mediatek/gpu/hal/mtk_gpu_utility.c
- * It's not our api, ask them to provide header file
- */
 extern bool mtk_get_gpu_loading(unsigned int *pLoading);
-/*
- * In drivers/misc/mediatek/auxadc/mt_auxadc.c
- * It's not our api, ask them to provide header file
- */
 extern int IMM_IsAdcInitReady(void);
 /*aee related*/
 #if (CONFIG_THERMAL_AEE_RR_REC == 1)
@@ -581,10 +492,6 @@ extern void dump_lvts_register_value(void);
 #if LVTS_VALID_DATA_TIME_PROFILING
 extern void lvts_dump_time_profiling_result(struct seq_file *m);
 #endif
-/*=============================================================
- *LOG
- *=============================================================
- */
 #define TSCPU_LOG_TAG           "[Thermal/TZ/CPU]"
 
 #define tscpu_dprintk(fmt, args...)	\
@@ -597,9 +504,6 @@ extern void lvts_dump_time_profiling_result(struct seq_file *m);
 #define tscpu_printk(fmt, args...)	pr_notice(TSCPU_LOG_TAG fmt, ##args)
 #define tscpu_warn(fmt, args...)	pr_notice(TSCPU_LOG_TAG fmt, ##args)
 
-/*
- * Support LVTS
- */
 #if CFG_THERM_LVTS
 #define LVTS_LOG_TAG            "[Thermal/TZ/LVTS]"
 #define LVTS_LOG_REG_TAG        "[Thermal/TZ/LVTSREG]"
@@ -616,10 +520,6 @@ extern void lvts_dump_time_profiling_result(struct seq_file *m);
 	} while (0)
 #endif
 
-/*=============================================================
- * Register macro for internal use
- *=============================================================
- */
 
 #define THERM_CTRL_BASE_2    thermal_base
 #define AUXADC_BASE_2        auxadc_ts_base
@@ -627,10 +527,6 @@ extern void lvts_dump_time_profiling_result(struct seq_file *m);
 #define APMIXED_BASE_2       th_apmixed_base
 
 
-/*******************************************************************************
- * AUXADC Register Definition
- *****************************************************************************
- */
 
 #define AUXADC_CON0_V       (AUXADC_BASE_2 + 0x000)
 #define AUXADC_CON1_V       (AUXADC_BASE_2 + 0x004)
@@ -673,29 +569,17 @@ extern void lvts_dump_time_profiling_result(struct seq_file *m);
 
 #define AUXADC_MISC_P       (auxadc_ts_phy_base + 0x094)
 
-/*******************************************************************************
- * Peripheral Configuration Register Definition
- *****************************************************************************
- */
 
 /*APB Module infracfg_ao*/
 #define INFRA_GLOBALCON_RST_0_SET (INFRACFG_AO_BASE_2 + 0x120)
 #define INFRA_GLOBALCON_RST_0_CLR (INFRACFG_AO_BASE_2 + 0x124)
 #define INFRA_GLOBALCON_RST_0_STA (INFRACFG_AO_BASE_2 + 0x128)
-/*******************************************************************************
- * APMixedSys Configuration Register Definition
- *****************************************************************************
- */
 /* TODO: check base addr. */
 #define TS_CON0_TM             (APMIXED_BASE_2 + 0x600) /*yes 0x10212000*/
 #define TS_CON1_TM             (APMIXED_BASE_2 + 0x604)
 #define TS_CON0_P           (apmixed_phy_base + 0x600)
 #define TS_CON1_P           (apmixed_phy_base + 0x604)
 
-/*******************************************************************************
- * Thermal Controller Register Mask Definition
- *****************************************************************************
- */
 #define THERMAL_ENABLE_SEN0     0x1
 #define THERMAL_ENABLE_SEN1     0x2
 #define THERMAL_ENABLE_SEN2     0x4

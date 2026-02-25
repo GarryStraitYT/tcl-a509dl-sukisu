@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -4503,13 +4500,6 @@ static void testcase_move_data_between_SRAM(void)
 	CMDQ_LOG("%s END\n", __func__);
 }
 
-/* Make sure driver can execute command on SRAM successfully
- * Coverage:
- *     Cannot start_in_sram with secure task
- *     Cannot flush twice SRAM task
- *     SRAM size should be normal after flush task and destroy task
- *     SRAM execution result should be correct
- */
 static void testcase_run_command_on_SRAM(void)
 {
 	size_t free_sram_size = 0;
@@ -4609,11 +4599,6 @@ static void testcase_read_with_mask(void)
 	CMDQ_LOG("%s END\n", __func__);
 }
 
-/*
- * Test Global CPR
- * 1. initialize and read should be correct
- * 2. no initialize and read should be correct
- */
 static void testcase_global_variable(void)
 {
 	s32 status = 0;
@@ -4692,11 +4677,6 @@ static void testcase_global_variable(void)
 	CMDQ_LOG("%s END\n", __func__);
 }
 
-/*
- * Test Efficient Polling
- * 1. Polling basic function should work
- * 2. Polling should not block low priority thread
- */
 static void testcase_efficient_polling(void)
 {
 	struct cmdqRecStruct *h_poll, *h_low;

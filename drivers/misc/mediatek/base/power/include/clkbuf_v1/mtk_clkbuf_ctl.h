@@ -1,13 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
-/**
- * @file    mtk_clk_buf_ctl.h
- * @brief   Driver for clock buffer control
- *
- */
 #ifndef __MTK_CLK_BUF_CTL_H__
 #define __MTK_CLK_BUF_CTL_H__
 

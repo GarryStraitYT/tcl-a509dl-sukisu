@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author: Flora Fu <flora.fu@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/module.h>
 #include <linux/of.h>
@@ -26,15 +13,6 @@
 #define MT6397_BUCK_MODE_AUTO	0
 #define MT6397_BUCK_MODE_FORCE_PWM	1
 
-/*
- * MT6397 regulators' information
- *
- * @desc: standard fields of regulator description.
- * @qi: Mask for query enable signal status of regulators
- * @vselon_reg: Register sections for hardware control mode of bucks
- * @vselctrl_reg: Register for controlling the buck control mode.
- * @vselctrl_mask: Mask for query buck's voltage control mode.
- */
 struct mt6397_regulator_info {
 	struct regulator_desc desc;
 	u32 qi;

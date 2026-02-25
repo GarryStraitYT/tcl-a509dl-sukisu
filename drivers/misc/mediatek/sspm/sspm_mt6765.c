@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>       /* needed by all modules */
 #include <linux/init.h>         /* needed by module macros */
@@ -197,9 +194,6 @@ static struct platform_driver mtk_mt6765_sspm_driver __refdata = {
 	.id_table = mt6765_sspm_id_table,
 };
 
-/*
- * driver initialization entry point
- */
 static int __init mt6765_sspm_init(void)
 {
 	return platform_driver_register(&mtk_mt6765_sspm_driver);

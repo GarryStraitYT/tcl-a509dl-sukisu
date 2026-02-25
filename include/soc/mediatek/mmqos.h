@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Anthony Huang <anthony.huang@mediatek.com>
- */
 #ifndef MTK_MMQOS_H
 #define MTK_MMQOS_H
 

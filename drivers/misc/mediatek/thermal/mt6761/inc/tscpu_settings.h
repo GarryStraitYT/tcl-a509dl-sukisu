@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- *
- */
 
 #ifndef __TSCPU_SETTINGS_H__
 #define __TSCPU_SETTINGS_H__
@@ -16,10 +12,6 @@
 #include "clatm_initcfg.h"
 #include <linux/platform_device.h>
 
-/*=============================================================
- * Genernal
- *=============================================================
- */
 #define MIN(_a_, _b_) ((_a_) > (_b_) ? (_b_) : (_a_))
 #define MAX(_a_, _b_) ((_a_) > (_b_) ? (_a_) : (_b_))
 #define _BIT_(_bit_)		(unsigned int)(1 << (_bit_))
@@ -47,10 +39,6 @@
 		}	\
 	} while (0)
 
-/*=============================================================
- * CONFIG (SW related)
- *=============================================================
- */
 /*Enable thermal controller CG*/
 #define THERMAL_EBABLE_TC_CG
 
@@ -75,10 +63,6 @@
 /* 1: turn on supports to MET logging; 0: turn off */
 #define CONFIG_SUPPORT_MET_MTKTSCPU				(0)
 
-/* Thermal controller HW filtering function.
- * Only 1, 2, 4, 8, 16 are valid values,
- * they means one reading is a avg of X samples
- */
 #define THERMAL_CONTROLLER_HW_FILTER			(2) /* 1, 2, 4, 8, 16 */
 
 /* 1: turn on thermal controller HW thermal protection; 0: turn off */
@@ -106,19 +90,12 @@
 /* 1: thermal driver update temp to MET directly, use hrtimer; 0: turn off */
 #define THERMAL_DRV_UPDATE_TEMP_DIRECT_TO_MET	(1)
 
-/* Define this in tscpu_settings.h enables this feature.
- * It polls CPU TS in hrtimer and run ATM in RT 98 kthread.
- */
 #define FAST_RESPONSE_ATM						(1)
 #define THERMAL_INIT_VALUE						(0xDA1)
 
 /* 1: mtk_tc.c supports LVTS; 0: o.w. */
 #define CFG_THERM_LVTS							(0)
 
-/*=============================================================
- * Chip related
- *=============================================================
- */
 /* double check */
 //#define TS_CONFIGURE		TS_CON1_TM	/* depend on CPU design*/
 #define TS_CONFIGURE		TS_CON0_TM	/* depend on CPU design*/
@@ -207,10 +184,6 @@
 #else
 #define CONFIG_THERMAL_AEE_RR_REC (0)
 #endif
-/*=============================================================
- *REG ACCESS
- *=============================================================
- */
 
 #define thermal_setl(addr, val)     mt_reg_sync_writel(readl(addr) |	\
 					(val), ((void *)addr))
@@ -233,10 +206,6 @@
 #define THERMAL_CG	(therm_clk_infracfg_ao_base + 0x80)
 #define THERMAL_DCM	(therm_clk_infracfg_ao_base + 0x70)
 #endif
-/*=============================================================
- *LOG
- *=============================================================
- */
 #define TSCPU_LOG_TAG		"[Thermal/TZ/CPU]"
 
 #define tscpu_dprintk(fmt, args...)   \
@@ -249,10 +218,6 @@
 #define tscpu_printk(fmt, args...) pr_notice(TSCPU_LOG_TAG fmt, ##args)
 #define tscpu_warn(fmt, args...)  pr_notice(TSCPU_LOG_TAG fmt, ##args)
 
-/*=============================================================
- * Structures
- *=============================================================
- */
 enum thermal_controller_name {
 	THERMAL_CONTROLLER0 = 0,
 	THERMAL_CONTROLLER1,
@@ -295,10 +260,6 @@ struct mtk_cpu_power_info {
 	unsigned int cpufreq_power;
 };
 
-/*=============================================================
- * Shared variables
- *=============================================================
- */
 /*In src/mtk_tc.c*/
 extern int temp_eUART;
 extern int temp_dUART;
@@ -314,10 +275,6 @@ extern int tscpu_polling_factor1;
 extern int tscpu_polling_factor2;
 
 #if MTKTSCPU_FAST_POLLING
-/* Combined fast_polling_trip_temp and fast_polling_factor,
- *it means polling_delay will be 1/5 of original interval
- *after mtktscpu reports > 65C w/o exit point
- */
 extern int fast_polling_trip_temp;
 extern int fast_polling_trip_temp_high;
 extern int fast_polling_factor;
@@ -352,11 +309,6 @@ extern int bts_cur_temp;	/* in mtk_ts_bts.c */
 #endif
 
 #if PRECISE_HYBRID_POWER_BUDGET
-/*	tscpu_prev_cpu_temp: previous CPUSYS temperature
- *	tscpu_curr_cpu_temp: current CPUSYS temperature
- *	tscpu_prev_gpu_temp: previous GPUSYS temperature
- *	tscpu_curr_gpu_temp: current GPUSYS temperature
- */
 extern int tscpu_prev_cpu_temp, tscpu_prev_gpu_temp;
 extern int tscpu_curr_cpu_temp, tscpu_curr_gpu_temp;
 #endif
@@ -391,10 +343,6 @@ extern void atm_restart_hrtimer(void);
 extern unsigned int static_cpu_power_limit;
 extern unsigned int static_gpu_power_limit;
 extern int tscpu_cpu_dmips[CPU_COOLER_NUM];
-/*=============================================================
- * Shared functions
- *=============================================================
- */
 /*In common/thermal_zones/mtk_ts_cpu.c*/
 extern void thermal_init_interrupt_for_UART(int temp_e, int temp_d);
 extern void tscpu_update_tempinfo(void);
@@ -429,15 +377,7 @@ extern void thermal_release_all_periodoc_temp_sensing(void);
 extern int (*max_temperature_in_bank[THERMAL_BANK_NUM])(void);
 extern void thermal_disable_all_periodoc_temp_sensing(void);
 
-/*
- *In drivers/misc/mediatek/gpu/hal/mtk_gpu_utility.c
- *It's not our api, ask them to provide header file
- */
 extern bool mtk_get_gpu_loading(unsigned int *pLoading);
-/*
- *In drivers/misc/mediatek/auxadc/mt_auxadc.c
- *It's not our api, ask them to provide header file
- */
 extern int IMM_IsAdcInitReady(void);
 #if defined(CATM_TPCB_EXTEND)
 extern void mtk_thermal_get_turbo(void);
@@ -456,10 +396,6 @@ extern u8 aee_rr_curr_thermal_status(void);
 extern u8 aee_rr_curr_thermal_ATM_status(void);
 extern u64 aee_rr_curr_thermal_ktime(void);
 #endif
-/*=============================================================
- * Register macro for internal use
- *=============================================================
- */
 
 #if TSCPU_NEW_FLOW
 extern void __iomem *thermal_base;
@@ -480,10 +416,6 @@ extern void __iomem *INFRACFG_AO_base;
 #define APMIXED_BASE_2    APMIXED_BASE
 #endif
 
-/*******************************************************************************
- * AUXADC Register Definition
- *****************************************************************************
- */
 
 #define AUXADC_CON0_V       (AUXADC_BASE_2 + 0x000)
 #define AUXADC_CON1_V       (AUXADC_BASE_2 + 0x004)
@@ -526,10 +458,6 @@ extern void __iomem *INFRACFG_AO_base;
 
 #define AUXADC_MISC_P       (auxadc_ts_phy_base + 0x094)
 
-/*******************************************************************************
- * Peripheral Configuration Register Definition
- *****************************************************************************
- */
 
 /*APB Module infracfg_ao*/
 /*yes, 0x10000000*/
@@ -538,20 +466,12 @@ extern void __iomem *INFRACFG_AO_base;
 #define INFRA_GLOBALCON_RST_0_CLR (INFRACFG_AO_BASE_2 + 0x124)
 /*yes, 0x10000000*/
 #define INFRA_GLOBALCON_RST_0_STA (INFRACFG_AO_BASE_2 + 0x128)
-/*******************************************************************************
- * APMixedSys Configuration Register Definition
- *****************************************************************************
- */
 /* TODO: check base addr. */
 #define TS_CON0_TM             (APMIXED_BASE_2 + 0x600) /*yes 0x10212000*/
 #define TS_CON1_TM             (APMIXED_BASE_2 + 0x604)
 #define TS_CON0_P           (apmixed_phy_base + 0x600)
 #define TS_CON1_P           (apmixed_phy_base + 0x604)
 
-/*******************************************************************************
- * Thermal Controller Register Definition
- *****************************************************************************
- */
 #define TEMPMONCTL0         (THERM_CTRL_BASE_2 + 0x000)
 #define TEMPMONCTL1         (THERM_CTRL_BASE_2 + 0x004)
 #define TEMPMONCTL2         (THERM_CTRL_BASE_2 + 0x008)
@@ -694,10 +614,6 @@ extern void __iomem *INFRACFG_AO_base;
 #define PTPSPARE2_P           (thermal_phy_base + 0xF28)
 #define PTPSPARE3_P           (thermal_phy_base + 0xF2C)
 
-/*******************************************************************************
- * Thermal Controller Register Mask Definition
- *****************************************************************************
- */
 #define THERMAL_ENABLE_SEN0     0x1
 #define THERMAL_ENABLE_SEN1     0x2
 #define THERMAL_ENABLE_SEN2     0x4

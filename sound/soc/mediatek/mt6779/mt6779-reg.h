@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Eason Yen <eason.yen@mediatek.com>
- */
 
 #ifndef _MT6779_REG_H_
 #define _MT6779_REG_H_
@@ -16,9 +12,6 @@ enum {
 	MT6779_MEMIF_PBUF_SIZE_NUM,
 };
 
-/*****************************************************************************
- *                  R E G I S T E R       D E F I N I T I O N
- *****************************************************************************/
 /* AFE_DAC_CON0 */
 #define VUL12_ON_SFT                                   31
 #define VUL12_ON_MASK                                  0x1

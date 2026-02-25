@@ -1,33 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- *
- * Filename:
- * ---------
- *   mtk-soc-pcm-common
- *
- * Project:
- * --------
- *   mtk-soc-pcm-common function
- *
- * Description:
- * ------------
- *   Common function
- *
- * Author:
- * -------
- *   Chipeng Chang (MTK02308)
- *
- *---------------------------------------------------------------------------
----
- *
-
-*******************************************************************************/
 
 #ifndef AUDIO_MT_SOC_COMMON_H
 #define AUDIO_MT_SOC_COMMON_H
@@ -70,9 +42,6 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 
-/*
- * define for PCM settings
- */
 #define MAX_PCM_DEVICES 4
 #define MAX_PCM_SUBSTREAMS 128
 #define MAX_MIDI_DEVICES

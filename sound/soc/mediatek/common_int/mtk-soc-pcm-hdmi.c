@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_hdmi.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio hdmi playback
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mt6799-hdmi.h"
 #include "mtk-auddrv-afe.h"
@@ -59,9 +26,6 @@ static struct snd_dma_buffer *HDMI_dma_buf;
 
 static DEFINE_SPINLOCK(auddrv_hdmi_lock);
 
-/*
- *    function implementation
- */
 
 static int mtk_hdmi_probe(struct platform_device *pdev);
 static int mtk_pcm_hdmi_close(struct snd_pcm_substream *substream);

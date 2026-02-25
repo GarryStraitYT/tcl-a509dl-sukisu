@@ -18,7 +18,8 @@
 #include <linux/reboot-mode.h>
 
 /* Begin added by mingbo.feng for defect-10428894  on 2020-12-02 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 #if defined(CONFIG_MTK_PMIC_WRAP)
 #include <linux/regmap.h>
 #include <linux/soc/mediatek/pmic_wrap.h>
@@ -43,7 +44,8 @@ static int syscon_reboot_mode_write(struct reboot_mode_driver *reboot,
 	struct syscon_reboot_mode *syscon_rbm;
 	int ret;
 /* Begin added by mingbo.feng for defect-10428894  on 2020-12-02 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	int reg_val=0;
 #endif
 /* End added by mingbo.feng for defect-10428894  on 2020-12-02 */
@@ -56,7 +58,8 @@ static int syscon_reboot_mode_write(struct reboot_mode_driver *reboot,
 		dev_err(reboot->dev, "update reboot mode bits failed\n");
 
 /* Begin added by mingbo.feng for defect-10428894  on 2020-12-02 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
         if(magic ==3){//for bootloader
             regmap_read(regmap, MT6357_RTC_PDN1_ADDR, &reg_val);
             pr_err(" Bootloader: MT6357_RTC_PDN1  =%x\n",reg_val);
@@ -94,7 +97,8 @@ static int syscon_reboot_mode_probe(struct platform_device *pdev)
 	int ret;
 	struct syscon_reboot_mode *syscon_rbm;
 /* Begin added by mingbo.feng for defect-  on 2020-12-02 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 #if defined(CONFIG_MTK_PMIC_WRAP)
         struct device_node *pwrap_node;
 #endif
@@ -121,7 +125,8 @@ static int syscon_reboot_mode_probe(struct platform_device *pdev)
 	of_property_read_u32(pdev->dev.of_node, "mask", &syscon_rbm->mask);
 
 /* Begin added by mingbo.feng for defect- 10428894 on 2020-12-02 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 #if defined(CONFIG_MTK_PMIC_WRAP)
 	pwrap_node = of_parse_phandle(pdev->dev.of_node,"mediatek,pwrap-regmap", 0);
 	if (!pwrap_node)

@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * drivers/staging/android/mtk_ion/ion_test.c
- *
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) "ion-test: " fmt
 

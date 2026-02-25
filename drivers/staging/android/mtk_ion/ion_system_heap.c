@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * drivers/staging/android/mtk_ion/ion_system_heap.c
- *
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <asm/page.h>
 #include <linux/dma-mapping.h>
@@ -56,11 +51,6 @@ struct ion_system_heap {
 	struct ion_page_pool *cached_pools[NUM_ORDERS];
 };
 
-/**
- * The page from page-pool are all zeroed before. We need do cache
- * clean for cached buffer. The uncached buffer are always non-cached
- * since it's allocated. So no need for non-cached pages.
- */
 static struct page *alloc_buffer_page(struct ion_system_heap *heap,
 				      struct ion_buffer *buffer,
 				      unsigned long order)

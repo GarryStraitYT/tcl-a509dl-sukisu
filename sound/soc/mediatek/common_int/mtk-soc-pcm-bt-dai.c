@@ -1,39 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mtk_pcm_bt_dai.c
- *
- * Project:
- * --------
- *   Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio bt to dai capture
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-soc-pcm-common.h"
 #include "mtk-soc-pcm-platform.h"
@@ -45,9 +13,6 @@ static struct snd_dma_buffer *Bt_Dai_Capture_dma_buf;
 
 static DEFINE_SPINLOCK(auddrv_BTDaiInCtl_lock);
 
-/*
- *    function implementation
- */
 static void StartAudioBtDaiHardware(struct snd_pcm_substream *substream);
 static void StopAudioBtDaiHardware(struct snd_pcm_substream *substream);
 static int mtk_bt_dai_probe(struct platform_device *pdev);

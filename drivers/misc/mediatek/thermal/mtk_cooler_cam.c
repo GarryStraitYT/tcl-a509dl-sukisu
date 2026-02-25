@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -60,10 +57,6 @@ static int single_cam_flag;
 static int dualcam_Tj_hysteresis = 10000;
 static int ttj_offset;
 
-/*
- * The cooler status of exit camera.
- * This is for camera app reference.
- */
 enum {
 	CL_CAM_DEACTIVE = 0,
 	CL_CAM_ACTIVE = 1,

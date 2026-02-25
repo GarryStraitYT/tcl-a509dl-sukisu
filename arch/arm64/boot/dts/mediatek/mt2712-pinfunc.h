@@ -1,9 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- * Author: Zhiyong Tao <zhiyong.tao@mediatek.com>
- *
- */
 #ifndef __DTS_MT2712_PINFUNC_H
 #define __DTS_MT2712_PINFUNC_H
 

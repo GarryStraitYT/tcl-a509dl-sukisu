@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include <linux/kthread.h>
 #include "ccci_bm.h"
 #include "port_proxy.h"

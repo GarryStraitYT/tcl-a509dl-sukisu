@@ -1,18 +1,3 @@
-/*
- * spi-mt7621.c -- MediaTek MT7621 SPI controller driver
- *
- * Copyright (C) 2011 Sergiy <piratfm@gmail.com>
- * Copyright (C) 2011-2013 Gabor Juhos <juhosg@openwrt.org>
- * Copyright (C) 2014-2015 Felix Fietkau <nbd@nbd.name>
- *
- * Some parts are based on spi-orion.c:
- *   Author: Shadi Ammouri <shadi@marvell.com>
- *   Copyright (C) 2007-2008 Marvell Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
 
 #include <linux/init.h>
 #include <linux/module.h>

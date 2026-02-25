@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 
 #include <linux/kernel.h>
@@ -55,9 +52,6 @@ char *wakesrc_str[32] = {
 	[31] = " R12_MCUSYS_IDLE_TO_EMI_ALL",
 };
 
-/**************************************
- * Function and API
- **************************************/
 int __spm_get_pcm_timer_val(const struct pwr_ctrl *pwrctrl)
 {
 	u32 val;

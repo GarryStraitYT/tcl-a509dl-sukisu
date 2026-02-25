@@ -1,34 +1,3 @@
-/*
- * CPU-agnostic ARM page table allocator.
- *
- * ARMv7 Short-descriptor format, supporting
- * - Basic memory attributes
- * - Simplified access permissions (AP[2:1] model)
- * - Backwards-compatible TEX remap
- * - Large pages/supersections (if indicated by the caller)
- *
- * Not supporting:
- * - Legacy access permissions (AP[2:0] model)
- *
- * Almost certainly never supporting:
- * - PXN
- * - Domains
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Copyright (C) 2014-2015 ARM Limited
- * Copyright (c) 2014-2015 MediaTek Inc.
- */
 
 #define pr_fmt(fmt)	"arm-v7s io-pgtable: " fmt
 
@@ -53,12 +22,6 @@
 #define io_pgtable_ops_to_data(x)					\
 	io_pgtable_to_data(io_pgtable_ops_to_pgtable(x))
 
-/*
- * We have 32 bits total; 12 bits resolved at level 1, 8 bits at level 2,
- * and 12 bits in a page. With some carefully-chosen coefficients we can
- * hide the ugly inconsistencies behind these macros and at least let the
- * rest of the code pretend to be somewhat sane.
- */
 #define ARM_V7S_ADDR_BITS		32
 #define _ARM_V7S_LVL_BITS(lvl)		(16 - (lvl) * 4)
 #define ARM_V7S_LVL_SHIFT(lvl)		(ARM_V7S_ADDR_BITS - (4 + 8 * (lvl)))
@@ -77,14 +40,6 @@
 	((u32)(addr) >> ARM_V7S_LVL_SHIFT(_l)) & _ARM_V7S_IDX_MASK(_l); \
 })
 
-/*
- * Large page/supersection entries are effectively a block of 16 page/section
- * entries, along the lines of the LPAE contiguous hint, but all with the
- * same output address. For want of a better common name we'll call them
- * "contiguous" versions of their respective page/section entries here, but
- * noting the distinction (WRT to TLB maintenance) that they represent *one*
- * entry repeated 16 times, not 16 separate entries (as in the LPAE case).
- */
 #define ARM_V7S_CONT_PAGES		16
 
 /* PTE type bits: these are all mixed up with XN/PXN bits in most cases */
@@ -106,11 +61,6 @@
 #define ARM_V7S_CONT_SECTION		BIT(18)
 #define ARM_V7S_CONT_PAGE_XN_SHIFT	15
 
-/*
- * The attribute bits are consistently ordered*, but occupy bits [17:10] of
- * a level 1 PTE vs. bits [11:4] at level 2. Thus we define the individual
- * fields relative to that 8-bit block, plus a total shift relative to the PTE.
- */
 #define ARM_V7S_ATTR_SHIFT(lvl)		(16 - (lvl) * 6)
 
 #define ARM_V7S_ATTR_MASK		0xff

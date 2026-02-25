@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __MT65XX_LCM_LIST_H__
 #define __MT65XX_LCM_LIST_H__
@@ -14,6 +10,8 @@
 extern struct LCM_DRIVER bangkok_tdt_ili9881d_hd_dsi_vdo_lcm_drv;
 extern struct LCM_DRIVER bangkok_tdt_st7703_hd_dsi_vdo_lcm_drv;
 extern struct LCM_DRIVER bangkok_coe_gc9702p_hd_dsi_vdo_lcm_drv;
+extern struct LCM_DRIVER bangkok_ykl_xm96120_hd_dsi_vdo_lcm_drv;
+extern struct LCM_DRIVER bangkok_coe_gh1001_hd_dsi_vdo_lcm_drv;
 //bangkok tf end
 
 extern struct LCM_DRIVER otm1282a_hd720_dsi_vdo_60hz_lcm_drv;

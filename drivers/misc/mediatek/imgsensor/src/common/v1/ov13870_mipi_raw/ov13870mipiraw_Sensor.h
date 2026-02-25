@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _OV13870MIPI_SENSOR_H
 #define _OV13870MIPI_SENSOR_H

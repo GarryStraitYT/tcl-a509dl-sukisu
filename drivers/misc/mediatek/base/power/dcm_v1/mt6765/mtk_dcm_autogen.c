@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #include <mt-plat/mtk_io.h>
 #include <mt-plat/sync_write.h>
@@ -161,9 +158,6 @@ void dcm_infracfg_ao_infra_md(int on)
 	}
 }
 
-/*
- * Align MT6739 and MT6763, only control bit 27.
- */
 #define INFRACFG_AO_INFRA_MEM_REG0_MASK (0x1 << 27)
 #define INFRACFG_AO_INFRA_MEM_REG0_ON (0x1 << 27)
 #define INFRACFG_AO_INFRA_MEM_REG0_OFF (0x0 << 27)

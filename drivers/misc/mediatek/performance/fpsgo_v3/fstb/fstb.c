@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -846,10 +843,6 @@ static long long get_cpu_frame_time(struct FSTB_FRAME_INFO *iter)
 
 }
 
-/*
- * check if camera is active
- * if yes, apply g block c boost
- */
 long long fstb_cam_active_ts;
 int fstb_is_cam_active;
 void fpsgo_comp2fstb_camera_active(int pid)
@@ -1157,16 +1150,6 @@ static int fps_update(struct FSTB_FRAME_INFO *iter)
 	return iter->queue_fps;
 }
 
-/* Calculate FPS limit:
- * @retval new fps limit
- *
- * search in ascending order
- * For discrete range:
- *  same as before, we select the upper one level that
- *  is just larger than current target.
- * For contiguous range:
- *  if the new limit is between [start,end], use new limit
- */
 static int calculate_fps_limit(struct FSTB_FRAME_INFO *iter, int target_fps)
 {
 	int ret_fps = target_fps;

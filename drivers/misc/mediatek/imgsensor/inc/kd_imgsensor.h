@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _KD_IMGSENSOR_H
 #define _KD_IMGSENSOR_H
@@ -21,9 +18,6 @@
 /* X means "switch G and S atomically" */
 /* H means "switch T and Q atomically" */
 
-/******************************************************************************
- *
- ******************************************************************************/
 
 /* sensorOpen */
 #define KDIMGSENSORIOC_T_OPEN \
@@ -110,9 +104,6 @@
 	_IOWR(IMGSENSORMAGIC, 10, struct COMPAT_ACDK_SENSOR_PRESOLUTION_STRUCT)
 #endif
 
-/************************************************************************
- *
- ************************************************************************/
 /* SENSOR CHIP VERSION */
 /*IMX*/
 #define IMX499_SENSOR_ID                        0x0499
@@ -536,9 +527,6 @@
 #define SENSOR_DRVNAME_OV13870_MIPI_RAW_5MP     "ov13870_mipi_raw_5mp"
 #define SENSOR_DRVNAME_OV8856_MIPI_RAW_5MP      "ov8856_mipi_raw_5mp"
 
-/******************************************************************************
- *
- ******************************************************************************/
 void KD_IMGSENSOR_PROFILE_INIT(void);
 void KD_IMGSENSOR_PROFILE(char *tag);
 void KD_IMGSENSOR_PROFILE_INIT_I2C(void);

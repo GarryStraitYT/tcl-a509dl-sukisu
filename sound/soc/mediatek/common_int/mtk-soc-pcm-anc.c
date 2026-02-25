@@ -1,39 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt6583.c
- *
- * Project:
- * --------
- *   MT6583  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Ship Hsu
- *
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *					 C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *				E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include <linux/dma-mapping.h>
 
@@ -51,9 +19,6 @@
 
 #include <linux/mutex.h>
 
-/*
- *	function implementation
- */
 
 #define GIC_PRIVATE_SIGNALS (32)
 #define AUDDRV_DL1_MAX_BUFFER_LENGTH (0x6000)
@@ -61,10 +26,6 @@
 #define MT6595_AFE_MCU_ANC_TO_AP_LINE (0xC6)
 #define ANC_DEVNAME "ancservice"
 
-/* #define ANC_MD32_TO_HOST_IPC (ANC_MD32_BASE + 0x04)
- * #define ANC_HOST_TO_MD32_IPC (ANC_MD32_BASE + 0x08)
- * #define ANC_SEMAPHORE		(ANC_MD32_BASE + 0x50)
- */
 
 #define ANC_MD32_BASE 0x11025000
 #define ANC_MD32_PTCM 0x11020000
@@ -153,12 +114,6 @@ DECLARE_WAIT_QUEUE_HEAD(IPC_Wait_Queue);
 void *MD32_REG_VIRTUAL_ADDR;
 void *MD32_DTCM_VIRTUAL_ADDR;
 void *MD32_PTCM_VIRTUAL_ADDR;
-/*void *SPM_AUDIO_PWR_CON;
- * void *SPM_AUDIO_ACCESS;
- * #define WriteREG(_addr, _value) (*(volatile unsigned int *)(_addr) =
- * (unsigned int)(_value))
- * #define ReadREG(_addr)		  (*(volatile unsigned int *)(_addr))
- */
 
 enum {
 	M2A_DumpReady,
@@ -737,9 +692,6 @@ static long ANCService_ioctl(struct file *fp, unsigned int cmd,
 	return ret;
 }
 
-/*
- * ioctl32 compat
- */
 #ifdef CONFIG_COMPAT
 
 static long ANCService_ioctl_compat(struct file *file, unsigned int cmd,

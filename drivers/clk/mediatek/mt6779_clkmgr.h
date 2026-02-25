@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_CLKMGR_6779_H
 #define _MT_CLKMGR_6779_H

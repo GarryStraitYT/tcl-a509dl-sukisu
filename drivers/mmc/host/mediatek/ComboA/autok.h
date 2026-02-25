@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _AUTOK_H_
 #define _AUTOK_H_
@@ -363,9 +360,6 @@ enum AUTOK_PARAM {
 	TOTAL_PARAM_COUNT
 };
 
-/**********************************************************
- * Function Declaration                                   *
- **********************************************************/
 extern int autok_path_sel(struct msdc_host *host);
 extern int autok_init_ddr208(struct msdc_host *host);
 extern int autok_init_sdr104(struct msdc_host *host);

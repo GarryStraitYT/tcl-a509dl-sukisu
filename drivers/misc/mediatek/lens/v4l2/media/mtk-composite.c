@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -34,9 +31,6 @@
 
 #include "mtk-composite.h"
 
-/******************************************************************************
- * Definition
- *****************************************************************************/
 
 #define MTK_COMPOSITE_NAME "mtk-composite-v4l2-1"
 

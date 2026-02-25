@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef SEC_EXPORT_H
 #define SEC_EXPORT_H
 
-/**************************************************************************
- *  Security Module ERROR CODE
- **************************************************************************/
 #define SEC_OK                                  0x0000
 
 /* IMAGE CIPHER */
@@ -48,9 +42,6 @@
 /* KERNEL DRIVER */
 #define ERR_KERNEL_CRYPTO_INVALID_MODE          0xA000
 
-/**************************************************************************
- *  Security Module Export API
- **************************************************************************/
 int masp_boot_init(void);
 void masp_secure_algo(unsigned char Direction,
 		      unsigned char *ContentAddr,

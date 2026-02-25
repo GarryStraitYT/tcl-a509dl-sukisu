@@ -1,37 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/******************************************************************************
- *
- * Filename:
- * ---------
- *   mtk_soc_codec_63xx
- *
- * Project:
- * --------
- *
- *
- * Description:
- * ------------
- *   Audio codec stub file
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *-----------------------------------------------------------------------------
- *
- *
- *****************************************************************************/
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
@@ -3995,9 +3963,6 @@ static const char *const amp_function[] = { "Off", "On" };
 static const char *const hac_fuction[] = {"Off", "On", "Test_On", "Test_Off"};
 #endif
 static const char *const aud_clk_buf_function[] = { "Off", "On" };
-/* static const char *DAC_SampleRate_function[] = {
- * "8000", "11025", "16000", "24000", "32000", "44100", "48000"};
- */
 static const char *const DAC_DL_PGA_Headset_GAIN[] = {
 	"8Db", "7Db", "6Db", "5Db", "4Db", "3Db", "2Db", "1Db", "0Db",
 	"-1Db", "-2Db", "-3Db",

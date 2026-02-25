@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include <linux/interrupt.h>
@@ -250,15 +247,6 @@ struct mau_config_info {
 	unsigned int end_bit32;	/* :1; */
 };
 
-/* set m4u MAU monitor to debug
- * Steps in this api:
- * 1. enable secure debug
- * 2. disable mau interrupt
- * 3. set mau register
- * 4. clear mau irq bit
- * 5. enable mau interrupt
- * 6. disable secure debug. No disable cmd, add later.
- */
 int mau_start_monitor(int m4u_id, int mmu_id, int mau_set,
 		      int wr, int vir, int io,
 		      unsigned int ext_addr_start, unsigned int ext_addr_end,
@@ -1923,10 +1911,6 @@ static void m4u_isr_restart(struct timer_list *unused)
 static int m4u_isr_pause_timer_init(void)
 {
 	timer_setup(&m4u_isr_pause_timer, m4u_isr_restart, 0);
-/*
- * init_timer(&m4u_isr_pause_timer);
- * m4u_isr_pause_timer.function = m4u_isr_restart;
- */
 	return 0;
 }
 

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -59,20 +56,8 @@
 #include <mt-plat/mtk_devinfo.h>
 #endif
 
-/*****************************************************************************
- *  Local switches
- *****************************************************************************/
-/* Define ATM_CFG_PROFILING to compile the code segments for profiling. It
- * depends on ostimer which is wrapped by CFG_TIMER_SUPPORT.
- * Only tested with FAST_RESPONSE_ATM is turned on.
- * ! Must not define this in official release branches. Only for local tests.
- */
 /* #define ATM_CFG_PROFILING (1) */
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static int print_cunt;
 static int adaptive_limit[5][2];
 static struct apthermolmt_user ap_atm;
@@ -122,9 +107,6 @@ static int MINIMUM_MDLA_POWER = 300;
 static int MAXIMUM_MDLA_POWER = 1000;
 #endif
 
-/* 1. MINIMUM_BUDGET_CHANGE = 0 ==> thermal equilibrium
- * maybe at higher than TARGET_TJ_HIGH
- */
 /* 2. Set MINIMUM_BUDGET_CHANGE > 0 if to keep Tj at TARGET_TJ */
 static int MINIMUM_BUDGET_CHANGE = 50;
 static int g_total_power;
@@ -235,12 +217,6 @@ static int active_adp_cooler;
 
 static int GPU_L_H_TRIP = 80, GPU_L_L_TRIP = 40;
 
-/* tscpu_atm
- *   0: ATMv1 (default)
- *   1: ATMv2 (FTL)
- *   2: CPU_GPU_Weight ATM v2
- *   3: Precise Power Budgeting + Hybrid Power Budgeting
- */
 #ifdef PHPB_DEFAULT_ON
 static int tscpu_atm = 3;
 #else
@@ -260,9 +236,6 @@ static int (*_adaptive_power_calc)
 (long prev_temp, long curr_temp, unsigned int gpu_loading);
 
 #if PRECISE_HYBRID_POWER_BUDGET
-/* initial value: assume 1 degreeC for temp.
- *			<=> 1 unit for total_power(0~100)
- */
 struct phpb_param {
 	int tt, tp;
 	char type[8];
@@ -326,9 +299,6 @@ static int K_TT = 4000;
 static int K_SUM_TT_LOW = 10;
 /* for ATM polling delay 50ms, increase this based on polling delay */
 static int K_SUM_TT_HIGH = 10;
-/* clamp sum_tt (err_integral) between MIN_SUM_TT ~ MAX_SUM_TT,
- *	automatically calculated
- */
 static int MIN_SUM_TT = -800000;
 static int MAX_SUM_TT = 800000;
 static int MIN_TTJ = 65000;
@@ -407,15 +377,7 @@ unsigned int gpu_pwr_lmt_cnt = 1;
 #if defined(THERMAL_APU_UNLIMIT)
 static unsigned long total_apu_polling_time;
 #endif
-/*=============================================================
- *Local function prototype
- *=============================================================
- */
 static void set_adaptive_gpu_power_limit(unsigned int limit);
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 int __attribute__((weak))
 mtk_eara_thermal_pb_handle(int total_pwr_budget,
 	int max_cpu_power, int max_gpu_power,
@@ -487,19 +449,6 @@ mt_get_uartlog_status(void)
 
 /*=============================================================*/
 
-/*
- *   static int step0_mask[11] = {1,1,1,1,1,1,1,1,1,1,1};
- *   static int step1_mask[11] = {0,1,1,1,1,1,1,1,1,1,1};
- *   static int step2_mask[11] = {0,0,1,1,1,1,1,1,1,1,1};
- *   static int step3_mask[11] = {0,0,0,1,1,1,1,1,1,1,1};
- *   static int step4_mask[11] = {0,0,0,0,1,1,1,1,1,1,1};
- *   static int step5_mask[11] = {0,0,0,0,0,1,1,1,1,1,1};
- *  static int step6_mask[11] = {0,0,0,0,0,0,1,1,1,1,1};
- *   static int step7_mask[11] = {0,0,0,0,0,0,0,1,1,1,1};
- *   static int step8_mask[11] = {0,0,0,0,0,0,0,0,1,1,1};
- *   static int step9_mask[11] = {0,0,0,0,0,0,0,0,0,1,1};
- *   static int step10_mask[11]= {0,0,0,0,0,0,0,0,0,0,1};
- */
 
 int tsatm_thermal_get_catm_type(void)
 {
@@ -513,9 +462,6 @@ int mtk_thermal_get_tpcb_target(void)
 }
 EXPORT_SYMBOL(mtk_thermal_get_tpcb_target);
 
-/**
- * TODO: What's the diff from get_cpu_target_tj?
- */
 int get_target_tj(void)
 {
 	return TARGET_TJ;
@@ -994,9 +940,6 @@ int is_cpu_power_min(void)
 }
 EXPORT_SYMBOL(is_cpu_power_min);
 
-/**
- * TODO: What's the diff from get_target_tj?
- */
 int get_cpu_target_tj(void)
 {
 	return cpu_target_tj;
@@ -1053,13 +996,6 @@ EXPORT_SYMBOL(tscpu_get_min_mdla_pwr);
 #endif
 
 #if CONTINUOUS_TM
-/**
- * @brief update cATM+ ttj control loop parameters
- * everytime related parameters are changed, we need to recalculate.
- * from thermal config: MAX_TARGET_TJ, STEADY_TARGET_TJ,
- * MIN_TTJ, TRIP_TPCB...etc
- * cATM+'s parameters: K_SUM_TT_HIGH, K_SUM_TT_LOW
- */
 
 struct CATM_T thermal_atm_t;
 
@@ -1123,9 +1059,6 @@ static void reset_gpu_power_history(void)
 	gpu_power_history_idx = 0;
 }
 
-/* we'll calculate SMA for gpu power,
- * but the output will still be aligned to OPP
- */
 static int adjust_gpu_power(int power)
 {
 	int i, total = 0, sma_power;
@@ -1165,10 +1098,6 @@ static int adjust_gpu_power(int power)
 #endif
 #endif
 
-/*
- *Pass ATM total power budget to EARA for C/G/... allocation
- *ATM follow up if ERAR bypass
- */
 static int EARA_handled(int total_power)
 {
 #if defined(EARA_THERMAL_SUPPORT)
@@ -1502,10 +1431,6 @@ static int __phpb_dynamic_theta(int max_theta)
 	return theta;
 }
 
-/**
- * TODO: target_tj is adjusted by catmv2, therefore dynamic_theta would not
- * changed frequently.
- */
 static int __phpb_calc_delta(int curr_temp, int prev_temp, int phpb_param_idx)
 {
 	struct phpb_param *p = &phpb_params[phpb_param_idx];

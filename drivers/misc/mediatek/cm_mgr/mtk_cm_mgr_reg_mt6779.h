@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_CM_MGR_PLATFORM_REG_H__
 #define __MTK_CM_MGR_PLATFORM_REG_H__
 
-/*
- * BIT Operation
- */
 #define CM_BIT(_bit_) \
 	(unsigned int)(1U << (_bit_))
 #define CM_BITMASK(_bits_) \

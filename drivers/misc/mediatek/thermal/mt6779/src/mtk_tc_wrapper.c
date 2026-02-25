@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -66,17 +63,6 @@ int tscpu_curr_gpu_temp;
 
 static int tscpu_curr_max_ts_temp;
 
-/*
- * PTP#	module		TSMCU Plan
- *  0	MCU_LITTLE	TSMCU-5,6,7
- *  1	MCU_BIG		TSMCU-8,9
- *  2	MCU_CCI		TSMCU-5,6,7
- *  3	MFG(GPU)	TSMCU-4
- *  4	MDLA		TSMCU-1
- *  5	VPU		TSMCU-2
- *  6	TOP		TSMCU-2,3,4
- *  7	MD		TSMCU-0
- */
 int get_immediate_none_wrap(void)
 {
 	return -127000;
@@ -423,9 +409,6 @@ int (*get_immediate_tsX[TS_ENUM_MAX])(void) = {
 	get_immediate_tsabb_wrap, /* TS_ABB */
 };
 
-/**
- * this only returns latest stored max ts temp but not updated from TC.
- */
 int tscpu_get_curr_max_ts_temp(void)
 {
 	return tscpu_curr_max_ts_temp;

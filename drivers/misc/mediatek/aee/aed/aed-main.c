@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/cdev.h>
 #include <linux/compat.h>
@@ -56,9 +53,6 @@ static DECLARE_COMPLETION(aed_ke_com);
 static struct aee_req_queue ee_queue;
 static struct work_struct ee_work;
 static DECLARE_COMPLETION(aed_ee_com);
-/*
- * may be accessed from irq
- */
 static spinlock_t aed_device_lock;
 int aee_mode = AEE_MODE_NOT_INIT;
 static int force_red_screen = AEE_FORCE_NOT_SET;
@@ -72,9 +66,6 @@ static struct proc_dir_entry *aed_proc_dir;
 #define MaxStackSize 8100
 #define MaxMapsSize 65536
 
-/******************************************************************************
- * DEBUG UTILITIES
- *****************************************************************************/
 
 void msg_show(const char *prefix, struct AE_Msg *msg)
 {
@@ -159,16 +150,10 @@ void msg_show(const char *prefix, struct AE_Msg *msg)
 }
 
 
-/******************************************************************************
- * CONSTANT DEFINITIONS
- *****************************************************************************/
 #define CURRENT_EE_COREDUMP "current-ee-coredump"
 
 #define MAX_EE_COREDUMP 0x800000
 
-/******************************************************************************
- * STRUCTURE DEFINITIONS
- *****************************************************************************/
 
 struct aed_eerec {		/* external exception record */
 	struct list_head list;
@@ -200,20 +185,11 @@ struct aed_dev {
 };
 
 
-/******************************************************************************
- * FUNCTION PROTOTYPES
- *****************************************************************************/
 static long aed_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 
 
-/******************************************************************************
- * GLOBAL DATA
- *****************************************************************************/
 static struct aed_dev aed_dev;
 
-/******************************************************************************
- * Message Utilities
- *****************************************************************************/
 
 inline void msg_destroy(char **ppmsg)
 {
@@ -295,9 +271,6 @@ static ssize_t msg_copy_to_user(const char *prefix, char *msg, char __user *buf,
 	return ret;
 }
 
-/******************************************************************************
- * Kernel message handlers
- *****************************************************************************/
 static struct aee_oops *aee_oops_create(enum AE_DEFECT_ATTR attr,
 		enum AE_EXP_CLASS clazz, const char *module)
 {
@@ -661,9 +634,6 @@ static void ke_worker(struct work_struct *work)
 	}
 }
 
-/******************************************************************************
- * EE message handlers
- *****************************************************************************/
 static void ee_gen_notavail_msg(void)
 {
 	struct AE_Msg *rep_msg;
@@ -967,9 +937,6 @@ static void ee_worker(struct work_struct *work)
 	}
 }
 
-/******************************************************************************
- * AED EE File operations
- *****************************************************************************/
 static int aed_ee_open(struct inode *inode, struct file *filp)
 {
 	if (strncmp(current->comm, "aee_aed", 7))
@@ -1083,9 +1050,6 @@ static ssize_t aed_ee_write(struct file *filp, const char __user *buf,
 	return count;
 }
 
-/******************************************************************************
- * AED KE File operations
- *****************************************************************************/
 static int aed_ke_open(struct inode *inode, struct file *filp)
 {
 	int major;
@@ -1497,10 +1461,6 @@ done:
 	}
 }
 
-/*
- * aed process daemon and other command line may access me
- * concurrently
- */
 DEFINE_SEMAPHORE(aed_dal_sem);
 static long aed_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -2468,9 +2428,6 @@ static int aed_proc_done(void)
 	return 0;
 }
 
-/******************************************************************************
- * Module related
- *****************************************************************************/
 static const struct file_operations aed_ee_fops = {
 	.owner = THIS_MODULE,
 	.open = aed_ee_open,

@@ -1,24 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * GenieZone (hypervisor-based seucrity platform) enables hardware protected
- * and isolated security execution environment, includes
- * 1. GZ hypervisor
- * 2. Hypervisor-TEE OS (built-in Trusty OS)
- * 3. Drivers (ex: debug, communication and interrupt) for GZ and
- *    hypervisor-TEE OS
- * 4. GZ and hypervisor-TEE and GZ framework (supporting multiple TEE
- *    ecosystem, ex: M-TEE, Trusty, GlobalPlatform, ...)
- */
-/*
- * This is log driver
- *
- * Memory log is supported - a shared memory is used for memory log
- * Driver provides read function for user-space debug apps getting log
- */
 
 #include <linux/platform_device.h>
 #include <gz-trusty/smcall.h>
@@ -62,12 +43,6 @@ struct gz_trace_dump_t {
 };
 #endif
 
-/* NOTE: log_rb will be put at the begin of the memory buffer.
- * The actual data buffer size is
- * lower_power_of_2(TRUSTY_LOG_SIZE - sizeof(struct log_rb)).
- * If LOG_SIZE is PAGE_SIZE * power of 2, it will waste half of buffer.
- * so that, set the buffer size (power_of_2 + 1) PAGES.
- **/
 #define TRUSTY_LOG_SIZE (PAGE_SIZE * 65)
 #define TRUSTY_LINE_BUFFER_SIZE 256
 

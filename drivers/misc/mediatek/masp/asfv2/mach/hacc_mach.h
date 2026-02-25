@@ -1,31 +1,16 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/* to avoid disclosing any secret and let customer know we have hacc hardware,
- *   the file name 'hacc' is changed to 'hacc_hw' in kernel driver
- */
 
 #ifndef HACC_MACH_H
 #define HACC_MACH_H
 
 #include "sec_osal_light.h"
 
-/******************************************************************************
- * CHIP SELECTION
- ******************************************************************************/
 extern void __iomem *hacc_base;
 
-/******************************************************************************
- * MACROS DEFINITIONS
- ******************************************************************************/
 #define AES_BLK_SZ_ALIGN(size)      ((size) & ~((AES_BLK_SZ << 3) - 1))
 
 
-/******************************************************************************
- * HARDWARE DEFINITIONS
- ******************************************************************************/
 #define HACC_CG                      (0x1 << 10)
 
 #define HACC_AES_TEST_SRC            (0x02000000)
@@ -98,24 +83,14 @@ extern void __iomem *hacc_base;
 #define HACC_SECINIT2_MAGIC          0x46293911
 
 
-/******************************************************************************
- * CONSTANT DEFINITIONS
- ******************************************************************************/
 #define HACC_AES_MAX_KEY_SZ          (32)
 #define AES_CFG_SZ                   (16)
 #define AES_BLK_SZ                   (16)
 #define HACC_HW_KEY_SZ               (16)
 #define _CRYPTO_SEED_LEN             (16)
 
-/* In order to support NAND writer and keep MTK secret,
- * use MTK HACC seed and custom crypto seed to generate SW key
- * to encrypt SEC_CFG
- */
 #define MTK_HACC_SEED                (0x1)
 
-/******************************************************************************
- * TYPE DEFINITIONS
- ******************************************************************************/
 enum aes_mode {
 	AES_ECB_MODE,
 	AES_CBC_MODE
@@ -154,9 +129,6 @@ struct hacc_context {
 	unsigned char hw_key[HACC_AES_MAX_KEY_SZ];
 };
 
-/******************************************************************************
- *  EXPORT FUNCTION
- ******************************************************************************/
 extern unsigned int hacc_set_key(enum aes_key_id id, enum aes_key key);
 extern unsigned int hacc_do_aes(enum aes_ops ops,
 				unsigned char *src,
@@ -169,9 +141,6 @@ extern void HACC_V3_Run(unsigned int *p_src, unsigned int src_len,
 			unsigned int *p_dst);
 extern void HACC_V3_Terminate(void);
 
-/******************************************************************************
- * EXTERNAL VARIABLE
- ******************************************************************************/
 extern bool bHACC_HWWrapKeyInit;
 extern bool bHACC_SWKeyInit;
 

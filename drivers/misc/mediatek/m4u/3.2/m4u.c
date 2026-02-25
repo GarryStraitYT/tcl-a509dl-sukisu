@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/uaccess.h>
 #include <linux/module.h>
@@ -206,9 +203,6 @@ static int m4u_client_add_buf(struct m4u_client_t *client,
 }
 
 
-/*static int m4u_client_del_buf(struct m4u_client_t *client,
- *struct m4u_buf_info_t *pList)
- */
 /*{*/
 /*    mutex_lock(&(client->dataMutex));*/
 /*    list_del(&(pList->link));*/
@@ -219,17 +213,6 @@ static int m4u_client_add_buf(struct m4u_client_t *client,
 
 
 /***********************************************************/
-/** find or delete a buffer from client list
- * @param   client   -- client to be searched
- * @param   mva      -- mva to be searched
- * @param   del      -- should we del this buffer from client?
- *
- * @return buffer_info if found, NULL on fail
- * @remark
- * @see
- * @to-do    we need to add multi domain support here.
- * @author K Zhang      @date 2013/11/14
- */
 /************************************************************/
 static struct m4u_buf_info_t *m4u_client_find_buf(
 		struct m4u_client_t *client,
@@ -270,9 +253,6 @@ static struct m4u_buf_info_t *m4u_client_find_buf(
 
 
 /*dump buf info in client*/
-/*static void m4u_client_dump_buf(
- *struct m4u_client_t *client, const char *pMsg)
- */
 /*{*/
 /*    struct m4u_buf_info_t *pList;*/
 /*    struct list_head *pListHead;*/
@@ -283,9 +263,6 @@ static struct m4u_buf_info_t *m4u_client_find_buf(
 /*    {*/
 /*	pList = container_of(pListHead, struct m4u_buf_info_t, link);*/
 /*	M4UMSG("port=%s, va=0x%x, size=0x%x, mva=0x%x, prot=%d\n",*/
-/*	m4u_get_port_name
- *	(pList->port), pList->va, pList->size, pList->mva, pList->prot);
- */
 /*    }*/
 /*   mutex_unlock(&(client->dataMutex));*/
 
@@ -752,12 +729,6 @@ int m4u_alloc_mva(struct m4u_client_t *client,
 	mmprofile_log_ex(M4U_MMP_Events[M4U_MMP_ALLOC_MVA],
 		MMPROFILE_FLAG_START, va, size);
 #endif
-/*
- *	if (va && sg_table) {
- *		M4UMSG("%s, va or sg_table are both valid: va=0x%lx, sg=0x%p\n",
- *			__func__, va, sg_table);
- *	}
- */
 	if (!va && !sg_table)	{
 		M4UMSG(
 			"%s, va or sg_table are both invalid: va=0x%lx, sg=0x%p\n",
@@ -1167,9 +1138,6 @@ int m4u_query_mva_info(unsigned int domain_idx,
 EXPORT_SYMBOL(m4u_query_mva_info);
 
 /***********************************************************/
-/* map mva buffer to kernel va buffer
- *   this function should ONLY used for DEBUG
- */
 /************************************************************/
 int m4u_mva_map_kernel(unsigned int mva,
 		unsigned int size, unsigned long *map_va,

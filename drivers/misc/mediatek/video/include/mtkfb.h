@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __MTKFB_H
 #define __MTKFB_H
@@ -11,9 +7,6 @@
 #include "mtkfb_info.h"
 
 
-/**NOTICE:
- * Must be consistent with bionic/libc/kernel/linux/common/mtkfb.h
- */
 #define MTK_FB_NO_ION_FD                 ((int)(~0U>>1))
 #define MTK_FB_NO_USE_LAEYR_ID			 ((int)(~0U>>1))
 #define FBCAPS_GENERIC_MASK              (0x00000fff)
@@ -62,9 +55,6 @@
 /* /0: power off  1: power on */
 #define MTKFB_GET_POWERSTATE MTK_IOR(21, unsigned long)
 #define MTKFB_GET_DISPLAY_IF_INFORMATION MTK_IOR(22, struct mtk_dispif_info)
-/* called before SET_OVERLAY each time,
- * if true, hwc will not use FB_LAYER again
- */
 #define MTKFB_AEE_LAYER_EXIST MTK_IOR(23, unsigned long)
 #define MTKFB_GET_OVERLAY_LAYER_INFO MTK_IOR(24, struct fb_overlay_layer_info)
 #define MTKFB_FACTORY_AUTO_TEST MTK_IOR(25, unsigned long)
@@ -84,10 +74,6 @@
 
 /*Extension FB active option*/
 #define FB_ACTIVATE_NO_UPDATE  512       /* Skip frame update */
-/**
- * Just for mt6589 Platform
- * @{
- */
 #define MTKFB_GETVFRAMEPHYSICAL MTK_IOW(41, unsigned long)
 #define MTKFB_WAIT_OVERLAY_READY MTK_IO(42)
 #define MTKFB_GET_OVERLAY_LAYER_COUNT MTK_IOR(43, unsigned long)
@@ -207,9 +193,6 @@ struct fb_overlay_mode {
 enum MTK_DISP_SESSION {
 	DISP_SESSION_LCM = 1 << 0,	/* DSI0 */
 	DISP_SESSION_MEM = 1 << 1,	/* OVL0->WDMA0 */
-/* Extension mode, Dst buf is provided by user,
- * for Wifi Display or other purpose
- */
 	DISP_SESSION_WFD = 1 << 2,
 	DISP_SESSION_MHL = 1 << 3,	/* DPI */
 	DISP_SESSION_LCM1 = 1 << 4,	/* DSI1 */

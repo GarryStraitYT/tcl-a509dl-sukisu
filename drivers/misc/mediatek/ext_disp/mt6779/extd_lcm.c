@@ -1,31 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 /***********************************************/
-/*
- * Record the modify of dts, dtsi, configs & dws
- * If we support dual lcm, please modify the dts, dtsi, configs and
- *					dws files as the following content.
- *
- * dts: Add LCM1 GPIO (RESET & DSI_TE).
- *
- * dtsi: Add dsi_te1 node:
- *		dsi_te_1: dsi_te_1 {
- *			compatible = "mediatek, dsi_te_1-eint";
- *			status = "disabled";
- *		};
- *
- * configs:
- *	CONFIG_CUSTOM_KERNEL_LCM=
- *	"nt35595_fhd_dsi_cmd_truly_nt50358_extern
- *		nt35595_fhd_dsi_cmd_truly_nt50358_2th"
- *	CONFIG_MTK_DUAL_DISPLAY_SUPPORT=2
- *
- * dws: Add dsi_te1 EINT.
- */
 
 /***************************************/
 #include "extd_info.h"

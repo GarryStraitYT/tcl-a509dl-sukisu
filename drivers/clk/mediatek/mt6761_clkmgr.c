@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Owen Chen <owen.chen@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -52,9 +48,6 @@ void __iomem *clk_mcucfg_base;
 #define ARMPLL_L_EXIST		0
 #define CCIPLL_EXIST		0
 
-/************************************************
- **********         log debug          **********
- ************************************************/
 #define TAG     "[Power/clkmgr] "
 
 #define clk_info(fmt, args...)      \
@@ -62,9 +55,6 @@ void __iomem *clk_mcucfg_base;
 #define clk_dbg(fmt, args...)       \
 	pr_debug(TAG fmt, ##args)
 
-/************************************************
- **********      register access       **********
- ************************************************/
 
 #define clk_readl(addr) \
 	readl(addr)
@@ -79,21 +69,6 @@ void __iomem *clk_mcucfg_base;
 #define clk_clrl(addr, val) \
 	mt_reg_sync_writel(clk_readl(addr) & ~(val), addr)
 
-/************************************************
- **********      struct definition     **********
- ************************************************/
-/************************************************
- **********      global variablies     **********
- ************************************************/
-/************************************************
- **********      spin lock protect     **********
- ************************************************/
-/************************************************
- **********          pll part          **********
- ************************************************/
-/************************************************
- **********         subsys part        **********
- ************************************************/
 /*ARMPLL1*/
 #define ARMPLL_CON0		(clk_apmixed_base + 0x30C)
 #define ARMPLL_CON1		(clk_apmixed_base + 0x310)
@@ -133,17 +108,8 @@ void __iomem *clk_mcucfg_base;
 #define MP1_PLL_DIV_CFG		(clk_mcucfg_base + 0x7A4) /*ARMPLL_L*/
 #define BUS_PLL_DIV_CFG		(clk_mcucfg_base + 0x7C0) /*CCIPLL*/
 
-/************************************************
- **********         cg_clk part        **********
- ************************************************/
 
-/************************************************
- **********       initialization       **********
- ************************************************/
 
-/************************************************
- **********       function debug       **********
- ************************************************/
 static void clk_dump(void)
 {
 	clk_info("[ARMPLL_LL_CON0]=0x%08x\n", clk_readl(ARMPLL_CON0));

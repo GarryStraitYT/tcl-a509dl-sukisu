@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -164,12 +161,6 @@ enum rt9467_adc_sel {
 	RT9467_ADC_MAX,
 };
 
-/*
- * Unit for each ADC parameter
- * 0 stands for reserved
- * For TS_BAT, the real unit is 0.25.
- * Here we use 25, please remember to divide 100 while showing the value
- */
 static const int rt9467_adc_unit[RT9467_ADC_MAX] = {
 	0,
 	RT9467_ADC_UNIT_VBUS_DIV5,
@@ -3154,10 +3145,6 @@ out:
 	return rt9467_device_write(info->client, 0x70, 1, &data);
 }
 
-/*
- * This function is used in shutdown function
- * Use i2c smbus directly
- */
 static int rt9467_sw_reset(struct rt9467_info *info)
 {
 	int ret = 0;
@@ -3940,95 +3927,3 @@ MODULE_AUTHOR("ShuFanLee <shufan_lee@richtek.com>");
 MODULE_DESCRIPTION("RT9467 Charger Driver");
 MODULE_VERSION(RT9467_DRV_VERSION);
 
-/*
- * Release Note
- * 1.0.19
- * (1) Revise enable_auto_sensing function, set auto sensing bit when enable
-	it, otherwise clear it.
- * (2) Add shipping_mode_store node, and add adc_access_lock to avoid
-	conflicting access with adc measurement.
- * (3) Add safety_check ops, trigger ieoc event, when ibat < ieoc for 3 times.
- * (4) Add workaround for vsys overshoot
- *
- * 1.0.18
- * (1) Check tchg 3 times if it >= 120 degree
- *
- * 1.0.17
- * (1) Add ichg workaround
- *
- * 1.0.16
- * (1) Fix type error of enable_auto_sensing in sw_reset
- * (2) Move irq_mask to info structure
- * (3) Remove config of Charger_Detect_Init/Release
- *
- * 1.0.15
- * (1) Do ilim select in WQ and register charger class in probe
- *
- * 1.0.14
- * (1) Disable attach delay
- * (2) Enable IRQ_RZE at the end of irq handler
- * (3) Remove IRQ related registers from reg_addr
- * (4) Recheck status in irq handler
- * (5) Use bc12_access_lock instead of chgdet_lock
- *
- * 1.0.13
- * (1) Add do event interface for polling mode
- * (2) Check INT pin after reading evt
- *
- * 1.0.12
- * (1) Add MTK_SSUSB config for Charger_Detect_Init/Release
- *
- * 1.0.11
- * (1) Disable psk mode in pep20_reest
- * (2) For secondary chg, enter shipping mode before shdn
- * (3) Add BC12 sdp workaround
- * (4) Remove enabling/disabling ILIM in chgdet_handler
- *
- * 1.0.10
- * (1) Add IEOC workaround
- * (2) Release set_ieoc/enable_te interface
- * (3) Fix type errors
- *
- * 1.0.9
- * (1) Add USB workaround for CDP port
- * (2) Plug in -> usbsw to charger, after chgdet usbsw to AP
- *     Plug out -> usbsw to AP
- * (3) Filter out not changed irq state
- * (4) Not to use CHG_IRQ3
- *
- * 1.0.8
- * (1) Set irq to wake up system
- * (2) Refine I2C driver related table
- *
- * 1.0.7
- * (1) Enable/Disable ILIM in chgdet_handler
- *
- * 1.0.6
- * (1) Prevent backboot
- * (2) Add CEB pin control for secondary charger
- * (3) After PE pattern -> Enable skip mode
- *     Disable skip mode -> Start PE pattern
- * (4) Disable BC12 detection before reset IRQ in init_setting
- *
- * 1.0.5
- * (1) Remove wait CDP flow
- * (2) Add rt9467_chgdet_handler for attachi/detachi
- * (3) Set secondary chg to HZ if it is not in charging mode
- * (4) Add is_charging_enabled, get_min_ichg OPS
- *
- * 1.0.4
- * (1) Set ichg&aicr, enable chg before sending PE+ series pattern
- * (2) Add enable_cable_drop_com OPS
- *
- * 1.0.3
- * (1) IRQs are default unmasked before E4, need to mask them manually
- *
- * 1.0.2
- * (1) Fix AICL workqueue lock issue
- *
- * 1.0.1
- * (1) Fix IRQ init sequence
- *
- * 1.0.0
- * (1) Initial released
- */

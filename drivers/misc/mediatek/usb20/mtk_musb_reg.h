@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef __MT_MUSB_REG_H__
 #define __MT_MUSB_REG_H__
@@ -9,9 +6,6 @@
 
 #define MUSB_EP0_FIFOSIZE	64	/* This is non-configurable */
 
-/*
- * MUSB Register bits
- */
 
 /* POWER */
 #define MUSB_POWER_ISOUPDATE	0x80
@@ -193,9 +187,6 @@
 /* HUBADDR */
 #define MUSB_HUBADDR_MULTI_TT		0x80
 
-/*
- * Common USB registers
- */
 
 #define MUSB_FADDR		0x00	/* 8-bit */
 #define MUSB_POWER		0x01	/* 8-bit */
@@ -213,18 +204,12 @@
 
 #define MUSB_FIFO_OFFSET(epnum)	(0x20 + ((epnum) * 4))
 
-/*
- * Additional Control Registers
- */
 
 #define MUSB_DEVCTL		0x60	/* 8 bit */
 
 #define MUSB_OPSTATE    0x620
 #define OTG_IDLE 0
 
-/*
- * MD Direct Tethering related Registers
- */
 
 #define MUSB_USB_MDL1INTM	0x744
 #define MUSB_QIMCR			0xc08
@@ -337,61 +322,28 @@
 #define IDDIG_INT_POL        (1<<9)
 #define DRVVBUS_INT_POL      (1<<10)
 
-/*
- * OTG 2.0 Registers
- */
 #define OTG20_CSRL	0x730	/* OTG20 Related Control Register L */
 #define OTG20_CSRH	0x731	/* OTG20 Related Control Register H */
 
 /* OTG20 Related Control Register L */
-/* Disable Host mode entering
- * C_OPM_HSUS state before entering suspend
- */
 #define DIS_HSUS	(1<<7)
 
-/* EN: FS idle of A device will
- * transfer to HFS_HSUS state first
- */
 #define A_HFS_WHNP	(1<<6)
-/* Disables B device entering
- * C_OPM_B_WTDIS states before
- * switching to host mode
- */
 #define DIS_B_WTDIS	(1<<5)
 
-/* EN: host-hs-suspend entering OPM_FS_WTCON state first
- * while receiving disconnect signal
- */
 #define HHS_SUSP_DIS	(1<<4)
-/* EN: Disables B device
- * charging VBUS function
- * for OTG2.0 feature
- */
 #define DIS_CHARGE_VBUS	(1<<3)
 
-/* EN: hsus mode of host initializing resuming interrupt
- * while receiving resume K as waiting for HNP
- */
 #define HSUS_RESUME_INT	(1<<2)
-/* EN: hnpsus-mode of host entering host-normal mode as
- * receiving resume K while waiting for HNP
- */
 #define HSUS_RESUME	(1<<1)
 
 
 #define OTG20_EN	(1<<0)	/* Enables OTG 2.0 feature */
 
 /* OTG20 Related Control Register H */
-/* Informs whether HW sends bus reset automatically
- * while B-device changes to host with HNP
- */
 
 #define DIS_AUTORST	(1<<1)
 
-/* EN: to decrease A
- * device connection
- * denounce waiting timing
- */
 #define CON_DEB_SHORT (1<<0)
 /* QMU Registers */
 #ifdef CONFIG_MTK_MUSB_QMU_SUPPORT

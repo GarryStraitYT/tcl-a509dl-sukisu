@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __CCCI_DEBUG_H__
 #define __CCCI_DEBUG_H__
@@ -32,9 +29,6 @@ extern int ccci_log_write(const char *fmt, ...); /* Exported by CCCI Util */
 extern int ccci_dump_write(int md_id, int buf_type,
 	unsigned int flag, const char *fmt, ...);
 
-/*****************************************************************************
- ** CCCI dump log define start ****************
- ****************************************************************************/
 /*--------------------------------------------------------------------------*/
 /* This is used for log to mobile log or uart log */
 #define CCCI_LEGACY_DBG_LOG(idx, tag, fmt, args...) \
@@ -156,9 +150,6 @@ do { \
 	CCCI_LEGACY_DBG_LOG(idx, tag, fmt, ##args); \
 } while (0)
 
-/****************************************************************************
- ** CCCI dump log define end ****************
- ****************************************************************************/
 
 /* #define CLDMA_TRACE */
 /* #define PORT_NET_TRACE */

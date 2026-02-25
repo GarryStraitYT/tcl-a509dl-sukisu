@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __DT_BINDINGS_INTERCONNECT_MTK_MT6761_EMI_H
 #define __DT_BINDINGS_INTERCONNECT_MTK_MT6761_EMI_H

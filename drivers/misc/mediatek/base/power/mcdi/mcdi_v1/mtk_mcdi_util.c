@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 #include <linux/printk.h>
 #include <linux/types.h>
 #include <linux/kconfig.h>
@@ -18,9 +15,6 @@
 #include <sspm_mbox.h>
 #endif
 
-/**
- * MCU read/write interface
- */
 static inline unsigned int mcdi_sspm_read(int id)
 {
 	unsigned int val = 0;
@@ -94,9 +88,6 @@ int mcdi_fw_is_ready(void)
 	return __mcdi_fw_is_ready();
 }
 
-/**
- * SPMC related interface
- */
 bool mcdi_is_cpc_mode(void)
 {
 #if defined(MCDI_CPC_MODE)
@@ -175,9 +166,6 @@ void mcdi_set_cpu_iso_mbox(unsigned int iso_mask)
 	mcdi_mbox_write(MCDI_MBOX_CPU_ISOLATION_MASK, iso_mask);
 }
 
-/**
- * MCDI utility function
- */
 unsigned long long idle_get_current_time_us(void)
 {
 	unsigned long long idle_current_time = sched_clock();

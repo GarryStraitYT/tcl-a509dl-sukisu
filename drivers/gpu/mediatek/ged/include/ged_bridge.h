@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __GED_BRIDGE_H__
 #define __GED_BRIDGE_H__
@@ -13,9 +10,6 @@
 #include "ged_bridge_id.h"
 
 
-/*****************************************************************************
- *  BRIDGE FUNCTIONS
- *****************************************************************************/
 
 int ged_bridge_log_buf_get(
 	struct GED_BRIDGE_IN_LOGBUFGET *psLogBufGetIN,

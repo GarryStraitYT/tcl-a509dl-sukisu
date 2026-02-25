@@ -1,39 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *   AudDrv_Clk.c
- *
- * Project:
- * --------
- *   MT6759 Audio Driver clock control implement
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Chipeng Chang (MTK02308)
- *
- *----------------------------------------------------------------------------
- *
- *
- *****************************************************************************/
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include <linux/clk.h>
 
@@ -61,9 +29,6 @@ bool spm_resource_req(unsigned int user, unsigned int req_mask)
 	__attribute__((weak));
 #endif
 #endif
-/*****************************************************************************
- *                         D A T A   T Y P E S
- *****************************************************************************/
 
 static int APLL1Counter;
 static int APLL2Counter;
@@ -465,14 +430,6 @@ EXIT:
 	return 0;
 }
 #endif
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_Clk_On / AudDrv_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable PLL(26M clock) \ AFE clock
- *
- ****************************************************************************/
 void AudDrv_Clk_On(void)
 {
 #if !defined(CONFIG_FPGA_EARLY_PORTING)
@@ -621,14 +578,6 @@ void AudDrv_Clk_Off(void)
 }
 EXPORT_SYMBOL(AudDrv_Clk_Off);
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ANA_Clk_On / AudDrv_ANA_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable analog part clock
- *
- *****************************************************************************/
 void AudDrv_ANA_Clk_On(void)
 {
 }
@@ -639,15 +588,6 @@ void AudDrv_ANA_Clk_Off(void)
 }
 EXPORT_SYMBOL(AudDrv_ANA_Clk_Off);
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ADC_Clk_On / AudDrv_ADC_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable analog part clock
- *
- ****************************************************************************
- */
 
 void AudDrv_ADC_Clk_On(void)
 {
@@ -706,15 +646,6 @@ void AudDrv_ADC_Clk_Off(void)
 	spin_unlock_irqrestore(&auddrv_Clk_lock, flags);
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ADC2_Clk_On / AudDrv_ADC2_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable clock
- *
- ****************************************************************************
- */
 
 void AudDrv_ADC2_Clk_On(void)
 {
@@ -723,15 +654,6 @@ void AudDrv_ADC2_Clk_On(void)
 void AudDrv_ADC2_Clk_Off(void)
 {
 }
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ADC3_Clk_On / AudDrv_ADC3_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable clock
- *
- ****************************************************************************
- */
 
 void AudDrv_ADC3_Clk_On(void)
 {
@@ -741,15 +663,6 @@ void AudDrv_ADC3_Clk_Off(void)
 {
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ADC_Hires_Clk_On / AudDrv_ADC_Hires_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable analog part clock
- *
- ****************************************************************************
- */
 
 void AudDrv_ADC_Hires_Clk_On(void)
 {
@@ -759,15 +672,6 @@ void AudDrv_ADC_Hires_Clk_Off(void)
 {
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ADC2_Hires_Clk_On / AudDrv_ADC2_Hires_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable analog part clock
- *
- ****************************************************************************
- */
 
 void AudDrv_ADC2_Hires_Clk_On(void)
 {
@@ -777,15 +681,6 @@ void AudDrv_ADC2_Hires_Clk_Off(void)
 {
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_APLL22M_Clk_On / AudDrv_APLL22M_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable clock
- *
- ****************************************************************************
- */
 
 void AudDrv_APLL22M_Clk_On(void)
 {
@@ -857,15 +752,6 @@ EXIT:
 	spin_unlock_irqrestore(&auddrv_Clk_lock, flags);
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_APLL24M_Clk_On / AudDrv_APLL24M_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable clock
- *
- ****************************************************************************
- */
 
 void AudDrv_APLL24M_Clk_On(void)
 {
@@ -939,16 +825,6 @@ EXIT:
 	spin_unlock_irqrestore(&auddrv_Clk_lock, flags);
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_I2S_Clk_On / AudDrv_I2S_Clk_Off
- *
- * DESCRIPTION
- * Enable I2S In clock (bck)
- * This should be enabled in slave i2s mode.
- *
- ****************************************************************************
- */
 void aud_top_con_pdn_i2s(bool _pdn)
 {
 	if (_pdn)
@@ -990,15 +866,6 @@ void AudDrv_I2S_Clk_Off(void)
 }
 EXPORT_SYMBOL(AudDrv_I2S_Clk_Off);
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_TDM_Clk_On / AudDrv_TDM_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable TDM clock
- *
- ****************************************************************************
- */
 void aud_top_con_pdn_tdm_ck(bool _pdn)
 {
 	Afe_Set_Reg(AUDIO_TOP_CON0, _pdn << 20,
@@ -1148,15 +1015,6 @@ void AudDrv_APLL2Tuner_Clk_Off(void)
 	spin_unlock_irqrestore(&auddrv_Clk_lock, flags);
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_HDMI_Clk_On / AudDrv_HDMI_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable analog part clock
- *
- ****************************************************************************
- */
 
 void AudDrv_HDMI_Clk_On(void)
 {
@@ -1233,15 +1091,6 @@ void AudDrv_Emi_Clk_Off(void)
 #endif
 }
 
-/*****************************************************************************
- * FUNCTION
- *  AudDrv_ANC_Clk_On / AudDrv_ANC_Clk_Off
- *
- * DESCRIPTION
- *  Enable/Disable ANC clock
- *
- ****************************************************************************
- */
 
 void AudDrv_ANC_Clk_On(void)
 {

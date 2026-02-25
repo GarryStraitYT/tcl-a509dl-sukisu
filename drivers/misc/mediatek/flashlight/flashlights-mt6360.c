@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -76,9 +73,6 @@ struct mt6360_platform_data {
 	struct flashlight_device_id *dev_id;
 };
 
-/******************************************************************************
- * Charger power supply class
- *****************************************************************************/
 static int mt6360_high_voltage_supply(int enable)
 {
 	union power_supply_propval prop;
@@ -101,9 +95,6 @@ static int mt6360_high_voltage_supply(int enable)
 	return ret;
 }
 
-/******************************************************************************
- * mt6360 operations
- *****************************************************************************/
 static const int mt6360_current[MT6360_LEVEL_NUM] = {
 	  25,   50,  75, 100, 125, 150, 175,  200,  225,  250,
 	 275,  300, 325, 350, 375, 400, 450,  500,  550,  600,
@@ -401,9 +392,6 @@ static int mt6360_uninit(void)
 }
 
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static void mt6360_work_disable_ch1(struct work_struct *data)
 {
 	pr_debug("ht work queue callback\n");
@@ -456,9 +444,6 @@ static int mt6360_timer_cancel(int channel)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operation wrapper function
- *****************************************************************************/
 static int mt6360_operate(int channel, int enable)
 {
 	ktime_t ktime;
@@ -542,9 +527,6 @@ static int mt6360_operate(int channel, int enable)
 	return 0;
 }
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int mt6360_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -714,9 +696,6 @@ static struct flashlight_operations mt6360_ops = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int mt6360_parse_dt(struct device *dev,
 		struct mt6360_platform_data *pdata)
 {

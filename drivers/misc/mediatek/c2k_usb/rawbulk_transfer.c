@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 /* #define DEBUG */
 /* #define VERBOSE_DEBUG */
@@ -38,9 +35,6 @@
 #define STOP_UPSTREAM   0x1
 #define STOP_DOWNSTREAM 0x2
 
-/* extern int modem_buffer_push(int port_num, const unsigned char *buf,
- * int count);
- */
 #ifdef CONFIG_EVDO_DT_VIA_SUPPORT
 char *transfer_name[] = { "modem", "ets", "at", "pcv", "gps" };
 #else
@@ -127,9 +121,6 @@ static struct rawbulk_transfer *id_to_transfer(int transfer_id)
 
 /* extern int rawbulk_usb_state_check(void); */
 
-/*
- * upstream
- */
 
 #define UPSTREAM_STAT_FREE          0
 #define UPSTREAM_STAT_UPLOADING     2
@@ -562,9 +553,6 @@ int rawbulk_push_upstream_buffer(int transfer_id, const void *buffer,
 }
 EXPORT_SYMBOL_GPL(rawbulk_push_upstream_buffer);
 
-/*
- * downstream
- */
 
 #define DOWNSTREAM_STAT_FREE        0
 #define DOWNSTREAM_STAT_DOWNLOADING 2

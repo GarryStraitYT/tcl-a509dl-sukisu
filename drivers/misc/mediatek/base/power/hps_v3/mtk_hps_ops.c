@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/slab.h>
@@ -9,9 +6,6 @@
 #include "mtk_hps.h"
 #include "mtk_hps_internal.h"
 
-/*
- *#include <mt-plat/met_drv.h>
- */
 
 static int cal_base_cores(void)
 {

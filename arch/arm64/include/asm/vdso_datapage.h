@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 #ifndef __ASM_VDSO_DATAPAGE_H
 #define __ASM_VDSO_DATAPAGE_H
 

@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Sagy Shih <sagy.shih@mediatek.com>
- */
 
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -1118,9 +1114,6 @@ unsigned int lpDram_Register_Read(unsigned int Reg_base, unsigned int Offset)
 }
 EXPORT_SYMBOL(lpDram_Register_Read);
 
-/************************************************
- * CL#46077
- *************************************************/
 unsigned int get_dram_data_rate(void)
 {
 	unsigned int u4PllIdx, u4ShuLevel, u4SDM_PCW, u4PREDIV, u4POSDIV;

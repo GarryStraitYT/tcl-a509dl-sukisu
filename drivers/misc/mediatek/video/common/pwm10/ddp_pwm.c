@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/time.h>
@@ -420,16 +417,6 @@ static void disp_pwm_set_enabled(struct cmdqRecStruct *cmdq,
 
 }
 
-/*
- * If you want to re-map the backlight level from user space to
- * the real level of hardware output, please modify here.
- *
- * Inputs:
- *  id		- DISP_PWM0 / DISP_PWM1
- *  level_1024	- Backlight value in [0, 1023]
- * Returns:
- *  PWM duty in [0, 1023]
- */
 static int disp_pwm_level_remap(enum disp_pwm_id_t id, int level_1024)
 {
 	return level_1024;

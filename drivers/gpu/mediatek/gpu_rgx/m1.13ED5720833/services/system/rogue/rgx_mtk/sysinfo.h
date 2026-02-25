@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 /*************************************************************************/ /*!
  *
@@ -91,9 +88,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #if defined(__linux__)
-/*
- * Use the static bus ID for the platform DRM device.
- */
 #if defined(PVR_DRM_DEV_BUS_ID)
 #define	SYS_RGX_DEV_DRM_BUS_ID	PVR_DRM_DEV_BUS_ID
 #else

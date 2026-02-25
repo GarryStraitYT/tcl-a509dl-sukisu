@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef __MTK_CMDQ_H__
 #define __MTK_CMDQ_H__
@@ -25,9 +22,6 @@
 #define CMDQ_EVENT_MAX			0x3FF
 #define SUBSYS_NO_SUPPORT		99
 
-/* GCE provide 26M timer, thus each tick 1/26M second,
- * which is, 1 microsecond = 26 ticks
- */
 #define CMDQ_US_TO_TICK(_t)		(_t * 26)
 #define CMDQ_TICK_TO_US(_t)		(do_div(_t, 26))
 
@@ -36,14 +30,6 @@ extern int gce_shift_bit;
 #define CMDQ_REG_SHIFT_ADDR(addr)	((addr) >> gce_shift_bit)
 #define CMDQ_REG_REVERT_ADDR(addr)	((addr) << gce_shift_bit)
 
-/* GCE provide 32/64 bit General Purpose Register (GPR)
- * use as data cache or address register
- *	 32bit: R0-R15
- *	 64bit: P0-P7
- * Note:
- *	R0-R15 and P0-P7 actullay share same memory
- *	R0 use as mask in instruction, thus be care of use R1/P0.
- */
 enum cmdq_gpr {
 	/* 32bit R0 to R15 */
 	CMDQ_GPR_R00 = 0x00,
@@ -153,29 +139,10 @@ struct cmdq_flush_completion {
 
 u32 cmdq_subsys_id_to_base(struct cmdq_base *cmdq_base, int id);
 
-/**
- * cmdq_pkt_realloc_cmd_buffer() - reallocate command buffer for CMDQ packet
- * @pkt:	the CMDQ packet
- * @size:	the request size
- * Return: 0 for success; else the error code is returned
- */
 int cmdq_pkt_realloc_cmd_buffer(struct cmdq_pkt *pkt, size_t size);
 
-/**
- * cmdq_register_device() - register device which needs CMDQ
- * @dev:	device for CMDQ to access its registers
- *
- * Return: cmdq_base pointer or NULL for failed
- */
 struct cmdq_base *cmdq_register_device(struct device *dev);
 
-/**
- * cmdq_mbox_create() - create CMDQ mailbox client and channel
- * @dev:	device of CMDQ mailbox client
- * @index:	index of CMDQ mailbox channel
- *
- * Return: CMDQ mailbox client pointer
- */
 struct cmdq_client *cmdq_mbox_create(struct device *dev, int index);
 void cmdq_mbox_stop(struct cmdq_client *cl);
 
@@ -194,24 +161,10 @@ void cmdq_pkt_free_buf(struct cmdq_pkt *pkt);
 
 s32 cmdq_pkt_add_cmd_buffer(struct cmdq_pkt *pkt);
 
-/**
- * cmdq_mbox_destroy() - destroy CMDQ mailbox client and channel
- * @client:	the CMDQ mailbox client
- */
 void cmdq_mbox_destroy(struct cmdq_client *client);
 
-/**
- * cmdq_pkt_create() - create a CMDQ packet
- * @client:	the CMDQ mailbox client
- *
- * Return: CMDQ packet pointer
- */
 struct cmdq_pkt *cmdq_pkt_create(struct cmdq_client *client);
 
-/**
- * cmdq_pkt_destroy() - destroy the CMDQ packet
- * @pkt:	the CMDQ packet
- */
 void cmdq_pkt_destroy(struct cmdq_pkt *pkt);
 
 u64 *cmdq_pkt_get_va_by_offset(struct cmdq_pkt *pkt, size_t offset);
@@ -251,16 +204,6 @@ s32 cmdq_pkt_store_value_reg(struct cmdq_pkt *pkt, u16 indirect_dst_reg_idx,
 s32 cmdq_pkt_write_indriect(struct cmdq_pkt *pkt, struct cmdq_base *clt_base,
 	dma_addr_t addr, u16 src_reg_idx, u32 mask);
 
-/**
- * cmdq_pkt_write() - append write command to the CMDQ packet
- * @pkt:	the CMDQ packet
- * @value:	the specified target register value
- * @clt_base:	the CMDQ base
- * @addr:	target register address
- * @mask:	the specified target register mask
- *
- * Return: 0 for success; else the error code is returned
- */
 s32 cmdq_pkt_write(struct cmdq_pkt *pkt, struct cmdq_base *clt_base,
 	dma_addr_t addr, u32 value, u32 mask);
 
@@ -290,28 +233,11 @@ s32 cmdq_pkt_poll_addr(struct cmdq_pkt *pkt, u32 value, u32 addr, u32 mask,
 s32 cmdq_pkt_poll_reg(struct cmdq_pkt *pkt, u32 value, u8 subsys,
 	u16 offset, u32 mask);
 
-/**
- * cmdq_pkt_poll() - append polling command with mask to the CMDQ packet
- * @pkt:	the CMDQ packet
- * @value:	the specified target register value
- * @subsys:	the CMDQ subsys id
- * @offset:	register offset from module base
- * @mask:	the specified target register mask
- *
- * Return: 0 for success; else the error code is returned
- */
 s32 cmdq_pkt_poll(struct cmdq_pkt *pkt, struct cmdq_base *clt_base,
 	u32 value, u32 addr, u32 mask, u8 reg_gpr);
 
 int cmdq_pkt_timer_en(struct cmdq_pkt *pkt);
 
-/* cmdq_pkt_sleep() - append commands to wait a short time in microsecond
- * @pkt:	the CMDQ packet
- * @tick:	sleep time in tick, use CMDQ_MS_TO_TICK to translate into ms
- * @reg_gpr:	GPR use to counting
- *
- * Return 0 for success; else the error code is returned
- */
 s32 cmdq_pkt_sleep(struct cmdq_pkt *pkt, u32 tick, u16 reg_gpr);
 
 s32 cmdq_pkt_poll_timeout(struct cmdq_pkt *pkt, u32 value, u8 subsys,
@@ -321,26 +247,12 @@ void cmdq_pkt_perf_end(struct cmdq_pkt *pkt);
 void cmdq_pkt_perf_begin(struct cmdq_pkt *pkt);
 u32 *cmdq_pkt_get_perf_ret(struct cmdq_pkt *pkt);
 
-/**
- * cmdq_pkt_wfe() - append wait for event command to the CMDQ packet
- * @pkt:	the CMDQ packet
- * @event:	the desired event type to "wait and CLEAR"
- *
- * Return: 0 for success; else the error code is returned
- */
 int cmdq_pkt_wfe(struct cmdq_pkt *pkt, u16 event);
 
 int cmdq_pkt_wait_no_clear(struct cmdq_pkt *pkt, u16 event);
 
 int cmdq_pkt_acquire_event(struct cmdq_pkt *pkt, u16 event);
 
-/**
- * cmdq_pkt_clear_event() - append clear event command to the CMDQ packet
- * @pkt:	the CMDQ packet
- * @event:	the desired event to be cleared
- *
- * Return: 0 for success; else the error code is returned
- */
 s32 cmdq_pkt_clear_event(struct cmdq_pkt *pkt, u16 event);
 
 s32 cmdq_pkt_set_event(struct cmdq_pkt *pkt, u16 event);
@@ -351,20 +263,6 @@ s32 cmdq_pkt_finalize(struct cmdq_pkt *pkt);
 
 s32 cmdq_pkt_finalize_loop(struct cmdq_pkt *pkt);
 
-/**
- * cmdq_pkt_flush_async() - trigger CMDQ to asynchronously execute the CMDQ
- *                          packet and call back at the end of done packet
- * @client:	the CMDQ mailbox client
- * @pkt:	the CMDQ packet
- * @cb:		called at the end of done packet
- * @data:	this data will pass back to cb
- *
- * Return: 0 for success; else the error code is returned
- *
- * Trigger CMDQ to asynchronously execute the CMDQ packet and call back
- * at the end of done packet. Note that this is an ASYNC function. When the
- * function returned, it may or may not be finished.
- */
 s32 cmdq_pkt_flush_async(struct cmdq_pkt *pkt,
 	cmdq_async_flush_cb cb, void *data);
 
@@ -373,16 +271,6 @@ int cmdq_pkt_wait_complete(struct cmdq_pkt *pkt);
 s32 cmdq_pkt_flush_threaded(struct cmdq_pkt *pkt,
 	cmdq_async_flush_cb cb, void *data);
 
-/**
- * cmdq_pkt_flush() - trigger CMDQ to execute the CMDQ packet
- * @pkt:	the CMDQ packet
- *
- * Return: 0 for success; else the error code is returned
- *
- * Trigger CMDQ to execute the CMDQ packet. Note that this is a
- * synchronous flush function. When the function returned, the recorded
- * commands have been done.
- */
 s32 cmdq_pkt_flush(struct cmdq_pkt *pkt);
 
 void cmdq_buf_print_wfe(char *text, u32 txt_sz,

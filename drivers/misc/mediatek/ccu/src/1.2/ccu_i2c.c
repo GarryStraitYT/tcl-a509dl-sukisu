@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/device.h>
@@ -26,9 +23,6 @@
 #include "ccu_i2c.h"
 #include "ccu_i2c_hw.h"
 #include "kd_camera_feature.h"/*for IMGSENSOR_SENSOR_IDX*/
-/**************************************************************************
- *
- **************************************************************************/
  /*I2C Channel offset*/
 #define I2C_BASE_OFS_CH1 (0x200)
 #define MAX_I2C_CMD_LEN 255

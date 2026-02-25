@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
@@ -2270,7 +2266,8 @@ static int battery_exist_get(struct mtk_gauge *gauge,
 }
 
 /* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 static int bat_isense_get(struct mtk_gauge *gauge,
 	struct mtk_gauge_sysfs_field_info *attr, int *val)
 {
@@ -2832,7 +2829,8 @@ static struct mtk_gauge_sysfs_field_info mt6357_sysfs_field_tbl[] = {
 	GAUGE_SYSFS_FIELD_WO(
 		bat_temp_froze_en_set, GAUGE_PROP_BAT_TEMP_FROZE_EN),
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	GAUGE_SYSFS_FIELD_RO(bat_isense_get,
 		GAUGE_PROP_ISENSE_VOLTAGE),
 	#endif
@@ -3279,7 +3277,8 @@ static int mt6357_gauge_probe(struct platform_device *pdev)
 	}
 
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)
+	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
+		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
 	gauge->chan_isense = devm_iio_channel_get(
 		&pdev->dev, "pmic_isense_voltage");
 	if (IS_ERR(gauge->chan_isense)) {

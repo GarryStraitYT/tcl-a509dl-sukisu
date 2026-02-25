@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 #include <linux/kernel.h>
 #include <linux/kthread.h>
 #include "ccci_config.h"
@@ -13,12 +10,6 @@
 #include "port_ctlmsg.h"
 
 #define MAX_QUEUE_LENGTH 16
-/*
- * all supported modems should follow these
- * handshake messages as a protocol.
- * but we still can support un-usual modem by
- * providing cutomed kernel_port_ops.
- */
 static void control_msg_handler(struct port_t *port, struct sk_buff *skb)
 {
 	int md_id = port->md_id;

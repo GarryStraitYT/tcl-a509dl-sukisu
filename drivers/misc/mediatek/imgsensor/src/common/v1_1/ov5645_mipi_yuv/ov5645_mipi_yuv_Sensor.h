@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 OV5645mipi_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _OV5645_SENSOR_H
 #define _OV5645_SENSOR_H
 

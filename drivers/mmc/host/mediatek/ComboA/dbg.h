@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT_MSDC_DEUBG__
 #define __MT_MSDC_DEUBG__
@@ -128,11 +125,6 @@ do { \
 #define IRQ_MSG(fmt, args...)
 #endif
 
-/*
- * snprintf may return a value of size or "more" to indicate
- * that the output was truncated, thus be careful of "more"
- * case.
- */
 #define SPREAD_PRINTF(buff, size, evt, fmt, args...) \
 do { \
 	if (buff && size && *(size)) { \

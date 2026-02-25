@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_SPM_H__
 #define __MTK_SPM_H__
@@ -10,18 +7,12 @@
 
 
 
-/************************************************************
- * FIXME: To be refined !!!
- ************************************************************/
 
 #include <linux/io.h>
 /* SUBSYS Power Status */
 extern void __iomem *spm_base;
 #define SPM_BASE spm_base
 
-/********************************************************************
- * APIs for external modules
- *******************************************************************/
 bool mtk_spm_drv_ready(void);
 bool mtk_spm_base_ready(void);
 unsigned int mtk_spm_read_register(int register_index);
@@ -33,16 +24,10 @@ enum {
 	SPM_SPARE_ACK_MASK,
 };
 
-/********************************************************************
- * FIXME: To be refined !!!
- *******************************************************************/
 int mtk_spm_init(void);
 void *mt_spm_base_get(void);
 extern int spm_load_firmware_status(void);
 
-/********************************************************************
- * sspm lock spm scenario
- *******************************************************************/
 
 #ifdef CONFIG_MTK_TINYSYS_SSPM_SUPPORT
 extern bool is_sspm_ipi_lock_spm(void);
@@ -51,9 +36,6 @@ extern void sspm_ipi_lock_spm_scenario(int start, int id, int opt,
 #endif /* CONFIG_MTK_TINYSYS_SSPM_SUPPORT */
 
 
-/********************************************************************
- * TWAM definitions for MET use only.
- *******************************************************************/
 struct twam_byte {
 	u32 signal;
 	u32 id;

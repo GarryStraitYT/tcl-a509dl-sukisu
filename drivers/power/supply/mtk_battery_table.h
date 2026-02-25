@@ -1,17 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #ifndef _MTK_BATTERY_TABLE_H
 #define _MTK_BATTERY_TABLE_H
 
 #include "mtk_battery.h"
-/* ============================================================
- * define
- * ============================================================
- */
 
 /* customize */
 #define DIFFERENCE_FULLOCV_ITH	200	/* mA */
@@ -41,16 +33,6 @@
 
 #define POWERON_SYSTEM_IBOOT	500	/* mA */
 
-/*
- * LOW_TEMP_MODE = 0
- *	disable LOW_TEMP_MODE
- * LOW_TEMP_MODE = 1
- *	if battery temperautre < LOW_TEMP_MODE_TEMP
- *	when bootup , force C mode
- * LOW_TEMP_MODE = 2
- *	if battery temperautre < LOW_TEMP_MODE_TEMP
- *	force C mode
- */
 #define LOW_TEMP_MODE			0
 #define LOW_TEMP_MODE_TEMP		0
 
@@ -218,12 +200,6 @@
 #define OVER_DISCHARGE_LEVEL	-1500
 
 #define UISOC_UPDATE_TYPE		0
-/*
- *	uisoc_update_type:
- *	0: only ui_soc interrupt update ui_soc
- *	1: coulomb/nafg will update ui_soc if delta car > ht/lt_gap /2
- *	2: coulomb/nafg will update ui_soc
- */
 
 /* using current to limit uisoc in 100% case*/
 /* UI_FULL_LIMIT_ITH0 3000 means 300ma */
@@ -274,19 +250,11 @@
 /* End modified by bitao.xiong for task-9796564 on 2020-08-20 */
 
 
-/* if ACTIVE_TABLE == 0 && MULTI_BATTERY == 0
- * load g_FG_PSEUDO100_Tx from dtsi
- */
 #define MULTI_BATTERY			0
 #define BATTERY_ID_CHANNEL_NUM	1
 #define BATTERY_PROFILE_ID		0
 #define TOTAL_BATTERY_NUMBER	4
 
-/*
- * if ACTIVE_TABLE == 0 , use DTSI table
- * if ACTIVE_TABLE == x , use .h table
- * ACTIVE_TABLE <= MAX_TABLE
- */
 #define ACTIVE_TABLE			0
 
 /*#define MTK_GET_BATTERY_ID_BY_GPIO*/
@@ -510,10 +478,6 @@ struct fuelgauge_temperature Fg_Temperature_Table[21] = {
 
 
 
-/* ============================================================
- * <DOD, Battery_Voltage> Table
- * ============================================================
- */
 
 
 

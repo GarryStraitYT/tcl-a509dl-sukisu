@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -36,32 +33,12 @@
 /* Definition */
 /* ************************************ */
 
-/**
- * \def MTK_THERMAL_MONITOR_MEASURE_GET_TEMP_OVERHEAD
- * 1 to enable
- * 0 to disable
- */
 #define MTK_THERMAL_MONITOR_MEASURE_GET_TEMP_OVERHEAD (0)
 
 #define MTK_THERMAL_MONITOR_COOLER_MAX_EXTRA_CONDITIONS (3)
 
 #define MTK_THERMAL_MONITOR_CONDITIONAL_COOLING (1)
 
-/**
- *  \def MTK_MAX_STEP_SMA_LEN
- *  If not defined as 1, multi-step temperature SMA len is supported.
- *  For example, MTK_MAX_STEP_SMA_LEN is defined as 4.
- *  Users can set 4 different SMA len for a thermal zone and assign
- *  a high threshold for each.
- *  SMA len in the next step is applied if temp of the TZ reaches high
- *  threshold.
- *  Represent this in a simple figure as below:
- *   -infinite HT(0)|<- sma_len(0) ->|HT(1)|<- sma_len(1) ->|HT(2)|<- sma_len(2)
- *   ->|HT(3)|<- sma_len(3)-> |+infinite HT(4)
- *  In temp range between HT(i) and HT(i+1), sma_len(i) is applied.
- *  HT(i) < HT(i+1), eq is not allowed since meaningless
- *  sma_len(i) in [1, 60]
- */
 #define MAX_STEP_MA_LEN (4)
 
 #define MSMA_MAX_HT     (1000000)
@@ -124,18 +101,11 @@ static struct proc_dir_entry *proc_cooler_dir_entry;
 static struct proc_dir_entry *proc_tz_dir_entry;
 
 static struct proc_dir_entry *proc_drv_therm_dir_entry;
-/**
- *  write to nBattCurrentCnsmpt, nCPU0_usage,
- *  and nCPU1_usage are locked by MTM_SYSINFO_LOCK
- */
 
 
 
 /* static int nModem_TxPower = -127;  ///< Indicate invalid value */
 
-/* For enabling time based thermal protection
- * under phone call+AP suspend scenario.
- */
 static int g_mtm_phone_call_ongoing;
 
 static DEFINE_MUTEX(MTM_COOLER_LOCK);
@@ -630,9 +600,6 @@ static ssize_t _mtkthermal_cooler_write
 	}
 #else
 #error "Change correspondent part when changing MTK_THERMAL_MONITOR_ skip..."
-/* Change correspondent part when changing
- * MTK_THERMAL_MONITOR_COOLER_MAX_EXTRA_CONDITIONS!
- */
 #endif
 	/*THRML_ERROR_LOG("%s bad arg\n", __func__);*/
 
@@ -916,16 +883,8 @@ static long _mtkthermal_update_and_get_sma
 	return ret;
 }
 
-/**
- *  0: means please do not show thermal limit in "Show CPU Usage" panel.
- *  1: means show thermal limit and CPU temp only
- *  2: means show all all tz temp besides thermal limit and CPU temp
- */
 static unsigned int g_thermal_indicator_mode;
 
-/**
- *  delay in milliseconds.
- */
 static unsigned int g_thermal_indicator_delay;
 
 /* Read */
@@ -1101,14 +1060,7 @@ static void __exit mtkthermal_exit(void)
 	THRML_LOG("%s\n", __func__);
 }
 
-/* ************************************
- * thermal_zone_device_ops Wrapper
- * ************************************
- */
 
-/*
- * .bind wrapper: bind the thermal zone device with a thermal cooling device.
- */
 static int mtk_thermal_wrapper_bind
 (struct thermal_zone_device *thermal, struct thermal_cooling_device *cdev)
 {
@@ -1178,9 +1130,6 @@ static int mtk_thermal_wrapper_bind
 	return ret;
 }
 
-/*
- *.unbind wrapper: unbind the thermal zone device with a thermal cooling device.
- */
 static int mtk_thermal_wrapper_unbind
 (struct thermal_zone_device *thermal, struct thermal_cooling_device *cdev)
 {
@@ -1245,9 +1194,6 @@ static int mtk_thermal_wrapper_unbind
 	return ret;
 }
 
-/*
- * .get_temp wrapper: get the current temperature of the thermal zone.
- */
 static int mtk_thermal_wrapper_get_temp
 (struct thermal_zone_device *thermal, int *temperature)
 {
@@ -1300,11 +1246,6 @@ static int mtk_thermal_wrapper_get_temp
 	return ret;
 }
 
-/*
- * .get_mode wrapper: get the current mode (user/kernel) of the thermal zone.
- *  - "kernel" means thermal management is done in kernel.
- *  - "user" will prevent kernel thermal driver actions upon trip points
- */
 static int mtk_thermal_wrapper_get_mode
 (struct thermal_zone_device *thermal, enum thermal_device_mode *mode)
 {
@@ -1327,9 +1268,6 @@ static int mtk_thermal_wrapper_get_mode
 	return ret;
 }
 
-/*
- *  .set_mode wrapper: set the mode (user/kernel) of the thermal zone.
- */
 static int mtk_thermal_wrapper_set_mode
 (struct thermal_zone_device *thermal, enum thermal_device_mode mode)
 {
@@ -1352,9 +1290,6 @@ static int mtk_thermal_wrapper_set_mode
 	return ret;
 }
 
-/*
- * .get_trip_type wrapper: get the type of certain trip point.
- */
 static int mtk_thermal_wrapper_get_trip_type
 (struct thermal_zone_device *thermal, int trip, enum thermal_trip_type *type)
 {
@@ -1378,10 +1313,6 @@ static int mtk_thermal_wrapper_get_trip_type
 	return ret;
 }
 
-/*
- * .get_trip_temp wrapper:get the temperature above which the certain trip point
- *  will be fired.
- */
 static int mtk_thermal_wrapper_get_trip_temp
 (struct thermal_zone_device *thermal, int trip, int *temperature)
 {
@@ -1408,9 +1339,6 @@ static int mtk_thermal_wrapper_get_trip_temp
 	return ret;
 }
 
-/*
- * .get_crit_temp wrapper:
- */
 static int mtk_thermal_wrapper_get_crit_temp
 (struct thermal_zone_device *thermal, int *temperature)
 {
@@ -1830,9 +1758,6 @@ static struct thermal_cooling_device_ops mtk_cooling_wrapper_dev_ops = {
 	.set_cur_state = mtk_cooling_wrapper_set_cur_state,
 };
 
-/*
- * MTK Cooling Register
- */
 struct thermal_cooling_device *mtk_thermal_cooling_device_register_wrapper
 (char *type, void *devdata, const struct thermal_cooling_device_ops *ops)
 {
@@ -1968,9 +1893,6 @@ struct thermal_cooling_device *cdev, int exit_point)
 }
 EXPORT_SYMBOL(mtk_thermal_cooling_device_add_exit_point);
 
-/*
- * MTK Cooling Unregister
- */
 void mtk_thermal_cooling_device_unregister_wrapper(
 struct thermal_cooling_device *cdev)
 {

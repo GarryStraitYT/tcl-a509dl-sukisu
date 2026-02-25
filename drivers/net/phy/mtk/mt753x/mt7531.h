@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #ifndef _MT7531_H_
 #define _MT7531_H_

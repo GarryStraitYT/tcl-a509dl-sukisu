@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/err.h>
 #include <linux/rcupdate.h>
@@ -56,11 +53,6 @@ int get_task_group_path(struct task_group *tg, char *buf, size_t buf_len)
 	return cgroup_path(tg->css.cgroup, buf, buf_len);
 }
 
-/*
- * set sched boost type
- * @type: reference sched boost type
- * @return :success current type,else return -1
- */
 int set_sched_boost_type(int type)
 {
 	if (type < SCHED_NO_BOOST || type > SCHED_ALL_BOOST) {
@@ -81,18 +73,10 @@ int get_sched_boost_type(void)
 }
 EXPORT_SYMBOL(get_sched_boost_type);
 
-/*
- * get orig cpu prefer of task
- */
 inline int task_orig_cpu_prefer(struct task_struct *task)
 {
 	return task->cpu_prefer;
 }
-/*
- * modify task's boost type
- * first priority is SCHED_ALL_BOOST.
- * priority: task < group < all_boost
- */
 int cpu_prefer(struct task_struct *task)
 {
 	int cpu_prefer = task_orig_cpu_prefer(task);

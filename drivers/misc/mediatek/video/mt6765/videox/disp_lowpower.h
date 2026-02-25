@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _DISP_LOWPOWER_H_
 #define _DISP_LOWPOWER_H_
@@ -18,10 +15,6 @@ void kick_logger_dump(char *string);
 void kick_logger_dump_reset(void);
 char *get_kick_dump(void);
 unsigned int get_kick_dump_size(void);
-/**
- * return 0: display is not idle trigger now
- * return 1: display is idle
- */
 int primary_display_is_idle(void);
 void primary_display_idlemgr_kick(const char *source, int need_lock);
 void enter_share_sram(enum CMDQ_EVENT_ENUM resourceEvent);

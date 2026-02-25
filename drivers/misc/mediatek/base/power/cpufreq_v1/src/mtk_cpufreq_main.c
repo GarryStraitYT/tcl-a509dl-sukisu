@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/random.h>
 #include <linux/pm_opp.h>
@@ -22,9 +19,6 @@
 #define met_tag_oneshot(a, b, c) do {} while (0)
 //#define _set_met_tag_oneshot(a, bz) do{}while(0)
 
-/*
- * Global Variables
- */
 bool is_in_cpufreq;
 DEFINE_MUTEX(cpufreq_mutex);
 DEFINE_MUTEX(cpufreq_para_mutex);
@@ -1145,9 +1139,6 @@ static void ppm_limit_callback(struct ppm_client_req req)
 	_mt_cpufreq_dvfs_request_wrapper(NULL, 0, MT_CPU_DVFS_PPM, NULL);
 #endif
 }
-/*
- * cpufreq driver
- */
 static int _mt_cpufreq_verify(struct cpufreq_policy *policy)
 {
 	struct mt_cpu_dvfs *p;
@@ -1338,9 +1329,6 @@ static struct cpufreq_driver _mt_cpufreq_driver = {
 	.attr = _mt_cpufreq_attr,
 };
 
-/*
- * Platform driver
- */
 static int
 _mt_cpufreq_pm_callback(struct notifier_block *nb,
 		unsigned long action, void *ptr)

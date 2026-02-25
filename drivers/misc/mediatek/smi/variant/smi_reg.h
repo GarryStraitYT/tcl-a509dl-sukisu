@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef _SMI_REG_H__
 #define _SMI_REG_H__
@@ -386,11 +383,6 @@ extern struct mtk_smi_data *smi_data;
 #define F_SMI_DOMN(port, domain) \
 	(((domain)&0x3)<<((((port) > 15)?(port-16) : port)<<1))
 
-/*
- * for 73,63 and 27, they have the same register offset,
- * since those are only used when smi_variant was configed,
- * so it's OK for we remove the original define
- */
 #define REG_OFFSET_SMI_L1LEN	                (0x200)
 #define REG_OFFSET_SMI_L1ARB0	                (0x204)
 #define REG_OFFSET_SMI_L1ARB1	                (0x208)

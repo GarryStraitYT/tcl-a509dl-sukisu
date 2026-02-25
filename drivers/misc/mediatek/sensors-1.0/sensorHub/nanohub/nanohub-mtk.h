@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _NANOHUB_MTK_IPI_H
 #define _NANOHUB_MTK_IPI_H

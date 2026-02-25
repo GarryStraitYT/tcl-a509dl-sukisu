@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *	mt_soc_pcm_voice_ultra.c
- *
- * Project:
- * --------
- *	MT6797
- *
- * Description:
- * ------------
- *	Platform driver for ultrasound during voice call
- *
- * Author:
- * -------
- *	Kai Chieh Chuang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -54,9 +21,6 @@
 #include <scp_helper.h>
 #endif
 
-/*
- *    function implementation
- */
 static bool mDlPrepareDone;
 static bool mUlPrepareDone;
 

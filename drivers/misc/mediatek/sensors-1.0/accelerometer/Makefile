@@ -18,4 +18,5 @@ obj-$(CONFIG_TOKYO_1ST_STK8BA53)   += TOKYO_1st_STK8BA53/
 obj-$(CONFIG_MTK_SIGNIFICANT_SENSOR)   +=  significant_motion/
 #end modified by zhikui.li,bring up sensor
 obj-$(CONFIG_TCT_1ST_STK8BA53)   += TCT_1ST_STK8BA53/
+obj-$(CONFIG_TCT_2ND_MC3416)   += TCT_2ND_MC3416/
 obj-$(CONFIG_MTK_SIGNIFICANT_SENSOR)   +=  significant_motion/

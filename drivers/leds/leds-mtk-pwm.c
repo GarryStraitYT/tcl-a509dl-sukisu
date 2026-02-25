@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- */
 
 #include <linux/ctype.h>
 #include <linux/err.h>
@@ -19,9 +15,6 @@
 #include <linux/workqueue.h>
 
 
-/****************************************************************************
- * variables
- ***************************************************************************/
 
 struct mtk_leds_info;
 struct led_desp *leds_desp;
@@ -82,9 +75,6 @@ struct mtk_leds_info {
 static DEFINE_MUTEX(leds_mutex);
 
 
-/****************************************************************************
- * DEBUG MACROS
- ***************************************************************************/
 
 #define LEDS_DRV_TAG "[LED_DRV]"
 #define LEDS_DRV_INFO(format, args...) \
@@ -127,9 +117,6 @@ static void led_debug_log(struct mtk_led_data *s_led,
 }
 
 
-/****************************************************************************
- * add API for temperature control
- ***************************************************************************/
 
 struct led_desp *getLedDesp(char *name)
 {
@@ -195,9 +182,6 @@ int setMaxBrightness(struct led_desp *desp, int percent, int enable)
 }
 EXPORT_SYMBOL(setMaxBrightness);
 
-/****************************************************************************
- * driver functions
- ***************************************************************************/
 static void __led_pwm_set(struct led_pwm_info *led_info)
 {
 	int new_duty = led_info->duty;
@@ -458,9 +442,6 @@ out_led_dt:
 }
 
 
-/****************************************************************************
- * driver functions
- ***************************************************************************/
 
 static int mtk_leds_probe(struct platform_device *pdev)
 {
@@ -572,11 +553,6 @@ static void __exit mtk_leds_exit(void)
 	platform_driver_unregister(&mtk_pwm_leds_driver);
 }
 
-/* delay leds init, for (1)display has delayed to use clock upstream.
- * (2)to fix repeat switch battary and power supply caused BL KE issue,
- * battary calling bl .shutdown whitch need to call disp_pwm and display
- * function and they not yet probe.
- */
 late_initcall(mtk_leds_init);
 module_exit(mtk_leds_exit);
 

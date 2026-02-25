@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 
-/*
- * BU63169AF voice coil motor driver
- * BU63169 : OIS driver
- * AK7372  : VCM driver be the same as AK7371AF
- */
 
 #include <linux/delay.h>
 #include <linux/fs.h>

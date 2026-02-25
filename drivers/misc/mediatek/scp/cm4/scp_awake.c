@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>       /* needed by all modules */
 #include <linux/init.h>         /* needed by module macros */
@@ -38,12 +35,6 @@
 struct mutex scp_awake_mutexs[SCP_CORE_TOTAL];
 
 
-/*
- * acquire scp lock flag, keep scp awake
- * @param scp_core_id: scp core id
- * return  0 :get lock success
- *        -1 :get lock timeout
- */
 int scp_awake_lock(enum scp_core_id scp_id)
 {
 	unsigned long spin_flags;
@@ -121,12 +112,6 @@ int scp_awake_lock(enum scp_core_id scp_id)
 }
 EXPORT_SYMBOL_GPL(scp_awake_lock);
 
-/*
- * release scp awake lock flag
- * @param scp_core_id: scp core id
- * return  0 :release lock success
- *        -1 :release lock fail
- */
 int scp_awake_unlock(enum scp_core_id scp_id)
 {
 	unsigned long spin_flags;
@@ -214,9 +199,6 @@ void scp_enable_sram(void)
 	writel(0, SCP_CLK_CTRL_TCM_TAIL_SRAM_PD);
 }
 
-/*
- * scp_sys_reset, reset scp
- */
 #if SCP_RECOVERY_SUPPORT
 int scp_sys_full_reset(void)
 {

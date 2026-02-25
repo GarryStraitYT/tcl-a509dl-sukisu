@@ -1,15 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __TSCPU_LVTS_SETTINGS_H__
 #define __TSCPU_LVTS_SETTINGS_H__
 
-/*=============================================================
- * Chip related
- *=============================================================
- */
 /* chip dependent */
 /* TODO: change to new reg addr. */
 #define LVTS_ADDRESS_INDEX_1	112 /* 0x01B0 */

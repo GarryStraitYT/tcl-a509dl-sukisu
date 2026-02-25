@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk-dsp-platform.h --  Mediatek ADSP platform
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chipeng <Chipeng.chang@mediatek.com>
- */
 
 
 #ifndef _MTK_DSP_PLATFORM_DRIVER_H_

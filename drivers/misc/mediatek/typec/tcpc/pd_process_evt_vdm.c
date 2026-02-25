@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "inc/pd_core.h"
 #include "inc/tcpci_event.h"
@@ -343,9 +340,6 @@ DECL_PE_STATE_TRANSITION(PD_DPM_MSG_DISCOVER_CABLE) = {
 DECL_PE_STATE_REACTION(PD_DPM_MSG_DISCOVER_CABLE);
 #endif	/* CONFIG_PD_DISCOVER_CABLE_ID */
 
-/*
- * [BLOCK] Porcess Ctrl MSG
- */
 
 #ifdef CONFIG_USB_PD_ALT_MODE
 #ifdef CONFIG_USB_PD_DBG_DP_UFP_U_AUTO_ATTENTION
@@ -418,9 +412,6 @@ static inline bool pd_process_ctrl_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess Custom MSG (SVDM/UVDM)
- */
 
 #ifdef CONFIG_USB_PD_CUSTOM_VDM
 
@@ -471,9 +462,6 @@ static inline bool pd_process_uvdm(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess Data MSG (VDM)
- */
 
 #if (PE_EVT_INFO_VDM_DIS == 0)
 static const char * const pe_vdm_cmd_name[] = {
@@ -613,9 +601,6 @@ static inline bool pd_process_data_msg(
 	return ret;
 }
 
-/*
- * [BLOCK] Porcess PDM MSG
- */
 
 static inline bool pd_process_dpm_msg(
 		struct pd_port *pd_port, struct pd_event *pd_event)
@@ -632,9 +617,6 @@ static inline bool pd_process_dpm_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess HW MSG
- */
 
 static inline bool pd_process_hw_msg(
 		struct pd_port *pd_port, struct pd_event *pd_event)
@@ -663,9 +645,6 @@ static inline bool pd_process_hw_msg(
 	return false;
 }
 
-/*
- * [BLOCK] Porcess PE MSG
- */
 
 static inline bool pd_process_pe_msg(
 	struct pd_port *pd_port, struct pd_event *pd_event)
@@ -685,9 +664,6 @@ static inline bool pd_process_pe_msg(
 	return pd_make_vdm_state_transit_nak(pd_port);
 }
 
-/*
- * [BLOCK] Porcess Timer MSG
- */
 
 static inline bool pd_process_timer_msg(
 		struct pd_port *pd_port, struct pd_event *pd_event)
@@ -704,9 +680,6 @@ static inline bool pd_process_timer_msg(
 	}
 }
 
-/*
- * [BLOCK] Porcess TCP MSG
- */
 
 const uint8_t tcp_vdm_evt_init_state[] = {
 	PE_DFP_UFP_VDM_IDENTITY_REQUEST, /* TCP_DPM_EVT_DISCOVER_ID */
@@ -910,9 +883,6 @@ static inline bool pd_process_tcp_msg(
 	return true;
 }
 
-/*
- * [BLOCK] Process Policy Engine's VDM Message
- */
 
 bool pd_process_event_vdm(struct pd_port *pd_port, struct pd_event *pd_event)
 {

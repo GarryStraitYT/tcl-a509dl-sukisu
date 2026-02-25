@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _VPU_DVFS_H_
 #define _VPU_DVFS_H_

@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __VPU_DRV_H__
 #define __VPU_DRV_H__
@@ -15,14 +12,6 @@
 #define VPU_MAX_NUM_CORES 3
 #define VPU_MAX_NUM_PLANE 3
 
-/** Request core values
- *  b0..b15: Core Bit Mask and Trylock
- *    1. Bitmask: b0..b15, represents core0 ~ core15
- *    2. 0xFFFF:  Common Pool
- *    3. 0x87:    Trylock
- *  b16..b32: Function Masks
- *    b16: Multi-Core Processing
- */
 #define VPU_TRYLOCK_CORENUM 0x87
 #define VPU_CORE_MULTIPROC  0x10000
 #define VPU_CORE_COMMON     0x0FFFF
@@ -35,98 +24,9 @@ typedef uint8_t vpu_id_t;
 /* the last byte of string must be '/0' */
 //typedef char vpu_name_t[32];
 
-/**
- * Documentation index:
- *   S1. Introduction
- *   S2. Requirement
- *   S3. Sample Use Cases
- */
 
-/**
- * S1. Introduction
- * VPU driver is a transparent platform for data exchange with VPU firmware.
- * VPU firmware can dynamically load an algorithm and do image post-processing.
- *
- * VPU driver implements a model based on aspect of algorithm's requirements.
- * An algorithm needs the buffers of input and output, and execution arguments.
- * For all mentioned above, VPU driver defines 'Port' to describe the buffers
- * of input and output, and 'Info' to describe the specification of algorithm.
- * According the 'Port' and 'Info', a user could enque requests for doing
- * image post-processing. The diagram is as follows:
- *
- *                 +---------------+
- *                 |     algo      |
- *                 |    ------     |
- *   input port1-> | [info1]       | ->output port1
- *                 | [info2]       |
- *   input port2-> | [info...]     |
- *                 +---------------+
- *
- * With Algo's properties, a user can get enough information to do processing,
- * and assign the buffers to the matching ports. Moreover, a user algo can
- * specify execution arguments to a request.
- *
- *   +------------------------+
- *   |        request         |
- *   |     -------------      |
- *   | [buffer1]=>input port1 |
- *   | [buffer2]=>input port2 |
- *   | [buffer3]=>input port3 |
- *   | [setting1]             |
- *   | [setting2]             |
- *   | [setting...]           |
- *   +------------------------+
- *
- */
 
-/**
- * S2. Requirement
- * 1. The processing order is FIFO. User should deque the request in order.
- * 2. The buffer address must be accessible by VPU. Use iommu to remap address
- *    to the specific region.
- *
- */
 
-/**
- * S3. Sample Use Cases
- * Provide 4 essential ioctl commands:
- * - VPU_IOCTL_GET_ALGO_INFO: get algo's port and info.
- *
- *     struct vpu_algo algo;
- *     strncpy(algo_n->name, "algo_name", sizeof(algo_n->name));
- *     ioctl(fd, VPU_IOCTL_GET_ALGO_INFO, algo);
- *
- * - VPU_IOCTL_ENQUE_REQUEST: enque a request to user's own queue.
- *
- *     struct vpu_request req;
- *     struct vpu_buffer *buf;
- *     req->algo_id = algo->id;
- *     req->buffer_count = 1;
- *     buf = &req->buffers[0];
- *     buf->format = VPU_BUF_FORMAT_IMG_Y8;
- *     buf->width = 640;
- *     buf->height = 360;
- *     buf->plane_count = 1;
- *     ioctl(fd, VPU_IOCTL_ENQ_REQUEST, req);
- *
- * - VPU_IOCTL_DEQUE_REQUEST: wait for request done, and get processing result.
- *
- *     struct vpu_request req;
- *     ioctl(fd, VPU_IOCTL_DEQUE_REQUEST, req);
- *
- * - VPU_IOCTL_FLUSH_REQUEST: flush all running request, and return failure if
- *                            not finished
- *
- *     ioctl(fd, VPU_IOCTL_FLUSH_REQUEST, 0);
- *
- * - VPU_IOCTL_SET_POWER: request power mode and the performance.
- *
- *     struct vpu_power power;
- *     power.mode = VPU_POWER_MODE_DYNAMIC;
- *     power.opp = VPU_POWER_OPP_UNREQUEST;
- *     ioctl(fd, VPU_IOCTL_SET_POWER, power);
- *
- */
 
 /*---------------------------------------------------------------------------*/
 /*  VPU Property                                                             */
@@ -145,34 +45,6 @@ enum vpu_prop_access {
 	VPU_PROP_ACCESS_RDWR
 };
 
-/*
- * The description of properties contains the information about property values,
- * which are stored as compact memory. With the offset, it can get the specific
- * value from compact data.
- *
- * The example of struct vpu_prop_desc is as follows:
- *   +--------+---------------------+--------+--------+-------+--------+
- *   |   id   | name                | offset | type   | count | access |
- *   +--------+---------------------+--------+--------+-------+--------+
- *   |   0    | algo_version        | 0      | int32  | 1     | RDONLY |
- *   +--------+---------------------+--------+--------+-------+--------+
- *   |   1    | field_1             | 4      | int32  | 2     | RDWR   |
- *   +--------+---------------------+--------+--------+-------+--------+
- *   |   2    | field_2             | 12     | int64  | 1     | RDWR   |
- *   +--------+---------------------+--------+--------+-------+--------+
- *
- * Use a buffer to store all property data, which is a compact-format data.
- * The buffer's layout is described by prop_desc, using the offset could
- * get the specific data.
- *
- * The example of compact-format memory is as follows:
- *   +--------+--------+--------+--------+--------+
- *   |  0~3   |  4~7   |  8~11  |  12~15 |  16~23 |
- *   +--------+--------+--------+--------+--------+
- *   |alg_vers|    field_1      |    field_2      |
- *   +--------+--------+--------+--------+--------+
- *
- */
 struct vpu_prop_desc {
 	vpu_id_t id;
 	uint8_t type;      /* the property's data type */
@@ -198,25 +70,6 @@ enum vpu_port_dir {
 	VPU_NUM_PORT_DIRS
 };
 
-/*
- * The ports contains the information about algorithm's input and output.
- * The each buffer on the vpu_request should be assigned a port id,
- * to let algorithm recognize every buffer's purpose.
- *
- * The example of vpu_port table is as follows:
- *   +--------+---------------------+--------+--------+
- *   |   id   | name                | type   | dir    |
- *   +--------+---------------------+--------+--------+
- *   |   0    | image-in            | IMAGE  | IN     |
- *   +--------+---------------------+--------+--------+
- *   |   1    | data-in             | DATA   | IN     |
- *   +--------+---------------------+--------+--------+
- *   |   2    | image-out           | IMAGE  | OUT    |
- *   +--------+---------------------+--------+--------+
- *   |   3    | image-temp          | IMAGE  | INOUT  |
- *   +--------+---------------------+--------+--------+
- *
- */
 struct vpu_port {
 	vpu_id_t id;
 	uint8_t usage;
@@ -268,21 +121,11 @@ struct vpu_reg_values {
 /*  VPU Power                                                                */
 /*---------------------------------------------------------------------------*/
 
-/*
- * Provide two power modes:
- * - dynamic: power-saving mode, it's on request to power on device.
- * - on: power on immediately
- */
 enum vpu_power_mode {
 	VPU_POWER_MODE_DYNAMIC,
 	VPU_POWER_MODE_ON,
 };
 
-/*
- * Provide a set of OPPs(operation performance point)
- * The default opp is at the minimun performance,
- * and users could request the performance.
- */
 enum vpu_power_opp {
 	VPU_POWER_OPP_UNREQUEST = 0xFF,
 };

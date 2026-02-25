@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef __EARA_THERMAL_BASE_H__
 #define __EARA_THERMAL_BASE_H__

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "LCM"
 
@@ -1556,9 +1553,6 @@ static void lcm_setbacklight_cmdq(void *handle, unsigned int level)
 static void *lcm_switch_mode(int mode)
 {
 #ifndef BUILD_LK
-/* customization: 1. V2C config 2 values, C2V config 1 value;
- * 2. config mode control register
- */
 	if (mode == 0) {	/* V2C */
 		lcm_switch_mode_cmd.mode = CMD_MODE;
 		/* mode control addr */
@@ -1581,11 +1575,6 @@ static void *lcm_switch_mode(int mode)
 
 #if (LCM_DSI_CMD_MODE)
 
-/* partial update restrictions:
- * 1. roi width must be 1080 (full lcm width)
- * 2. vertical start (y) must be multiple of 16
- * 3. vertical height (h) must be multiple of 16
- */
 static void lcm_validate_roi(int *x, int *y, int *width, int *height)
 {
 	unsigned int y1 = *y;

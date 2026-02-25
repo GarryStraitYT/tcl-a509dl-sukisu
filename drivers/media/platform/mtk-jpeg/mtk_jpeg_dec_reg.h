@@ -1,9 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Xia Jiang <xia.jiang@mediatek.com>
- *
- */
 
 #ifndef _MTK_JPEG_REG_H
 #define _MTK_JPEG_REG_H

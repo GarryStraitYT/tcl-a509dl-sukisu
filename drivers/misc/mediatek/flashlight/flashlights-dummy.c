@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -68,9 +65,6 @@ struct dummy_chip_data {
 };
 
 
-/******************************************************************************
- * dummy operations
- *****************************************************************************/
 static const int dummy_current[DUMMY_LEVEL_NUM] = {
 	/* TODO: define current */
 	100, 1000
@@ -199,9 +193,6 @@ static int dummy_uninit(void)
 	return dummy_write_reg(dummy_i2c_client, reg, val);
 }
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer dummy_timer;
 static unsigned int dummy_timeout_ms;
 
@@ -218,9 +209,6 @@ static enum hrtimer_restart dummy_timer_func(struct hrtimer *timer)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int dummy_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -362,9 +350,6 @@ static struct flashlight_operations dummy_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int dummy_chip_init(struct dummy_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.
@@ -512,9 +497,6 @@ static struct i2c_driver dummy_i2c_driver = {
 	.id_table = dummy_i2c_id,
 };
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int dummy_probe(struct platform_device *pdev)
 {
 	struct dummy_platform_data *pdata = dev_get_platdata(&pdev->dev);

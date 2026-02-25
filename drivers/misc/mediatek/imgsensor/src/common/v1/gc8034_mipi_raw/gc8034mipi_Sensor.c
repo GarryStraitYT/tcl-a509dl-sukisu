@@ -769,7 +769,7 @@ static void gc8034_gcore_identify_otp(void)
     write_cmos_sensor(0xfc, 0x00);
     write_cmos_sensor(0xfc, 0xee);
     gc8034_gcore_enable_otp(otp_open);
-    //	gc8034_gcore_read_otp_info();
+    gc8034_gcore_read_otp_info();
     gc8034_gcore_update_otp();
     gc8034_gcore_enable_otp(otp_close);
     write_cmos_sensor(0xfc, 0x00);

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #include <linux/slab.h>
 #include "cmdq_sec.h"
@@ -37,11 +34,6 @@ static uint32_t gSubmitTaskCount;
 #endif
 static uint32_t gSecPrintCount;
 
-/*
- ** for CMDQ_LOG_LEVEL
- ** set log level to 0 to enable all logs
- ** set log level to 3 to close all logs
- */
 enum LOG_LEVEL {
 	LOG_LEVEL_MSG = 0,
 	LOG_LEVEL_LOG = 1,
@@ -49,11 +41,6 @@ enum LOG_LEVEL {
 	LOG_LEVEL_MAX,
 };
 
-/* Set 1 to open once for each process context, because of below reasons:
- * 1. kmalloc size > 4KB, need pre-allocation to avoid memory
- * fragmentation and causes kmalloc fail.
- * 2. we entry secure world for config and trigger GCE, and wait in normal world
- */
 #define CMDQ_OPEN_SESSION_ONCE (1)
 
 /* function declaretion */

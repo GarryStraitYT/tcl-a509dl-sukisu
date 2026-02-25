@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kthread.h>
 /* #include <linux/rtpm_prio.h> */
@@ -78,9 +75,6 @@ static void _extd_set_layer_num(int layer_num, unsigned int session)
 					    0, NULL);
 }
 
-/**
- * __setup_mem_session - create memory session or switch mode
- */
 int __setup_mem_session(unsigned int session, int to_mode)
 {
 	int ret = 0;
@@ -187,9 +181,6 @@ int __setup_ext_session(unsigned int session, int mode)
 	return ret;
 }
 
-/**
- * return: 0 on success
- */
 static int __create_external_display_path(unsigned int session, int mode)
 {
 	int ret = 0;
@@ -297,11 +288,6 @@ static int disp_switch_mode_kthread(void *data)
 	return 0;
 }
 
-/**
- * __get_session_by_dev - query session by device id
- *
- * return: session id
- */
 static unsigned int __get_session_by_dev(unsigned int dev)
 {
 	unsigned int session = 0;
@@ -322,9 +308,6 @@ static unsigned int __get_session_by_dev(unsigned int dev)
 }
 
 #ifndef OVL_CASCADE_SUPPORT
-/**
- * @session_id: if 0, the @dev is about to be destroyed
- */
 static int path_change_without_cascade(enum DISP_MODE mode,
 				       unsigned int to_session,
 				       unsigned int dev)

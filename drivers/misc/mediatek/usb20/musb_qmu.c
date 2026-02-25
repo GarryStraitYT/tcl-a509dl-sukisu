@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -235,12 +232,6 @@ void lower_power_timer_test_init(void)
 	schedule_delayed_work(&low_power_timer_montior_work, 0);
 }
 
-/*  mode 0 : no timer mechanism
- *  mode 1 : real case for idle task, no-usb-irq control
- *  mode 2 + option 0: simulate SCREEN ON  mode 1 case
- *  mode 2 + option 1: simulate SCREEN OFF mode 1 perfect case
- *  mode 2 + option 2: simulate SCREEN OFF mode 1 real case
- */
 
 void low_power_timer_sleep(unsigned int sleep_ms)
 {

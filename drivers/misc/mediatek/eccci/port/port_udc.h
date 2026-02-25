@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #ifndef __PORT_UDC__
 #define __PORT_UDC__
 #include "ccci_core.h"
@@ -16,10 +13,6 @@
 void udc_cmd_handler(struct port_t *port, struct sk_buff *skb);
 void set_udc_status(struct sk_buff *skb);
 
-/**
- *	 @brief  Compression request (descriptor) for UDC compression
- *
- **/
 
 struct udc_comp_req_t {
 	u16 seg_len:13; /* segment length */
@@ -32,10 +25,6 @@ struct udc_comp_req_t {
 	u32 seg_phy_addr;/* comp_req_table offset */
 } __packed;
 
-/**
- *	 @brief  Compression result (meta) of UDC compression
- *
- **/
 
 struct udc_comp_rslt_t {
 	u32 cmp_len:13; /* compressed data length */
@@ -138,12 +127,6 @@ struct ccci_udc_kick_param_t {
 } __packed;
 /* udc cmd end */
 
-/*
- *struct ap_md_rw_index {
- *	unsigned int read;
- *	unsigned int write;
- *} __packed;
- */
 struct ap_md_rw_index {
 	struct {
 		unsigned int read;

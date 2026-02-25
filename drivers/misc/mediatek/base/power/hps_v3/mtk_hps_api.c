@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -23,15 +20,9 @@
 
 static unsigned char iccs_target_power_state_bitmask;
 #endif
-/*
- * static
- */
 #define STATIC
 /* #define STATIC static */
 
-/*
- * hps set PPM request
- */
 
 int hps_set_PPM_request(unsigned int little_min, unsigned int little_max,
 	unsigned int big_min, unsigned int big_max)
@@ -56,9 +47,6 @@ int hps_set_PPM_request(unsigned int little_min, unsigned int little_max,
 	return 0;
 }
 
-/*
- * hps cpu num base
- */
 int hps_set_cpu_num_base(enum hps_base_type_e type, unsigned int little_cpu,
 	unsigned int big_cpu)
 {
@@ -168,9 +156,6 @@ int hps_get_cpu_num_base(enum hps_base_type_e type,
 	return 0;
 }
 
-/*
- * hps cpu num limit
- */
 int hps_set_cpu_num_limit(enum hps_limit_type_e type, unsigned int little_cpu,
 	unsigned int big_cpu)
 {
@@ -280,9 +265,6 @@ int hps_get_cpu_num_limit(enum hps_limit_type_e type,
 	return 0;
 }
 
-/*
- * hps tlp
- */
 int hps_get_tlp(unsigned int *tlp_ptr)
 {
 	if (hps_ctxt.init_state != INIT_STATE_DONE)
@@ -296,9 +278,6 @@ int hps_get_tlp(unsigned int *tlp_ptr)
 	return 0;
 }
 
-/*
- * hps num_possible_cpus
- */
 int hps_get_num_possible_cpus(unsigned int *little_cpu_ptr,
 	unsigned int *big_cpu_ptr)
 {
@@ -314,9 +293,6 @@ int hps_get_num_possible_cpus(unsigned int *little_cpu_ptr,
 	return 0;
 }
 
-/*
- * hps num_online_cpus
- */
 int hps_get_num_online_cpus(unsigned int *little_cpu_ptr,
 	unsigned int *big_cpu_ptr)
 {
@@ -332,9 +308,6 @@ int hps_get_num_online_cpus(unsigned int *little_cpu_ptr,
 	return 0;
 }
 
-/*
- * hps cpu num base
- */
 int hps_get_enabled(unsigned int *enabled_ptr)
 {
 	if (hps_ctxt.init_state != INIT_STATE_DONE)
@@ -368,9 +341,6 @@ int hps_set_enabled(unsigned int enabled)
 	return 0;
 }
 
-/*
- * hps get/set power mode
- */
 int hps_get_powmode_status(unsigned int *pwrmode_ptr)
 {
 	if (hps_ctxt.init_state != INIT_STATE_DONE)
@@ -399,9 +369,6 @@ int hps_set_powmode_status(unsigned int pwrmode)
 	return 0;
 }
 
-/*
- * hps get/set PPM_power mode
- */
 int hps_get_ppm_powmode_status(unsigned int *pwrmode_ptr)
 {
 	if (hps_ctxt.init_state != INIT_STATE_DONE)

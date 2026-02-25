@@ -1,15 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -56,11 +44,6 @@ static struct drm_framebuffer *mtk_drm_framebuffer_init(struct drm_device *dev,
 	return fb;
 }
 
-/*
- * Wait for any exclusive fence in fb's gem object's reservation object.
- *
- * Returns -ERESTARTSYS if interrupted, else 0.
- */
 int mtk_fb_wait(struct drm_framebuffer *fb)
 {
 	struct drm_gem_object *gem;

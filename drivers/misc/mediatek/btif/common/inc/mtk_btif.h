@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_BTIF_H_
 #define __MTK_BTIF_H_
@@ -89,12 +86,6 @@ enum _ENUM_BTIF_TEST_CASE_ {
 #endif
 
 #define BTIF_RX_BTM_CTX BTIF_THREAD_CTX/*BTIF_WQ_CTX*//* BTIF_TASKLET_CTX */
-/*
- * -- cannot be used because ,
- * mtk_wcn_stp_parser data will call *(stp_if_tx) to send ack,
- * in which context sleepable lock or usleep operation may be used,
- * these operation is not allowed in tasklet, may cause schedule_bug
- */
 
 #define BTIF_TX_CTX BTIF_TX_USER_CTX	/* BTIF_TX_SINGLE_CTX */
 

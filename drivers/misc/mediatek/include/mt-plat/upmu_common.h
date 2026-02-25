@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef _MT_PMIC_COMMON_H_
 #define _MT_PMIC_COMMON_H_
@@ -121,14 +118,8 @@ enum MT65XX_POWER_VOL_TAG {
 	VOL_3600 = 3600
 };
 
-/*
- * PMIC Exported Function for power service
- */
 extern signed int g_I_SENSE_offset;
 
-/*
- * PMIC extern functions
- */
 extern unsigned int pmic_read_interface(unsigned int RegNum,
 					unsigned int *val,
 					unsigned int MASK,

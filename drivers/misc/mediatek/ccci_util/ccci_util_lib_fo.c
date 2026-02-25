@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/device.h>
@@ -41,10 +38,6 @@
 //mtk099077: #include <memory-amms.h>
 #include "ccci_util_log.h"
 #include "ccci_util_lib_main.h"
-/*************************************************************************
- **** Local debug option for this file only ******************************
- *************************************************************************
- */
 /* #define LK_LOAD_MD_INFO_DEBUG_EN */
 
 #define CCCI_MEM_ALIGN      (SZ_32M)
@@ -361,9 +354,6 @@ struct fos_item {
 #define MTK_C2K_LTE_MODE	(0)
 #endif
 
-/* array for store default option setting,
- * option value may be updated at init if needed
- */
 static struct fos_item ccci_fos_setting[] = {
 	{"opt_md1_support", MTK_MD1_SUPPORT},
 	{"opt_md2_support", 0}, /* phase out */

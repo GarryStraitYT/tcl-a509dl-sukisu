@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef __MUSB_CORE_H__
 #define __MUSB_CORE_H__
@@ -102,9 +99,6 @@ extern void musb_bug(void);
 #include <linux/usb/class-dual-role.h>
 #endif
 
-/* NOTE:  otg and peripheral-only state machines start at B_IDLE.
- * OTG or host-only go to A_IDLE when ID is sensed.
- */
 #define is_peripheral_active(m)		(!(m)->is_host)
 #define is_host_active(m)		((m)->is_host)
 
@@ -168,10 +162,6 @@ enum musb_g_ep0_state {
 	MUSB_EP0_STAGE_ACKWAIT,	/* after zlp, before statusin */
 } __packed;
 
-/*
- * OTG protocol constants.  See USB OTG 1.3 spec,
- * sections 5.5 "Device Timings" and 6.6.5 "Timers".
- */
 #define OTG_TIME_A_WAIT_VRISE	100	/* msec (max) */
 /* when switch host to device within min 1 second, the otg state can't*/
 /* switch to b-idle successfully, then connect to host and can't run */
@@ -215,16 +205,6 @@ void dumpTime(enum writeFunc_enum func, int epnum);
 
 /******************************** TYPES *************************************/
 
-/**
- * struct musb_platform_ops - Operations passed to musb_core by HW glue layer
- * @init:	turns on clocks, sets up platform-specific registers, etc
- * @exit:	undoes @init
- * @set_mode:	forcefully changes operating mode
- * @try_ilde:	tries to idle the IP
- * @vbus_status: returns vbus status if possible
- * @set_vbus:	forces vbus status
- * @adjust_channel_params: pre check for standard dma channel_program func
- */
 struct musb_platform_ops {
 	int (*init)(struct musb *musb);
 	int (*exit)(struct musb *musb);
@@ -247,11 +227,6 @@ struct musb_platform_ops {
 	void (*unprepare_clk)(struct musb *musb);
 };
 
-/*
- * struct musb_hw_ep - endpoint hardware (bidirectional)
- *
- * Ordered slightly for better cacheline locality.
- */
 struct musb_hw_ep {
 	struct musb *musb;
 	void __iomem *fifo;
@@ -319,9 +294,6 @@ struct musb_context_registers {
 	struct musb_csr_regs index_regs[MUSB_C_NUM_EPS];
 };
 
-/*
- * struct musb - Driver instance data.
- */
 struct musb {
 	struct semaphore musb_lock;
 	/* device lock */

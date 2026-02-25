@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0+
-/*
- * Copyright (c) 2019 MediaTek Inc.
- *
- */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/interrupt-controller/irq.h>
@@ -351,45 +347,7 @@
 /*End   Modified by fuhua.wang for audio-bring-up on 2019.07.31 task_id: 8188551 */
 
 /* FINGERPRINT start */
-/*&spi0 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	fingerprint@0 {
-		compatible = "goodix,goodix-fp";
-		reg = <0>;
-		spi-max-frequency = <8000000>;
-		netlink-event = <30>;
-		status = "okay";
-	};
-};
-*/
 
-/*&goodix_fp {
-	pinctrl-names = "default", "reset_high", "reset_low";
-	pinctrl-0 = <&fingerprint_default>;
-	pinctrl-1 = <&fingerprint_reset_high>;
-	pinctrl-2 = <&fingerprint_reset_low>;
-	status = "okay";
-};
-
-&pio {
-	fingerprint_default: state_default {
-	};
-	fingerprint_reset_high: state_reset_high {
-		pins_cmd_dat {
-			pinmux = <PINMUX_GPIO172__FUNC_GPIO172>;
-			slew-rate = <1>;
-			output-high;
-		};
-	};
-	fingerprint_reset_low: state_reset_low {
-		pins_cmd_dat {
-			pinmux = <PINMUX_GPIO172__FUNC_GPIO172>;
-			slew-rate = <1>;
-			output-low;
-		};
-	};
-};*/
 /* FINGERPRINT end */
 
 /* FINGERPRINT start */
@@ -665,10 +623,6 @@
 	mt6370pd,intr_gpio = <&pio 41 0x0>;
 };
 
-/*
-&mt6370_chg {
-	bc12_sel = <1>;
-};*/
 
 #include "mediatek/bangkok_tf_charge.dtsi"
 #include "mediatek/bangkok_tf_battery.dtsi"

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef __MTK_PP_H__
 #define __MTK_PP_H__
 
@@ -74,7 +71,4 @@ void MTKPP_TriggerAEE(int bug_on);
 
 #endif	/* __MTK_PP_H__ */
 
-/******************************************************************************
- End of file (mtk_pp.h)
-******************************************************************************/
 

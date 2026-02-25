@@ -1,16 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
-/**
- * Copy of
- * alps/vendor/mediatek/proprietary/hardware/dpframework/inc/DpDataType.h
- * to decouple kernel code with android space code(GLP)
- * NOTICE:
- * MUST BE CONSISTENT WITH dpframework
- */
 #ifndef __DP_DATA_TYPE_H__
 #define __DP_DATA_TYPE_H__
 

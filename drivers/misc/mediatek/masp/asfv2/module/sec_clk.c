@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2011 MediaTek Inc.
- */
 
-/******************************************************************************
- *  INCLUDE LINUX HEADER
- ******************************************************************************/
 #include <linux/platform_device.h>
 #include <linux/device.h>
 #include <linux/string.h>

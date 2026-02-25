@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MTK_CPUIDLE_CPC_H__
 #define __MTK_CPUIDLE_CPC_H__
@@ -34,10 +31,6 @@ enum {
 	NF_CPC_SMC_CONFIG
 };
 
-/**
- * number of profile type :
- *  - (number of cpu type) + cluster + mcusys
- */
 #define DEV_TYPE_NUM (NF_CPU_TYPE + 2)
 
 

@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mt2701-afe-common.h  --  Mediatek 2701 audio driver definitions
- *
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Garlic Tseng <garlic.tseng@mediatek.com>
- */
 
 #ifndef _MT_2701_AFE_COMMON_H_
 #define _MT_2701_AFE_COMMON_H_

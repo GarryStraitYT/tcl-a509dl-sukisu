@@ -1,21 +1,3 @@
-/* drivers/input/touchscreen/gt1x_tpd.c
- *
- * 2010 - 2016 Goodix Technology.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be a reference
- * to you, when you are integrating the GOODiX's CTP IC into your system,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- * 
- * Version: 1.6   
- * Release Date:  2016/07/28
- */
 #include "gt1x_generic.h"
 #include "gt1x_tpd_custom.h"
 
@@ -257,10 +239,6 @@ static s32 i2c_read_mtk(u16 addr, u8 * buffer, s32 len)
 }
 #endif /* TPD_SUPPORT_I2C_DMA */
 
-/**
- * @return: return 0 if success, otherwise return a negative number
- *          which contains the error code.
- */
 s32 gt1x_i2c_read(u16 addr, u8 * buffer, s32 len)
 {
 #if TPD_SUPPORT_I2C_DMA
@@ -270,10 +248,6 @@ s32 gt1x_i2c_read(u16 addr, u8 * buffer, s32 len)
 #endif
 }
 
-/**
- * @return: return 0 if success, otherwise return a negative number
- *          which contains the error code.
- */
 s32 gt1x_i2c_write(u16 addr, u8 * buffer, s32 len)
 {
 #if TPD_SUPPORT_I2C_DMA
@@ -284,11 +258,6 @@ s32 gt1x_i2c_write(u16 addr, u8 * buffer, s32 len)
 }
 
 #ifdef TPD_REFRESH_RATE
-/**
- * gt1x_set_refresh_rate - Write refresh rate
- * @rate: refresh rate N (Duration=5+N ms, N=0~15)
- * Return: 0---succeed.
- */
 static u8 gt1x_set_refresh_rate(u8 rate)
 {
 	u8 buf[1] = { rate };
@@ -302,10 +271,6 @@ static u8 gt1x_set_refresh_rate(u8 rate)
 	return gt1x_i2c_write(GTP_REG_REFRESH_RATE, buf, sizeof(buf));
 }
 
-/**
-  *gt1x_get_refresh_rate - get refresh rate
-  *Return: Refresh rate or error code
- */
 static u8 gt1x_get_refresh_rate(void)
 {
 	int ret;

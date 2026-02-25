@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #if defined(MTK_LCM_DEVICE_TREE_SUPPORT)
 #ifndef BUILD_LK
@@ -48,9 +45,6 @@
 #include "lcm_i2c.h"
 
 
-/*****************************************************************************
- * Define
- *****************************************************************************/
 #ifndef CONFIG_FPGA_EARLY_PORTING
 #ifdef CONFIG_MTK_LEGACY
 #define LCM_I2C_ADDR 0x3E
@@ -63,9 +57,6 @@
 #endif
 
 
-/*****************************************************************************
- * GLobal Variable
- *****************************************************************************/
 #ifdef CONFIG_MTK_LEGACY
 static struct i2c_board_info _lcm_i2c_board_info __initdata = {
 	I2C_BOARD_INFO(LCM_I2C_ID_NAME, LCM_I2C_ADDR)
@@ -80,17 +71,11 @@ static const struct of_device_id _lcm_i2c_of_match[] = {
 static struct i2c_client *_lcm_i2c_client;
 
 
-/*****************************************************************************
- * Function Prototype
- *****************************************************************************/
 static int _lcm_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id);
 static int _lcm_i2c_remove(struct i2c_client *client);
 
 
-/*****************************************************************************
- * Data Structure
- *****************************************************************************/
 struct _lcm_i2c_dev {
 	struct i2c_client *client;
 
@@ -123,15 +108,9 @@ static struct i2c_driver _lcm_i2c_driver = {
 };
 
 
-/*****************************************************************************
- * Extern Area
- *****************************************************************************/
 
 
 
-/*****************************************************************************
- * Function
- *****************************************************************************/
 static int _lcm_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id)
 {
@@ -173,9 +152,6 @@ static int _lcm_i2c_write_bytes(unsigned char addr, unsigned char value)
 }
 
 
-/*
- * module load/unload record keeping
- */
 static int __init _lcm_i2c_init(void)
 {
 	pr_debug("[LCM][I2C] %s\n", __func__);

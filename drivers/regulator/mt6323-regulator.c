@@ -1,11 +1,3 @@
-/*
- * Copyright (c) 2016 MediaTek Inc.
- * Author: Chen Zhong <chen.zhong@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
 
 #include <linux/module.h>
 #include <linux/of.h>
@@ -21,15 +13,6 @@
 #define MT6323_LDO_MODE_NORMAL	0
 #define MT6323_LDO_MODE_LP	1
 
-/*
- * MT6323 regulators' information
- *
- * @desc: standard fields of regulator description.
- * @qi: Mask for query enable signal status of regulators
- * @vselon_reg: Register sections for hardware control mode of bucks
- * @vselctrl_reg: Register for controlling the buck control mode.
- * @vselctrl_mask: Mask for query buck's voltage control mode.
- */
 struct mt6323_regulator_info {
 	struct regulator_desc desc;
 	u32 qi;

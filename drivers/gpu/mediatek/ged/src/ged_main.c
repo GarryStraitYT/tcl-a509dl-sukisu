@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/cdev.h>
 #include <linux/delay.h>
@@ -41,11 +38,6 @@
 #include "ged_ge.h"
 #include "ged_gpu_tuner.h"
 
-/**
- * ===============================================
- * SECTION : Local functions declaration
- * ===============================================
- */
 static int ged_open(struct inode *inode, struct file *filp);
 static int ged_release(struct inode *inode, struct file *filp);
 static unsigned int ged_poll(struct file *file,
@@ -66,11 +58,6 @@ static int ged_pdrv_probe(struct platform_device *pdev);
 static void ged_exit(void);
 static int ged_init(void);
 
-/**
- * ===============================================
- * SECTION : Local variables definition
- * ===============================================
- */
 #define GED_DRIVER_DEVICE_NAME "ged"
 
 static GED_LOG_BUF_HANDLE ghLogBuf_GPU;
@@ -122,9 +109,6 @@ static const struct file_operations ged_fops = {
 #endif
 };
 
-/******************************************************************************
- * GED File operations
- *****************************************************************************/
 static int ged_open(struct inode *inode, struct file *filp)
 {
 	filp->private_data = NULL;
@@ -392,12 +376,6 @@ unlock_and_return:
 }
 #endif
 
-/******************************************************************************
- * Module related
- *****************************************************************************/
-/*
- * ged driver probe
- */
 static int ged_pdrv_probe(struct platform_device *pdev)
 {
 	int ret;
@@ -410,9 +388,6 @@ static int ged_pdrv_probe(struct platform_device *pdev)
 
 	return ret;
 }
-/*
- * unregister the gpufreq driver, remove fs node
- */
 static void ged_exit(void)
 {
 #ifndef GED_BUFFER_LOG_DISABLE
@@ -469,9 +444,6 @@ static void ged_exit(void)
 	platform_driver_unregister(&g_ged_pdrv);
 }
 
-/*
- * register the ged driver, create fs node
- */
 static int ged_init(void)
 {
 	GED_ERROR err = GED_ERROR_FAIL;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _CAMERA_TYPEDEFS_H
 #define _CAMERA_TYPEDEFS_H

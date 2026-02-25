@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/uaccess.h>
 #include <linux/module.h>
@@ -196,9 +193,6 @@ static int m4u_client_add_buf(struct m4u_client_t *client,
 }
 
 
-/*static int m4u_client_del_buf(struct m4u_client_t *client,
- *m4u_buf_info_t *pList)
- */
 /*{*/
 /*    mutex_lock(&(client->dataMutex));*/
 /*    list_del(&(pList->link));*/
@@ -209,17 +203,6 @@ static int m4u_client_add_buf(struct m4u_client_t *client,
 
 
 /***********************************************************/
-/** find or delete a buffer from client list
- * @param   client   -- client to be searched
- * @param   mva      -- mva to be searched
- * @param   del      -- should we del this buffer from client?
- *
- * @return buffer_info if found, NULL on fail
- * @remark
- * @see
- * @to-do    we need to add multi domain support here.
- * @author K Zhang      @date 2013/11/14
- ************************************************************/
 static struct m4u_buf_info *m4u_client_find_buf(
 	struct m4u_client_t *client,
 	unsigned int mva, int del)
@@ -255,27 +238,6 @@ static struct m4u_buf_info *m4u_client_find_buf(
 
 
 /*dump buf info in client*/
-/*static void m4u_client_dump_buf(
- *struct m4u_client_t *client, const char *pMsg)
- *
- *{
- *    m4u_buf_info_t *pList;
- *    struct list_head *pListHead;
- *
- *    m4u_err("print mva list [%s] ================>\n", pMsg);
- *    mutex_lock(&(client->dataMutex));
- *    list_for_each(pListHead, &(client->mvaList))
- *    {
- *		pList = container_of(pListHead, m4u_buf_info_t, link);
- *		m4u_err("port=%s, va=0x%x, size=0x%x, mva=0x%x, prot=%d\n",
- *			m4u_get_port_name(pList->port),
- *			pList->va, pList->size, pList->mva, pList->prot);
- *    }
- *   mutex_unlock(&(client->dataMutex));
-
- *    m4u_err("print mva list done ================>\n");
- *}
- */
 
 
 struct m4u_client_t *m4u_create_client(void)
@@ -1089,9 +1051,6 @@ int m4u_query_mva_info(unsigned int mva, unsigned int size,
 }
 EXPORT_SYMBOL(m4u_query_mva_info);
 
-/*   map mva buffer to kernel va buffer
- *   this function should ONLY used for DEBUG
- ************************************************************/
 int m4u_mva_map_kernel(unsigned int mva, unsigned int size,
 		       unsigned long *map_va,
 		       unsigned int *map_size)
@@ -1786,15 +1745,6 @@ static long MTK_M4U_ioctl(struct file *filp, unsigned int cmd,
 			return -EFAULT;
 		}
 		m4u_err("alloc mva by ioctl is not support\n");
-/*
- *		ret = m4u_alloc_mva(client, m4u_module.port, m4u_module.BufAddr,
- *				    NULL,
- *				    m4u_module.BufSize, m4u_module.prot,
- *				    m4u_module.flags, &(m4u_module.MVAStart));
- *
- *		if (ret)
- *			return ret;
- */
 		ret = copy_to_user(&(((struct M4U_MOUDLE *) arg)->MVAStart),
 				 &(m4u_module.MVAStart), sizeof(unsigned int));
 		if (ret) {
@@ -1820,12 +1770,6 @@ static long MTK_M4U_ioctl(struct file *filp, unsigned int cmd,
 			return -EFAULT;
 		}
 		m4u_err("dealloc mva by ioctl is not support\n");
-/*
- *		ret = m4u_dealloc_mva(client, m4u_module.port,
- *				      m4u_module.MVAStart);
- *		if (ret)
- *			return ret;
- */
 		}
 		break;
 
@@ -2367,18 +2311,6 @@ static struct platform_driver m4uDrv = {
 	}
 };
 
-/*
- *static u64 m4u_dmamask = ~(u32) 0;
- *
- *static struct platform_device mtk_m4u_dev = {
- *	.name = M4U_DEV_NAME,
- *	.id = 0,
- *	.dev = {
- *		.dma_mask = &m4u_dmamask,
- *		.coherent_dma_mask = 0xffffffffUL
- *	}
- *};
- */
 
 #define __M4U_USE_PROC_NODE
 
@@ -2425,11 +2357,6 @@ static int __init MTK_M4U_Init(void)
 	}
 	m4u_info("M4U platform_driver_register finsish\n");
 
-/*
- *	retval = platform_device_register(&mtk_m4u_dev);
- *	if (retval != 0)
- *		return retval;
- */
 
 #ifdef M4U_PROFILE
 	m4u_profile_init();

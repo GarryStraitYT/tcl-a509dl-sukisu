@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_gadget.c - MediaTek usb3 DRD peripheral support
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 #include "mtu3.h"
 #include "mtu3_trace.h"
 
@@ -390,10 +383,6 @@ done:
 	return ret;
 }
 
-/*
- * Set or clear the halt bit of an EP.
- * A halted EP won't TX/RX any data but will queue requests.
- */
 static int mtu3_gadget_ep_set_halt(struct usb_ep *ep, int value)
 {
 	struct mtu3_ep *mep = to_mtu3_ep(ep);

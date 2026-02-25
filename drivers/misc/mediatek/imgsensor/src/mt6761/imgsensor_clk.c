@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "imgsensor_common.h"
 
@@ -270,9 +267,6 @@ static inline void imgsensor_clk_check(struct IMGSENSOR_CLK *pclk)
 	}
 }
 
-/************************************************************************
- * Common Clock Framework (CCF)
- ************************************************************************/
 enum IMGSENSOR_RETURN imgsensor_clk_init(struct IMGSENSOR_CLK *pclk)
 {
 	int i;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -244,12 +241,6 @@ int sdcard_hw_reset(struct mmc_host *mmc)
 	return ret;
 }
 
-/* SDcard will change speed mode and power reset
- * UHS card
- *    UHS_SDR104 --> UHS_DDR50 --> UHS_SDR50 --> UHS_SDR25
- * HS card
- *    50MHz --> 25MHz --> 12.5MHz --> 6.25MHz
- */
 int sdcard_reset_tuning(struct mmc_host *mmc)
 {
 	struct msdc_host *host = mmc_priv(mmc);

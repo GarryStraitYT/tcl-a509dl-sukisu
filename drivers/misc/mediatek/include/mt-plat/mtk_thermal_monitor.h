@@ -1,17 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MTK_THERMAL_MONITOR_H
 #define _MTK_THERMAL_MONITOR_H
 
 #include <linux/thermal.h>
 
-/*
- *  MTK_THERMAL_WRAPPER_BYPASS = 1 (use original Linux Thermal API)
- *  MTK_THERMAL_WRAPPER_BYPASS = 0 (use MTK Thermal API Monitor)
- */
 #define MTK_THERMAL_WRAPPER_BYPASS 0
 
 #if MTK_THERMAL_WRAPPER_BYPASS

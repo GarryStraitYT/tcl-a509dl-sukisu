@@ -1,13 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MediaTek Pinctrl Paris Driver, which implement the vendor per-pin
- * bindings for MediaTek SoC.
- *
- * Copyright (C) 2018 MediaTek Inc.
- * Author: Sean Wang <sean.wang@mediatek.com>
- *	   Zhiyong Tao <zhiyong.tao@mediatek.com>
- *	   Hongzhou.Yang <hongzhou.yang@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/gpio/driver.h>

@@ -31,11 +31,6 @@
 
 
 
-/*
- * =============================================================================
- *                     MACRO
- * =============================================================================
- */
 
 #define MAX_SIZE_OF_ONE_FRAME (16) /* 32-bits * 4ch */
 #define DO_BYTE_ALIGN(value, mask) (((value) + mask) & (~mask))
@@ -46,11 +41,6 @@
 #define MAX_DSP_DMA_WRITE_SIZE   (0x10000)
 
 
-/*
- * =============================================================================
- *                     log
- * =============================================================================
- */
 
 #ifdef ipi_dbg
 #undef ipi_dbg
@@ -73,11 +63,6 @@
 static char *g_dump_buf[DMA_DUMP_MAX_SIZE];
 #endif
 
-/*
- * =============================================================================
- *                     struct def
- * =============================================================================
- */
 
 /* DMA */
 struct audio_region_t {
@@ -127,11 +112,6 @@ struct hal_dma_queue_t {
 
 
 
-/*
- * =============================================================================
- *                     global var
- * =============================================================================
- */
 
 static struct audio_ipi_dma_t *g_dma[NUM_OPENDSP_TYPE];
 static struct gen_pool *g_dma_pool[NUM_OPENDSP_TYPE];
@@ -145,11 +125,6 @@ static struct hal_dma_queue_t g_hal_dma_queue;
 /* byte align alignment: scp cm4_a(32), cm4_b(32), audio dsp(128) */
 static uint8_t g_cache_alilgn_order[NUM_OPENDSP_TYPE];
 static uint8_t g_cache_alilgn_mask[NUM_OPENDSP_TYPE];
-/*
- * =============================================================================
- *                     utilities
- * =============================================================================
- */
 
 inline phys_addr_t offset_to_phy_addr(const uint32_t offset,
 				      const uint32_t dsp_id)
@@ -224,11 +199,6 @@ inline uint8_t *dma_vir_base(const uint32_t dsp_id)
 	} while (0)
 
 
-/*
- * =============================================================================
- *                     init
- * =============================================================================
- */
 
 static int hal_dma_init_msg_queue(struct hal_dma_queue_t *msg_queue,
 				  const uint32_t size);
@@ -454,11 +424,6 @@ void *get_audio_ipi_dma_vir_addr(uint32_t dsp_id,
 
 
 
-/*
- * =============================================================================
- *                     alloc/free
- * =============================================================================
- */
 
 int audio_ipi_dma_alloc(
 	const uint8_t task,
@@ -564,11 +529,6 @@ int audio_ipi_dma_free(const uint8_t task,
 
 
 
-/*
- * =============================================================================
- *                     alloc/free region
- * =============================================================================
- */
 
 int audio_ipi_dma_alloc_region(const uint8_t task,
 			       const uint32_t ap_to_dsp_size,
@@ -819,11 +779,6 @@ int audio_ipi_dma_free_region_all_task(uint32_t dsp_id)
 
 
 
-/*
- * =============================================================================
- *                     region
- * =============================================================================
- */
 
 static uint32_t audio_region_data_count(struct audio_region_t *region)
 {
@@ -1253,11 +1208,6 @@ int audio_ipi_dma_drop_region(const uint8_t task,
 
 
 
-/*
- * =============================================================================
- *                     DSP -> DMA -> HAL
- * =============================================================================
- */
 
 inline bool hal_dma_check_idx_msg_valid(
 	const struct hal_dma_queue_t *msg_queue,

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __SYSTRAKCER_V2_H__
 #define __SYSTRAKCER_V2_H__
@@ -63,13 +60,6 @@
 
 static inline unsigned int extract_n2mbits(unsigned int input, int n, int m)
 {
-/*
- * 1. ~0 = 1111 1111 1111 1111 1111 1111 1111 1111
- * 2. ~0 << (m - n + 1) = 1111 1111 1111 1111 1100 0000 0000 0000
- * // assuming we are extracting 14 bits, the +1 is added
- * for inclusive selection
- * 3. ~(~0 << (m - n + 1)) = 0000 0000 0000 0000 0011 1111 1111 1111
- */
 	int mask;
 
 	if (n > m) {

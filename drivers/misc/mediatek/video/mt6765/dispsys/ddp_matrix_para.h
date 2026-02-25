@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _DDP_MATRIX_PARA_H_
 #define _DDP_MATRIX_PARA_H_

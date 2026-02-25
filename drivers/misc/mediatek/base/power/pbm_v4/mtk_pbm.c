@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -87,9 +84,6 @@ static struct task_struct *pbm_thread;
 static atomic_t kthread_nreq = ATOMIC_INIT(0);
 /* extern u32 get_devinfo_with_index(u32 index); */
 
-/*
- * weak function
- */
 int __attribute__ ((weak))
 tscpu_get_min_cpu_pwr(void)
 {
@@ -444,12 +438,6 @@ static void mtk_power_budget_manager(enum pbm_kicker kicker, struct mrp *mrpmgr)
 	pbm_wake_up_thread(kicker, mrpmgr);
 }
 
-/*
- * kicker: 0
- * who call : PMIC
- * i_max: mA
- * condition: persentage decrease 1%, then update i_max
- */
 void kicker_pbm_by_dlpt(int i_max)
 {
 	struct pbm *pwrctrl = &pbm_ctrl;
@@ -461,11 +449,6 @@ void kicker_pbm_by_dlpt(int i_max)
 		mtk_power_budget_manager(KR_DLPT, &mrpmgr);
 }
 
-/*
- * kicker: 1, 2
- * who call : MD1
- * condition: on/off
- */
 void kicker_pbm_by_md(enum pbm_kicker kicker, bool status)
 {
 	struct pbm *pwrctrl = &pbm_ctrl;
@@ -477,12 +460,6 @@ void kicker_pbm_by_md(enum pbm_kicker kicker, bool status)
 		mtk_power_budget_manager(kicker, &mrpmgr);
 }
 
-/*
- * kicker: 3
- * who call : CPU
- * loading: mW
- * condition: opp changed
- */
 void kicker_pbm_by_cpu(unsigned int loading, int core, int voltage)
 {
 	struct pbm *pwrctrl = &pbm_ctrl;
@@ -496,12 +473,6 @@ void kicker_pbm_by_cpu(unsigned int loading, int core, int voltage)
 		mtk_power_budget_manager(KR_CPU, &mrpmgr);
 }
 
-/*
- * kicker: 4
- * who call : GPU
- * loading: mW
- * condition: opp changed
- */
 void kicker_pbm_by_gpu(bool status, unsigned int loading, int voltage)
 {
 	struct pbm *pwrctrl = &pbm_ctrl;
@@ -515,11 +486,6 @@ void kicker_pbm_by_gpu(bool status, unsigned int loading, int voltage)
 		mtk_power_budget_manager(KR_GPU, &mrpmgr);
 }
 
-/*
- * kicker: 5
- * who call : Flash
- * condition: on/off
- */
 void kicker_pbm_by_flash(bool status)
 {
 	struct pbm *pwrctrl = &pbm_ctrl;
@@ -630,9 +596,6 @@ _mt_pbm_pm_callback(struct notifier_block *nb,
 }
 
 /* CONFIG_PBM_PROC_FS */
-/*
- * show current debug status
- */
 static int mt_pbm_debug_proc_show(struct seq_file *m, void *v)
 {
 	if (mt_pbm_debug)
@@ -665,9 +628,6 @@ static int mt_pbm_debug_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/*
- * enable debug message
- */
 static ssize_t mt_pbm_debug_proc_write
 (struct file *file, const char __user *buffer, size_t count, loff_t *data)
 {

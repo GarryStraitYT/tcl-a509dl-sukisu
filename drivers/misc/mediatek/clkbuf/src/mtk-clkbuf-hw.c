@@ -1,14 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: owen.chen <owen.chen@mediatek.com>
- */
 
-/*
- * @file    mtk-clk-buf-hw.c
- * @brief   Driver for clock buffer control of each platform
- *
- */
 #include <linux/kobject.h>
 #include <linux/slab.h>
 #include <linux/string.h>
@@ -48,12 +39,6 @@ static unsigned int pwrap_dcxo_en_init;
 /* store all register information including offset & bit shift */
 static struct reg_info *cfg;
 
-/*
- * This is initial value of dts property, it would be replaced after dws file
- * generate cust.dtsi.
- * Including CLK_BUF_STATUS, CLK_BUF_OUTPUT_IMPEDANCE,
- * CLK_BUF_CONTROLS_DESENSE.
- */
 static unsigned int CLK_BUF_STATUS[XO_NUMBER] = {
 		CLOCK_BUFFER_HW_CONTROL,
 		CLOCK_BUFFER_SW_CONTROL,
@@ -89,10 +74,6 @@ static unsigned int CLK_BUF_DRIVING_CURRENT[XO_NUMBER] = {
 	CLK_BUF_DRIVING_CURR_1,
 	CLK_BUF_DRIVING_CURR_1,
 	CLK_BUF_DRIVING_CURR_1};
-/*
- * This is strings defined for debug usage, it's better understand of meaning
- * of data we present.
- */
 static char XO_NAME[XO_NUMBER][7] = {
 		"XO_SOC",
 		"XO_WCN",
@@ -112,17 +93,6 @@ static char XO_M_NAME[XO_NUMBER][MODE_M_NUM][20] = {
 	{"EXT_EN_M", "EXT_EN_BB_G", "EXT_CLK_SEL_G", "EXT_BUF247_EN"},
 };
 
-/*
- * @struct dts_predef
- * @brief
- * @	const char prop[20] : property string for dts node to fetch data
- *	u32 len : the length of array we need to put in the offset&bit data.
- *	u32 idx : the index of property data we serach for.
- *	u32 mask : the mask defined by hw register mapping.
- *	u32 interval : if interval != 0, means we use this value to calculate
- *		      the reset of offset. (offset = 0x990, interval = 0x2, we
- *		      get 0x992, 0x994, 0x996...depending our length defined)
- */
 static struct dts_predef clkbuf_dts[DTS_NUM] = {
 	[XO_SW_EN] = {"pmic-xo-en", 7, 0, 0x1, 0},
 	[DCXO_CW] = {"pmic-dcxo-cw", 20, 0, 0xffff, 0x2},

@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include "inc/pd_core.h"
 #include "inc/pd_dpm_core.h"
 #include "inc/tcpci.h"
 #include "inc/pd_policy_engine.h"
 
-/*
- * [PD2.0] Figure 8-57 VCONN Swap State Diagram
- */
 
 void pe_vcs_send_swap_entry(struct pd_port *pd_port)
 {

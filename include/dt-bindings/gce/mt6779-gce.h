@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Dennis-YC Hsieh <dennis-yc.hsieh@mediatek.com>
- */
 
 #ifndef _DT_BINDINGS_GCE_MT6779_H
 #define _DT_BINDINGS_GCE_MT6779_H
@@ -224,11 +220,6 @@
 #define CMDQ_EVENT_DVP_DONE_ASYNC_SHOT		453
 #define CMDQ_EVENT_DSI0_TE_INFRA		898
 
-/* CMDQ sw tokens
- * Following definitions are gce sw token which may use by clients
- * event operation API.
- * Note that token 512 to 639 may set secure
- */
 
 /* end of hw event and begin of sw token */
 #define CMDQ_MAX_HW_EVENT				512
@@ -243,9 +234,6 @@
 /* check CABC setup finish */
 #define CMDQ_SYNC_TOKEN_CABC_EOF			644
 
-/* Notify normal CMDQ there are some secure task done
- * MUST NOT CHANGE, this token sync with secure world
- */
 #define CMDQ_SYNC_SECURE_THR_EOF			647
 
 /* CMDQ use sw token */
@@ -258,11 +246,6 @@
 #define CMDQ_SYNC_TOKEN_MSS				665
 #define CMDQ_SYNC_TOKEN_MSF				666
 
-/* GPR access tokens (for HW register backup)
- * There are 15 32-bit GPR, 3 GPR form a set
- * (64-bit for address, 32-bit for value)
- * MUST NOT CHANGE, these tokens sync with MDP
- */
 #define CMDQ_SYNC_TOKEN_GPR_SET_0			700
 #define CMDQ_SYNC_TOKEN_GPR_SET_1			701
 #define CMDQ_SYNC_TOKEN_GPR_SET_2			702

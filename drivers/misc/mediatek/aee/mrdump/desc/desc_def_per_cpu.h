@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 	DF_PER_CPU(last_irq_enter, "  irq: enter(%d, "),
 	DF_PER_CPU(jiffies_last_irq_enter, "%llu) "),

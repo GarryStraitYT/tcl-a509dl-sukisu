@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_reserved_mem.h --  Mediatek ADSP memory control
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Celine Liu <Celine.liu@mediatek.com>
- */
 
 #ifndef __ADSP_RESERVEDMEM_DEFINE_H__
 #define __ADSP_RESERVEDMEM_DEFINE_H__

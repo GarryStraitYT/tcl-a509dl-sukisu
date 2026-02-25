@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * mtk_gadget.h
- *
- * Copyright (c) 2015 MediaTek Inc.
- *
- */
 #ifndef MTK_GADGET_H
 #define MTK_GADGET_H
 

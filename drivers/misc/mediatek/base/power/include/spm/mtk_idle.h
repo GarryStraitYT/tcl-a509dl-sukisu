@@ -1,14 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef __MTK_IDLE_H__
 #define __MTK_IDLE_H__
 
-/**********************************************************
- * mtk idle types
- **********************************************************/
 
 enum mtk_idle_type_id {
 	IDLE_TYPE_DP = 0,
@@ -27,9 +21,6 @@ static inline const char *mtk_idle_name(int idle_type)
 		idle_type == IDLE_TYPE_RG ? "rgidle" : "null";
 }
 
-/* --------------------------------------------------------
- * mtk idle notification
- **********************************************************/
 #include <linux/notifier.h>
 
 enum mtk_idle_notify_id {
@@ -45,9 +36,6 @@ extern int mtk_idle_notifier_register(struct notifier_block *n);
 extern void mtk_idle_notifier_unregister(struct notifier_block *n);
 
 
-/* --------------------------------------------------------
- * For MCDI module
- **********************************************************/
 
 extern int mtk_idle_select(int cpu);    /* return idle_type */
 extern int dpidle_enter(int cpu);       /* dpidle */
@@ -55,16 +43,10 @@ extern int soidle_enter(int cpu);       /* sodi */
 extern int soidle3_enter(int cpu);      /* sodi3 */
 
 
-/* --------------------------------------------------------
- * For ufs module
- **********************************************************/
 
 extern void idle_lock_by_ufs(unsigned int lock);
 
 
-/* --------------------------------------------------------
- * For other modules
- **********************************************************/
 
 /* For DVT only: Verify SODI/DP w/o MCDI enable */
 /* #define MTK_IDLE_DVT_TEST_ONLY */
@@ -79,9 +61,6 @@ extern bool mtk_dpidle_is_active(void);
 extern void mtk_idle_disp_is_ready(bool enable);
 
 
-/* --------------------------------------------------------
- * Misc: get recent idle ratio
- **********************************************************/
 
 /* FIXME: To be removed. Externally used by hps, only for mt6799 project */
 struct mtk_idle_recent_ratio {

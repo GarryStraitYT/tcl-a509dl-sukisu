@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
 #ifndef __DPMAIF_REG_H__
 #define __DPMAIF_REG_H__
@@ -29,10 +26,6 @@ extern struct hif_dpmaif_ctrl *dpmaif_ctrl;
 #define DPMAIF_SLEEP_PROTECT_CTRL   (0x1<<4)
 #define INFRA_TOPAXI_PROTECT_READY_STA1_1 (0x258)
 
-/***********************************************************************
- *  DPMAIF AO/PD register define macro
- *
- ***********************************************************************/
  #ifdef DVT_DEFINITION
 #define DPMAIF_PD_BASE                     0x1022D000
 #define DPMAIF_AO_BASE                     0x10014000

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "LCM"
 
@@ -579,9 +576,6 @@ static void lcm_update(unsigned int x, unsigned int y, unsigned int width,
 	dsi_set_cmdq(data_array, 1, 0);
 }
 
-/* partial update restrictions:
- * 1. roi width must be 1080 (full lcm width)
- */
 static void lcm_validate_roi(int *x, int *y, int *width, int *height)
 {
 	unsigned int x1, w;

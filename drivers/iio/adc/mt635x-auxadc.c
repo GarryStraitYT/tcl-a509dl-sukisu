@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/completion.h>
 #include <linux/delay.h>
@@ -50,15 +47,6 @@ struct mt635x_auxadc_device {
 	int imix_r;
 };
 
-/*
- * @ch_name:	HW channel name
- * @ch_num:	HW channel number
- * @res:	ADC resolution
- * @r_ratio:	resistance ratio, represented by r_ratio[0] / r_ratio[1]
- * @avg_num:	sampling times of AUXADC measurments then average it
- * @regs:	request and data output registers for this channel
- * @has_regs:	determine if this channel has request and data output registers
- */
 struct auxadc_channels {
 	enum iio_chan_type type;
 	long info_mask;
@@ -89,10 +77,6 @@ struct auxadc_channels {
 		.has_regs = _has_regs,			\
 	}
 
-/*
- * The array represents all possible AUXADC channels found
- * in the supported PMICs.
- */
 static struct auxadc_channels auxadc_chans[] = {
 	MT635x_AUXADC_CHANNEL(BATADC, 0, 15, true),
 	MT635x_AUXADC_CHANNEL(ISENSE, 0, 15, true),
@@ -641,9 +625,6 @@ static const struct auxadc_info mt6359_info = {
 #endif
 };
 
-/*
- * imix_r cali before entering suspend
- */
 static void enable_dummy_load(struct mt635x_auxadc_device *adc_dev)
 {
 	int i = 0;
@@ -741,12 +722,6 @@ static int auxadc_get_uisoc(void)
 		return prop.intval;
 }
 
-/*
- * @adc_dev:	 pointer to the struct mt635x_auxadc_device
- * @auxadc_chan: pointer to the struct auxadc_channels, it represents specific
-		 auxadc channel
- * @val:	 pointer to output value
- */
 static int get_auxadc_out(struct mt635x_auxadc_device *adc_dev,
 			  const struct auxadc_channels *auxadc_chan, int *val)
 {

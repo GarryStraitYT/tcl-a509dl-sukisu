@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author: Argus Lin <argus.lin@mediatek.com>
- */
 
 #ifndef _MT6357_H_
 #define _MT6357_H_
@@ -955,9 +951,6 @@
 /* 512ms */
 #define ACCDET_EINT1_DEB_512		(0x0F<<3)
 
-/* ACCDET_CON15: accdet eint0 debounce, PWM width&thresh, etc.
- * bit0: ACCDET_EINT0_DEB_SEL, 1,debounce_multi_sync_path;0,from register
- */
 #define ACCDET_EINT0_DEB_SEL		(0x01<<0)
 /* 0ms */
 #define ACCDET_EINT0_DEB_BYPASS		(0x00<<3)

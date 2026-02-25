@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt-soc-pcm-deep-buffer-dl.c
- *
- * Project:
- * --------
- *    Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio playback for deep buffer
- *
- * Author:
- * -------
- *   Shane Chien
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -66,9 +33,6 @@ static unsigned int mPlaybackDramState;
 
 static bool vcore_dvfs_enable;
 
-/*
- *    function implementation
- */
 static int deep_buffer_dl_hdoutput;
 static bool mPrepareDone;
 static const void *irq_user_id;

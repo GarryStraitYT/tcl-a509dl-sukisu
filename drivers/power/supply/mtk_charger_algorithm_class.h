@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author Wy Chuang<wy.chuang@mediatek.com>
- */
 
 #ifndef __MTK_CHARGER_ALGORITHM_CLASS_H__
 #define __MTK_CHARGER_ALGORITHM_CLASS_H__
@@ -21,15 +17,6 @@ struct chg_alg_properties {
 	const char *alias_name;
 };
 
-/*
- * ALG_INIT_FAIL: hw init fail
- * ALG_TA_NOT_SUPPORT: TA does not support
- * ALG_TA_CHECKING: checking TA
- * ALG_NOT_READY: TA support & not meet the conditions
- * ALG_READY: TA support & meet the conditions
- * ALG_RUNNING: alg is running
- * ALG_DONE: alg done
- */
 enum chg_alg_state {
 	ALG_INIT_FAIL,
 	ALG_TA_CHECKING,

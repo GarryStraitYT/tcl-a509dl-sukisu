@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * MediaTek xHCI Host Controller Driver
- *
- * Copyright (c) 2015 MediaTek Inc.
- * Author:
- *  Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/dma-mapping.h>
@@ -598,13 +591,6 @@ static int xhci_mtk_remove(struct platform_device *dev)
 	return 0;
 }
 
-/*
- * if ip sleep fails, and all clocks are disabled, access register will hang
- * AHB bus, so stop polling roothubs to avoid regs access on bus suspend.
- * and no need to check whether ip sleep failed or not; this will cause SPM
- * to wake up system immediately after system suspend complete if ip sleep
- * fails, it is what we wanted.
- */
 static int __maybe_unused xhci_mtk_suspend(struct device *dev)
 {
 	struct xhci_hcd_mtk *mtk = dev_get_drvdata(dev);

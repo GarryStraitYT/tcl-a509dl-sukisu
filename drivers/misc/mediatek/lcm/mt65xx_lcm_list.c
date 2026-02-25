@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #include "mt65xx_lcm_list.h"
 #include <lcm_drv.h>
@@ -55,6 +51,9 @@ struct LCM_setting_table {
 
 struct LCM_DRIVER *lcm_driver_list[] = {
 //bangkok tf start 
+#if defined(BANGKOK_COE_GH1001_HD_DSI_VDO)
+    &bangkok_coe_gh1001_hd_dsi_vdo_lcm_drv,
+#endif
 #if defined(BANGKOK_TDT_ILI9881D_HD_DSI_VDO)
     &bangkok_tdt_ili9881d_hd_dsi_vdo_lcm_drv,
 #endif
@@ -63,6 +62,9 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 #endif
 #if defined(BANGKOK_COE_GC9702P_HD_DSI_VDO)
     &bangkok_coe_gc9702p_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(BANGKOK_YKL_XM96120_HD_DSI_VDO)
+    &bangkok_ykl_xm96120_hd_dsi_vdo_lcm_drv,
 #endif
 //bangkok tf end
 
@@ -1466,14 +1468,6 @@ void lcm_array_cmdq(const struct LCM_UTIL_FUNCS *util,struct LCM_setting_table *
 	defined(NT35521_HD720_DSI_VIDEO_TM)
 static unsigned char lcd_id_pins_value = 0xFF;
 
-/*
- * Function:    which_lcd_module_triple
- * Description: read LCD ID PIN status,could identify three status:highlowfloat
- * Input:       none
- * Output:      none
- * Return:      LCD ID1|ID0 value
- * Others:
- */
 unsigned char which_lcd_module_triple(void)
 {
 	unsigned char  high_read0 = 0;

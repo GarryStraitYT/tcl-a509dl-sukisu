@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * History: V1.0 --- [2013.03.14]Driver creation
- *          V1.1 --- [2013.07.03]Re-write I2C function to fix the bug that
- *                               i2c access error on MT6589 platform.
- *          V1.2 --- [2013.07.04]Add self test function.
- *          V1.3 --- [2013.07.04]Support new chip id 0x57 and 0x58.
- */
 
 #define pr_fmt(fmt) "[barometer] " fmt
 
@@ -59,10 +49,6 @@ static int barohub_set_powermode(bool enable)
 	return err;
 }
 
-/*
- *get compensated pressure
- *unit: hectopascal(hPa)
- */
 static int barohub_get_pressure(char *buf, int bufsize)
 {
 	struct barohub_ipi_data *obj = obj_ipi_data;

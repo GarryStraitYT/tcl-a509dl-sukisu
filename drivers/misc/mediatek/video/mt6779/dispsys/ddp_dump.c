@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define LOG_TAG "dump"
 
@@ -795,31 +792,6 @@ static void mmsys_config_dump_reg(void)
 		0xFE4, INREG32(module_base + 0xFE4));
 }
 
-/**
- * ------ clock:
- * Before power on mmsys:
- * CLK_CFG_0_CLR (address is 0x10000048) = 0x80000000 (bit 31).
- * Before using DISP_PWM0 or DISP_PWM1:
- * CLK_CFG_1_CLR(address is 0x10000058)=0x80 (bit 7).
- * Before using DPI pixel clock:
- * CLK_CFG_6_CLR(address is 0x100000A8)=0x80 (bit 7).
- *
- * Only need to enable the corresponding bits of MMSYS_CG_CON0 and
- * MMSYS_CG_CON1 for the modules: smi_common, larb0, mdp_crop, fake_eng,
- * mutex_32k, pwm0, pwm1, dsi0, dsi1, dpi.
- * Other bits could keep 1. Suggest to keep smi_common and larb0
- * always clock on.
- *
- * --------valid & ready
- * example:
- * ovl0 -> ovl0_mout_ready=1 means engines after ovl_mout are
- *         ready for receiving data
- *	ovl0_mout_ready=0 means ovl0_mout can not receive data,
- *         maybe ovl0_mout or after engines config error
- * ovl0 -> ovl0_mout_valid=1 means engines before ovl0_mout is OK,
- *	ovl0_mout_valid=0 means ovl can not transfer data to ovl0_mout,
- *         means ovl0 or before engines are not ready.
- */
 
 static void mmsys_config_dump_analysis(void)
 {

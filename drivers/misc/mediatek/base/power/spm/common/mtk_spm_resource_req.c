@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
@@ -36,9 +33,6 @@ static const char * const spm_resource_name[] = {
 
 static struct mtk_idle_sysfs_handle spm_resource_req_file;
 
-/* Compulsory method for spm resource requirement.
- * This function's implementation depend on platform
- */
 int __attribute__((weak))
 	spm_resource_parse_req_console(struct device_node *np)
 {
@@ -57,9 +51,6 @@ int __attribute__((weak)) spm_resource_req_console_by_id(
 	return -1;
 }
 
-/* Method for spm resource requirement status.
- * This function's implementation depend on platform
- */
 int __attribute__((weak))
 	spm_get_resource_req_console_status(unsigned int *res_bitmask)
 {
@@ -172,9 +163,6 @@ static void spm_update_curr_resource_usage(void)
 	spin_unlock_irqrestore(&spm_resource_desc_update_lock, flags);
 }
 
-/*
- * debugfs
- */
 #define NF_CMD_BUF		128
 
 static ssize_t resource_req_read(char *ToUserBuf, size_t sz, void *priv)

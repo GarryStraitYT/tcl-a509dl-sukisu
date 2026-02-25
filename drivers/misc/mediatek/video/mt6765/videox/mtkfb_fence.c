@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "disp_drv_log.h"
 #include "ion_drv.h"
@@ -317,12 +314,6 @@ static void mtkfb_ion_init(void)
 	MTKFB_FENCE_LOG("create ion client 0x%p\n", ion_client);
 }
 
-/**
- * Import ion handle and configure this buffer
- * @client
- * @fd ion shared fd
- * @return ion handle
- */
 static struct ion_handle *mtkfb_ion_import_handle(struct ion_client *client,
 	int fd)
 {
@@ -853,10 +844,6 @@ struct mtkfb_fence_buf_info *mtkfb_init_buf_info(
 	return buf;
 }
 
-/**
- * Query a @mtkfb_fence_buf_info node from @info_pool_head,
- * if empty create a new one
- */
 static struct mtkfb_fence_buf_info *mtkfb_get_buf_info(void)
 {
 	struct mtkfb_fence_buf_info *info;
@@ -883,11 +870,6 @@ static struct mtkfb_fence_buf_info *mtkfb_get_buf_info(void)
 	return info;
 }
 
-/**
- * signal fence and release buffer
- * layer: set layer
- * fence: signal fence which value is not bigger than this param
- */
 void mtkfb_release_fence(unsigned int session_id, unsigned int layer_id,
 	int fence)
 {
@@ -1228,15 +1210,6 @@ static int prepare_ion_buf(struct disp_buffer_info *buf,
 	return 0;
 }
 
-/**
- * 1. query a @mtkfb_fence_buf_info list node
- * 2. create fence object
- * 3. create ion mva
- * 4. save fence fd, mva to @mtkfb_fence_buf_info node
- * 5. add @mtkfb_fence_buf_info node to @mtkfb_fence_sync_info.buf_list
- * @buf struct @fb_overlay_buffer
- * @return struct @mtkfb_fence_buf_info
- */
 struct mtkfb_fence_buf_info *disp_sync_prepare_buf(
 	struct disp_buffer_info *buf)
 {

@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Biao Huang <biao.huang@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <dt-bindings/pinctrl/mt65xx.h>
 #include <linux/module.h>
@@ -23,13 +10,6 @@
 #include "pinctrl-mtk-common.h"
 #include "pinctrl-mtk-mt2701.h"
 
-/**
- * struct mtk_spec_pinmux_set
- * - For special pins' mode setting
- * @pin: The pin number.
- * @offset: The offset of extra setting register.
- * @bit: The bit of extra setting register.
- */
 struct mtk_spec_pinmux_set {
 	unsigned short pin;
 	unsigned short offset;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #include <linux/clk.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>
@@ -51,24 +48,12 @@ struct mmdvfs_drv_data {
 
 static BLOCKING_NOTIFIER_HEAD(mmdvfs_notifier_list);
 
-/**
- * register_mmdvfs_notifier - register multimedia clk changing notifier
- * @nb: notifier block
- *
- * Register notifier block to receive clk changing  notification.
- */
 int register_mmdvfs_notifier(struct notifier_block *nb)
 {
 	return blocking_notifier_chain_register(&mmdvfs_notifier_list, nb);
 }
 EXPORT_SYMBOL_GPL(register_mmdvfs_notifier);
 
-/**
- * unregister_mmdvfs_notifier - unregister multimedia clk changing notifier
- * @nb: notifier block
- *
- * Unregister clk changing notifier block.
- */
 int unregister_mmdvfs_notifier(struct notifier_block *nb)
 {
 	return blocking_notifier_chain_unregister(&mmdvfs_notifier_list, nb);
@@ -208,9 +193,6 @@ static int regulator_event_notify(struct notifier_block *nb,
 }
 
 
-/*
- * mmdvfs driver init
- */
 
 static const struct of_device_id of_mmdvfs_match_tbl[] = {
 	{

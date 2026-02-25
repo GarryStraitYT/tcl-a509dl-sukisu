@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM mtk_ppm
 #if !defined(_MTK_PPM_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)

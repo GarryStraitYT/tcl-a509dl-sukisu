@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef _CAM_CAL_H
 #define _CAM_CAL_H
 
@@ -21,9 +18,6 @@
 /*X means "switch G and S atomically"*/
 /*H means "switch T and Q atomically"*/
 
-/**********************************************
- *
- **********************************************/
 
 /*CAM_CAL write*/
 #define CAM_CALIOC_S_WRITE _IOW(CAM_CALAGIC, 0, struct stCAM_CAL_INFO_STRUCT)

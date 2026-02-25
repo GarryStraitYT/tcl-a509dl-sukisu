@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __SENSOR_PERFORMANCE_H__
 #define __SENSOR_PERFORMANCE_H__

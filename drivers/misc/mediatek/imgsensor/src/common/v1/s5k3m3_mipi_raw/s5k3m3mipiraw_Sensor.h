@@ -1,23 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *	 s5k3m3mipiraw_Sensor.h
- *
- * Project:
- * --------
- *	 ALPS
- *	PengtaoFan
- * Description:
- * ------------
- *	 CMOS sensor header file
- *
- ****************************************************************************/
 #ifndef _S5K3M3MIPI_SENSOR_H
 #define _S5K3M3MIPI_SENSOR_H
 

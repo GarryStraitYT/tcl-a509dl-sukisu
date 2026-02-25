@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define PFX "IMX586_pdafotp"
 #define LOG_INF(format, args...) pr_debug(PFX "[%s] " format, __func__, ##args)

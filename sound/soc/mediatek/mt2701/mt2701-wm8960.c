@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mt2701-wm8960.c  --  MT2701 WM8960 ALSA SoC machine driver
- *
- * Copyright (c) 2017 MediaTek Inc.
- * Author: Ryder Lee <ryder.lee@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <sound/soc.h>

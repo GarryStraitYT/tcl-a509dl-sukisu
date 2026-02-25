@@ -1,31 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
-/*
- *  linux/drivers/char/serial_core.h
- *
- *  Copyright (C) 2000 Deep Blue Solutions Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 #ifndef _UAPILINUX_SERIAL_CORE_H
 #define _UAPILINUX_SERIAL_CORE_H
 
 #include <linux/serial.h>
 
-/*
- * The type definitions.  These are from Ted Ts'o's serial.h
- */
 #define PORT_UNKNOWN	0
 #define PORT_8250	1
 #define PORT_16450	2
@@ -58,12 +36,6 @@
 #define PORT_RT2880	29	/* Ralink RT2880 internal UART */
 #define PORT_16550A_FSL64 30	/* Freescale 16550 UART with 64 FIFOs */
 
-/*
- * ARM specific type numbers.  These are not currently guaranteed
- * to be implemented, and will change in the future.  These are
- * separate so any additions to the old serial.c that occur before
- * we are merged can be easily merged here.
- */
 #define PORT_PXA	31
 #define PORT_AMBA	32
 #define PORT_CLPS711X	33

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -18,9 +15,6 @@
 
 #include "mtk_spm_internal.h"
 
-/***********************************************************
- * Local definitions
- ***********************************************************/
 
 static void __iomem *infrasys_base;    /* INFRA_REG, INFRA_SW_CG_x_STA */
 static void __iomem *mmsys_base;       /* MM_REG, DISP_CG_CON_x */
@@ -58,13 +52,7 @@ static void __iomem *apmixedsys_base;  /* APMIXEDSYS */
 #define PWRSTA_BIT_INFRA    (1U << 6)
 #define PWRSTA_BIT_ALL		(0xffffffff)
 
-/***********************************************************
- * Functions for external modules
- ***********************************************************/
 
-/***********************************************************
- * Check clkmux registers
- ***********************************************************/
 #define CLK_CFG(id) TOPCK_REG(0x40+id*0x10)
 
 enum {
@@ -126,9 +114,6 @@ static bool check_clkmux_pdn(unsigned int clkmux_id)
 	return false;
 }
 
-/***********************************************************
- * Check cg idle condition for dp/sodi/sodi3
- ***********************************************************/
 /* Local definitions */
 struct idle_cond_info {
 	/* check SPM_PWR_STATUS for bit definition */
@@ -188,9 +173,6 @@ static unsigned int idle_cond_mask[NR_IDLE_TYPES][NR_CG_GRPS] = {
 static unsigned int idle_block_mask[NR_IDLE_TYPES][NR_CG_GRPS+1];
 static unsigned int idle_value[NR_CG_GRPS];
 
-/***********************************************************
- * Check pll idle condition
- ***********************************************************/
 
 #define PLL_MFGPLL  APMIXEDSYS(0x24C)
 #define PLL_MMPLL   APMIXEDSYS(0x25C)
@@ -401,17 +383,11 @@ bool mtk_idle_cond_check(int idle_type)
 	return ret;
 }
 
-/***********************************************************
- * Clock mux check for vcore low power mode
- ***********************************************************/
 bool mtk_idle_cond_vcore_lp_mode(int idle_type)
 {
 	return true;
 }
 
-/***********************************************************
- * Fundamental build up functions
- ***********************************************************/
 static void get_cg_addrs(void)
 {
 	/* Assign cg address to idle_cg_info */

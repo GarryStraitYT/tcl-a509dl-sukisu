@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/pm_qos.h>
 #include <linux/soc/mediatek/mtk-pm-qos.h>
@@ -449,12 +446,6 @@ static const struct file_operations mtk_pm_qos_proc_fops = {
 	.release        = single_release,
 };
 
-/**
- * plist_add - add @node to @head
- *
- * @node:	&struct plist_node pointer
- * @head:	&struct plist_head pointer
- */
 static void mtk_pm_qos_plist_add(struct plist_node *node,
 	struct plist_head *head)
 {
@@ -487,12 +478,6 @@ ins_node:
 
 }
 
-/**
- * plist_del - Remove a @node from plist.
- *
- * @node:	&struct plist_node pointer - entry to be removed
- * @head:	&struct plist_head pointer - list head
- */
 static void mtk_pm_qos_plist_del(struct plist_node *node,
 	struct plist_head *head)
 {
@@ -554,12 +539,6 @@ static inline void mtk_pm_qos_set_value(struct pm_qos_constraints *c, s32 value)
 	c->target_value = value;
 }
 
-/**
- * mtk_pm_qos_request - returns current system wide qos expectation
- * @pm_qos_class: identification of which qos value is requested
- *
- * This function returns the current target value.
- */
 int mtk_pm_qos_request(unsigned int pm_qos_class)
 {
 	if (pm_qos_class >= MTK_PM_QOS_NUM_CLASSES) {
@@ -572,17 +551,6 @@ int mtk_pm_qos_request(unsigned int pm_qos_class)
 EXPORT_SYMBOL_GPL(mtk_pm_qos_request);
 
 
-/**
- * pm_qos_update_target - manages the constraints list and calls the notifiers
- *  if needed
- * @c: constraints data struct
- * @node: request to add to the list, to update or to remove
- * @action: action to take on the constraints list
- * @value: value of the request to add or update
- *
- * This function returns 1 if the aggregated constraint value has changed, 0
- *  otherwise.
- */
 static int __mtk_pm_qos_update_target(struct pm_qos_constraints *c,
 	struct plist_node *node, enum pm_qos_req_action action, int value)
 {
@@ -643,18 +611,6 @@ static void mtk_pm_qos_update_target(struct mtk_pm_qos_object *obj,
 	mutex_unlock(&obj->qos_lock);
 }
 
-/**
- * mtk_pm_qos_add_request - inserts new qos request into the list
- * @req: pointer to a preallocated handle
- * @pm_qos_class: identifies which list of qos request to use
- * @value: defines the qos request
- *
- * This function inserts a new entry in the pm_qos_class list of requested qos
- * performance characteristics.  It recomputes the aggregate QoS expectations
- * for the pm_qos_class of parameters and initializes the pm_qos_request
- * handle.  Caller needs to save this handle for later use in updates and
- * removal.
- */
 
 void mtk_pm_qos_add_request(struct mtk_pm_qos_request *req,
 	unsigned int pm_qos_class, s32 value)
@@ -696,16 +652,6 @@ void mtk_pm_qos_add_request(struct mtk_pm_qos_request *req,
 }
 EXPORT_SYMBOL_GPL(mtk_pm_qos_add_request);
 
-/**
- * mtk_pm_qos_update_request - modifies an existing qos request
- * @req : handle to list element holding a mtk_pm_qos request to use
- * @value: defines the qos request
- *
- * Updates an existing qos request for the pm_qos_class of parameters along
- * with updating the target pm_qos_class value.
- *
- * Attempts are made to make this code callable on hot code paths.
- */
 void mtk_pm_qos_update_request(struct mtk_pm_qos_request *req,
 	s32 new_value)
 {
@@ -732,14 +678,6 @@ void mtk_pm_qos_update_request(struct mtk_pm_qos_request *req,
 }
 EXPORT_SYMBOL_GPL(mtk_pm_qos_update_request);
 
-/**
- * mtk_pm_qos_remove_request - modifies an existing qos request
- * @req: handle to request list element
- *
- * Will remove pm qos request from the list of constraints and
- * recompute the current target value for the pm_qos_class.  Call this
- * on slow code paths.
- */
 void mtk_pm_qos_remove_request(struct mtk_pm_qos_request *req)
 {
 	if (!req) /*guard against callers passing in null */
@@ -765,14 +703,6 @@ void mtk_pm_qos_remove_request(struct mtk_pm_qos_request *req)
 }
 EXPORT_SYMBOL_GPL(mtk_pm_qos_remove_request);
 
-/**
- * mtk_pm_qos_add_notifier - sets notification entry for changes to target value
- * @pm_qos_class: identifies which qos target changes should be notified.
- * @notifier: notifier block managed by caller.
- *
- * will register the notifier into a notification chain that gets called
- * upon changes to the pm_qos_class target value.
- */
 int mtk_pm_qos_add_notifier(unsigned int pm_qos_class,
 	struct notifier_block *notifier)
 {
@@ -791,14 +721,6 @@ int mtk_pm_qos_add_notifier(unsigned int pm_qos_class,
 }
 EXPORT_SYMBOL_GPL(mtk_pm_qos_add_notifier);
 
-/**
- * mtk_pm_qos_remove_notifier - deletes notification entry from chain.
- * @pm_qos_class: identifies which qos target changes are notified.
- * @notifier: notifier block to be removed.
- *
- * will remove the notifier from the notification chain that gets called
- * upon changes to the pm_qos_class target value.
- */
 int mtk_pm_qos_remove_notifier(unsigned int pm_qos_class,
 	struct notifier_block *notifier)
 {

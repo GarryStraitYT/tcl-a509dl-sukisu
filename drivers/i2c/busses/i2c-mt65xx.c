@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author: Xudong Chen <xudong.chen@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/clk.h>
 #include <linux/completion.h>
@@ -428,17 +415,6 @@ static void mtk_i2c_init_hw(struct mtk_i2c *i2c)
 	writel(I2C_DMA_CLR_FLAG, i2c->pdmabase + OFFSET_RST);
 }
 
-/*
- * Calculate i2c port speed
- *
- * Hardware design:
- * i2c_bus_freq = parent_clk / (clock_div * 2 * sample_cnt * step_cnt)
- * clock_div: fixed in hardware, but may be various in different SoCs
- *
- * The calculation want to pick the highest bus frequency that is still
- * less than or equal to i2c->speed_hz. The calculation try to get
- * sample_cnt and step_cn
- */
 static int mtk_i2c_calculate_speed(struct mtk_i2c *i2c, unsigned int clk_src,
 				   unsigned int target_speed,
 				   unsigned int *timing_step_cnt,

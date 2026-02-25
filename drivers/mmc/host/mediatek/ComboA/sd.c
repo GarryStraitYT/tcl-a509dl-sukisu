@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -70,12 +67,6 @@ static unsigned int g_flush_error_count;
 static int g_flush_error_happened;
 #endif
 
-/* if eMMC cache of specific vendor shall be disabled,
- * fill CID.MID into g_emmc_cache_quirk[]
- * exmple:
- * g_emmc_cache_quirk[0] = CID_MANFID_HYNIX;
- * g_emmc_cache_quirk[1] = CID_MANFID_SAMSUNG;
- */
 unsigned char g_emmc_cache_quirk[256];
 #define CID_MANFID_SANDISK		0x2
 #define CID_MANFID_TOSHIBA		0x11
@@ -151,9 +142,6 @@ int msdc_rsp[] = {
 #define msdc_dma_off()          MSDC_SET_BIT32(MSDC_CFG, MSDC_CFG_PIO)
 #endif
 
-/***************************************************************
- * BEGIN register dump functions
- ***************************************************************/
 #define PRINTF_REGISTER_BUFFER_SIZE 512
 #define ONE_REGISTER_STRING_SIZE    14
 
@@ -417,14 +405,7 @@ void msdc_dump_info(char **buff, unsigned long *size, struct seq_file *m,
 	mmc_cmd_dump(NULL, NULL, NULL, host->mmc, 100);
 }
 EXPORT_SYMBOL(msdc_dump_info);
-/***************************************************************
- * END register dump functions
- ***************************************************************/
 
-/*
- * for AHB read / write debug
- * return DMA status.
- */
 int msdc_get_dma_status(int host_id)
 {
 	if (host_id < 0 || host_id >= HOST_MAX_NUM) {
@@ -610,9 +591,6 @@ void msdc_set_smpl_all(struct msdc_host *host, u32 clock_mode)
 		TYPE_WRITE_CRC_EDGE, NULL);
 }
 
-/* sd card change voltage wait time =
- * (1/freq) * SDC_VOL_CHG_CNT(default 0x145)
- */
 #define msdc_set_vol_change_wait_count(count) \
 	MSDC_SET_FIELD(SDC_VOL_CHG, SDC_VOL_CHG_CNT, (count))
 
@@ -629,29 +607,14 @@ void msdc_set_check_endbit(struct msdc_host *host, bool enable)
 	}
 }
 
-/* count of bad sd detecter (or bad sd condition kinds),
- * we can add it here if has other condition
- */
 #define BAD_SD_DETECTER_COUNT 1
 
-/* we take it as bad sd when the bad sd condition occurs
- * out of tolerance
- */
 static u32 bad_sd_tolerance[BAD_SD_DETECTER_COUNT] = {10};
 
-/* bad sd condition occur times
- */
 static u32 bad_sd_detecter[BAD_SD_DETECTER_COUNT] = {0};
 
-/* bad sd condition occur times will reset to zero by self
- * when reach the forget time (when set to 0, means not
- * reset to 0 by self), unit:s
- */
 static u32 bad_sd_forget[BAD_SD_DETECTER_COUNT] = {3};
 
-/* the latest occur time of the bad sd condition,
- * unit: clock
- */
 static unsigned long bad_sd_timer[BAD_SD_DETECTER_COUNT] = {0};
 
 static void msdc_reset_bad_sd_detecter(struct msdc_host *host)
@@ -1047,11 +1010,6 @@ static void msdc_init_hw(struct msdc_host *host)
 	N_MSG(FUC, "init hardware done!");
 }
 
-/*
- * card hw reset if error
- * 1. reset pin:    DONW => 2us    => UP  => 200us
- * 2. power:        OFF     => 10us  => ON => 200us
- */
 static void msdc_card_reset(struct mmc_host *mmc)
 {
 	struct msdc_host *host = mmc_priv(mmc);
@@ -2067,9 +2025,6 @@ out:
 	return cmd->error;
 }
 
-/* do command queue command - CMD44, CMD45, CMD13(QSR)
- * use another register set
- */
 unsigned int msdc_do_cmdq_command(struct msdc_host *host,
 	struct mmc_command *cmd,
 	unsigned long timeout)
@@ -2086,9 +2041,6 @@ end:
 }
 #endif
 
-/* The abort condition when PIO read/write
- *  tmo:
- */
 static int msdc_pio_abort(struct msdc_host *host, struct mmc_data *data,
 	unsigned long tmo)
 {
@@ -2114,9 +2066,6 @@ static int msdc_pio_abort(struct msdc_host *host, struct mmc_data *data,
 	return ret;
 }
 
-/*
- *  Need to add a timeout, or WDT timeout, system reboot.
- */
 /* pio mode data read/write */
 int msdc_pio_read(struct msdc_host *host, struct mmc_data *data)
 {
@@ -2313,10 +2262,6 @@ error:
 	goto end;
 }
 
-/* please make sure won't using PIO when size >= 512
- * which means, memory card block read/write won't using pio
- * then don't need to handle the CMD12 when data error.
- */
 int msdc_pio_write(struct msdc_host *host, struct mmc_data *data)
 {
 	void __iomem *base = host->base;
@@ -4446,10 +4391,6 @@ static void msdc_ops_enable_sdio_irq(struct mmc_host *mmc, int enable)
 	}
 }
 
-/* FIXME: This function is only used to switch voltage to 1.8V
- * This function can be used in initialization power setting after msdc driver
- * use mmc layer power control instead of MSDC power control
- */
 static int msdc_ops_switch_volt(struct mmc_host *mmc, struct mmc_ios *ios)
 {
 	struct msdc_host *host = mmc_priv(mmc);
@@ -4517,9 +4458,6 @@ static int msdc_card_busy(struct mmc_host *mmc)
 	return 0;
 }
 
-/* Add this function to check if no interrupt back after dma starts.
- * It may occur when write crc received, but busy over host->data_timeout_ms
- */
 static void msdc_check_data_timeout(struct work_struct *work)
 {
 	struct msdc_host *host =

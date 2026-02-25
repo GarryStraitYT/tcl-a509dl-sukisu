@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #include "mdp_m4u.h"
 #ifdef CONFIG_MTK_CMDQ_MBOX_EXT

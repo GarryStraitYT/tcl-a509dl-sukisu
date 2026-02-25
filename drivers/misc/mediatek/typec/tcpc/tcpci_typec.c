@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/cpu.h>
@@ -137,9 +134,6 @@ static inline int typec_enable_vconn(struct tcpc_device *tcpc_dev)
 	return tcpci_set_vconn(tcpc_dev, true);
 }
 
-/*
- * [BLOCK] TYPEC Connection State Definition
- */
 
 enum TYPEC_CONNECTION_STATE {
 	typec_disabled = 0,
@@ -278,9 +272,6 @@ static inline void typec_transfer_state(struct tcpc_device *tcpc_dev,
 #define TYPEC_NEW_STATE(state)  \
 	(typec_transfer_state(tcpc_dev, state))
 
-/*
- * [BLOCK] TypeC Alert Attach Status Changed
- */
 
 static const char *const typec_attach_name[] = {
 	"NULL",
@@ -351,9 +342,6 @@ static int typec_check_water_status(struct tcpc_device *tcpc_dev)
 }
 #endif /* CONFIG_WATER_DETECTION */
 
-/*
- * [BLOCK] NoRpSRC Entry
- */
 
 #ifdef CONFIG_TYPEC_CAP_NORP_SRC
 static bool typec_try_enter_norp_src(struct tcpc_device *tcpc_dev)
@@ -415,9 +403,6 @@ static inline int typec_norp_src_attached_entry(struct tcpc_device *tcpc_dev)
 }
 #endif	/* CONFIG_TYPEC_CAP_NORP_SRC */
 
-/*
- * [BLOCK] Unattached Entry
- */
 
 static inline int typec_try_low_power_mode(struct tcpc_device *tcpc_dev)
 {
@@ -640,9 +625,6 @@ static inline void typec_disable_entry(struct tcpc_device *tcpc_dev)
 	typec_cc_open_entry(tcpc_dev, typec_disabled);
 }
 
-/*
- * [BLOCK] Attached Entry
- */
 
 static inline int typec_set_polarity(struct tcpc_device *tcpc_dev,
 					bool polarity)
@@ -794,9 +776,6 @@ static inline void typec_sink_dbg_acc_attached_entry(
 #endif	/* CONFIG_TYPEC_CAP_DBGACC_SNK */
 
 
-/*
- * [BLOCK] Try.SRC / TryWait.SNK
- */
 
 #ifdef CONFIG_TYPEC_CAP_TRY_SOURCE
 
@@ -853,9 +832,6 @@ static inline void typec_trywait_snk_pe_entry(struct tcpc_device *tcpc_dev)
 
 #endif /* CONFIG_TYPEC_CAP_TRY_SOURCE */
 
-/*
- * [BLOCK] Try.SNK / TryWait.SRC
- */
 
 #ifdef CONFIG_TYPEC_CAP_TRY_SINK
 
@@ -894,9 +870,6 @@ static inline void typec_trywait_src_entry(struct tcpc_device *tcpc_dev)
 
 #endif /* CONFIG_TYPEC_CAP_TRY_SINK */
 
-/*
- * [BLOCK] Attach / Detach
- */
 
 static inline void typec_cc_snk_detect_vsafe5v_entry(
 	struct tcpc_device *tcpc_dev)
@@ -994,9 +967,6 @@ static inline void typec_cc_snk_remove_entry(struct tcpc_device *tcpc_dev)
 	typec_unattach_wait_pe_idle_entry(tcpc_dev);
 }
 
-/*
- * [BLOCK] Check Legacy Cable
- */
 
 #ifdef CONFIG_TYPEC_CHECK_LEGACY_CABLE
 
@@ -1311,9 +1281,6 @@ static inline int typec_legacy_handle_cc_change(struct tcpc_device *tcpc_dev)
 
 #endif /* CONFIG_TYPEC_CHECK_LEGACY_CABLE */
 
-/*
- * [BLOCK] CC Change (after debounce)
- */
 
 static void typec_debug_acc_attached_with_vbus_entry(
 		struct tcpc_device *tcpc_dev)
@@ -1523,9 +1490,6 @@ static inline bool typec_handle_cc_changed_entry(struct tcpc_device *tcpc_dev)
 	return true;
 }
 
-/*
- * [BLOCK] Handle cc-change event (from HW)
- */
 
 static inline void typec_attach_wait_entry(struct tcpc_device *tcpc_dev)
 {
@@ -1781,19 +1745,6 @@ static inline bool typec_is_cc_attach(struct tcpc_device *tcpc_dev)
 	return cc_attach;
 }
 
-/**
- * typec_check_false_ra_detach
- *
- * Check the Single Ra resistance (eMark) exists or not when
- *	1) Ra_detach INT triggered.
- *	2) Wakeup_Timer triggered.
- *
- * If reentering low-power mode and eMark still exists,
- * it may cause an infinite loop.
- *
- * If the CC status is both open, return true; otherwise return false
- *
- */
 
 static inline bool typec_check_false_ra_detach(struct tcpc_device *tcpc_dev)
 {
@@ -2054,9 +2005,6 @@ int tcpc_typec_handle_cc_change(struct tcpc_device *tcpc_dev)
 	return 0;
 }
 
-/*
- * [BLOCK] Handle timeout event
- */
 
 #ifdef CONFIG_TYPEC_CAP_TRY_STATE
 static inline int typec_handle_drp_try_timeout(struct tcpc_device *tcpc_dev)
@@ -2397,9 +2345,6 @@ int tcpc_typec_handle_timeout(struct tcpc_device *tcpc_dev, uint32_t timer_id)
 	return ret;
 }
 
-/*
- * [BLOCK] Handle ps-change event
- */
 
 static inline int typec_handle_vbus_present(struct tcpc_device *tcpc_dev)
 {
@@ -2519,9 +2464,6 @@ int tcpc_typec_handle_ps_change(struct tcpc_device *tcpc_dev, int vbus_level)
 	return typec_handle_vbus_absent(tcpc_dev);
 }
 
-/*
- * [BLOCK] Handle PE event
- */
 
 #ifdef CONFIG_USB_POWER_DELIVERY
 
@@ -2554,9 +2496,6 @@ int tcpc_typec_handle_pe_pr_swap(struct tcpc_device *tcpc_dev)
 
 #endif /* CONFIG_USB_POWER_DELIVERY */
 
-/*
- * [BLOCK] Handle reach vSafe0V event
- */
 
 int tcpc_typec_handle_vsafe0v(struct tcpc_device *tcpc_dev)
 {
@@ -2580,9 +2519,6 @@ int tcpc_typec_handle_vsafe0v(struct tcpc_device *tcpc_dev)
 	return 0;
 }
 
-/*
- * [BLOCK] TCPCI TypeC I/F
- */
 
 static const char *const typec_role_name[] = {
 	"UNKNOWN",

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #ifndef __EEPROM_I2C_COMMON_DRIVER_H
 #define __EEPROM_I2C_COMMON_DRIVER_H
 #include <linux/i2c.h>

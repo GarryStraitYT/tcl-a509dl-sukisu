@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MT6799_VPU_PROFILE_H_
 #define _MT6799_VPU_PROFILE_H_
@@ -85,9 +82,6 @@
 /* iDMA */
 
 
-/*
- * Masks for each of the selector listed above
- */
 
 /* XTPERF_CNT_COMMITTED_INSN selector mask */
 
@@ -117,9 +111,6 @@
 
 #define XTPERF_MASK_OVERFLOW                     0x0001
 
-/*
- * XTPERF_CNT_INSN selector mask
- */
 
 #define XTPERF_MASK_INSN_ALL                     0x8DFF
 
@@ -148,9 +139,6 @@
 #define XTPERF_MASK_INSN_NON_BRANCH              0x8000
 /* Non-branch instruction (aka. non-CTI) */
 
-/*
- * XTPERF_CNT_D_STALL selector mask
- */
 
 #define XTPERF_MASK_D_STALL_ALL                  0x01FE
 
@@ -171,9 +159,6 @@
 #define XTPERF_MASK_D_STALL_BANK_CONFLICT        0x0100
 /* Bank-conflict stall */
 
-/*
- * XTPERF_CNT_I_STALL selector mask
- */
 
 #define XTPERF_MASK_I_STALL_ALL                  0x01FF
 
@@ -196,9 +181,6 @@
 #define XTPERF_MASK_I_STALL_ITERATIVE_DIV        0x0100
 /* Iterative divide stall */
 
-/*
- * XTPERF_CNT_EXR selector mask
- */
 
 #define XTPERF_MASK_EXR_ALL                      0x01FF
 
@@ -221,9 +203,6 @@
 #define XTPERF_MASK_EXR_MEM_ERR                  0x0100
 /* HW-corrected memory error */
 
-/*
- * XTPERF_CNT_BUBBLES selector mask
- */
 
 #define XTPERF_MASK_BUBBLES_ALL                   0x01FD
 
@@ -244,9 +223,6 @@
 #define XTPERF_MASK_BUBBLES_WAITI                 0x0100
 /* WAITI bubble */
 
-/*
- * XTPERF_CNT_I_TLB selector mask
- */
 
 #define XTPERF_MASK_I_TLB_ALL                     0x000F
 
@@ -259,9 +235,6 @@
 #define XTPERF_MASK_I_TLB_MISSES                  0x0008
 /* ITLB Miss Exception */
 
-/*
- * XTPERF_CNT_I_MEM selector mask
- */
 
 #define XTPERF_MASK_I_MEM_ALL                     0x000F
 
@@ -274,9 +247,6 @@
 #define XTPERF_MASK_I_MEM_BYPASS                  0x0008
 /* Bypass (i.e. uncached) fetch */
 
-/*
- * XTPERF_CNT_D_TLB selector mask
- */
 
 #define XTPERF_MASK_D_TLB_ALL                     0x000F
 
@@ -289,9 +259,6 @@
 #define XTPERF_MASK_D_TLB_MISSES                  0x0008
 /* DTLB Miss Exception */
 
-/*
- * XTPERF_CNT_D_LOAD_U* selector mask
- */
 
 #define XTPERF_MASK_D_LOAD_ALL                    0x000F
 
@@ -304,9 +271,6 @@
 #define XTPERF_MASK_D_LOAD_BYPASS                 0x0008
 /* Bypass (i.e. uncached) load */
 
-/*
- * XTPERF_CNT_D_STORE_U* selector mask
- */
 
 #define XTPERF_MASK_D_STORE_ALL                    0x000F
 
@@ -319,9 +283,6 @@
 #define XTPERF_MASK_D_STORE_PIF                    0x0008
 /* PIF Store */
 
-/*
- * XTPERF_CNT_D_ACCESS_U* selector mask
- */
 
 #define XTPERF_MASK_D_ACCESS_ALL                   0x000F
 
@@ -334,9 +295,6 @@
 #define XTPERF_MASK_D_ACCESS_HITS_MODIFIED         0x0008
 /* Hit Modified */
 
-/*
- * XTPERF_CNT_MULTIPLE_LS selector mask
- */
 
 #define XTPERF_MASK_MULTIPLE_LS_ALL                0x003F
 
@@ -353,9 +311,6 @@
 #define XTPERF_MASK_MULTIPLE_LS_2S_0L              0x0020
 /* 2 stores and 0 loads */
 
-/*
- * XTPERF_CNT_OUTBOUND_PIF selector mask
- */
 
 #define XTPERF_MASK_OUTBOUND_PIF_ALL               0x0003
 
@@ -364,9 +319,6 @@
 #define XTPERF_MASK_OUTBOUND_PIF_PREFETCH          0x0002
 /* Prefetch */
 
-/*
- * XTPERF_CNT_INBOUND_PIF selector mask
- */
 
 #define XTPERF_MASK_INBOUND_PIF_ALL                0x0003
 
@@ -375,9 +327,6 @@
 #define XTPERF_MASK_INBOUND_PIF_D_DMA              0x0002
 /* Data DMA */
 
-/*
- * XTPERF_CNT_PREFETCH selector mask
- */
 
 #define XTPERF_MASK_PREFETCH_ALL                   0x002F
 
@@ -392,18 +341,12 @@
 #define XTPERF_MASK_PREFETCH_D_L1_FILL             0x0020
 /* Fill directly to DCache L1 */
 
-/*
- * XTPERF_CNT_IDMA selector mask
- */
 
 #define XTPERF_MASK_IDMA_ALL                       0x0001
 
 #define XTPERF_MASK_IDMA_ACTIVE_CYCLES             0x0001
 /* Active Cycles */
 
-/*
- * XTPERF_CNT_INSN_LENGTH selector mask
- */
 
 #define XTPERF_MASK_INSN_LENGTH_ALL                0x7FFF
 

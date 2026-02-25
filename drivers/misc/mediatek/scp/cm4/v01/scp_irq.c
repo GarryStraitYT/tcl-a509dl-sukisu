@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/interrupt.h>
@@ -17,22 +14,12 @@
 #include <mt-plat/aee.h>
 #endif
 
-/*
- * handler for wdt irq for scp
- * dump scp register
- */
 static void scp_A_wdt_handler(void)
 {
 	pr_debug("[SCP] CM4 A WDT exception\n");
 	scp_A_dump_regs();
 }
 
-/*
- * dispatch scp irq
- * reset scp and generate exception if needed
- * @param irq:      irq id
- * @param dev_id:   should be NULL
- */
 irqreturn_t scp_A_irq_handler(int irq, void *dev_id)
 {
 	unsigned int reg = readl(SCP_A_TO_HOST_REG);
@@ -93,9 +80,6 @@ irqreturn_t scp_A_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-/*
- * scp irq initialize
- */
 void scp_A_irq_init(void)
 {
 	writel(SCP_IRQ_SCP2HOST, SCP_A_TO_HOST_REG); /* clear scp irq */

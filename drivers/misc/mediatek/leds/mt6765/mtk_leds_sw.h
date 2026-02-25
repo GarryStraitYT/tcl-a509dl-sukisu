@@ -1,16 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- */
 
 
 #ifndef _LEDS_SW_H
 #define _LEDS_SW_H
 
-/******************************************************************************
- *  LED & Backlight type defination
- *****************************************************************************/
 
 enum mt65xx_led_type {
 	MT65XX_LED_TYPE_RED = 0,
@@ -32,9 +25,6 @@ enum mt65xx_led_mode {
 	MT65XX_LED_MODE_CUST_BLS_PWM
 };
 
-/******************************************************************************
- *  for backlight
- *****************************************************************************/
 
 /* backlight call back function */
 typedef int (*cust_brightness_set) (int level, int div);
@@ -46,9 +36,6 @@ typedef int (*cust_set_brightness) (int level);
 #define MT_LED_INTERNAL_LEVEL_BIT_CNT 10
 #endif
 
-/******************************************************************************
- *  for PMIC
- *****************************************************************************/
 
 enum mt65xx_led_pmic {
 	MT65XX_LED_PMIC_LCD_ISINK = 0,
@@ -104,9 +91,6 @@ enum MT65XX_PMIC_ISINK_FSEL {
 	ISINK_128K_17HZ = 28,
 };
 
-/******************************************************************************
- *  for PWM
- *****************************************************************************/
 
 #define MIN_FRE_OLD_PWM 32/* the min frequence when use old mode pwm by kHz */
 #define BACKLIGHT_LEVEL_PWM_64_FIFO_MODE_SUPPORT 64
@@ -133,21 +117,7 @@ struct PWM_config {
 	bool pmic_pad;
 };
 
-/****************************************************************************
- * sw data structures
- ***************************************************************************/
 
-/**
- * led customization data structure
- * name : must the same as lights HAL
- * mode : control mode
- * data :
- *    PWM:  pwm number
- *    GPIO: gpio id
- *    PMIC: enum mt65xx_led_pmic
- *    CUST: custom set brightness function pointer
- * config_data: pwm config data
- */
 struct cust_mt65xx_led {
 	char *name;
 	enum mt65xx_led_mode mode;
@@ -155,15 +125,6 @@ struct cust_mt65xx_led {
 	struct PWM_config config_data;
 };
 
-/**
- * led device node structure with mtk extentions
- * cdev: common led device structure
- * cust: customization data from device tree
- * work: workqueue for specialfied led device
- * level: brightness level
- * delay_on: on time if led is blinking
- * delay_off: off time if led is blinking
- */
 struct mt65xx_led_data {
 	struct led_classdev cdev;
 	struct cust_mt65xx_led cust;
@@ -173,12 +134,6 @@ struct mt65xx_led_data {
 	int delay_off;
 };
 
-/**
- * LED Variable Settings
- * nled_mode:  0, off; 1, on; 2, blink
- * blink_on_time: on time if led is blinking
- * blink_off_time: off time if led is blinking
- */
 #define NLED_OFF 0
 #define NLED_ON 1
 #define NLED_BLINK 2

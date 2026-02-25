@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -37,9 +34,6 @@
 #endif
 
 
-/******************************************************************************
- * Definition
- *****************************************************************************/
 static DEFINE_MUTEX(fl_mutex);
 LIST_HEAD(flashlight_list);
 
@@ -61,9 +55,6 @@ static int pt_strict; /* always be zero in C standard */
 static int pt_is_low(int pt_low_vol, int pt_low_bat, int pt_over_cur);
 #endif
 
-/******************************************************************************
- * Weak functions
- *****************************************************************************/
 #ifdef CONFIG_MTK_FLASHLIGHT_DLPT
 void __attribute__ ((weak)) kicker_pbm_by_flash(bool status)
 {
@@ -71,9 +62,6 @@ void __attribute__ ((weak)) kicker_pbm_by_flash(bool status)
 }
 #endif
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int fl_set_level(struct flashlight_dev *fdev, int level)
 {
 	struct flashlight_dev_arg fl_dev_arg;
@@ -279,9 +267,6 @@ int flashlight_get_part_index(int part_id)
 EXPORT_SYMBOL(flashlight_get_part_index);
 
 
-/******************************************************************************
- * Flashlight devices
- *****************************************************************************/
 /* find device */
 static struct flashlight_dev *flashlight_find_dev_by_full_index(
 		const int type, const int ct, const int part)
@@ -332,12 +317,6 @@ static struct flashlight_dev *flashlight_find_dev_by_device_id(
 	return NULL;
 }
 
-/*
- * Register devices
- *
- * Please DO NOT register flashlight device driver,
- * until success to probe hardware.
- */
 int flashlight_dev_register(
 		const char *name, struct flashlight_operations *dev_ops)
 {
@@ -423,12 +402,6 @@ int flashlight_dev_unregister(const char *name)
 }
 EXPORT_SYMBOL(flashlight_dev_unregister);
 
-/*
- * Register devices
- *
- * Please DO NOT register flashlight device driver,
- * until success to probe hardware.
- */
 int flashlight_dev_register_by_device_id(
 		struct flashlight_device_id *dev_id,
 		struct flashlight_operations *dev_ops)
@@ -493,15 +466,6 @@ int flashlight_dev_unregister_by_device_id(struct flashlight_device_id *dev_id)
 EXPORT_SYMBOL(flashlight_dev_unregister_by_device_id);
 
 
-/******************************************************************************
- * Vsync IRQ
- *****************************************************************************/
-/*
- * LED flash control for high current capture mode
- * which is used by "imgsensor/src/[PLAT]/kd_sensorlist.c"
- *
- * Already be removed from kernel-4.4.
- */
 ssize_t strobe_VDIrq(void)
 {
 	return 0;
@@ -509,9 +473,6 @@ ssize_t strobe_VDIrq(void)
 EXPORT_SYMBOL(strobe_VDIrq);
 
 
-/******************************************************************************
- * Charger Status
- *****************************************************************************/
 static int flashlight_update_charger_status(struct flashlight_dev *fdev)
 {
 	struct flashlight_dev_arg fl_dev_arg;
@@ -533,9 +494,6 @@ static int flashlight_update_charger_status(struct flashlight_dev *fdev)
 }
 
 
-/******************************************************************************
- * Power throttling
- *****************************************************************************/
 #ifdef CONFIG_MTK_FLASHLIGHT_PT
 static int pt_arg_verify(int pt_low_vol, int pt_low_bat, int pt_over_cur)
 {
@@ -650,9 +608,6 @@ static void pt_oc_callback(enum BATTERY_OC_LEVEL_TAG level)
 #endif
 
 
-/******************************************************************************
- * File operations
- *****************************************************************************/
 static long _flashlight_ioctl(
 		struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -915,9 +870,6 @@ static const struct file_operations flashlight_fops = {
 };
 
 
-/******************************************************************************
- * SYSFS
- *****************************************************************************/
 /* flashlight strobe sysfs */
 static ssize_t flashlight_strobe_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -1557,9 +1509,6 @@ unlock:
 }
 static DEVICE_ATTR_RW(flashlight_sw_disable);
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static struct class *flashlight_class;
 static struct device *flashlight_device;
 static dev_t flashlight_devno;

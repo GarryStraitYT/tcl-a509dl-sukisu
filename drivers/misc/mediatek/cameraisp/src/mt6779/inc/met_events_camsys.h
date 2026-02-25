@@ -1,14 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*
- * ISP_Pass1_CAM:
- * Define 2 ftrace event:
- *        1. enter event
- *        2. leave event
- */
 
 #define EP_MARK_TRACE
 #ifndef EP_MARK_TRACE

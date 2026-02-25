@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_TRUSTY_TRUSTY_H
 #define __LINUX_TRUSTY_TRUSTY_H
@@ -101,9 +98,6 @@ void trusty_dequeue_nop(struct device *dev, struct trusty_nop *nop);
 #ifndef VIRTIO_ID_TRUSTY_IPC /*for kernel-4.19*/
 #define VIRTIO_ID_TRUSTY_IPC   13
 #endif
-/* This define should be added into include/uapi/linux/virtio_ids.h
- * #define VIRTIO_ID_NEBULA_IPC   14
- */
 #define VIRTIO_ID_NEBULA_IPC   13	/* virtio trusty ipc */
 
 #define MAX_DEV_NAME_LEN 32

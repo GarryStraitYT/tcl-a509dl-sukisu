@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/cdev.h>
 #include <linux/delay.h>
@@ -652,11 +649,6 @@ static void fbt_query_dep_list_loading(struct render_info *thr)
 	fpsgo_fbt2minitop_start(thr->dep_valid_size, thr->dep_arr);
 }
 
-/*
- * __incr- Given an array ARR with size @max, while index @i reaches @max,
- *         return @max and keeping @fl points to last valid element of
- *         ARR[max - 1]. Otherwise, do nomral increment of @i and @fl.
- */
 static inline int __incr(int i, int max)
 {
 	if (i >= max)
@@ -665,9 +657,6 @@ static inline int __incr(int i, int max)
 	return i + 1;
 }
 
-/*
- * __incr_alt - if @t reaches maximum already, raise @incr_c as candidate
- */
 static inline void __incr_alt(int t, int max, int *incr_t, int *incr_c)
 {
 	if (t < max)
@@ -808,9 +797,6 @@ static int fbt_is_light_loading(int loading)
 static void fbt_set_min_cap_locked(struct render_info *thr, int min_cap,
 					int check, int jerk)
 {
-/*
- * boost_ta should be checked during the flow, not here.
- */
 	int size = 0, i;
 	char *dep_str = NULL;
 	int ret;
@@ -1839,11 +1825,6 @@ static unsigned long long fbt_est_loading(int cur_ts,
 	}
 
 	return 0;
-/*
- *	Since qu/deq notification may be delayed because of wq,
- *	loading could be over estimated if qu/deq start comes later.
- *	Keep the current design, and be awared of low power.
- */
 }
 
 static void fbt_check_max_blc_locked(void)

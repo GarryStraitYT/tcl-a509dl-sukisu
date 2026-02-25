@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Pierre Lee <pierre.lee@mediatek.com>
- */
 
 
 #ifndef __DRV_CLK_FHCTL_H
@@ -13,9 +9,6 @@
 #include <linux/bitops.h>
 
 
-/************************************************
- **********      register field        **********
- ************************************************/
 // REG_CFG mask
 #define MASK_FRDDSX_DYS         GENMASK(23, 20)
 #define MASK_FRDDSX_DTS         GENMASK(19, 16)

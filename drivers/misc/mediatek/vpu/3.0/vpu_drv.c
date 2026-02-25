@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/device.h>
@@ -1695,9 +1692,6 @@ out:
 	return ret;
 }
 
-/******************************************************************************
- * platform_driver
- *****************************************************************************/
 
 static int vpu_probe(struct platform_device *pdev)
 {

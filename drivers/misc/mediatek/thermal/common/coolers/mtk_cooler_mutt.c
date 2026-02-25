@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -30,10 +27,6 @@
 
 
 #if FEATURE_MUTT_V2
-/*
- * No UL data(except IMS): active = 1; suspend = 255; bit0 in reserved =0;
- * No UL data(no IMS): active = 1; suspend = 255; bit0 in reserved =1;
- */
 #define BIT_MD_CL_NO_IMS	0x01000000
 #define MD_CL_NO_UL_DATA	0x00FF0101
 #endif
@@ -127,10 +120,6 @@ enum tmc_cooler_lv_enum {
 #define TMC_COOLER_LV_CTRL08 (TMC_CTRL_CMD_COOLER_LV | TMC_COOLER_LV8 << 16)
 
 #if FEATURE_MUTT_V2
-/*
- * No UL data(except IMS): active = 1; suspend = 255; bit0 in reserved =0;
- * No UL data(no IMS): active = 1; suspend = 255; bit0 in reserved =1;
- */
 #define BIT_MD_CL_NO_IMS MUTT_ENABLE_IMS_DISABLE /*IMS disable*/
 #define MD_CL_NO_UL_DATA (0xFF010000 | MUTT_ENABLE_IMS_ENABLE) /*IMS only*/
 #endif
@@ -277,10 +266,6 @@ static unsigned int cl_mutt_cur_limit;
 static unsigned long last_md_boot_cnt;
 
 #if FEATURE_THERMAL_DIAG
-/*
- * use "si_code" for Action identify
- * for tmd_pid (/system/bin/thermald)
- */
 enum {
 /*	TMD_Alert_ShutDown = 1, */
 	TMD_Alert_ULdataBack = 2,
@@ -378,10 +363,6 @@ static const struct file_operations clmutt_tmd_pid_fops = {
 #endif
 
 #if FEATURE_MUTT_V2
-/*
- * use "si_errno" for client identify
- * for tm_pid (/system/bin/thermal)
- */
 enum {
 	/*	TM_CLIENT_clwmt = 0,
 	 *	TM_CLIENT_mdulthro =1,
@@ -482,10 +463,6 @@ static const struct file_operations clmutt_tm_pid_fops = {
 	.release = single_release,
 };
 
-/*
- * cooling device callback functions (mtk_cl_mdoff_ops)
- * 1 : True and 0 : False
- */
 static int mtk_cl_mdoff_get_max_state(struct thermal_cooling_device *cdev,
 				unsigned long *state)
 {
@@ -645,10 +622,6 @@ static void mtk_cl_mutt_set_onIMS(int level)
 
 }
 
-/*
- * cooling device callback functions (mtk_cl_noIMS_ops)
- * 1 : True and 0 : False
- */
 static int mtk_cl_noIMS_get_max_state(struct thermal_cooling_device *cdev,
 				unsigned long *state)
 {
@@ -1059,10 +1032,6 @@ static int adaptive_tput_limit(long curr_temp)
 	return 0;
 }
 
-/*
- * cooling device callback functions (mtk_cl_adp_mutt_ops)
- * 1 : True and 0 : False
- */
 static int mtk_cl_adp_mutt_get_max_state(struct thermal_cooling_device *cdev,
 				unsigned long *state)
 {
@@ -1117,36 +1086,6 @@ static struct thermal_cooling_device_ops mtk_cl_adp_mutt_ops = {
 	.set_cur_state = mtk_cl_adp_mutt_set_cur_state,
 };
 
-/* =======================
- *#define debugfs_entry(name) \
- *do { \
- *	dentry_f = debugfs_create_u32(#name, S_IWUSR | S_IRUGO, _d, &name); \
- *	if (IS_ERR_OR_NULL(dentry_f)) {	\
- *		pr_notice("Unable to create debugfsfile: " #name "\n"); \
- *		return; \
- *	} \
- *} while (0)
- *
- *static void create_debugfs_entries(void)
- *{
- *	struct dentry *dentry_f;
- *	struct dentry *_d;
- *
- *	_d = debugfs_create_dir("cl_adp_mutt", NULL);
- *	if (IS_ERR_OR_NULL(_d)) {
- *		pr_info("unable to create debugfs directory\n");
- *		return;
- *	}
- *
- *	debugfs_entry(MD_target_t);
- *	debugfs_entry(t_stable_range);
- *	debugfs_entry(tt_MD_high);
- *	debugfs_entry(tt_MD_low);
- *}
- *
- *#undef debugfs_entry
- *==========================
- */
 #endif
 
 static int mtk_cooler_mutt_register_ltf(void)

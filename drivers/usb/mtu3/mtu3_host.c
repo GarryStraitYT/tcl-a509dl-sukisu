@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mtu3_dr.c - dual role switch and host glue layer
- *
- * Copyright (C) 2016 MediaTek Inc.
- *
- * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/iopoll.h>
@@ -34,10 +27,6 @@ enum ssusb_uwk_vers {
 	SSUSB_UWK_V2,
 };
 
-/*
- * ip-sleep wakeup mode:
- * all clocks can be turn off, but power domain should be kept on
- */
 static void ssusb_wakeup_ip_sleep_set(struct ssusb_mtk *ssusb, bool enable)
 {
 	u32 reg, msk, val;
@@ -217,12 +206,6 @@ static void ssusb_host_cleanup(struct ssusb_mtk *ssusb)
 	ssusb_host_disable(ssusb, false);
 }
 
-/*
- * If host supports multiple ports, the VBUSes(5V) of ports except port0
- * which supports OTG are better to be enabled by default in DTS.
- * Because the host driver will keep link with devices attached when system
- * enters suspend mode, so no need to control VBUSes after initialization.
- */
 int ssusb_host_init(struct ssusb_mtk *ssusb, struct device_node *parent_dn)
 {
 	struct device *parent_dev = ssusb->dev;

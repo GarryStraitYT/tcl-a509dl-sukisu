@@ -1,27 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *     s5k2l7_setting_mode3.h
- *
- * Project:
- * --------
- *     ALPS
- *
- * Description:
- * ------------
- *     CMOS sensor setting file
- *
- * Setting Release Date:
- * ------------
- *     2016.09.01
- *
- ****************************************************************************/
 #ifndef _s5k2l7MIPI_SETTING_MODE3_H_
 #define _s5k2l7MIPI_SETTING_MODE3_H_
 
@@ -142,10 +120,6 @@ static struct imgsensor_info_struct _imgsensor_info_m3 =                       \
 	.i2c_speed = 1000,                                                     \
 }
 
-/* full_w; full_h; x0_offset; y0_offset; w0_size; h0_size; scale_w; scale_h;
- * x1_offset;  y1_offset;  w1_size;  h1_size;
- * x2_tg_offset;	 y2_tg_offset;	w2_tg_size;  h2_tg_size;
- */
 #define struct_SENSOR_WINSIZE_INFO struct SENSOR_WINSIZE_INFO_STRUCT
 #define _S5K2L7_MODE3_WINSIZE_INFO_                                            \
 static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3[5] =              \
@@ -172,13 +146,6 @@ static struct_SENSOR_WINSIZE_INFO _imgsensor_winsize_info_m3[5] =              \
 } while (0)
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 initial setting
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_init_2l7_m3[] = {
 	0X6214, 0X7970,
 	0X6218, 0X7150,
@@ -1567,15 +1534,6 @@ kal_uint16 addr_data_pair_init_2l7_m3[] = {
 };
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 preview setting
- *     M3 setting, RZ8_V1.0settings
- *     Bining 30fps
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_preview_2l7_m3[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -1776,15 +1734,6 @@ kal_uint16 addr_data_pair_preview_2l7_m3[] = {
 };
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 capture setting
- *     M3 setting, RZ8_V1.0settings
- *     Full 30fps
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_capture_2l7_m3[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -1985,15 +1934,6 @@ kal_uint16 addr_data_pair_capture_2l7_m3[] = {
 };
 
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 high speed video setting
- *     M3 setting, RZ8_V1.0settings
- *     Slim 30fps
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_hs_2l7_m3[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -2193,15 +2133,6 @@ kal_uint16 addr_data_pair_hs_2l7_m3[] = {
 	0X6028, 0X4000
 };
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 slim video setting
- *     M3 setting, RZ8_V1.0settings
- *     Slim 30fps
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_slim_2l7_m3[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,
@@ -2401,15 +2332,6 @@ kal_uint16 addr_data_pair_slim_2l7_m3[] = {
 	0X6028, 0X4000
 };
 
-/*****************************************************************************
- *
- * Description:
- * ------------
- *     mode 3 cpature with WDR setting
- *     M3 setting, RZ8_V1.0settings
- *     Full 30fps
- *
- ****************************************************************************/
 kal_uint16 addr_data_pair_capture_wdr_2l7_m3[] = {
 	0X6028, 0X4000,
 	0X6214, 0X7970,

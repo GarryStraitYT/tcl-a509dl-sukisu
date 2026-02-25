@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #ifdef CONFIG_MTK_LOCKING_AEE
 #include <mt-plat/aee.h>

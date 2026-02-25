@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <media/v4l2-event.h>
 #include <media/v4l2-mem2mem.h>
@@ -112,12 +109,6 @@ static struct mtk_q_data *mtk_vdec_get_q_data(struct mtk_vcodec_ctx *ctx,
 	return &ctx->q_data[MTK_Q_DATA_DST];
 }
 
-/*
- * This function tries to clean all display buffers, the buffers will return
- * in display order.
- * Note the buffers returned from codec driver may still be in driver's
- * reference list.
- */
 static struct vb2_buffer *get_display_buffer(struct mtk_vcodec_ctx *ctx,
 	bool got_early_eos)
 {
@@ -183,14 +174,6 @@ static struct vb2_buffer *get_display_buffer(struct mtk_vcodec_ctx *ctx,
 	return &dstbuf->vb.vb2_buf;
 }
 
-/*
- * This function tries to clean all capture buffers that are not used as
- * reference buffers by codec driver any more
- * In this case, we need re-queue buffer to vb2 buffer if user space
- * already returns this buffer to v4l2 or this buffer is just the output of
- * previous sps/pps/resolution change decode, or do nothing if user
- * space still owns this buffer
- */
 static struct vb2_buffer *get_free_buffer(struct mtk_vcodec_ctx *ctx)
 {
 	struct mtk_video_dec_buf *dstbuf;

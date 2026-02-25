@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -127,9 +124,6 @@ static mmp_event dprec_mmp_event_spy(enum DPREC_LOGGER_ENUM l)
 		return ddp_mmp_get_events()->session_wait_vsync;
 	case DPREC_LOGGER_DISPMGR_CACHE_SYNC:
 		return ddp_mmp_get_events()->primary_cache_sync;
-/*	case DPREC_LOGGER_DSI_EXT_TE:
- *		return ddp_mmp_get_events()->dsi_te;
- */
 	}
 	return 0xffff;
 }
@@ -1134,12 +1128,6 @@ int dprec_handle_option(unsigned int option)
 	return 0;
 }
 
-/**
- * return true if overall_switch is set. this will dump
- * all register setting by default.
- * other functions outside of this display_recorder.c
- * could use this api to determine whether to enable debug funciton
- */
 int dprec_option_enabled(void)
 {
 	return _control.overall_switch;

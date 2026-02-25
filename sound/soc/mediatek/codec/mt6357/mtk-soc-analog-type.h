@@ -1,39 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*****************************************************************************
- *
- * Filename:
- * ---------
- *  mt_sco_analog_type.h
- *
- * Project:
- * --------
- *   MT6583  Audio Driver Kernel Function
- *
- * Description:
- * ------------
- *   Audio register
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *----------------------------------------------------------------------------
- *
- *
- *****************************************************************************/
 
 #ifndef _AUDIO_ANALOG_TYPE_H
 #define _AUDIO_ANALOG_TYPE_H
 
 
-/*****************************************************************************
- *                ENUM DEFINITION
- *****************************************************************************/
 
 
 enum audio_analog_volume_type {

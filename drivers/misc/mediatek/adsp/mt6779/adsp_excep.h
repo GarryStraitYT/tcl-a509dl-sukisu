@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_excep.h --  Mediatek ADSP exception handling
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: HsinYi Chang <hsin-yi.chang@mediatek.com>
- */
 
 #ifndef __ADSP_EXCEP_H__
 #define __ADSP_EXCEP_H__

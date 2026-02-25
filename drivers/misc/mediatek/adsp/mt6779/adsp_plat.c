@@ -121,13 +121,6 @@ void adsp_way_en_ctrl(uint32_t enable)
 }
 
 #define SEMAPHORE_TIMEOUT 5000
-/*
- * acquire a hardware semaphore
- * @param flag: semaphore id
- * return  ADSP_OK: get sema success
- *         ADSP_ERROR: adsp is disabled
- *         ADSP_SEMAPHORE_BUSY: release sema fail
- */
 int get_adsp_semaphore(unsigned int flag)
 {
 	int read_back;
@@ -164,14 +157,6 @@ int get_adsp_semaphore(unsigned int flag)
 	return ret;
 }
 
-/*
- * release a hardware semaphore
- * @param flag: semaphore id
- * return  ADSP_OK: release sema success
- *         ADSP_ERROR: adsp is disabled
- *         ADSP_SEMAPHORE_BUSY: release sema fail
-
- */
 int release_adsp_semaphore(unsigned int flag)
 {
 	int read_back;

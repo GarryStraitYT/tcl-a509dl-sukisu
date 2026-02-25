@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 #include <mt-plat/mtk_io.h>
 #include <mt-plat/sync_write.h>

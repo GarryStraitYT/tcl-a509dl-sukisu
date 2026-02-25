@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __LINUX_REGULATOR_MT6357_H
 #define __LINUX_REGULATOR_MT6357_H

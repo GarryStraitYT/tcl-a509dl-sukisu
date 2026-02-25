@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/spinlock.h>
 #include "m4u_priv.h"
@@ -458,12 +455,6 @@ unsigned int get_first_valid_mva(unsigned int domain_idx)
 	return mva;
 }
 
-/*
- * return 1: it is ccu port, and alloc ccu region  --right
- * return 0: it isn't ccu port, and alloc non-ccu region --right
- * return -1: the port is ccu region, but it isn't ccu port; -- wrong
- * the region is not ccu region, but it  insersected with ccu region -- wrong
- */
 static int __check_ccu_mva_region(
 	unsigned int startIdx, unsigned int nr, void *priv)
 {

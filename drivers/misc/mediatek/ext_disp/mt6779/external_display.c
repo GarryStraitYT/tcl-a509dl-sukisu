@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/delay.h>
 #include <linux/sched.h>
@@ -155,23 +152,7 @@ static enum DISP_MODULE_ENUM _get_dst_module_by_lcm(disp_path_handle pHandle)
 	return DISP_MODULE_DSI1;
 }
 
-/*
- * trigger operation:   VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 1.wait idle:         N         N        Y        Y
- * 2.lcm update:        N         Y        N        Y
- * 3.path start:        idle->Y   Y        idle->Y  Y
- * 4.path trigger:      idle->Y   Y        idle->Y  Y
- * 5.mutex enable:      N         N        idle->Y  Y
- * 6.set cmdq dirty:    N         Y        N        N
- * 7.flush cmdq:        Y         Y        N        N
- * 8.reset cmdq:        Y         Y        N        N
- * 9.cmdq insert token: Y         Y        N        N
- */
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- *	1.wait idle:	     N         N        Y        Y
- */
 static int _should_wait_path_idle(void)
 {
 	if (ext_disp_cmdq_enabled())
@@ -180,10 +161,6 @@ static int _should_wait_path_idle(void)
 	return dpmgr_path_is_busy(pgc->dpmgr_handle);
 }
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 3.path start:       idle->Y   Y        idle->Y  Y
- */
 static int _should_start_path(void)
 {
 	if (ext_disp_is_video_mode())
@@ -192,11 +169,6 @@ static int _should_start_path(void)
 	return 1;
 }
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 4. path trigger:    idle->Y   Y        idle->Y  Y
- * 5. mutex enable:    N         N        idle->Y  Y
- */
 static int _should_trigger_path(void)
 {
 	if (ext_disp_is_video_mode())
@@ -207,10 +179,6 @@ static int _should_trigger_path(void)
 		return 1;
 }
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 6. set cmdq dirty:  N         Y        N        N
- */
 static int _should_set_cmdq_dirty(void)
 {
 	if (ext_disp_cmdq_enabled() && (ext_disp_is_video_mode() == 0))
@@ -219,28 +187,16 @@ static int _should_set_cmdq_dirty(void)
 	return 0;
 }
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 7. flush cmdq:      Y         Y        N        N
- */
 static int _should_flush_cmdq_config_handle(void)
 {
 	return ext_disp_cmdq_enabled() ? 1 : 0;
 }
 
-/*
- * trigger operation:  VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 8. reset cmdq:      Y         Y        N        N
- */
 static int _should_reset_cmdq_config_handle(void)
 {
 	return ext_disp_cmdq_enabled() ? 1 : 0;
 }
 
-/*
- * trigger operation:      VDO+CMDQ  CMD+CMDQ VDO+CPU  CMD+CPU
- * 9. cmdq insert token:   Y         Y        N        N
- */
 static int _should_insert_wait_frame_done_token(void)
 {
 	return ext_disp_cmdq_enabled() ? 1 : 0;

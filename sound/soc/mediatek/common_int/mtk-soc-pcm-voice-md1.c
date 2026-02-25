@@ -1,40 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Michael Hsiao <michael.hsiao@mediatek.com>
- */
 
-/*******************************************************************************
- *
- * Filename:
- * ---------
- *   mt_soc_pcm_voice_md1.c
- *
- * Project:
- * --------
- *   voice call platform driver
- *
- * Description:
- * ------------
- *
- *
- * Author:
- * -------
- * Chipeng Chang
- *
- *------------------------------------------------------------------------------
- *
- *
- ******************************************************************************
- */
 
-/*****************************************************************************
- *                     C O M P I L E R   F L A G S
- *****************************************************************************/
 
-/*****************************************************************************
- *                E X T E R N A L   R E F E R E N C E S
- *****************************************************************************/
 
 #include "mtk-auddrv-afe.h"
 #include "mtk-auddrv-ana.h"
@@ -49,9 +16,6 @@
 #include "mtk-soc-pcm-platform.h"
 #include <linux/dma-mapping.h>
 
-/*
- *    declaration
- */
 
 struct mtk_voice_property {
 	/* speech mixctrl instead property usage */
@@ -69,9 +33,6 @@ struct mtk_voice_property {
 	int speech_md_active;
 };
 
-/*
- *    function implementation
- */
 
 static int mtk_voice_probe(struct platform_device *pdev);
 static int mtk_voice_close(struct snd_pcm_substream *substream);

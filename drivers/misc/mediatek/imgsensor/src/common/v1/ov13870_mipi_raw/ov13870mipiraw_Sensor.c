@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
@@ -211,12 +208,6 @@ static struct SENSOR_WINSIZE_INFO_STRUCT imgsensor_winsize_info[10] = {
 };
 
 /* VC_Num, VC_PixelNum, ModeSelect, EXPO_Ratio, ODValue, RG_STATSMODE */
-/* VC0_ID, VC0_DataType, VC0_SIZEH, VC0_SIZE,
- * VC1_ID, VC1_DataType, VC1_SIZEH, VC1_SIZEV
- */
-/* VC2_ID, VC2_DataType, VC2_SIZEH, VC2_SIZE,
- * VC3_ID, VC3_DataType, VC3_SIZEH, VC3_SIZEV
- */
 /* VC wsize in bytes */
 static struct SENSOR_VC_INFO_STRUCT SENSOR_VC_INFO[10] = {
 	/* Preview mode setting */

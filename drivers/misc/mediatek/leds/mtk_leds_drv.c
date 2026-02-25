@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- */
 
 #include <linux/i2c.h>
 #include <linux/module.h>
@@ -33,9 +29,6 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " %s(%d) :" fmt, __func__, __LINE__
 
-/****************************************************************************
- * variables
- ***************************************************************************/
 #ifndef CONFIG_MTK_PWM
 #define CLK_DIV1 0
 #endif
@@ -55,18 +48,13 @@ static int I2C_SET_FOR_BACKLIGHT  = 350;
 #endif
 
 
-/****************************************************************************
- * function prototypes
- ***************************************************************************/
 #ifndef CONTROL_BL_TEMPERATURE
 #define CONTROL_BL_TEMPERATURE
 #endif
 
+
 #define MT_LED_INTERNAL_LEVEL_BIT_CNT 10
 
-/******************************************************************************
- * for DISP backlight High resolution
- *****************************************************************************/
 #ifdef LED_INCREASE_LED_LEVEL_MTKPATCH
 #define LED_INTERNAL_LEVEL_BIT_CNT 10
 #endif
@@ -79,9 +67,6 @@ int __weak mtkfb_set_backlight_level(unsigned int level) { return 0; };
 void __weak disp_pq_notify_backlight_changed(int bl_1024) {};
 static int mt65xx_led_set_cust(struct cust_mt65xx_led *cust, int level);
 
-/****************************************************************************
- * add API for temperature control
- ***************************************************************************/
 
 #ifdef CONTROL_BL_TEMPERATURE
 
@@ -92,12 +77,6 @@ static unsigned int last_level;
 static unsigned int current_level;
 static DEFINE_MUTEX(bl_level_limit_mutex);
 
-/****************************************************************************
- * external functions for display
- * this API add for control the power and temperature,
- * if enabe=1, the value of brightness will smaller than max_level,
- * whatever lightservice transfers to driver.
- ***************************************************************************/
 int setMaxbrightness(int max_level, int enable)
 {
 #if !defined(CONFIG_MTK_AAL_SUPPORT)
@@ -143,9 +122,6 @@ int setMaxbrightness(int max_level, int enable)
 }
 EXPORT_SYMBOL(setMaxbrightness);
 #endif
-/****************************************************************************
- * internal functions
- ***************************************************************************/
 static void get_div_array(void)
 {
 	int i = 0;
@@ -274,9 +250,6 @@ static int mt65xx_blink_set(struct led_classdev *led_cdev,
 		return 0;
 }
 
-/****************************************************************************
- * external functions for display
- ***************************************************************************/
 int mt65xx_leds_brightness_set(enum mt65xx_led_type type,
 			       enum led_brightness level)
 {
@@ -348,9 +321,6 @@ int mt65xx_leds_brightness_set(enum mt65xx_led_type type,
 }
 EXPORT_SYMBOL(mt65xx_leds_brightness_set);
 
-/****************************************************************************
- * external functions for AAL
- ***************************************************************************/
 int backlight_brightness_set(int level)
 {
 	struct cust_mt65xx_led *cust_led_list = mt_get_cust_led_list();
@@ -430,9 +400,6 @@ static int led_i2c_remove(struct i2c_client *client)
 	return 0;
 }
 #endif
-/****************************************************************************
- * driver functions
- ***************************************************************************/
 static int mt65xx_leds_probe(struct platform_device *pdev)
 {
 	int i;
@@ -632,11 +599,6 @@ static void __exit mt65xx_leds_exit(void)
 }
 
 //module_param(debug_enable_led, int, 0644);
-/* delay leds init, for (1)display has delayed to use clock upstream.
- * (2)to fix repeat switch battary and power supply caused BL KE issue,
- * battary calling bl .shutdown whitch need to call disp_pwm and display
- * function and they not yet probe.
- */
 late_initcall(mt65xx_leds_init);
 module_exit(mt65xx_leds_exit);
 

@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_bus_monitor.h --  Mediatek ADSP bus monitor
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chien-Wei Hsu <chien-wei.hsu@mediatek.com>
- */
 
 #ifndef __ADSP_BUS_MONITOR_H__
 #define __ADSP_BUS_MONITOR_H__

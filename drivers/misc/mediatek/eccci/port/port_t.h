@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __PORT_T_H__
 #define __PORT_T_H__
@@ -113,15 +110,7 @@ struct port_t {
 /****************************************************************************/
 /* API Region called by ccci port object */
 /****************************************************************************/
-/*
- *This API used to some port create kthread handle,
- *which have same kthread handle flow.
- */
 int port_kthread_handler(void *arg);
-/*
- *This API used to some port to receive native HIF RX data,
- *which have same RX receive flow.
- */
 int port_recv_skb(struct port_t *port, struct sk_buff *skb);
 
 int port_user_register(struct port_t *port);

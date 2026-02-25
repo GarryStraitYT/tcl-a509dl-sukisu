@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/sched.h>
@@ -703,12 +700,6 @@ static void MTKCalGpuLoading(unsigned int *pui32Loading,
 		g_RGXutilUser, &sGpuUtilStats);
 
 		if (sGpuUtilStats.bValid) {
-/*
- *			PVR_DPF((PVR_DBG_ERROR, "Loading: A(%d), I(%d), B(%d)",
- *				sGpuUtilStats.ui64GpuStatActiveHigh,
- *				sGpuUtilStats.ui64GpuStatIdle,
- *				sGpuUtilStats.ui64GpuStatBlocked));
- */
 #if defined(__arm64__) || defined(__aarch64__)
 			*pui32Loading =
 				(100*(sGpuUtilStats.ui64GpuStatActive)) /

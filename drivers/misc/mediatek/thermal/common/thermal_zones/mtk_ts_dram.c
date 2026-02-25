@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -24,10 +21,6 @@
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static DEFINE_SEMAPHORE(sem_mutex);
-/*
- *The thermal policy is meaningless here.
- *We only use it to make this thermal zone work.
- */
 static unsigned int interval;	/* seconds, 0 : no auto polling */
 static int trip_temp[10] = { 125000, 110000, 100000, 90000, 80000,
 				70000, 65000, 60000, 55000, 50000 };
@@ -67,16 +60,6 @@ static int mtktsdram_get_temp(
 struct thermal_zone_device *thermal, unsigned long *t)
 {
 	unsigned char t1, t2;
-/*
- *The value getting from the read_dram_temperature api is only from 0 to 7.
- *000B: SDRAM Low temperature operating limit exceeded
- *001B: 4x tREFI, 4x tREFIpb, 4x tREFW
- *010B: 2x tREFI, 2x tREFIpb, 2x tREFW
- *011B: 1x tREFI, 1x tREFIpb, 1x tREFW (<=85°C)
- *100B: 0.5x tREFI, 0.5x tREFIpb, 0.5x tREFW, do not de-rate SDRAM AC timing
- *101B: 0.25x tREFI, 0.25x tREFIpb, 0.25x tREFW, do not de-rate SDRAM AC timing
- *110B: 0.25x tREFI, 0.25x tREFIpb, 0.25x tREFW, de-rate SDRAM
- */
 	mtktsdram_dprintk("[%s]\n", __func__);
 	t1 = read_dram_temperature(CHANNEL_A);
 	t2 = read_dram_temperature(CHANNEL_B);

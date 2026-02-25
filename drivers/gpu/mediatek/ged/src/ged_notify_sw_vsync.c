@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 
 #include <linux/version.h>
@@ -149,10 +146,6 @@ static bool g_timer_on;
 static unsigned long long g_timer_on_ts;
 static bool g_bGPUClock;
 
-/*
- * void timer_switch(bool bTock)
- * only set the staus, not really operating on real timer
- */
 void timer_switch(bool bTock)
 {
 	mutex_lock(&gsVsyncStampLock);
@@ -434,22 +427,12 @@ EXPORT_SYMBOL(ged_dvfs_gpu_clock_switch_notify);
 
 #define GED_TIMER_BACKUP_THRESHOLD 3000
 
-/*
- *	SODI implementation need to cancel timer physically.
- *	but timer status is logically unchanged	*
- */
 
-/*
- * enter sodi state is trivial, just cancel timer
- */
 void ged_sodi_start(void)
 {
 	hrtimer_try_to_cancel(&g_HT_hwvsync_emu);
 }
 
-/*
- * exit sodi state should aware sands of time is still running
- */
 void ged_sodi_stop(void)
 {
 	unsigned long long ns_cur_time;

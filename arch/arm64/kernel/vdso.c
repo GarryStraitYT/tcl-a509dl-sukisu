@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #include <linux/cache.h>
 #include <linux/clocksource.h>
@@ -25,9 +22,6 @@
 extern char vdso_start[], vdso_end[];
 static unsigned long vdso_pages __ro_after_init;
 
-/*
- * The vDSO data page.
- */
 static union {
 	struct vdso_data	data;
 	u8			page[PAGE_SIZE];
@@ -35,9 +29,6 @@ static union {
 struct vdso_data *vdso_data = &vdso_data_store.data;
 
 #ifdef CONFIG_COMPAT
-/*
- * Create and map the vectors page for AArch32 tasks.
- */
 static struct page *vectors_page[1] __ro_after_init;
 
 static int __init alloc_vectors_page(void)
@@ -198,9 +189,6 @@ up_fail:
 	return PTR_ERR(ret);
 }
 
-/*
- * Update the vDSO data page to keep in sync with kernel timekeeping.
- */
 void update_vsyscall(struct timekeeper *tk)
 {
 	u32 use_syscall = !tk->tkr_mono.clock->archdata.vdso_direct;

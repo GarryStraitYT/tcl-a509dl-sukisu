@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/bug.h>
 #include <linux/compiler.h>
@@ -241,10 +238,6 @@ static void fill_note_S(struct elf_note *note, const char *name, int type,
 	fill_note(note, name, type, sz, NOTE_NAME_SHORT);
 }
 
-/*
- * fill up all the fields in prstatus from the given task struct, except
- * registers which need to be filled up separately.
- */
 static void fill_prstatus(struct elf_prstatus *prstatus, struct pt_regs *regs,
 			  struct task_struct *p, unsigned long pid)
 {

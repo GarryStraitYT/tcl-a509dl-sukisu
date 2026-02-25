@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/list.h>
 #include <linux/device.h>
@@ -589,14 +586,6 @@ int md_ccif_suspend(struct platform_device *dev, pm_message_t state)
 
 int md_ccif_resume(struct platform_device *dev)
 {
-/*
- *	struct ccci_modem *md = (struct ccci_modem *)dev->dev.platform_data;
- *	struct md_ccif_ctrl *md_ctrl = (struct md_ccif_ctrl *)md->private_data;
- *
- *	CCCI_DEBUG_LOG(md->index, TAG,
- *  "md_ccif_resume,md=0x%p,md_ctrl=0x%p\n", md, md_ctrl);
- *	ccif_write32(md_ctrl->ccif_ap_base, APCCIF_CON, 0x01);
- */
 	return 0;
 }
 

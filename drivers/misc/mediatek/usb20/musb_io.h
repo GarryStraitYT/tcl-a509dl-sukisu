@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #ifndef __MUSB_LINUX_PLATFORM_ARCH_H__
 #define __MUSB_LINUX_PLATFORM_ARCH_H__

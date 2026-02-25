@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author Flora Fu <flora.fu@mediatek.com>
- */
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
@@ -970,14 +966,6 @@ static bool pwrap_is_fsm_vldclr(struct pmic_wrapper *wrp)
 	return PWRAP_GET_WACS_FSM(val) == PWRAP_WACS_FSM_WFVLDCLR;
 }
 
-/*
- * Timeout issue sometimes caused by the last read command
- * failed because pmic wrap could not got the FSM_VLDCLR
- * in time after finishing WACS2_CMD. It made state machine
- * still on FSM_VLDCLR and timeout next time.
- * Check the status of FSM and clear the vldclr to recovery the
- * error.
- */
 static inline void pwrap_leave_fsm_vldclr(struct pmic_wrapper *wrp)
 {
 	if (pwrap_is_fsm_vldclr(wrp))
@@ -1198,12 +1186,6 @@ static int pwrap_reset_spislave(struct pmic_wrapper *wrp)
 	return 0;
 }
 
-/*
- * pwrap_init_sidly - configure serial input delay
- *
- * This configures the serial input delay. We can configure 0, 2, 4 or 6ns
- * delay. Do a read test with all possible values and chose the best delay.
- */
 static int pwrap_init_sidly(struct pmic_wrapper *wrp)
 {
 	u32 rdata = 0;
@@ -1265,10 +1247,6 @@ static int pwrap_init_dual_io(struct pmic_wrapper *wrp)
 	return 0;
 }
 
-/*
- * pwrap_init_chip_select_ext is used to configure CS extension time for each
- * phase during data transactions on the pwrap bus.
- */
 static void pwrap_init_chip_select_ext(struct pmic_wrapper *wrp, u8 hext_write,
 				       u8 hext_read, u8 lext_start,
 				       u8 lext_end)

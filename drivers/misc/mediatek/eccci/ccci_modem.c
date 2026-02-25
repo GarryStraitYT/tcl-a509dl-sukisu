@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/list.h>
 #include <linux/device.h>
@@ -45,10 +42,6 @@
 
 struct ccci_modem *modem_sys[MAX_MD_NUM];
 
-/* flag for MD1_MD3_SMEM clear.
- * if it is been cleared by md1 bootup flow, set it to 1.
- * then it will not be cleared by md1 bootup flow
- */
 static atomic_t md1_md3_smem_clear = ATOMIC_INIT(0);
 
 #define DBM_S (CCCI_SMEM_SIZE_DBM + CCCI_SMEM_SIZE_DBM_GUARD * 2)
@@ -85,12 +78,6 @@ struct ccci_smem_region md1_6293_noncacheable_fat[] = {
 static const char *s_smem_user_names[SMEM_USER_MAX];
 
 struct ccci_smem_region md1_6293_cacheable[] = {
-/*
- * all CCB user should be put together, and the total size is set
- * in the first one, all reset CCB users' address, offset and size
- * will be re-calculated during port initialization. and please be
- * aware of that CCB user's size will be aligned to 4KB.
- */
 {SMEM_USER_CCB_DHL,		0*1024*1024,	CCB_CACHE_MIN_SIZE,	0, },
 {SMEM_USER_CCB_MD_MONITOR,	0*1024*1024,	CCB_CACHE_MIN_SIZE,	0, },
 {SMEM_USER_CCB_META,		0*1024*1024,	CCB_CACHE_MIN_SIZE,	0, },
@@ -110,9 +97,6 @@ struct ccci_smem_region md1_6292_noncacheable_fat[] = {
 {SMEM_USER_RAW_FORCE_ASSERT,	62*1024,	1*1024,		0, },
 {SMEM_USER_RAW_DBM,		64*1024-DBM_S,	DBM_S,		0, },
 {SMEM_USER_CCISM_SCP,		64*1024,	32*1024,	0, },
-/* {SMEM_USER_RAW_CCB_CTRL,	96*1024,	4*1024,
- * SMF_NCLR_FIRST, },
- */
 {SMEM_USER_RAW_NETD,		100*1024,	4*1024,		0, },
 {SMEM_USER_RAW_USB,		104*1024,	4*1024,		0, },
 {SMEM_USER_RAW_AUDIO,		108*1024,	20*1024,	0, },
@@ -125,12 +109,6 @@ struct ccci_smem_region md1_6292_noncacheable_fat[] = {
 };
 
 struct ccci_smem_region md1_6292_cacheable[] = {
-/*
- * all CCB user should be put together, and the total size is set
- * in the first one, all reset CCB users' address, offset and size
- * will be re-calculated during port initialization. and please be
- * aware of that CCB user's size will be aligned to 4KB.
- */
 {SMEM_USER_RAW_LWA,		32*1024*1024,	0*1024*1024,	0, },
 {SMEM_USER_MAX, },
 };

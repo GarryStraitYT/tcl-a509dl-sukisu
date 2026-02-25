@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define PFX "ov13b10_camera_sensor"
 #define pr_fmt(fmt) PFX "[%s] " fmt, __func__

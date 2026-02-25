@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Ming-Fan Chen <ming-fan.chen@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/debugfs.h>
@@ -230,14 +226,6 @@ enum {
 	MON_BIT_RQST, MON_BIT_DSTN, MON_BIT_PRLL, MON_BIT_LARB, MON_BIT_NR,
 };
 
-/*
- * |        LARB |    PARALLEL |28
- * | DESTINATION |     REQUEST |24
- * |                           |20
- * |                    MASTER |16
- * |          RW |             |12
- * |                      PORT | 8
- */
 static const u32 mon_bit[MON_BIT_NR + 1] = {0, 8, 14, 16, 24, 26, 28, 30, 32};
 
 struct mtk_smi_dbg_node {

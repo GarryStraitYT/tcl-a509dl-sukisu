@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2017 MediaTek Inc.
- */
 
 #include <linux/cpumask.h>
 
@@ -87,10 +84,6 @@ static struct cpuidle_driver mtk_cpuidle_driver_set_1 = {
 	.safe_state_index = 0,
 };
 
-/*
- * Used for mcdi_governor
- * only use exit_latency & target_residency
- */
 static struct cpuidle_driver
 	mtk_acao_mcdi_state[NF_MCDI_STATE_TABLE_TYPE] = {
 	[0] = {

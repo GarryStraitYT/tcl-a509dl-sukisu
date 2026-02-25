@@ -1,10 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * audio-buf-h --  Mediatek audio buffer
- *
- * Copyright (c) 2018 MediaTek Inc.
- * Author: Chipeng <Chipeng.chang@mediatek.com>
- */
 
 #ifndef AUDIO_RINGBUF_H
 #define AUDIO_RINGBUF_H
@@ -26,10 +20,6 @@ struct buf_attr {
 	unsigned int direction;
 };
 
-/*
- * real data operation with ringbuffer
- * when moving memory.
- */
 struct RingBuf {
 	char *pBufBase;
 	char *pBufEnd;
@@ -46,11 +36,6 @@ struct audio_dsp_dram {
 	unsigned char *vir_addr;
 };
 
-/*
- * data infiormation with ring buffer
- * because of char* data width differnt with AP <==> dsp
- * using ringbuf_bridge provide index with ring buffer.
- */
 struct ringbuf_bridge {
 	unsigned long long pBufBase;
 	unsigned long long pBufEnd;
@@ -119,12 +104,6 @@ int init_ring_buf(struct RingBuf *buf, char *vaaddr, int size);
 int init_ring_buf_bridge(struct ringbuf_bridge *buf_bridge,
 			 unsigned long long paaddr, int size);
 
-/**
- *  audio ring buffer implememation
- *  get data count
- *  get free sapce
- *  copy buffer from linear buffer/ring buffer
- */
 unsigned int RingBuf_getDataCount(const struct RingBuf *RingBuf1);
 unsigned int RingBuf_getFreeSpace(const struct RingBuf *RingBuf1);
 void RingBuf_copyToLinear(char *buf, struct RingBuf *RingBuf1,
@@ -138,9 +117,6 @@ int RingBuf_copyFromRingBuf(struct RingBuf *RingBuft, struct RingBuf *RingBufs,
 /* direct set value with buffer */
 void RingBuf_writeDataValue(struct RingBuf *RingBuf1, const char value,
 			    const unsigned int count);
-/*
- * update for write or read pointer , can use by hardware conusme data.
- */
 void RingBuf_update_writeptr(struct RingBuf *RingBuf1,
 			     unsigned int count);
 void RingBuf_update_readptr(struct RingBuf *RingBuf1, unsigned int count);

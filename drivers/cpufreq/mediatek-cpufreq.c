@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2015 Linaro Ltd.
- * Author: Pi-Cheng Chen <pi-cheng.chen@linaro.org>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 
 #include <linux/clk.h>
 #include <linux/cpu.h>
@@ -30,17 +17,6 @@
 #define MAX_VOLT_LIMIT		(1150000)
 #define VOLT_TOL		(10000)
 
-/*
- * The struct mtk_cpu_dvfs_info holds necessary information for doing CPU DVFS
- * on each CPU power/clock domain of Mediatek SoCs. Each CPU cluster in
- * Mediatek SoCs has two voltage inputs, Vproc and Vsram. In some cases the two
- * voltage inputs need to be controlled under a hardware limitation:
- * 100mV < Vsram - Vproc < 200mV
- *
- * When scaling the clock frequency of a CPU clock domain, the clock source
- * needs to be switched to another stable PLL clock temporarily until
- * the original PLL becomes stable at target frequency.
- */
 struct mtk_cpu_dvfs_info {
 	struct cpumask cpus;
 	struct device *cpu_dev;

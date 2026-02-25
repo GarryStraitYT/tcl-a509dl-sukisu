@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/spinlock.h>
 #include <linux/slab.h>
@@ -151,12 +148,6 @@ int sspm_mbox_send(unsigned int mbox, unsigned int slot, unsigned int irq,
 	return 0;
 }
 
-/*
- * dispatch sspm mbox irq and then reset mbox out irq
- * @param irq:      irq id
- * @param dev_id:   pointer point to sspmmbox
- };
- */
 static irqreturn_t sspm_mbox_irq_handler(int irq, void *dev_id)
 {
 	struct sspm_mbox *desc = (struct sspm_mbox *) dev_id;
@@ -246,10 +237,6 @@ fail:
 	return -1;
 }
 
-/*
- * parse device tree and mapping iomem
- * @return: 0 if success
- */
 unsigned int sspm_mbox_init(unsigned int mode, unsigned int count,
 	sspm_ipi_isr isr)
 {

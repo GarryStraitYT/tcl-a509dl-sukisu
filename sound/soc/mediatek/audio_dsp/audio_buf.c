@@ -41,32 +41,17 @@
 #define AUDIO_BUF_ALIGNEMNT (8)
 /* #define RINGBUF_COUNT_CHECK */
 
-/*
- * function for get how many data is available
- * @return how many data exist
- */
 unsigned int RingBuf_getDataCount(const struct RingBuf *RingBuf1)
 {
 	return RingBuf1->datacount;
 }
 
-/*
- *
- * function for get how free space available
- * @return how free sapce
- */
 
 unsigned int RingBuf_getFreeSpace(const struct RingBuf *RingBuf1)
 {
 	return RingBuf1->bufLen - RingBuf1->datacount;
 }
 
-/**
- * copy count number bytes from ring buffer to buf
- * @param buf buffer copy from
- * @param RingBuf1 buffer copy to
- * @param count number of bytes need to copy
- */
 void RingBuf_copyToLinear(char *buf, struct RingBuf *RingBuf1,
 			  unsigned int count)
 {
@@ -102,12 +87,6 @@ void RingBuf_copyToLinear(char *buf, struct RingBuf *RingBuf1,
 	Ringbuf_Check(RingBuf1);
 }
 
-/**
- * copy count number bytes from buf to RingBuf1
- * @param RingBuf1 ring buffer copy from
- * @param buf copy to
- * @param count number of bytes need to copy
- */
 
 void RingBuf_copyFromLinear(struct RingBuf *RingBuf1, const char *buf,
 			    unsigned int count)
@@ -147,11 +126,6 @@ void RingBuf_copyFromLinear(struct RingBuf *RingBuf1, const char *buf,
 	Ringbuf_Check(RingBuf1);
 }
 
-/**
- * copy ring buffer from RingBufs(source) to RingBuft(target)
- * @param RingBuft ring buffer copy to
- * @param RingBufs copy from copy from
- */
 void RingBuf_copyFromRingBufAll(struct RingBuf *RingBuft,
 				struct RingBuf *RingBufs)
 {
@@ -178,11 +152,6 @@ void RingBuf_copyFromRingBufAll(struct RingBuf *RingBuft,
 	Ringbuf_Check(RingBufs);
 }
 
-/**
- * copy ring buffer from RingBufs(source) to RingBuft(target) with count
- * @param RingBuft ring buffer copy to
- * @param RingBufs copy from copy from
- */
 int RingBuf_copyFromRingBuf(struct RingBuf *RingBuft, struct RingBuf *RingBufs,
 			    unsigned int count)
 {
@@ -224,12 +193,6 @@ int RingBuf_copyFromRingBuf(struct RingBuf *RingBuft, struct RingBuf *RingBufs,
 	return count;
 }
 
-/**
- * write bytes size of count with value
- * @param RingBuf1 ring buffer copy to
- * @value value put into buffer
- * @count bytes ned to put.
- */
 
 void RingBuf_writeDataValue(struct RingBuf *RingBuf1, const char value,
 			    const unsigned int count)
@@ -1359,11 +1322,6 @@ static void dma_memcpy(const char *target, const char *source, size_t count,
 	}
 }
 
-/**
- * copy ring buffer from RingBufs(source) to RingBuft(target) with count
- * @param RingBuft ring buffer copy to
- * @param RingBufs copy from copy from
- */
 int RingBuf_copyFromRingBuf_dma(struct RingBuf *RingBuft,
 				struct RingBuf *RingBufs, unsigned int count,
 				uint8_t IsDram, int mem_id)
@@ -1442,11 +1400,6 @@ void RingBuf_copyToLinear_dma(char *buf, struct RingBuf *RingBuf1,
 	Ringbuf_Check(RingBuf1);
 }
 
-/**
- * copy ring buffer from RingBufs(source) to RingBuft(target)
- * @param RingBuft ring buffer copy to
- * @param RingBufs copy from copy from
- */
 void RingBuf_copyFromRingBufAll_dma(struct RingBuf *RingBuft,
 				    struct RingBuf *RingBufs, uint8_t IsDram,
 				    int mem_id)

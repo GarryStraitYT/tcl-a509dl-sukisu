@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #ifndef _MTK_EEM_INTERNAL_AP_H_
 #define _MTK_EEM_INTERNAL_AP_H_
@@ -176,10 +173,6 @@ struct eem_devinfo {
 	unsigned int CPU_2L_SPEC:3;
 };
 
-/*********************************************
- * extern variables defined at mtk_eem.c
- *********************************************
- */
 extern unsigned int freq[NR_FREQ];
 
 extern struct mutex record_mutex;
@@ -190,10 +183,6 @@ extern void mt_record_unlock(unsigned long *flags);
 /* table used to apply to dvfs at final */
 extern unsigned int record_tbl_locked[NR_FREQ];
 
-/**************************************************
- * extern variables and operations defined at mtk_eem_platform.c
- ***************************************************
- */
 extern struct eem_det_ops cpu_det_ops;
 extern struct eem_det_ops cci_det_ops;
 extern struct eem_det_ops gpu_det_ops;
@@ -210,10 +199,6 @@ extern void restore_default_volt_gpu(struct eem_det *det);
 extern void get_freq_table_gpu(struct eem_det *det);
 extern void get_orig_volt_table_gpu(struct eem_det *det);
 
-/*********************************************
- * extern operations defined at mtk_eem.c
- *********************************************
- */
 extern void base_ops_enable(struct eem_det *det, int reason);
 extern void base_ops_disable(struct eem_det *det, int reason);
 extern void base_ops_disable_locked(struct eem_det *det, int reason);

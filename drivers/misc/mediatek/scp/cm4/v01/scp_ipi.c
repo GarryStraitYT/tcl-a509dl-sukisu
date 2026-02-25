@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/mutex.h>
 #include <linux/io.h>
@@ -22,9 +19,6 @@ struct scp_ipi_desc scp_ipi_desc[SCP_NR_IPI];
 struct share_obj *scp_send_obj[SCP_CORE_TOTAL];
 struct share_obj *scp_rcv_obj[SCP_CORE_TOTAL];
 struct mutex scp_ipi_mutex[SCP_CORE_TOTAL];
-/*
- * find an ipi handler and invoke it
- */
 void scp_A_ipi_handler(void)
 {
 #if SCP_IPI_STAMP_SUPPORT
@@ -81,9 +75,6 @@ void scp_A_ipi_handler(void)
 	/*pr_debug("scp_ipi_handler done\n");*/
 }
 
-/*
- * ipi initialize
- */
 void scp_A_ipi_init(void)
 {
 #if SCP_IPI_STAMP_SUPPORT
@@ -101,12 +92,6 @@ void scp_A_ipi_init(void)
 }
 
 
-/*
- * API let apps can register an ipi handler to receive IPI
- * @param id:	   IPI ID
- * @param handler:  IPI handler
- * @param name:	 IPI name
- */
 enum scp_ipi_status scp_ipi_registration(enum ipi_id id,
 	void (*ipi_handler)(int id, void *data, unsigned int len),
 	const char *name)
@@ -125,10 +110,6 @@ enum scp_ipi_status scp_ipi_registration(enum ipi_id id,
 }
 EXPORT_SYMBOL_GPL(scp_ipi_registration);
 
-/*
- * API let apps unregister an ipi handler
- * @param id:	   IPI ID
- */
 enum scp_ipi_status scp_ipi_unregistration(enum ipi_id id)
 {
 	if (id < SCP_NR_IPI) {
@@ -141,14 +122,6 @@ enum scp_ipi_status scp_ipi_unregistration(enum ipi_id id)
 }
 EXPORT_SYMBOL_GPL(scp_ipi_unregistration);
 
-/*
- * API for apps to send an IPI to scp
- * @param id:   IPI ID
- * @param buf:  the pointer of data
- * @param len:  data length
- * @param wait: If true, wait (atomically) until data have been gotten by Host
- * @param len:  data length
- */
 enum scp_ipi_status scp_ipi_send(enum ipi_id id, void *buf,
 	unsigned int  len, unsigned int wait, enum scp_core_id scp_id)
 {

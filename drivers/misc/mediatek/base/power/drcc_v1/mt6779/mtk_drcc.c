@@ -1,21 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
-/**
- * @file	mkt_drcc.c
- * @brief   Driver for drcc
- *
- */
 
 #define __MTK_DRCC_C__
 
-/*
- *=============================================================
- * Include files
- *=============================================================
- */
 
 /* system includes */
 #include <linux/init.h>
@@ -59,9 +46,6 @@
 	#include <mt-plat/aee.h>
 #endif
 
-/************************************************
- * Marco definition
- ************************************************/
 #define LOG_INTERVAL	(1LL * NSEC_PER_SEC)
 
 #ifdef TIME_LOG
@@ -83,61 +67,34 @@ static unsigned long long drcc_pTime_us, drcc_cTime_us, drcc_diff_us;
 #endif
 #endif
 
-/************************************************
- * bit operation
- ************************************************/
 #undef  BIT
 #define BIT(bit)	(1U << (bit))
 
 #define MSB(range)	(1 ? range)
 #define LSB(range)	(0 ? range)
-/**
- * Genearte a mask wher MSB to LSB are all 0b1
- * @r:	Range in the form of MSB:LSB
- */
 #define BITMASK(r)	\
 	(((unsigned int) -1 >> (31 - MSB(r))) & ~((1U << LSB(r)) - 1))
 
-/**
- * Set value at MSB:LSB. For example, BITS(7:3, 0x5A)
- * will return a value where bit 3 to bit 7 is 0x5A
- * @r:	Range in the form of MSB:LSB
- */
 /* BITS(MSB:LSB, value) => Set value at MSB:LSB  */
 #define BITS(r, val)	((val << LSB(r)) & BITMASK(r))
 #define GET_BITS_VAL(_bits_, _val_)   \
 	(((_val_) & (BITMASK(_bits_))) >> ((0) ? _bits_))
 
-/************************************************
- * LOG
- ************************************************/
 #define DRCC_TAG	 "[xxxx_drcc] "
 
 #define drcc_info(fmt, args...)		pr_info(DRCC_TAG fmt, ##args)
 #define drcc_debug(fmt, args...)	\
 	pr_debug(DRCC_TAG"(%d)" fmt, __LINE__, ##args)
 
-/************************************************
- * REG ACCESS
- ************************************************/
 #ifdef __KERNEL__
 	#define drcc_read(addr)	__raw_readl((void __iomem *)(addr))
 	#define drcc_read_field(addr, range)	\
 		((drcc_read(addr) & BITMASK(range)) >> LSB(range))
 	#define drcc_write(addr, val)	mt_reg_sync_writel(val, addr)
 #endif
-/**
- * Write a field of a register.
- * @addr:	Address of the register
- * @range:	The field bit range in the form of MSB:LSB
- * @val:	The value to be written to the field
- */
 #define drcc_write_field(addr, range, val)	\
 	drcc_write(addr, (drcc_read(addr) & ~BITMASK(range)) | BITS(range, val))
 
-/************************************************
- * static Variable
- ************************************************/
 static struct hrtimer drcc_timer_log;
 static bool drcc_timer_en;
 static DEFINE_SPINLOCK(drcc_spinlock);
@@ -170,9 +127,6 @@ static unsigned int drcc6_Code;
 static unsigned int drcc7_Code;
 #endif
 
-/************************************************
- * Global function definition
- ************************************************/
 #ifdef CONFIG_MTK_AEE_IPANIC
 static void _mt_drcc_aee_init(void)
 {
@@ -348,9 +302,6 @@ void mtk_drcc_protect(unsigned int value,
 	mtk_drcc_log2RamConsole();
 }
 
-/*
- * timer for log
- */
 static unsigned int preCount[8];
 static enum hrtimer_restart drcc_timer_log_func(struct hrtimer *timer)
 {
@@ -393,9 +344,6 @@ static enum hrtimer_restart drcc_timer_log_func(struct hrtimer *timer)
 	return HRTIMER_RESTART;
 }
 
-/************************************************
- * set DRCC status by procfs interface
- ************************************************/
 static int drcc_enable_proc_show(struct seq_file *m, void *v)
 {
 	int status = 0, value, drcc_n = 0;

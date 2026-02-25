@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 #include "cmdq_reg.h"
 #include "cmdq_mdp_common.h"
 #include "cmdq_sec_iwc_common.h"

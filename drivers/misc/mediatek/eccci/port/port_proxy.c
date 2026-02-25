@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #include <linux/kthread.h>
 #include <linux/cdev.h>
@@ -65,9 +62,6 @@ static inline int proxy_get_critical_user(struct port_proxy *proxy_p,
 }
 
 /****************************************************************************/
-/*REGION: default char device operation definition for node,
- * which export node for userspace
- ***************************************************************************/
 int port_dev_open(struct inode *inode, struct file *file)
 {
 	int md_id;
@@ -402,9 +396,6 @@ long port_dev_compat_ioctl(struct file *filp, unsigned int cmd,
 #endif
 
 /**************************************************************************/
-/* REGION: port common API implementation,
- * these APIs are valiable for every port
- */
 /**************************************************************************/
 static inline int port_struct_init(struct port_t *port,
 	struct port_proxy *port_p)
@@ -618,10 +609,6 @@ static inline int port_adjust_skb(struct port_t *port, struct sk_buff *skb)
 	return 0;
 }
 
-/*
- *This API is common API for port to resceive skb form modem or HIF,
- *
- */
 int port_recv_skb(struct port_t *port, struct sk_buff *skb)
 {
 	unsigned long flags;
@@ -705,11 +692,6 @@ int port_kthread_handler(void *arg)
 	return 0;
 }
 
-/*
- * This API is called by port,
- * which wants to dump message as
- * ascii string or raw binary format,
- */
 void port_ch_dump(struct port_t *port, int dir, void *msg_buf, int len)
 {
 	if (port->flags & PORT_F_DUMP_RAW_DATA)
@@ -797,10 +779,6 @@ int port_user_unregister(struct port_t *port)
 }
 
 
-/*
- * This API is called by port_net,
- * which is used to send skb message to md
- */
 int port_net_send_skb_to_md(struct port_t *port, int is_ack,
 	struct sk_buff *skb)
 {
@@ -974,9 +952,6 @@ static struct port_t *proxy_get_port(struct port_proxy *proxy_p, int minor,
 	return NULL;
 }
 
-/*
- * kernel inject CCCI message to modem.
- */
 static inline int proxy_send_msg_to_md(struct port_proxy *proxy_p,
 	int ch, unsigned int msg, unsigned int resv, int blocking)
 {
@@ -1036,12 +1011,6 @@ static inline int proxy_send_msg_to_md(struct port_proxy *proxy_p,
 	return -CCCI_ERR_INVALID_LOGIC_CHANNEL_ID;
 }
 
-/*
- * if recv_request returns 0 or -CCCI_ERR_DROP_PACKET,
- * then it's port's duty to free the request, and caller should
- * NOT reference the request any more. but if it returns other error,
- * caller should be responsible to free the request.
- */
 static inline int proxy_dispatch_recv_skb(struct port_proxy *proxy_p,
 	int hif_id, struct sk_buff *skb, unsigned int flag)
 {
@@ -1417,10 +1386,6 @@ int port_send_msg_to_md(struct port_t *port, unsigned int msg,
 /****************************************************************************/
 /* Extern API implement for none port related module */
 /****************************************************************************/
-/*
- * This API is called by ccci_modem,
- * and used to create all ccci port instance for per modem
- */
 int ccci_port_init(int md_id)
 {
 	struct port_proxy *proxy_p;
@@ -1440,10 +1405,6 @@ int ccci_port_init(int md_id)
 	return 0;
 }
 
-/*
- * This API is called by ccci_fsm,
- * and used to dump all ccci port status for debugging
- */
 void ccci_port_dump_status(int md_id)
 {
 	struct port_proxy *proxy_p;
@@ -1490,11 +1451,6 @@ static inline void user_broadcast_wrapper(int md_id, unsigned int state)
 		inject_md_status_event(md_id, mapped_event, NULL);
 }
 
-/*
- * This API is called by ccci_fsm,
- * and used to dispatch modem status for all ports,
- * which want to know md state transition.
- */
 void ccci_port_md_status_notify(int md_id, unsigned int state)
 {
 	struct port_proxy *proxy_p;
@@ -1511,11 +1467,6 @@ void ccci_port_md_status_notify(int md_id, unsigned int state)
 }
 
 
-/*
- * This API is called by HIF,
- * and used to dispatch Queue status for all ports,
- * which is mounted on the hif_id & qno
- */
 void ccci_port_queue_status_notify(int md_id, int hif_id, int qno,
 	int dir, unsigned int state)
 {
@@ -1535,10 +1486,6 @@ void ccci_port_queue_status_notify(int md_id, int hif_id, int qno,
 }
 EXPORT_SYMBOL(ccci_port_queue_status_notify);
 
-/*
- * This API is called by HIF,
- * and used to dispatch RX data for related port
- */
 int ccci_port_recv_skb(int md_id, int hif_id, struct sk_buff *skb,
 	unsigned int flag)
 {
@@ -1555,10 +1502,6 @@ int ccci_port_recv_skb(int md_id, int hif_id, struct sk_buff *skb,
 }
 EXPORT_SYMBOL(ccci_port_recv_skb);
 
-/*
- * This API is called by ccci fsm,
- * and used to check whether all critical user exited.
- */
 int ccci_port_check_critical_user(int md_id)
 {
 	struct port_proxy *proxy_p;
@@ -1573,10 +1516,6 @@ int ccci_port_check_critical_user(int md_id)
 	return proxy_check_critical_user(proxy_p);
 }
 
-/*
- * This API is called by ccci fsm,
- * and used to get critical user status.
- */
 int ccci_port_get_critical_user(int md_id, unsigned int user_id)
 {
 	struct port_proxy *proxy_p;
@@ -1591,10 +1530,6 @@ int ccci_port_get_critical_user(int md_id, unsigned int user_id)
 	return proxy_get_critical_user(proxy_p, user_id);
 }
 
-/*
- * This API is called by ccci fsm,
- * and used to send a ccci msg for modem.
- */
 int ccci_port_send_msg_to_md(int md_id, int ch, unsigned int msg,
 	unsigned int resv, int blocking)
 {
@@ -1610,13 +1545,6 @@ int ccci_port_send_msg_to_md(int md_id, int ch, unsigned int msg,
 	return proxy_send_msg_to_md(proxy_p, ch, msg, resv, blocking);
 }
 EXPORT_SYMBOL(ccci_port_send_msg_to_md);
-/*
- * This API is called by ccci fsm,
- * and used to set port traffic flag to catch traffic history on
- * some important channel.
- * port traffic use md_boot_data[MD_CFG_DUMP_FLAG] =
- * 0x6000_000x as port dump flag
- */
 void ccci_port_set_traffic_flag(int md_id, unsigned int dump_flag)
 {
 	struct port_proxy *proxy_p;

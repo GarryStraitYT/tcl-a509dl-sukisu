@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/proc_fs.h>
 #include <linux/sched.h>
@@ -24,13 +21,6 @@
 extern unsigned long long sched_clock(void);
 
 #ifdef CONFIG_PRINTK_MTK_UART_CONSOLE
-/*
- * printk_ctrl:
- * 0: uart printk enable
- * 1: uart printk disable
- * 2: uart printk always enable
- * 2 only set in lk phase by cmline
- */
 
 #ifdef CONFIG_MTK_ENG_BUILD
 int printk_ctrl;

@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -1759,51 +1756,3 @@ MODULE_DESCRIPTION("RT9465 Charger Driver");
 MODULE_VERSION(RT9465_DRV_VERSION);
 
 
-/*
- * Version Note
- * 1.0.11
- * (1) Remove mt6336 and mt6306 related code
- *
- * 1.0.10
- * (1) Remove retries for chip id check
- * (2) Move chip check from probe to enale_chip
- *
- * 1.0.9
- * (1) Add more retries for chip id check
- *
- * 1.0.8
- * (1) Use standard GPIO API instead of pinctrl
- * (2) Remove EN pin pull high, lock i2c adapter workaround
- * (3) Add mt6306 gpio expander control
- *
- * 1.0.7
- * (1) Modify init sequence in probe function
- *
- * 1.0.6
- * (1) Modify the way to kick WDT and the name of enable_watchdog_timer to
- *     enable_wdt
- * (2) Change pr_xxx to dev_xxx
- *
- * 1.0.5
- * (1) Modify charger name to secondary_chg
- *
- * 1.0.4
- * (1) Modify some pr_debug to pr_debug_ratelimited
- * (2) Modify the way to parse dt
- *
- * 1.0.3
- * (1) Modify rt9465_is_hw_exist to support all version
- * (2) Correct chip version
- * (3) Release rt9465_is_charging_enabled/rt9465_get_min_ichg
- *
- * 1.0.2
- * (1) Add ICHG accuracy workaround for E2
- * (2) Support E3 chip
- * (3) Add config to separate EN pin from MT6336 or AP
- *
- * 1.0.1
- * (1) Remove registering power supply class
- *
- * 1.0.0
- * Initial Release
- */

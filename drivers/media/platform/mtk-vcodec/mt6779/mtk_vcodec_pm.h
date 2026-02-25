@@ -1,16 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _MTK_VCODEC_PM_H_
 #define _MTK_VCODEC_PM_H_
 
 #define MTK_PLATFORM_STR        "platform:mt6779"
 
-/**
- * struct mtk_vcodec_pm - Power management data structure
- */
 struct mtk_vcodec_pm {
 	struct clk      *vdec_bus_clk_src;
 	struct clk      *vencpll;

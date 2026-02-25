@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- * Author: Stanley Chu <stanley.chu@mediatek.com>
- */
 
 #include <linux/clk.h>
 #include <linux/delay.h>

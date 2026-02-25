@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2020 MediaTek Inc.
- */
 
 #include <linux/module.h>
 #include <linux/clk.h>
@@ -412,10 +409,6 @@ static s32 mm_apply_clk(s32 src_mux_id,
 
 }
 
-/*
- * Each freq occupies 8 bits => 0~3:current_step 4~7:id
- * (id is mapping to index of all_freqs)
- */
 static inline u32 set_freq_for_log(u32 freq, s32 cur_step, u32 id)
 {
 	cur_step &= 0xF;

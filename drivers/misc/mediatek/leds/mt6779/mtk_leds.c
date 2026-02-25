@@ -1,8 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2018 MediaTek Inc.
- *
- */
 
 
 #include <linux/module.h>
@@ -54,9 +50,6 @@ static unsigned int backlight_PWM_div_hal = CLK_DIV1;
 static DEFINE_MUTEX(leds_mutex);
 static DEFINE_MUTEX(leds_pmic_mutex);
 
-/****************************************************************************
- * variables
- ***************************************************************************/
 /* struct cust_mt65xx_led* bl_setting_hal = NULL; */
 static unsigned int bl_brightness_hal = 102;
 static unsigned int bl_duty_hal = 21;
@@ -85,9 +78,6 @@ struct cust_mt65xx_led *pled_dtsi;
 static unsigned int div_array_hal[PWM_DIV_NUM] = {
 	1, 2, 4, 8, 16, 32, 64, 128 };
 
-/****************************************************************************
- * func:return global variables
- ***************************************************************************/
 static unsigned long long current_t, last_time;
 static int count;
 static char buffer[4096] = "[BL] Set Backlight directly ";
@@ -305,9 +295,6 @@ struct cust_mt65xx_led *mt_get_cust_led_list(void)
 	return cust_led_list;
 }
 
-/****************************************************************************
- * internal functions
- ***************************************************************************/
 static int brightness_mapto64(int level)
 {
 	if (level < 30)

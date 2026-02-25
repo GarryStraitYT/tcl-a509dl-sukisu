@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/init.h>
 #include <linux/export.h>
@@ -29,19 +26,6 @@ unsigned int __attribute__((weak)) dcm_get_chip_sw_ver(void)
 	return 0;
 }
 
-/*****************************************
- * DCM driver will provide regular APIs :
- * 1. dcm_restore(type) to recovery CURRENT_STATE before any power-off reset.
- * 2. dcm_set_default(type) to reset as cold-power-on init state.
- * 3. dcm_disable(type) to disable all dcm.
- * 4. dcm_set_state(type) to set dcm state.
- * 5. dcm_dump_state(type) to show CURRENT_STATE.
- * 6. /sys/dcm/dcm_state interface:
- *			'restore', 'disable', 'dump', 'set'. 4 commands.
- *
- * spsecified APIs for workaround:
- * 1. (definitely no workaround now)
- *****************************************/
 void dcm_set_default(unsigned int type)
 {
 	int i;

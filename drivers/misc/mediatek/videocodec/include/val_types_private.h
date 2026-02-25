@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef _VAL_TYPES_PRIVATE_H_
 #define _VAL_TYPES_PRIVATE_H_
@@ -13,12 +10,6 @@
 
 #define OALMEM_STATUS_NUM 16
 
-/**
- * @par Enumeration
- *   VAL_HW_COMPLETE_T
- * @par Description
- *   This is polling or interrupt for waiting for HW done
- */
 enum VAL_HW_COMPLETE_T {
 	VAL_POLLING_MODE = 0,                       /* /< polling */
 	VAL_INTERRUPT_MODE,                         /* /< interrupt */
@@ -26,14 +17,6 @@ enum VAL_HW_COMPLETE_T {
 };
 
 
-/**
- * @par Enumeration
- *   VAL_CODEC_TYPE_T
- * @par Description
- *   This is the item in VAL_OBJECT_T for open driver type and
- *                    in VAL_CLOCK_T for clock setting and
- *                    in VAL_ISR_T for irq line setting
- */
 enum VAL_CODEC_TYPE_T {
 	VAL_CODEC_TYPE_NONE = 0,		/* /< None */
 	VAL_CODEC_TYPE_MP4_ENC,			/* /< MP4 encoder */
@@ -66,19 +49,6 @@ enum VAL_CACHE_TYPE_T {
 };
 
 
-/**
- * @par Structure
- *  VAL_INTMEM_T
- * @par Description
- *  This is a parameter for eVideoIntMemUsed()
- *  pvHandle		[IN]     The video codec driver handle
- *  u4HandleSize	[IN]     The size of video codec driver handle
- *  u4MemSize		[OUT]    The size of internal memory
- *  pvMemVa		[OUT]    The internal memory start virtual address
- *  pvMemPa		[OUT]    The internal memory start physical address
- *  pvReserved		[IN/OUT] The reserved parameter
- *  u4ReservedSize	[IN]     The size of reserved parameter structure
- */
 struct VAL_INTMEM_T {
 	void		*pvHandle;
 	unsigned int	u4HandleSize;
@@ -90,19 +60,6 @@ struct VAL_INTMEM_T {
 };
 
 
-/**
- * @par Structure
- *  VAL_EVENT_T
- * @par Description
- *  This is a parameter for eVideoWaitEvent() and eVideoSetEvent()
- *  pvHandle		[IN]     The video codec driver handle
- *  u4HandleSize	[IN]     The size of video codec driver handle
- *  pvWaitQueue		[IN]     The waitqueue discription
- *  pvEvent		[IN]     The event discription
- *  u4TimeoutMs		[IN]     The timeout ms
- *  pvReserved		[IN/OUT] The reserved parameter
- *  u4ReservedSize	[IN]     The size of reserved parameter structure
- */
 struct VAL_EVENT_T {
 	void		*pvHandle;
 	unsigned int	u4HandleSize;
@@ -114,18 +71,6 @@ struct VAL_EVENT_T {
 };
 
 
-/**
- * @par Structure
- *  VAL_MUTEX_T
- * @par Description
- *  This is a parameter for eVideoWaitMutex() and eVideoReleaseMutex()
- *  pvHandle		[IN]     The video codec driver handle
- *  u4HandleSize	[IN]     The size of video codec driver handle
- *  pvMutex		[IN]     The Mutex discriptor
- *  u4TimeoutMs		[IN]     The timeout ms
- *  pvReserved		[IN/OUT] The reserved parameter
- *  u4ReservedSize	[IN]     The size of reserved parameter structure
- */
 struct VAL_MUTEX_T {
 	void		*pvHandle;
 	unsigned int	u4HandleSize;
@@ -136,18 +81,6 @@ struct VAL_MUTEX_T {
 };
 
 
-/**
- * @par Structure
- *  VAL_POWER_T
- * @par Description
- *  This is a parameter for eVideoHwPowerCtrl()
- *  pvHandle		[IN]     The video codec driver handle
- *  u4HandleSize	[IN]     The size of video codec driver handle
- *  eDriverType		[IN]     The driver type
- *  fgEnable		[IN]     Enable or not.
- *  pvReserved		[IN/OUT] The reserved parameter
- *  u4ReservedSize	[IN]     The size of reserved parameter structure
- */
 struct VAL_POWER_T {
 	void		*pvHandle;
 	unsigned int	u4HandleSize;
@@ -158,19 +91,6 @@ struct VAL_POWER_T {
 };
 
 
-/**
- * @par Structure
- *  VAL_MMAP_T
- * @par Description
- *  This is a parameter for eVideoMMAP() and eVideoUNMAP()
- *  pvHandle		[IN]     The video codec driver handle
- *  u4HandleSize	[IN]     The size of video codec driver handle
- *  pvMemPa		[IN]     The physical memory address
- *  u4MemSize		[IN]     The memory size
- *  pvMemVa		[IN]     The mapped virtual memory address
- *  pvReserved		[IN/OUT] The reserved parameter
- *  u4ReservedSize	[IN]     The size of reserved parameter structure
- */
 struct VAL_MMAP_T {
 	void		*pvHandle;
 	unsigned int	u4HandleSize;
@@ -181,10 +101,6 @@ struct VAL_MMAP_T {
 	unsigned int	u4ReservedSize;
 };
 
-/**
- *   u4ReadAddr		[IN]  memory source address in VA
- *   u4ReadData		[OUT] memory data
- */
 struct VAL_VCODEC_OAL_MEM_STAUTS_T {
 	unsigned long	u4ReadAddr;
 	unsigned int	u4ReadData;

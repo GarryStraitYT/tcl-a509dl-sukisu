@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
-/******************************************************************************
- * camera_isp.c - MT6769 Linux ISP Device Driver
- *
- * DESCRIPTION:
- *     This file provid the other drivers ISP relative functions
- *
- ******************************************************************************/
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
@@ -144,17 +134,11 @@
 	pr_notice(MyTag "[%s] " format, __func__, ##args)
 
 
-/******************************************************************************
- *
- *****************************************************************************/
 /* #define ISP_WR32(addr, data)    iowrite32(data, addr) For other projects.*/
 #define ISP_WR32(addr, data)    mt_reg_sync_writel(data, addr)/* For89 Only.*/
 /* NEED_TUNING_BY_PROJECT */
 #define ISP_RD32(addr)                  ioread32((void *)addr)
 
-/******************************************************************************
- *
- *****************************************************************************/
 /* dynamic log level */
 #define ISP_DBG_INT                 (0x00000001)
 #define ISP_DBG_READ_REG            (0x00000004)
@@ -170,9 +154,6 @@
 #define ISP_DBG_HW_DON              (0x00001000)
 #define ISP_DBG_ION_CTRL            (0x00002000)
 
-/******************************************************************************
- *
- *****************************************************************************/
 static irqreturn_t ISP_Irq_CAM(enum ISP_IRQ_TYPE_ENUM irq_module);
 static irqreturn_t ISP_Irq_CAM_A(int  Irq, void *DeviceId);
 static irqreturn_t ISP_Irq_CAM_B(int  Irq, void *DeviceId);
@@ -241,10 +222,6 @@ const struct ISR_TABLE IRQ_CB_TBL[ISP_IRQ_TYPE_AMOUNT] = {
 #endif
 };
 
-/*
- * Note!!! The order and member of .compatible must be the same with that in
- *  "ISP_DEV_NODE_ENUM" in camera_isp.h
- */
 static const struct of_device_id isp_of_ids[] = {
 	{ .compatible = "mediatek,camsys", },
 	{ .compatible = "mediatek,cam1", },
@@ -378,9 +355,6 @@ ISP_PopBufTimestamp(
 static int32_t ISP_WaitTimestampReady(unsigned int module, unsigned int dma_id);
 #endif
 
-/******************************************************************************
- *
- *****************************************************************************/
 /* internal data */
 /* pointer to the kmalloc'd area, rounded up to a page boundary */
 static int *pTbl_RTBuf[ISP_IRQ_TYPE_AMOUNT];
@@ -449,17 +423,11 @@ static struct T_ION_TBL gION_TBL[ISP_DEV_NODE_NUM] = {
 	{ISP_DEV_NODE_NUM, NULL, NULL, NULL, NULL}
 };
 #endif
-/******************************************************************************
- *
- *****************************************************************************/
 struct ISP_USER_INFO_STRUCT {
 	pid_t   Pid;
 	pid_t   Tid;
 };
 
-/******************************************************************************
- *
- ******************************************************************************/
 #define ISP_BUF_SIZE            (4096)
 #define ISP_BUF_WRITE_AMOUNT    6
 
@@ -481,9 +449,6 @@ struct ISP_BUF_INFO_STRUCT {
 };
 
 
-/******************************************************************************
- *
- ******************************************************************************/
 #define ISP_ISR_MAX_NUM 32
 #define INT_ERR_WARN_TIMER_THREAS 1000
 #define INT_ERR_WARN_MAX_TIME 1
@@ -676,12 +641,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[ISP_IRQ_TYPE_AMOUNT];
 
-/**
- *   for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *   limited:
- *   each log must shorter than 512 bytes
- *   total log length in each irq/logtype can't over 1024 bytes
- */
 #define IRQ_LOG_KEEPER_T(sec, usec) {\
 		ktime_t time;           \
 		time = ktime_get();     \
@@ -993,10 +952,6 @@ unsigned int ISP_RD32_TG_CAMX_FRM_CNT(unsigned int IrqType, int reg_module)
 	return _regVal;
 }
 
-/*******************************************************************************
- * Add MET ftrace event for power profilling. CAM_enter when SOF and CAM_leave
- * when P1_Done
- ******************************************************************************/
 #if defined(ISP_MET_READY)
 int MET_Event_Get_BPP(enum _isp_dma_enum_ dmao, unsigned int reg_module)
 {
@@ -1114,9 +1069,6 @@ CAMSYS_MET_Events_Trace(
 }
 #endif
 
-/******************************************************************************
- *
- *****************************************************************************/
 static int32_t ISP_CheckUseCamWaitQ(enum ISP_IRQ_TYPE_ENUM type,
 	enum ISP_ST_ENUM st_type, unsigned int status)
 {
@@ -1141,9 +1093,6 @@ static int32_t ISP_CheckUseCamWaitQ(enum ISP_IRQ_TYPE_ENUM type,
 	return 0;
 }
 
-/******************************************************************************
- *
- *****************************************************************************/
 static int32_t ISP_CheckUseCamsvWaitQ(enum ISP_IRQ_TYPE_ENUM type,
 	enum ISP_ST_ENUM st_type, unsigned int status)
 {
@@ -1159,9 +1108,6 @@ static int32_t ISP_CheckUseCamsvWaitQ(enum ISP_IRQ_TYPE_ENUM type,
 	return 0;
 }
 
-/******************************************************************************
- *
- *****************************************************************************/
 static int32_t ISP_GetWaitQCamIndex(enum ISP_IRQ_TYPE_ENUM type)
 {
 	int32_t index = type - ISP_IRQ_TYPE_INT_CAM_A_ST;
@@ -1172,9 +1118,6 @@ static int32_t ISP_GetWaitQCamIndex(enum ISP_IRQ_TYPE_ENUM type)
 	return index;
 }
 
-/******************************************************************************
- *
- *****************************************************************************/
 static int32_t ISP_GetWaitQCamsvIndex(enum ISP_IRQ_TYPE_ENUM type)
 {
 	int32_t index = type - ISP_IRQ_TYPE_INT_CAMSV_0_ST;
@@ -1185,9 +1128,6 @@ static int32_t ISP_GetWaitQCamsvIndex(enum ISP_IRQ_TYPE_ENUM type)
 	return index;
 }
 
-/******************************************************************************
- *
- *****************************************************************************/
 static int32_t ISP_GetWaitQCamIrqIndex(
 	enum ISP_ST_ENUM st_type, unsigned int status)
 {
@@ -1218,9 +1158,6 @@ static int32_t ISP_GetWaitQCamIrqIndex(
 	return index;
 }
 
-/******************************************************************************
- *
- *****************************************************************************/
 static int32_t ISP_GetWaitQCamsvIrqIndex(
 	enum ISP_ST_ENUM st_type, unsigned int status)
 {
@@ -1240,25 +1177,16 @@ static int32_t ISP_GetWaitQCamsvIrqIndex(
 	return index;
 }
 
-/******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int ISP_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int ISP_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int
 ISP_GetIRQState(
 	unsigned int type,
@@ -1280,17 +1208,11 @@ ISP_GetIRQState(
 
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline unsigned int ISP_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 #if (Lafi_WAM_CQ_ERR == 1)
 static void ISP_RecordCQAddr(enum ISP_DEV_NODE_ENUM regModule)
 {
@@ -1323,9 +1245,6 @@ static void ISP_RecordCQAddr(enum ISP_DEV_NODE_ENUM regModule)
 
 }
 #endif
-/*******************************************************************************
- *
- ******************************************************************************/
 static void ISP_DumpCQDbg(enum ISP_IRQ_TYPE_ENUM module,
 				enum ISP_DEV_NODE_ENUM regModule)
 {
@@ -1418,9 +1337,6 @@ static void ISP_DumpCQDbg(enum ISP_IRQ_TYPE_ENUM module,
 		(unsigned int)ISP_RD32(CAM_REG_CQ_THR28_BASEADDR(regModule)));
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 static void ISP_DumpDmaDeepDbg(enum ISP_IRQ_TYPE_ENUM module)
 {
@@ -1785,9 +1701,6 @@ static inline void Disable_Unprepare_ccf_clock(void)
 	smi_control_clock_mtcmos(CAMERA_SMI_DISABLE);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 void ISP_Halt_Mask(unsigned int isphaltMask)
 {
@@ -1803,9 +1716,6 @@ void ISP_Halt_Mask(unsigned int isphaltMask)
 }
 EXPORT_SYMBOL(ISP_Halt_Mask);
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void ISP_ConfigDMAControl(void)
 {
 
@@ -1961,9 +1871,6 @@ static void ISP_ConfigDMAControl(void)
 	ISP_WR32(CAMSYS_REG_HALT4_SEC_EN, 0x00000001);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void ISP_EnableClock(bool En)
 {
 	if (En) {
@@ -2045,9 +1952,6 @@ static void ISP_EnableClock(bool En)
 	}
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void ISP_Reset(int module)
 {
 	LOG_DBG(" Reset module(%d), CAMSYS clk gate(0x%x)\n",
@@ -2103,9 +2007,6 @@ static inline void ISP_Reset(int module)
 	}
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_ReadReg(struct ISP_REG_IO_STRUCT *pRegIo)
 {
 	unsigned int i, ispRange = 0;
@@ -2201,9 +2102,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 /* Note: Can write sensor's test model only, */
 /* if need write to other modules, need modify current code flow */
 static int ISP_WriteRegToHw(
@@ -2292,9 +2190,6 @@ static int ISP_WriteRegToHw(
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_WriteReg(struct ISP_REG_IO_STRUCT *pRegIo)
 {
 	int Ret = 0;
@@ -2350,9 +2245,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 /* isr dbg log , sw isr response counter , +1 when sw receive 1 sof isr. */
 static unsigned int sof_count[ISP_IRQ_TYPE_AMOUNT] = {0};
@@ -2585,9 +2477,6 @@ static long ISP_Buf_CTRL_FUNC(unsigned long Param)
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_REGISTER_IRQ_USERKEY(char *userName)
 {
 	int key =  -1;
@@ -2631,9 +2520,6 @@ static int ISP_REGISTER_IRQ_USERKEY(char *userName)
 	return key;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_FLUSH_IRQ(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 {	/* FIX to avoid build warning */
 	unsigned long flags; /* old: unsigned int flags;*/
@@ -2716,9 +2602,6 @@ static int ISP_FLUSH_IRQ(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_WaitIrq(struct ISP_WAIT_IRQ_STRUCT *WaitIrq)
 {
 	int Ret = 0, Timeout = WaitIrq->EventInfo.Timeout;
@@ -3179,9 +3062,6 @@ EXIT:
 
 
 #ifdef ENABLE_KEEP_ION_HANDLE
-/*******************************************************************************
- *
- ******************************************************************************/
 static void ISP_ion_init(void)
 {
 	if (!pIon_client && g_ion_device)
@@ -3196,9 +3076,6 @@ static void ISP_ion_init(void)
 		LOG_INF("create ion client 0x%pK\n", pIon_client);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void ISP_ion_uninit(void)
 {
 	if (!pIon_client) {
@@ -3214,9 +3091,6 @@ static void ISP_ion_uninit(void)
 	pIon_client = NULL;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static struct ion_handle *
 ISP_ion_import_handle(
 	struct ion_client *client,
@@ -3248,9 +3122,6 @@ ISP_ion_import_handle(
 	return handle;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void
 ISP_ion_free_handle(
 	struct ion_client *client,
@@ -3270,9 +3141,6 @@ ISP_ion_free_handle(
 
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void ISP_ion_free_handle_by_module(unsigned int module)
 {
 	int i, j;
@@ -3315,9 +3183,6 @@ static void ISP_ion_free_handle_by_module(unsigned int module)
 #endif
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static long ISP_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
 	int Ret = 0;
@@ -4825,9 +4690,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int compat_get_isp_read_register_data(
 	struct compat_ISP_REG_IO_STRUCT __user *data32,
 	struct ISP_REG_IO_STRUCT __user *data)
@@ -5152,9 +5014,6 @@ ISP_ioctl_compat(
 
 #endif
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_open(
 	struct inode *pInode,
 	struct file *pFile)
@@ -5306,9 +5165,6 @@ EXIT:
 
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void ISP_StopHW(int module)
 {
 	unsigned int regTGSt, loopCnt;
@@ -5426,9 +5282,6 @@ RESET:
 
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void ISP_StopSVHW(int module)
 {
 	unsigned int regTGSt, loopCnt;
@@ -5572,9 +5425,6 @@ static inline void ISP_StopSVHW(int module)
 
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_release(
 	struct inode *pInode,
 	struct file *pFile)
@@ -5732,9 +5582,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_mmap(struct file *pFile, struct vm_area_struct *pVma)
 {
 	unsigned long length = 0;
@@ -5794,9 +5641,6 @@ static int ISP_mmap(struct file *pFile, struct vm_area_struct *pVma)
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 static dev_t IspDevNo;
 static struct cdev *pIspCharDrv;
@@ -5814,9 +5658,6 @@ static const struct file_operations IspFileOper = {
 #endif
 };
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void ISP_UnregCharDev(void)
 {
 	LOG_DBG("- E.");
@@ -5830,9 +5671,6 @@ static inline void ISP_UnregCharDev(void)
 	unregister_chrdev_region(IspDevNo, 1);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline int ISP_RegCharDev(void)
 {
 	int Ret = 0;
@@ -5870,9 +5708,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_probe(struct platform_device *pDev)
 {
 	int Ret = 0;
@@ -6233,9 +6068,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- * Called when the device is being detached from the driver
- ******************************************************************************/
 static int ISP_remove(struct platform_device *pDev)
 {
 	/*    struct resource *pRes;*/
@@ -6458,9 +6290,6 @@ EXIT:
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int ISP_resume(struct platform_device *pDev)
 {
 	unsigned int regVal;
@@ -6623,9 +6452,6 @@ const struct dev_pm_ops ISP_pm_ops = {
 };
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static struct platform_driver IspDriver = {
 	.probe   = ISP_probe,
 	.remove  = ISP_remove,
@@ -6643,9 +6469,6 @@ static struct platform_driver IspDriver = {
 	}
 };
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static ssize_t ISP_DumpRegToProc(
 	struct file *pFile,
 	char *pStart,
@@ -6656,9 +6479,6 @@ static ssize_t ISP_DumpRegToProc(
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static ssize_t ISP_RegDebug(
 	struct file *pFile,
 	const char *pBuffer,
@@ -6669,9 +6489,6 @@ static ssize_t ISP_RegDebug(
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static ssize_t CAMIO_DumpRegToProc(
 	struct file *pFile,
 	char *pStart,
@@ -6682,9 +6499,6 @@ static ssize_t CAMIO_DumpRegToProc(
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static ssize_t CAMIO_RegDebug(
 	struct file *pFile,
 	const char *pBuffer,
@@ -6695,9 +6509,6 @@ static ssize_t CAMIO_RegDebug(
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static const struct file_operations fcameraisp_proc_fops = {
 	.read = ISP_DumpRegToProc,
 	.write = ISP_RegDebug,
@@ -6706,9 +6517,6 @@ static const struct file_operations fcameraio_proc_fops = {
 	.read = CAMIO_DumpRegToProc,
 	.write = CAMIO_RegDebug,
 };
-/*******************************************************************************
- *
- ******************************************************************************/
 
 static int __init ISP_Init(void)
 {
@@ -6931,9 +6739,6 @@ static int __init ISP_Init(void)
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void __exit ISP_Exit(void)
 {
 	int i, j;
@@ -10408,9 +10213,6 @@ LB_CAM_SOF_IGNORE:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void SMI_INFO_DUMP(enum ISP_IRQ_TYPE_ENUM irq_module)
 {
 #if IS_ENABLED(CONFIG_MTK_SMI_EXT)
@@ -10519,9 +10321,6 @@ static void ISP_BH_Workqueue(struct work_struct *pWork)
 }
 #endif
 
-/*******************************************************************************
- *
- ******************************************************************************/
 module_init(ISP_Init);
 module_exit(ISP_Exit);
 MODULE_DESCRIPTION("Camera ISP driver");

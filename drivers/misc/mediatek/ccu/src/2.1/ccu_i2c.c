@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2016 MediaTek Inc.
- */
 
 #include <linux/types.h>
 #include <linux/device.h>
@@ -28,9 +25,6 @@
 #include "ccu_i2c_hw.h"
 #include "ccu_mva.h"
 #include "ccu_imgsensor.h"
-/*******************************************************************************
- *
- ******************************************************************************/
 /*I2C Channel offset*/
 #define I2C_BASE_OFS_CH1 (0x200)
 #define MAX_I2C_CMD_LEN 255
@@ -87,7 +81,6 @@ static const struct i2c_device_id ccu_i2c_6_ids[]
 static const struct i2c_device_id ccu_i2c_7_ids[]
 	= { {CCU_I2C_7_HW_DRVNAME, 0}, {} };
 
-static struct ion_handle *i2c_buffer_handle;
 static bool ccu_i2c_initialized[I2C_MAX_CHANNEL] = {0};
 
 #ifdef CONFIG_OF
@@ -315,10 +308,10 @@ int ccu_get_i2c_dma_buf_addr(struct ccu_device_s *g_ccu_device,
 }
 
 
-int ccu_i2c_free_dma_buf_mva_all(void)
+int ccu_i2c_free_dma_buf_mva_all(struct ccu_device_s *g_ccu_device)
 {
 
-	ccu_deallocate_mva(&i2c_buffer_handle);
+	ccu_deallocate_mva(g_ccu_device->i2c_dma_mva);
 
 	LOG_INF_MUST("%s done.\n", __func__);
 
@@ -371,7 +364,7 @@ static int i2c_query_dma_buffer_addr(struct ccu_device_s *g_ccu_device,
 
 	if (g_ccu_device->i2c_dma_mva == 0)	{
 		ret = ccu_allocate_mva(&g_ccu_device->i2c_dma_mva,
-				       g_ccu_device->i2c_dma_vaddr, &i2c_buffer_handle,
+				       g_ccu_device->i2c_dma_vaddr,
 				       CCU_I2C_DMA_BUF_SIZE);
 		if (ret != 0) {
 			LOG_ERR("ccu alloc mva fail");

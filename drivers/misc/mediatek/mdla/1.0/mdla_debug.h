@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #ifndef __MDLA_DEBUG_H__
 #define __MDLA_DEBUG_H__
@@ -64,35 +61,14 @@ enum MDLA_power_param {
 			LOG_ERR(format, ##args); \
 	}
 
-/**
- * mdla_dump_register - dump the register table, and show the content
- *                     of all fields.
- * @s:		the pointer to seq_file.
- */
 int mdla_dump_register(struct seq_file *s);
 
-/**
- * mdla_dump_image_file - dump the binary information stored in flash storage.
- * @s:          the pointer to seq_file.
- */
 int mdla_dump_image_file(struct seq_file *s);
 
-/**
- * mdla_dump_mesg - dump the log buffer, which is wroted by VPU
- * @s:          the pointer to seq_file.
- */
 int mdla_dump_mesg(struct seq_file *s);
 
-/**
- * mdla_dump_mdla - dump the mdla status
- * @s:          the pointer to seq_file.
- */
 int mdla_dump_mdla(struct seq_file *s);
 
-/**
- * mdla_dump_device_dbg - dump the remaining user information to debug fd leak
- * @s:          the pointer to seq_file.
- */
 int mdla_dump_device_dbg(struct seq_file *s);
 
 

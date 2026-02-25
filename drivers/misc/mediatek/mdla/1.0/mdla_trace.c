@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include "mdla_debug.h"
 
@@ -130,9 +127,6 @@ void mdla_dump_prof(struct seq_file *s)
 		mdla_print_seq(s, "c%d=0x%x\n", (i+1), c[i]);
 }
 
-/*
- * MDLA PMU counter reader
- */
 static void mdla_profile_pmu_counter(int core)
 {
 	u32 c[MDLA_PMU_COUNTERS] = {0};
@@ -217,9 +211,6 @@ void mdla_trace_tag_end(void)
 	tracing_mark_write(buf);
 #endif
 }
-/*
- * MDLA event based MET funcs
- */
 void mdla_met_event_enter(int core, int vmdla_opp,
 	int dsp_freq, int ipu_if_freq, int mdla_freq)
 {
@@ -237,9 +228,6 @@ void mdla_met_event_leave(int core)
 }
 
 
-/*
- * MDLA Polling Function
- */
 static enum hrtimer_restart mdla_profile_polling(struct hrtimer *timer)
 {
 	if (!cfg_period || !cfg_timer_en)

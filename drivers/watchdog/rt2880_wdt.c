@@ -1,15 +1,3 @@
-/*
- * Ralink RT288x/RT3xxx/MT76xx built-in hardware watchdog timer
- *
- * Copyright (C) 2011 Gabor Juhos <juhosg@openwrt.org>
- * Copyright (C) 2013 John Crispin <john@phrozen.org>
- *
- * This driver was based on: drivers/watchdog/softdog.c
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 as published
- * by the Free Software Foundation.
- */
 
 #include <linux/clk.h>
 #include <linux/reset.h>

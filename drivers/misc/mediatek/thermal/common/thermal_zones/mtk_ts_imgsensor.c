@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -25,10 +22,6 @@
 #include "kd_imgsensor_define.h"
 #include "kd_imgsensor_api.h"
 
-/*=============================================================
- * Weak function
- *=============================================================
- */
 MUINT32 __attribute__ ((weak))
 Get_Camera_Temperature(
 enum CAMERA_DUAL_CAMERA_SENSOR_ENUM senDevId, MUINT8 *valid, MUINT32 *temp)
@@ -40,14 +33,7 @@ enum CAMERA_DUAL_CAMERA_SENSOR_ENUM senDevId, MUINT8 *valid, MUINT32 *temp)
 	return -1;
 }
 
-/*=============================================================
- * Macro
- *=============================================================
- */
 
-/* If RESERVED_TZS is changed,
- * please adjust corresponding proc macro FOPS and PROC_FOPS_RW in this file
- */
 #define RESERVED_TZS (8)
 #define MTK_IMGS_TEMP_CRIT 120000	/* 120.000 degree Celsius */
 
@@ -60,14 +46,6 @@ enum CAMERA_DUAL_CAMERA_SENSOR_ENUM senDevId, MUINT8 *valid, MUINT32 *temp)
 
 #define mtk_imgs_printk(fmt, args...)   \
 	pr_notice("[Thermal/TZ/IMGS]" fmt, ##args)
-/*=============================================================
- * Function prototype
- *=============================================================
- */
-/*=============================================================
- * Local variable
- *=============================================================
- */
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 
@@ -99,20 +77,10 @@ struct cooler_data {
 static struct cooler_data g_clData[RESERVED_TZS];
 static int g_img_max; /* Number of image sensors in this platform */
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- *	use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5;
 static int polling_factor2 = 10;
-/*=============================================================
- * Local function
- *=============================================================
- */
 
 /* Return -1 if the index is out of array boundary */
 static int mtk_imgs_get_num_imgs(int *num)
@@ -137,10 +105,6 @@ static int mtk_imgs_get_num_imgs(int *num)
 	return 0;
 }
 
-/*=============================================================
- * Debug switch
- *=============================================================
- */
 static ssize_t mtk_imgs_write_log(
 struct file *file, const char __user *buffer, size_t count, loff_t *data)
 {
@@ -183,10 +147,6 @@ static const struct file_operations mtk_imgs_log_fops = {
 	.write = mtk_imgs_write_log,
 	.release = single_release,
 };
-/*=============================================================
- * Image sensor on/off status
- *=============================================================
- */
 static int sensor_on_off_bitmap; /* 0: power off, 1: power on*/
 enum sensor_state {power_off = 0, power_on = 1};
 
@@ -202,22 +162,10 @@ static void set_image_sensor_state(int device, enum sensor_state status)
 		sensor_on_off_bitmap &= ~(mask);
 
 }
-/* It returns a bitmap to indicate power on/off status of all image
- * sensors. Each bit binds to physical image sensor except bit 0.
- * Bit 0 binds the pseudo image sensor reporting the max temperature
- * of all physical image sensors, so bit 0 is always 0.
- * For example:
- * If bit 1 is 1, it means the image sensor 1 is power on. Otherwise,
- * it is power off.
- */
 int get_image_sensor_state(void)
 {
 	return sensor_on_off_bitmap;
 }
-/*=============================================================
- * Thermal Zone
- *=============================================================
- */
 
 static int mtk_imgs_get_index(struct thermal_zone_device *thermal)
 {
@@ -719,10 +667,6 @@ static const struct file_operations *thz_fops[RESERVED_TZS] = {
 	FOPS(6),
 	FOPS(7),
 };
-/*=============================================================
- * Cooler
- *=============================================================
- */
 
 static int mtk_imgs_cooler_get_index(struct thermal_cooling_device *cdev)
 {

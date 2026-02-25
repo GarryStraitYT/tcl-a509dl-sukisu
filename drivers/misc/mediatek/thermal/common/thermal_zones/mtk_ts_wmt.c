@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/thermal.h>
@@ -23,10 +20,6 @@
 #include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
-/*=============================================================
- *Weak functions
- *=============================================================
- */
 int __attribute__ ((weak))
 mtk_wcn_cmb_stub_query_ctrl(void)
 {
@@ -123,12 +116,6 @@ static char g_bind7[20] = { 0 };
 static char g_bind8[20] = { 0 };
 static char g_bind9[20] = { 0 };
 
-/**
- * If curr_temp >= polling_trip_temp1, use interval
- * else if cur_temp >= polling_trip_temp2 && curr_temp < polling_trip_temp1,
- * use interval*polling_factor1
- * else, use interval*polling_factor2
- */
 static int polling_trip_temp1 = 40000;
 static int polling_trip_temp2 = 20000;
 static int polling_factor1 = 5;
@@ -140,9 +127,6 @@ static unsigned int cl_pa2_dev_state;
 static unsigned int g_trip_temp[COOLER_NUM] = { 125000, 115000, 105000, 85000,
 							0, 0, 0, 0, 0, 0 };
 
-/* static int g_thro[COOLER_THRO_NUM] =
- *	{10 * ONE_MBITS_PER_SEC, 5 * ONE_MBITS_PER_SEC, 1 * ONE_MBITS_PER_SEC};
- */
 static int g_thermal_trip[COOLER_NUM] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 /* - Cooler info - */
 
@@ -164,26 +148,14 @@ static int g_limit_tput = -1;
 static unsigned int cl_dev_adp_cpu_state_active;
 
 /* parameters from adb shell */
-/*	0: for old WiFi algorithm.
- *	1: for HRA/ATR
- */
 static int wifi_throttle_version = 1;
 static int wmt_wifi_target_tj = 120000;
 static int wmt_wifi_target_offset = 1000;
 static int tj_stable_range = 1000;
-/*	0: wifi last (default)
- *	1: wifi first
- *	2: no throttle wifi
- *	3: independent
- *	4: not share target tj
- */
 static int resource_allocator_policy = 4;
 static int min_wifi_tput_ratio = 40;
 static int max_wifi_tput_ratio = 200;
 static int min_wifi_tput = 1000;
-/* initial value: assume 1 degreeC for temp.
- *		<=> 1 unit for wifi_tput_ratio(0~100)
- */
 static int tt_wifi_high = 50;
 static int tt_wifi_low = 50;
 static int tp_wifi_rise = 10000;
@@ -356,9 +328,6 @@ static int adaptive_tput_ratio(long prev_temp, long curr_temp)
 
 /* extern int cpu_target_tj; // in mtk_ts_cpu.c */
 /* extern int cpu_target_offset; // in mtk_ts_cpu.c */
-/**
- * @temp	current temperature in milli degree C
- */
 static void heterogeneous_resource_allocator(int temp)
 {
 	wmt_tm_dprintk("%s: wifi_throttle_version=%d, wifi temp=%d\n"
@@ -1364,9 +1333,6 @@ struct file *filp, const char __user *buf, size_t len, loff_t *data)
 		#endif
 		sensor_select = 0;
 	}
-/* wmt_wifi_in_soc_write ret 13 1 3 3 0 70000 3000 1000
- * 50 200 1000 50 50 10000
- */
 	return len;
 }
 

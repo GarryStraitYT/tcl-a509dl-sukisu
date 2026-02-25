@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2017 MediaTek Inc.
- */
 
 #define MUSB_HSDMA_BASE		0x200
 #define MUSB_HSDMA_INTR		(MUSB_HSDMA_BASE + 0)

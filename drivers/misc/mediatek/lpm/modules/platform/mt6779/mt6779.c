@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <mtk_lp_plat_apmcu.h>
@@ -14,10 +11,6 @@
 
 static unsigned int mt6779_lp_pwr_state;
 
-/*
- * Please make sure the race condition protection upfront
- * when calling mtk_lp_plat_do_mcusys_prepare_pdn()
- */
 int mt6779_do_mcusys_prepare_pdn(unsigned int status,
 					   unsigned int *resource_req)
 {
@@ -27,10 +20,6 @@ int mt6779_do_mcusys_prepare_pdn(unsigned int status,
 	return 0;
 }
 
-/*
- * Please make sure the race condition protection upfront
- * when calling mtk_lp_plat_do_mcusys_prepare_on()
- */
 static int __mt6779_do_mcusys_prepare_on(unsigned int clr_status)
 {
 	mt6779_sspm_notify_leave(clr_status);

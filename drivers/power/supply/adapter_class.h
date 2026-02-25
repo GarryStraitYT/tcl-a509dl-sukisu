@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef LINUX_POWER_ADAPTER_CLASS_H
 #define LINUX_POWER_ADAPTER_CLASS_H

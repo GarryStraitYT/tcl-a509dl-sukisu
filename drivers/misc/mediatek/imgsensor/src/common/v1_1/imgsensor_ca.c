@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include "imgsensor_ca.h"
 #include "tee_client_api.h"
@@ -29,11 +26,6 @@ static struct TEEC_Session imgsensor_tci_session;
 /*const char* MY_UUID = "bta_loader";*/
 /*#endif*/
 
-/*
- * #if defined(CONFIG_TRUSTONIC_TEE_SUPPORT)
- * const char* MY_UUID = NULL;
- * #endif
- */
 
 static int secure_i2c_bus = 0xff; /*initiate at _tee_cmd_get_i2c_bus*/
 

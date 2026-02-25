@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/string.h>
 #include <linux/time.h>
@@ -97,9 +94,6 @@ struct layer_statistic {
 static struct layer_statistic layer_stat;
 static int layer_statistic_enable;
 
-/**
- * @param idleMs new idle wait time in ms unit
- */
 int display_set_wait_idle_time(unsigned int idleMs)
 {
 	if (idle_check_interval != idleMs)

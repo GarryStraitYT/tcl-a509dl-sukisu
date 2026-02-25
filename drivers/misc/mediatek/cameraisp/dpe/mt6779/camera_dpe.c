@@ -1,14 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
-/**************************************************************
- * camera_DPE.c - Linux DPE Device Driver
- *
- * DESCRIPTION:
- *     This file provid the other drivers DPE relative functions
- *
- **************************************************************/
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
@@ -62,9 +52,6 @@
 #include <mmdvfs_pmqos.h>
 #endif
 
-/* Measure the kernel performance
- * #define __DPE_KERNEL_PERFORMANCE_MEASURE__
- */
 #ifdef __DPE_KERNEL_PERFORMANCE_MEASURE__
 #include <linux/met_drv.h>
 #include <linux/mtk_ftrace.h>
@@ -126,18 +113,12 @@ struct DPE_CLK_STRUCT dpe_clk;
 #define LOG_ERR(format, args...) pr_info(MyTag format, ##args)
 #define LOG_AST(format, args...) pr_info(MyTag format, ##args)
 
-/**************************************************************
- *
- **************************************************************/
 /* #define DPE_WR32(addr, data) iowrite32(data, addr) */
 #define DPE_WR32(addr, data) mt_reg_sync_writel(data, addr)
 #define DPE_RD32(addr) ioread32(addr)
 #define DPE_MASKWR(addr, data, mask) \
 	DPE_WR32(addr, ((DPE_RD32(addr) & ~(mask)) | data))
 
-/**************************************************************
- *
- **************************************************************/
 /* dynamic log level */
 #define DPE_DBG_DBGLOG (0x00000001)
 #define DPE_DBG_INFLOG (0x00000002)
@@ -146,16 +127,10 @@ struct DPE_CLK_STRUCT dpe_clk;
 #define DPE_DBG_WRITE_REG (0x00000010)
 #define DPE_DBG_TASKLET (0x00000020)
 
-/*
- *    CAM interrupt status
- */
 
 /* normal siganl : happens to be the same bit as register bit*/
 /*#define DPE_INT_ST           (1<<0)*/
 
-/*
- *   IRQ signal mask
- */
 
 #define INT_ST_MASK_DPE (DPE_INT_ST)
 
@@ -199,8 +174,6 @@ const struct ISR_TABLE DPE_IRQ_CB_TBL[DPE_IRQ_TYPE_AMOUNT] = {
 #endif
 };
 #endif
-/*
- */
 /*  */
 typedef void (*tasklet_cb)(unsigned long);
 struct Tasklet_table {
@@ -314,9 +287,6 @@ static struct DPE_CONFIG_STRUCT g_DpeEnqueReq_Struct;
 static struct DPE_CONFIG_STRUCT g_DpeDequeReq_Struct;
 static struct engine_requests dpe_reqs;
 static struct DPE_Request kDpeReq;
-/**************************************************************
- *
- **************************************************************/
 struct DPE_USER_INFO_STRUCT {
 	pid_t Pid;
 	pid_t Tid;
@@ -327,9 +297,6 @@ enum DPE_PROCESS_ID_ENUM {
 	DPE_PROCESS_ID_AMOUNT
 };
 
-/**************************************************************
- *
- **************************************************************/
 struct DPE_IRQ_INFO_STRUCT {
 	unsigned int Status[DPE_IRQ_TYPE_AMOUNT];
 	signed int DpeIrqCnt;
@@ -379,12 +346,6 @@ struct SV_LOG_STR {
 static void *pLog_kmalloc;
 static struct SV_LOG_STR gSvLog[DPE_IRQ_TYPE_AMOUNT];
 
-/*
- *   for irq used,keep log until IRQ_LOG_PRINTER being involked,
- *   limited:
- *   each log must shorter than 512 bytes
- *  total log length in each irq/logtype can't over 1024 bytes
- */
 #define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {\
 	char *ptr; \
 	char *pDes;\
@@ -991,25 +952,16 @@ static struct SV_LOG_STR gSvLog[DPE_IRQ_TYPE_AMOUNT];
 #define DVP_EXT_SRC_23_ASF_DV3_REG   (ISP_DPE_BASE + 0xBDC)
 
 #define DPE_MAX_REG_CNT              (0xBE0 >> 2)
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DPE_MsToJiffies(unsigned int Ms)
 {
 	return ((Ms * HZ + 512) >> 10);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DPE_UsToJiffies(unsigned int Us)
 {
 	return (((Us / 1000) * HZ + 512) >> 10);
 }
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int
 DPE_GetIRQState(unsigned int type, unsigned int userNumber, unsigned int stus,
 		enum DPE_PROCESS_ID_ENUM whichReq, int ProcessID)
@@ -1033,9 +985,6 @@ DPE_GetIRQState(unsigned int type, unsigned int userNumber, unsigned int stus,
 }
 
 
-/**************************************************************
- *
- **************************************************************/
 static inline unsigned int DPE_JiffiesToMs(unsigned int Jiffies)
 {
 	return ((Jiffies * 1000) / HZ);
@@ -1666,9 +1615,6 @@ static const struct engine_ops dpe_ops = {
 	.req_feedback_cb = dpe_feedback,
 };
 
-/*
- *
- */
 static signed int DPE_DumpReg(void)
 #if BYPASS_REG
 {
@@ -1844,9 +1790,6 @@ static inline void DPE_Disable_Unprepare_ccf_clock(void)
 }
 #endif
 
-/**************************************************************
- *
- **************************************************************/
 static void DPE_EnableClock(bool En)
 {
 #if defined(EP_NO_CLKMGR)
@@ -1924,9 +1867,6 @@ static void DPE_EnableClock(bool En)
 	}
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void DPE_Reset(void)
 {
 	LOG_DBG("- E.");
@@ -1950,9 +1890,6 @@ static inline void DPE_Reset(void)
 	}
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_ReadReg(struct DPE_REG_IO_STRUCT *pRegIo)
 {
 	unsigned int i;
@@ -2005,9 +1942,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_WriteRegToHw(struct DPE_REG_STRUCT *pReg,
 							unsigned int Count)
 {
@@ -2047,9 +1981,6 @@ static signed int DPE_WriteRegToHw(struct DPE_REG_STRUCT *pReg,
 
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_WriteReg(struct DPE_REG_IO_STRUCT *pRegIo)
 {
 	signed int Ret = 0;
@@ -2105,9 +2036,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_WaitIrq(struct DPE_WAIT_IRQ_STRUCT *WaitIrq)
 {
 	signed int Ret = 0;
@@ -2306,9 +2234,6 @@ EXIT:
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static long DPE_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 {
 	signed int Ret = 0;
@@ -2838,9 +2763,6 @@ EXIT:
 
 #ifdef CONFIG_COMPAT
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static int compat_get_DPE_read_register_data(
 			struct compat_DPE_REG_IO_STRUCT __user *data32,
 					struct DPE_REG_IO_STRUCT __user *data)
@@ -3063,9 +2985,6 @@ static long DPE_ioctl_compat(struct file *filp, unsigned int cmd,
 
 #endif
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_open(struct inode *pInode, struct file *pFile)
 {
 	signed int Ret = 0;
@@ -3165,9 +3084,6 @@ EXIT:
 
 }
 
-/******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_release(struct inode *pInode, struct file *pFile)
 {
 	struct DPE_USER_INFO_STRUCT *pUserInfo;
@@ -3217,9 +3133,6 @@ EXIT:
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 static dev_t DPEDevNo;
 static struct cdev *pDPECharDrv;
@@ -3237,9 +3150,6 @@ static const struct file_operations DPEFileOper = {
 #endif
 };
 
-/**************************************************************
- *
- **************************************************************/
 #ifdef CONFIG_MTK_IOMMU_V2
 enum mtk_iommu_callback_ret_t DPE_M4U_TranslationFault_callback(int port,
 	unsigned int mva, void *data)
@@ -3364,9 +3274,6 @@ enum m4u_callback_ret_t DPE_M4U_TranslationFault_callback(int port,
 #endif
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline void DPE_UnregCharDev(void)
 {
 	LOG_DBG("- E.");
@@ -3380,9 +3287,6 @@ static inline void DPE_UnregCharDev(void)
 	unregister_chrdev_region(DPEDevNo, 1);
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static inline signed int DPE_RegCharDev(void)
 {
 	signed int Ret = 0;
@@ -3422,9 +3326,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_probe(struct platform_device *pDev)
 {
 	signed int Ret = 0;
@@ -3624,9 +3525,6 @@ EXIT:
 	return Ret;
 }
 
-/*******************************************************************************
- * Called when the device is being detached from the driver
- ******************************************************************************/
 static signed int DPE_remove(struct platform_device *pDev)
 {
 	/*struct resource *pRes;*/
@@ -3661,9 +3559,6 @@ static signed int DPE_remove(struct platform_device *pDev)
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int bPass1_On_In_Resume_TG1;
 
 static signed int DPE_suspend(struct platform_device *pDev, pm_message_t Mesg)
@@ -3684,9 +3579,6 @@ static signed int DPE_suspend(struct platform_device *pDev, pm_message_t Mesg)
 	return 0;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static signed int DPE_resume(struct platform_device *pDev)
 {
 	LOG_DBG("bPass1_On_In_Resume_TG1(%d).\n", bPass1_On_In_Resume_TG1);
@@ -3771,9 +3663,6 @@ const struct dev_pm_ops DPE_pm_ops = {
 };
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static struct platform_driver DPEDriver = {
 	.probe = DPE_probe,
 	.remove = DPE_remove,
@@ -4035,9 +3924,6 @@ static const struct file_operations dpe_reg_proc_fops = {
 };
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 
 int32_t DPE_ClockOnCallback(uint64_t engineFlag)
 {
@@ -4198,9 +4084,6 @@ static signed int __init DPE_Init(void)
 	return Ret;
 }
 
-/*******************************************************************************
- *
- ******************************************************************************/
 static void __exit DPE_Exit(void)
 {
 	/*int i;*/
@@ -4223,9 +4106,6 @@ static void __exit DPE_Exit(void)
 }
 
 
-/*******************************************************************************
- *
- ******************************************************************************/
 void DPE_ScheduleWork(struct work_struct *data)
 {
 	if (DPE_DBG_DBGLOG & DPEInfo.DebugMask)
@@ -4413,9 +4293,6 @@ static void logPrint(struct work_struct *data)
 	ISP_TaskletFunc_DVS(arg);
 }
 
-/******************************************************************************
- *
- ******************************************************************************/
 module_init(DPE_Init);
 module_exit(DPE_Exit);
 MODULE_DESCRIPTION("Camera DPE driver");

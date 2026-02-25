@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Samuel Hsieh <samuel.hsieh@mediatek.com>
- */
 
 #ifndef __MTK_BATTERY_PERCENTAGE_THROTTLING_H__
 #define __MTK_BATTERY_PERCENTAGE_THROTTLING_H__

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __MT_PWM_HAL_PUB_H__
 #define __MT_PWM_HAL_PUB_H__
@@ -9,9 +6,6 @@
 #include <linux/types.h>
 #include <linux/platform_device.h>
 
-/*********************************
- *  Define Error Number
- **********************************/
 #define RSUCCESS 0
 #define EEXCESSPWMNO 1
 #define EPARMNOSUPPORT 2

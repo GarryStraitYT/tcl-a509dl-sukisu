@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2011 MediaTek Inc.
- */
 
 #include <linux/of_fdt.h>
 #include <linux/of.h>
@@ -17,9 +14,6 @@ static const struct of_device_id security_ao_ids[] = {
 	{}
 };
 
-/******************************************************************************
- * LOCAL FUNCTIONS
- ******************************************************************************/
 
 int masp_hal_set_dm_verity_error(void)
 {

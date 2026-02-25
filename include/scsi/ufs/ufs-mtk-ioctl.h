@@ -1,17 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 #ifndef UFS_MTK_IOCTL_H__
 #define UFS_MTK_IOCTL_H__
 
 #include <linux/types.h>
 
-/*
- *  IOCTL opcode for ufs ffu has the following opcode after
- *  Following the last SCSI IOCTL opcode.
- */
 #define UFS_IOCTL_QUERY         0x5388  /* Query descriptors, attr/flags */
 #define UFS_IOCTL_FFU           0x5389  /* Do firmware upgrade */
 #define UFS_IOCTL_GET_FW_VER    0x5390  /* Query production revision level */
@@ -96,11 +89,6 @@ struct ufs_ioctl_query_data_hpb {
 	__u8 buffer[0];
 };
 
-/**
- * struct ufs_ioctl_ffu - used to transfer data to and from user via ioctl
- * @buf_size: number of allocated bytes/data size on return
- * @buf_ptr: data location
- */
 struct ufs_ioctl_ffu_data {
 	/*
 	 * User should specify the size of the buffer (buf_ptr below) where
@@ -119,11 +107,6 @@ struct ufs_ioctl_ffu_data {
 	__u8 *buf_ptr;
 };
 
-/**
- * struct ufs_ioctl_ffu - used to transfer data to and from user via ioctl
- * @buf_size: number of allocated bytes/data size on return
- * @buf_ptr: data location
- */
 struct ufs_ioctl_query_fw_ver_data {
 	/*
 	 * User should specify the size of the buffer (buf_ptr below) where

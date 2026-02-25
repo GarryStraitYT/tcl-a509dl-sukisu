@@ -1,9 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * adsp_ipi.h --  Mediatek ADSP IPI interface
- *
- * Copyright (c) 2018 MediaTek Inc.
- */
 
 
 #ifndef __ADSP_IPI_H
@@ -17,9 +12,6 @@
 #define ADSP_AWAKE_TIMEOUT 5000
 #define ADSP_IPI_STAMP_SUPPORT 0
 
-/* adsp ipi ID definition
- * need to sync with ADSP-side
- */
 enum adsp_ipi_id {
 	ADSP_IPI_WDT = 0,
 	ADSP_IPI_TEST1,

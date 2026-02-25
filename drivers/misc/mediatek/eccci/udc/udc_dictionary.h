@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 #ifndef _UDC_DICTIONARY_H_
 #define _UDC_DICTIONARY_H_
 
@@ -15,10 +12,6 @@ enum udc_dict_opt_e {
 	UDC_DICT_OPERATOR,
 };
 
-/*
- *static const char *rfc3485_dictionary_identifier = {
- *};
- */
 
 static const char *rfc3485_dictionary_content = {
 	"\x0d\x0a\x52\x65\x6a\x65\x63\x74\x2d\x43\x6f\x6e\x74\x61\x63\x74"

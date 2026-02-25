@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * mt8173-rt5650-rt5676.c  --  MT8173 machine driver with RT5650/5676 codecs
- *
- * Copyright (c) 2015 MediaTek Inc.
- * Author: Koro Chen <koro.chen@mediatek.com>
- */
 
 #include <linux/module.h>
 #include <linux/gpio.h>

@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * The MT7623 driver based on Linux generic pinctrl binding.
- *
- * Copyright (C) 2015 - 2018 MediaTek Inc.
- * Author: Biao Huang <biao.huang@mediatek.com>
- *	   Ryder Lee <ryder.lee@mediatek.com>
- *	   Sean Wang <sean.wang@mediatek.com>
- */
 
 #include "pinctrl-moore.h"
 
@@ -696,10 +688,6 @@ static const struct mtk_pin_desc mt7623_pins[] = {
 	MT7623_PIN(279, "USB3_RES_BOND", EINT_NA, DRV_GRP1),
 };
 
-/* List all groups consisting of these pins dedicated to the enablement of
- * certain hardware block and the corresponding mode for all of the pins.
- * The hardware probably has multiple combinations of these pinouts.
- */
 
 /* AUDIO EXT CLK */
 static int mt7623_aud_ext_clk0_pins[] = { 208, };
@@ -1238,9 +1226,6 @@ static const struct group_desc mt7623_groups[] = {
 	PINCTRL_PIN_GROUP("watchdog_1", mt7623_watchdog_1),
 };
 
-/* Joint those groups owning the same capability in user point of view which
- * allows that people tend to use through the device tree.
- */
 static const char *mt7623_aud_clk_groups[] = { "aud_ext_clk0",
 					       "aud_ext_clk1", };
 static const char *mt7623_disp_pwm_groups[] = { "disp_pwm_0", "disp_pwm_1",
@@ -1394,11 +1379,6 @@ static struct mtk_pin_soc mt7623_data = {
 	.adv_pull_set = mtk_pinconf_adv_pull_set,
 };
 
-/*
- * There are some specific pins have mux functions greater than 8,
- * and if we want to switch thees high modes we need to disable
- * bonding constraints firstly.
- */
 static void mt7623_bonding_disable(struct platform_device *pdev)
 {
 	struct mtk_pinctrl *hw = platform_get_drvdata(pdev);

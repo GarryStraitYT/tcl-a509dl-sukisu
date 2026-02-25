@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -29,10 +26,6 @@
 #endif
 #include <linux/mfd/mt6357/registers.h>
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 int mtktspmic_debug_log = 1;
 /* Cali */
 static __s32 g_o_vts;

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef TMEM_UT_API_H
 #define TMEM_UT_API_H
@@ -21,9 +18,6 @@ struct ut_params {
 
 /* clang-format off */
 
-/* Using glue macro to generate a 'return' to bypass checkpatch's check.
- * ERROR: Macros with flow control statements should be avoided.
- */
 #define UT_GLUE_RET(a, b) a##b
 
 #define UT_OP(val, got, op, msg, halt) \

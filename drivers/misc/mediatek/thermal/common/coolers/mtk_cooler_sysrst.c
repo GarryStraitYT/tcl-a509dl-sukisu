@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -22,10 +19,6 @@
 #include <linux/seq_file.h>
 #include <tscpu_settings.h>
 
-/*=============================================================
- *Local variable definition
- *=============================================================
- */
 static unsigned int cl_dev_sysrst_state;
 static unsigned int cl_dev_sysrst_state_buck;
 static unsigned int cl_dev_sysrst_state_tsap;
@@ -38,13 +31,7 @@ static struct thermal_cooling_device *cl_dev_sysrst_tsap;
 #ifdef CONFIG_MTK_BIF_SUPPORT
 static struct thermal_cooling_device *cl_dev_sysrst_tsbif;
 #endif
-/*=============================================================
- */
 
-/*
- * cooling device callback functions (tscpu_cooling_sysrst_ops)
- * 1 : ON and 0 : OFF
- */
 static int sysrst_cpu_get_max_state(
 struct thermal_cooling_device *cdev, unsigned long *state)
 {

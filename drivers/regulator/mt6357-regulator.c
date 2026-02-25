@@ -21,16 +21,6 @@
 
 #define DEF_OC_IRQ_ENABLE_DELAY_MS	10
 
-/*
- * MT6357 regulators' information
- *
- * @desc: standard fields of regulator description.
- * @status_reg: for query status of regulators.
- * @qi: Mask for query enable signal status of regulators.
- * @modeset_reg: for operating AUTO/PWM mode register.
- * @modeset_mask: MASK for operating modeset register.
- * @modeset_shift: SHIFT for operating modeset register.
- */
 struct mt6357_regulator_info {
 	int irq;
 	int oc_irq_enable_delay_ms;

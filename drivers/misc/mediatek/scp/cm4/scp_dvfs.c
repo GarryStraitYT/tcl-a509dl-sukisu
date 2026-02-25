@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -58,12 +55,6 @@
 /* -1:SCP DVFS OFF, 1:SCP DVFS ON */
 static int scp_dvfs_flag = 1;
 
-/*
- * 0: SCP Sleep: OFF,
- * 1: SCP Sleep: ON,
- * 2: SCP Sleep: sleep without wakeup,
- * 3: SCP Sleep: force to sleep
- */
 static int scp_sleep_flag = -1;
 
 static int pre_pll_sel = -1;
@@ -395,10 +386,6 @@ void scp_vcore_request(unsigned int clk_opp)
 	DRV_WriteReg32(SCP_SCP2SPM_VOL_LV, dvfs->opp[idx].spm_opp);
 }
 
-/* scp_request_freq
- * return :-1 means the scp request freq. error
- * return :0  means the request freq. finished
- */
 int scp_request_freq(void)
 {
 	int value = 0;
@@ -613,13 +600,7 @@ static struct syscore_ops mt_scp_dvfs_syscore_ops = {
 };
 
 #ifdef CONFIG_PROC_FS
-/*
- * PROC
- */
 
-/****************************
- * show SCP state
- *****************************/
 static int mt_scp_dvfs_state_proc_show(struct seq_file *m, void *v)
 {
 	unsigned int scp_state;
@@ -638,9 +619,6 @@ static int mt_scp_dvfs_state_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/****************************
- * show scp dvfs sleep
- *****************************/
 static int mt_scp_dvfs_sleep_proc_show(struct seq_file *m, void *v)
 {
 	if (scp_sleep_flag == -1)
@@ -659,9 +637,6 @@ static int mt_scp_dvfs_sleep_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/**********************************
- * write scp dvfs sleep
- ***********************************/
 static ssize_t mt_scp_dvfs_sleep_proc_write(
 					struct file *file,
 					const char __user *buffer,
@@ -707,9 +682,6 @@ static ssize_t mt_scp_dvfs_sleep_proc_write(
 	return count;
 }
 
-/****************************
- * show scp dvfs ctrl
- *****************************/
 static int mt_scp_dvfs_ctrl_proc_show(struct seq_file *m, void *v)
 {
 	unsigned long spin_flags;
@@ -736,9 +708,6 @@ static int mt_scp_dvfs_ctrl_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-/**********************************
- * write scp dvfs ctrl
- ***********************************/
 static ssize_t mt_scp_dvfs_ctrl_proc_write(
 					struct file *file,
 					const char __user *buffer,
@@ -1424,9 +1393,6 @@ fail:
 	return -1;
 }
 
-/***************************************
- * this function should never be called
- ****************************************/
 static int mt_scp_dvfs_pdrv_remove(struct platform_device *pdev)
 {
 	return 0;
@@ -1454,9 +1420,6 @@ static struct platform_driver mt_scp_dvfs_pdrv __refdata = {
 	},
 };
 
-/**********************************
- * mediatek scp dvfs initialization
- ***********************************/
 void __init mt_scp_dvfs_ipi_init(void)
 {
 	scp_ipi_registration(IPI_SCP_PLL_CTRL,

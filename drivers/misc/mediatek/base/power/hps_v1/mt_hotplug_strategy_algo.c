@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) 2015 MediaTek Inc.
- */
 
-/**
- * @file    mt_hotplug_strategy_algo.c
- * @brief   hotplug strategy(hps) - algo
- */
 
 #include <linux/kernel.h>
 #include <linux/module.h>	/* MODULE_DESCRIPTION, MODULE_LICENSE */
@@ -17,9 +10,6 @@
 
 #include "mt_hotplug_strategy_internal.h"
 
-/*
- * hps algo - hmp
- */
 
 static void algo_hmp_limit(
 		struct cpumask *little_online_cpumask,
@@ -607,9 +597,6 @@ ALGO_END_WO_ACTION:
 	mutex_unlock(&hps_ctxt.lock);
 }
 
-/*
- * hps algo - smp
- */
 static void algo_smp_limit(
 		struct cpumask *little_online_cpumask,
 		unsigned int little_num_base,

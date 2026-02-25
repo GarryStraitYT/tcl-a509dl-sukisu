@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef __ASM_ARCH_DMA_H
 #define __ASM_ARCH_DMA_H
@@ -37,9 +34,6 @@ enum {
 /* define DMA ISR callback function's prototype */
 typedef void (*DMA_ISR_CALLBACK) (void *);
 
-/*
- * NoteXXX: Implementation below is obsolete and deprecated.
- */
 
 #include <linux/types.h>
 
@@ -135,10 +129,6 @@ extern int mt_warm_reset_gdma(int channel);
 extern int mt_hard_reset_gdma(int channel);
 extern int mt_reset_gdma(int channel);
 extern void mt_dma_running_status(void);
-/* This channel is used for APDMA Dummy READ.
- * in MT6592 this channel will be used by Frequency hopping all the time
- * .Owner: Chieh-Jay Liu
- */
 #define DFS_APDMA_CHANNEL 0
 
 #endif				/* !__MT_DMA_H__ */

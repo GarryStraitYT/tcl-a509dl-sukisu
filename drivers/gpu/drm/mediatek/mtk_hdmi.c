@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2014 MediaTek Inc.
- * Author: Jie Qiu <jie.qiu@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
@@ -656,11 +643,6 @@ static const struct hdmi_acr_n hdmi_rec_n_table[] = {
 	{      0, {  4096,  6272,  6144 } }, /* all other TMDS clocks */
 };
 
-/**
- * hdmi_recommended_n() - Return N value recommended by HDMI specification
- * @freq: audio sample rate in Hz
- * @clock: rounded TMDS clock in kHz
- */
 static unsigned int hdmi_recommended_n(unsigned int freq, unsigned int clock)
 {
 	const struct hdmi_acr_n *recommended;
@@ -1284,9 +1266,6 @@ static void mtk_hdmi_hpd_event(bool hpd, struct device *dev)
 		drm_helper_hpd_irq_event(hdmi->bridge.encoder->dev);
 }
 
-/*
- * Bridge callbacks
- */
 
 static int mtk_hdmi_bridge_attach(struct drm_bridge *bridge)
 {
@@ -1517,9 +1496,6 @@ static int mtk_hdmi_dt_parse_pdata(struct mtk_hdmi *hdmi,
 	return 0;
 }
 
-/*
- * HDMI audio codec callbacks
- */
 
 static int mtk_hdmi_audio_hw_params(struct device *dev, void *data,
 				    struct hdmi_codec_daifmt *daifmt,

@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #ifndef _PRIMARY_DISPLAY_H_
 #define _PRIMARY_DISPLAY_H_
@@ -32,37 +29,6 @@ enum DISP_PRIMARY_PATH_MODE {
 	DEBUG_RDMA1_DSI0_MODE
 };
 
-/*enum MTK_SMI_BWC_SCEN {
-	SMI_BWC_SCEN_NORMAL,
-	SMI_BWC_SCEN_UI_IDLE,
-	SMI_BWC_SCEN_VPMJC,
-	SMI_BWC_SCEN_FORCE_MMDVFS,
-	SMI_BWC_SCEN_HDMI,
-	SMI_BWC_SCEN_HDMI4K,
-	SMI_BWC_SCEN_WFD,
-	SMI_BWC_SCEN_VENC,
-	SMI_BWC_SCEN_SWDEC_VP,
-	SMI_BWC_SCEN_VP,
-	SMI_BWC_SCEN_VP_HIGH_FPS,
-	SMI_BWC_SCEN_VP_HIGH_RESOLUTION,
-	SMI_BWC_SCEN_VR,
-	SMI_BWC_SCEN_VR_SLOW,
-	SMI_BWC_SCEN_VSS,
-	SMI_BWC_SCEN_CAM_PV,
-	SMI_BWC_SCEN_CAM_CP,
-	SMI_BWC_SCEN_ICFP,
-	SMI_BWC_SCEN_MM_GPU,
-	SMI_BWC_SCEN_CNT
-};
-
-enum {
-	MMDVFS_CAM_MON_SCEN = SMI_BWC_SCEN_CNT, MMDVFS_SCEN_MHL,
-	MMDVFS_SCEN_MJC, MMDVFS_SCEN_DISP, MMDVFS_SCEN_ISP,
-	MMDVFS_SCEN_VP_HIGH_RESOLUTION, MMDVFS_SCEN_VPU, MMDVFS_MGR,
-	MMDVFS_SCEN_VPU_KERNEL, MMDVFS_PMQOS_ISP,
-	MMDVFS_SCEN_VP_WFD, MMDVFS_SCEN_COUNT
-};
-*/
 
 #define UINT8 unsigned char
 #define UINT32 unsigned int
@@ -409,9 +375,6 @@ int primary_display_diagnose(void);
 
 int primary_display_get_info(struct disp_session_info *info);
 int primary_display_capture_framebuffer(unsigned long pbuf);
-int primary_display_capture_framebuffer_ovl(unsigned long pbuf,
-	unsigned int format);
-
 int primary_display_is_video_mode(void);
 int primary_is_sec(void);
 int do_primary_display_switch_mode(int sess_mode, unsigned int session,

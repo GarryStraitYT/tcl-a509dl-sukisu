@@ -1,8 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2019 MediaTek Inc.
- * Author: Joey Pan <joey.pan@mediatek.com>
- */
 
 #ifndef __LCM_DRV_H__
 #define __LCM_DRV_H__
@@ -872,13 +868,6 @@ struct LCM_setting_table_V3 {
 	unsigned char para_list[128];
 };
 
-/*
- * dtype	---- data type
- * vc		---- virtual channel
- * dlen	---- data length
- * link_state ---- HS:0  LP:1
- * payload ---- payload
- */
 struct dsi_cmd_desc {
 	unsigned int dtype;
 	unsigned int vc;

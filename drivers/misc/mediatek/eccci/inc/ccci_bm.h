@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2016 MediaTek Inc.
- */
 
 #ifndef __CCCI_BM_H__
 #define __CCCI_BM_H__
@@ -9,16 +6,6 @@
 #include "ccci_common_config.h"
 #include "ccci_core.h"
 
-/*
- * the actually allocated skb's buffer is much bigger than what we request,
- * so when we judge which pool it belongs, the comparision is quite tricky...
- * another trikcy part is, ccci_fsd use CCCI_MTU as its payload size,
- * but it treat both ccci_header and op_id as header, so the total packet size
- * will be CCCI_MTU+sizeof(ccci_header)+sizeof(unsigned int).
- * check port_char's write() and ccci_fsd for detail.
- *
- * beaware, these macros are also used by CLDMA
- */
 /* user MTU+CCCI_H+extra(ex. ccci_fsd's OP_ID), for general packet */
 #define SKB_4K (CCCI_MTU+128)
 /* net MTU+CCCI_H, for network packet */
@@ -36,15 +23,6 @@
 #define skb_data_size(x) ((x)->end - (x)->data)
 #endif
 
-/*
- * This tells request free routine how it handles skb.
- * The CCCI request structure will always be recycled,
- * but its skb can have different policy.
- * CCCI request can work as just a wrapper,
- * due to netowork subsys will handler skb itself.
- * Tx: policy is determined by sender;
- * Rx: policy is determined by receiver;
- */
 enum DATA_POLICY {
 	FREE = 0,		/* simply free the skb */
 	RECYCLE,		/* put the skb back into our pool */

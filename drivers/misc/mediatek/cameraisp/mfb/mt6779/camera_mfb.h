@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (c) 2015 MediaTek Inc.
- */
 
 #ifndef _MT_MFB_H
 #define _MT_MFB_H
@@ -14,9 +11,6 @@
 #include <linux/compat.h>
 #endif
 
-/*
- *   enforce kernel log enable
- */
 #define KERNEL_LOG		/* enable debug log flag if defined */
 
 #define _SUPPORT_MAX_MFB_FRAME_REQUEST_ 32
@@ -24,9 +18,6 @@
 
 
 #define SIG_ERESTARTSYS 512	/* ERESTARTSYS */
-/*
- *
- */
 #define MFB_DEV_MAJOR_NUMBER    258
 
 #define MFB_MAGIC               'm'
@@ -53,9 +44,6 @@ struct MFB_REG_IO_STRUCT {
 };
 #define MFB_REG_IO_STRUCT struct MFB_REG_IO_STRUCT
 
-/*
- *   interrupt clear type
- */
 enum MFB_IRQ_CLEAR_ENUM {
 	MFB_IRQ_CLEAR_NONE,
 	MFB_IRQ_CLEAR_WAIT,
@@ -64,11 +52,6 @@ enum MFB_IRQ_CLEAR_ENUM {
 	MFB_IRQ_CLEAR_ALL
 };
 #define MFB_IRQ_CLEAR_ENUM enum MFB_IRQ_CLEAR_ENUM
-/*
- *   module's interrupt , each module should have its own isr.
- *   note:
- *	mapping to isr table,ISR_TABLE when using no device tree
- */
 enum MFB_IRQ_TYPE_ENUM {
 	MFB_IRQ_TYPE_INT_MFB_ST,	/* MFB */
 	MFB_IRQ_TYPE_AMOUNT
@@ -296,9 +279,6 @@ struct MFB_Config {
 };
 #define MFB_Config struct MFB_Config
 
-/*
- *
- */
 enum MFB_CMD_ENUM {
 	MFB_CMD_RESET,		/* Reset */
 	MFB_CMD_DUMP_REG,	/* Dump MFB Register */

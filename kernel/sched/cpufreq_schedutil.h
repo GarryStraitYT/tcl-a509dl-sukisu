@@ -1,7 +1,4 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*
- * Copyright (C) 2020 MediaTek Inc.
- */
 
 enum mt_cpu_dvfs_id {
 	MT_CPU_DVFS_LL,

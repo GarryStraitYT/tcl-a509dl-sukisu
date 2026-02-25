@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (c) 2019 MediaTek Inc.
- */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
@@ -103,9 +100,6 @@ struct lm3643_chip_data {
 };
 
 
-/******************************************************************************
- * Pinctrl configuration
- *****************************************************************************/
 static int lm3643_pinctrl_init(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -165,9 +159,6 @@ static int lm3643_pinctrl_set(int pin, int state)
 }
 
 
-/******************************************************************************
- * lm3643 operations
- *****************************************************************************/
 static const int lm3643_current[LM3643_LEVEL_NUM] = {
 	 22,  46,  70,  93,  116, 140, 163, 198, 245, 304,
 	351, 398, 445, 503,  550, 597, 656, 703, 750, 796,
@@ -441,9 +432,6 @@ int lm3643_uninit(void)
 }
 
 
-/******************************************************************************
- * Timer and work queue
- *****************************************************************************/
 static struct hrtimer lm3643_timer_ch1;
 static struct hrtimer lm3643_timer_ch2;
 static unsigned int lm3643_timeout_ms[LM3643_CHANNEL_NUM];
@@ -501,9 +489,6 @@ static int lm3643_timer_cancel(int channel)
 }
 
 
-/******************************************************************************
- * Flashlight operations
- *****************************************************************************/
 static int lm3643_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -651,9 +636,6 @@ static struct flashlight_operations lm3643_ops = {
 };
 
 
-/******************************************************************************
- * I2C device and driver
- *****************************************************************************/
 static int lm3643_chip_init(struct lm3643_chip_data *chip)
 {
 	/* NOTE: Chip initialication move to "set driver" for power saving.
@@ -800,9 +782,6 @@ static struct i2c_driver lm3643_i2c_driver = {
 };
 
 
-/******************************************************************************
- * Platform device and driver
- *****************************************************************************/
 static int lm3643_probe(struct platform_device *pdev)
 {
 	struct lm3643_platform_data *pdata = dev_get_platdata(&pdev->dev);
