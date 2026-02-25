@@ -3,7 +3,7 @@
 What's borked:
 - WiFi
 - Bluetooth
-- ~~Touchscreen~~ Fixed!
+- ~~Touchscreen~~ [Fixed!]
 - Modem(?)/Calls
 
 What works:
