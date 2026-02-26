@@ -187,9 +187,6 @@ static int mtktsbattery_get_temp(struct thermal_zone_device *thermal, int *t)
 {
 
 	*t = mtktsbattery_get_hw_temp();
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 
 	if ((int)*t >= polling_trip_temp1)
 		thermal->polling_delay = interval * 1000;
@@ -372,12 +369,14 @@ struct thermal_cooling_device *cdev, unsigned long state)
 		pr_debug("*****************************************");
 		pr_debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 
+/* Begin del by jin.wang for crash issue on 2021-11-22 */
+#if !defined(CONFIG_TCT_CHARGER)
 		/* To trigger data abort to reset the system
 		 * for thermal protection.
 		 */
-		/* Begin added by bitao.xiong for task-10031392 on 2020-10-10 */
-		//BUG();
-		/* End added by bitao.xiong for task-10031392 on 2020-10-10 */
+		BUG();
+#endif
+/* End del by jin.wang */
 	}
 	return 0;
 }

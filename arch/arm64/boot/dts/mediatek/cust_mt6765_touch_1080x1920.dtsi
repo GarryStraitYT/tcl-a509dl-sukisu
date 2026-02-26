@@ -24,14 +24,14 @@
 };
 
 &touch {
-	tpd-resolution = <720 1440>;
-	lcm-resolution = <720 1440>;
+	tpd-resolution = <1080 1920>;
+	lcm-resolution = <1080 1920>;
 	tpd-cfg-version = "config17";
-	tpd-max-touch-num = <5>;
+	tpd-max-touch-num = <10>;
 	interrupt-parent = <&pio>;
 	interrupts = <0 IRQ_TYPE_EDGE_FALLING 0 0>;
 	goodix,eint-gpio = <&pio 0 0x0>;
-	goodix,reset-gpio = <&pio 46 0x0>;
+	goodix,reset-gpio = <&pio 174 0x0>;
 	vtouch-supply = <&mt_pmic_vldo28_ldo_reg>;
 
 	/* Rotate cord when open blew lables */

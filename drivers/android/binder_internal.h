@@ -122,10 +122,12 @@ DEFINE_SHOW_ATTRIBUTE(binder_transactions);
 int binder_transaction_log_show(struct seq_file *m, void *unused);
 DEFINE_SHOW_ATTRIBUTE(binder_transaction_log);
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Add by jingyuan.wei for freezer on 2020/09/14
 int binder_freeze_show(struct seq_file *m, void *unused);
 DEFINE_SHOW_ATTRIBUTE(binder_freeze);
 //[TCT-ROM][PERF]End Add by jingyuan.wei for freezer on 2020/09/14
+#endif
 
 struct binder_transaction_log_entry {
 	int debug_id;

@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: GPL-2.0+
+&pe {
+	status = "disabled";
+};
+
+&pe2 {
+	status = "disabled";
+};
+
+&pe4 {
+	status = "disabled";
+};
+
+&pdc {
+	status = "disabled";
+};
+
+&mtk_charger_type {
+	bc12_active = <1>;
+};
+
+&usb {
+	charger = <&mtk_charger_type>;
+};
+
+&extcon_usb {
+	charger = <&mtk_charger_type>;
+	vbus-supply;
+};
+
+&lk_charger {
+	/delete-property/enable_pe_plus;
+	/delete-property/enable_pd20_reset;
+
+	ac_charger_current = <500000>;
+	charging_host_charger_current = <500000>;
+	led_brightness = <127>;
+	blinking_times = <6>;
+	blinking_period = <1500>;
+	temp_t4_threshold = <55>;
+	temp_t1_threshold = <0>;
+};
+
+&charger {
+	charger = <&mtk_charger_type>;
+	/delete-property/enable_pe_plus;
+	/delete-property/enable_pe_2;
+	/delete-property/enable_pe_3;
+	/delete-property/enable_pe_4;
+	/delete-property/enable_type_c;
+	/delete-property/enable_min_charge_temp;
+	/delete-property/enable_dynamic_mivr;
+	ac_charger_input_current = <2050000>;
+	ac_charger_current = <2000000>;
+	charging_host_charger_current = <1300000>;
+	battery_cv = <4400000>;
+	enable_sw_jeita;
+	/* sw jeita */
+	jeita_temp_above_t4_cv = <4100000>;
+	jeita_temp_t3_to_t4_cv = <4100000>;
+	jeita_temp_t2_to_t3_cv = <4400000>;
+	jeita_temp_t1_to_t2_cv = <4400000>;
+	jeita_temp_t0_to_t1_cv = <4400000>;
+	jeita_temp_below_t0_cv = <4400000>;
+	jeita_temp_above_t4_current = <0>;
+	jeita_temp_t3_to_t4_current = <1150000>;
+	jeita_temp_t2_to_t3_current = <1250000>;
+	jeita_temp_t1_to_t2_current = <1150000>;
+	jeita_temp_t0_to_t1_current = <1150000>;
+	jeita_temp_below_t0_current = <0>;
+
+	temp_t4_thres = <53>;
+	temp_t4_thres_minus_x_degree = <51>;
+	temp_t3_thres = <42>;
+	temp_t3_thres_minus_x_degree = <43>;
+	temp_t2_thres = <11>;
+	temp_t2_thres_plus_x_degree = <10>;
+	temp_t1_thres = <6>;
+	temp_t1_thres_plus_x_degree = <5>;
+	temp_t0_thres = <2>;
+	temp_t0_thres_plus_x_degree = <1>;
+	temp_neg_10_thres = <2>;
+
+	enable_min_charge_temp;
+	min_charge_temp = <1>;
+	min_charge_temp_plus_x_degree = <2>;
+	max_charge_temp = <53>;
+	max_charge_temp_minus_x_degree = <51>;
+};
+
+&mt6370_pmu {
+	status = "disabled";
+};
+
+&i2c3 {
+	usb_typec_will:usb_type_c@60 {
+		compatible = "mediatek,usb_type_c";
+		reg = <0x60>;
+		interrupt-parent = <&pio>;
+		interrupts = <3 0>;
+		wusb3801,intr_gpio = <&pio 3 0x0>;
+		interrupt-names = "wusb3801_int_irq";
+		status = "okay";
+	};
+};
+
+&i2c5 {
+	bq25601:bq25601@6B {
+		compatible = "mediatek,bq25601";
+		reg = <0x6B>;
+		charger_name = "primary_chg";
+		alias_name = "bq25601";
+		interrupt-parent = <&pio>;
+		interrupts = <12 0>;
+		bq25601,intr_gpio = <&pio 12 0x0>;
+		bq25601,en_gpio = <&pio 165 0x0>;
+		status = "okay";
+	};
+};

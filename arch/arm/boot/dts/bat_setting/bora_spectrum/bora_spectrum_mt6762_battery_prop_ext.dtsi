@@ -1,0 +1,137 @@
+// SPDX-License-Identifier: GPL-2.0
+#include <dt-bindings/iio/mt635x-auxadc.h>
+&mtk_gauge {
+	ACTIVE_TABLE = <(5)>;
+	MULTI_BATTERY = <(0)>;
+	Q_MAX_SYS_VOLTAGE_BAT0 = <(3350)>;
+	Q_MAX_SYS_VOLTAGE_BAT1 = <(3350)>;
+	Q_MAX_SYS_VOLTAGE_BAT2 = <(3350)>;
+	Q_MAX_SYS_VOLTAGE_BAT3 = <(3350)>;
+	PSEUDO1_EN = <(1)>;
+	PSEUDO100_EN = <(1)>;
+	PSEUDO100_EN_DIS = <(1)>;
+	PMIC_SHUTDOWN_CURRENT = <(20)>;
+	DIFFERENCE_FULLOCV_ITH = <(230)>;/* mA */
+ 	DIFFERENCE_FULLOCV_VTH = <(1000)>;/* 0.1mV */
+	CHARGE_PSEUDO_FULL_LEVEL = <(7600)>;/*report full when battery is hot state(cv=4.1V)*/
+	SHUTDOWN_1_TIME = <(30)>;
+	KEEP_100_PERCENT = <(1)>;
+	R_FG_VALUE = <(10)>;
+	EMBEDDED_SEL = <(0)>;
+	FG_METER_RESISTANCE = <(70)>;
+	COM_FG_METER_RESISTANCE = <(100)>;
+	CAR_TUNE_VALUE = <(100)>;
+	PMIC_MIN_VOL = <(33500)>;
+	POWERON_SYSTEM_IBOOT = <(500)>;
+	SHUTDOWN_GAUGE0_VOLTAGE = <(34000)>;
+	g_temperature =
+	<
+	50/*TEMPERATURE_T0*/
+	25/*TEMPERATURE_T1*/
+	10/*TEMPERATURE_T2*/
+	0/*TEMPERATURE_T3*/
+	(-10)/*TEMPERATURE_T4*/
+	>;
+	g_Q_MAX =
+	<
+	//BAT1  BAT2  BAT3  BAT4
+      2898 2993 3836 3949/*T0*/
+      2904 2998 3883 3928/*T1*/
+      2873 2907 3856 3937/*T2*/
+      2956 3012 3879 3987/*T3*/
+      2876 3016 3856 3957/*T4*/
+	>;
+	g_Q_MAX_H_CURRENT =
+	<
+    //BAT1 BAT2 BAT3 BAT4
+      2887 2974 3836 3944/*T0*/
+      2889 2961 3855 3908/*T1*/
+      2607 2768 3694 3844/*T2*/
+      2872 2601 3329 3449/*T3*/
+      1696 1713 2580 2472/*T4*/
+	>;
+	g_FG_PSEUDO1 =
+	<
+	//BAT1 BAT2 BAT3 BAT4
+	0    0    2    2/*T0*/
+	0    0    2    2/*T1*/
+	0    0    2    2/*T2*/
+	0    0    2    2/*T3*/
+	0    0    2    2/*T4*/
+	>;
+	g_FG_PSEUDO100 =
+	<
+	//BAT1 BAT2 BAT3 BAT4
+	100   100   97   97/*T0*/
+	100   100   97   97/*T1*/
+	100   100   97   97/*T2*/
+	100   100   92   92/*T3*/
+	100   100   90   90/*T4*/
+	>;
+	g_PMIC_MIN_VOL =
+	<
+	//BAT1  BAT2  BAT3  BAT4
+	33500 33500 33500 33500/*T0*/
+	33500 33500 33500 33500/*T1*/
+	33500 33500 33500 33500/*T2*/
+	33500 33500 33500 33500/*T3*/
+	33500 33500 33500 33500/*T4*/
+	>;
+	g_PON_SYS_IBOOT =
+	<
+	//BAT1 BAT2 BAT3 BAT4
+	5000 5000 5000 5000/*T0*/
+	5000 5000 5000 5000/*T1*/
+	5000 5000 5000 5000/*T2*/
+	5000 5000 5000 5000/*T3*/
+	5000 5000 5000 5000/*T4*/
+	>;
+	g_QMAX_SYS_VOL =
+	<
+	//BAT1  BAT2  BAT3  BAT4
+	33500 33500 33500 33500/*T0*/
+	33500 33500 33500 33500/*T1*/
+	33500 33500 33500 33500/*T2*/
+	33500 33500 33500 33500/*T3*/
+	33500 33500 33500 33500/*T4*/
+	>;
+	g_SHUTDOWN_HL_ZCV =
+	<
+	//BAT1 BAT2 BAT3 BAT4
+	3400 3400 3400 3400/*T0*/
+	3400 3400 3400 3400/*T1*/
+	3400 3400 3400 3400/*T2*/
+	3400 3400 3400 3400/*T3*/
+	3400 3400 3400 3400/*T4*/
+	>;
+	COM_R_FG_VALUE = <(0)>;
+	enable_tmp_intr_suspend = <(0)>;
+	MULTI_TEMP_GAUGE0 = <(1)>;
+	RBAT_PULL_UP_R = <(16900)>;
+	RBAT_PULL_UP_VOLT = <(1800)>;
+
+	battery-id-pullup-ohm = <(39000)>;
+
+	pmic = <&main_pmic>;
+	charger = <&sgm41513>;
+        bootvoltage = <&chosen>;
+	io-channels = <&pmic_auxadc AUXADC_BAT_TEMP>,
+		<&pmic_auxadc AUXADC_BATADC>,
+		<&pmic_auxadc AUXADC_VBIF>,
+		<&pmic_auxadc AUXADC_IMP>,
+		<&pmic_auxadc AUXADC_IMIX_R>,
+		<&pmic_auxadc AUXADC_ISENSE>,
+		<&auxadc 2>;
+	io-channel-names = "pmic_battery_temp",
+		"pmic_battery_voltage",
+		"pmic_bif_voltage",
+		"pmic_ptim_voltage",
+		"pmic_ptim_r",
+		"pmic_isense_voltage",
+		"battery_id";
+#if defined(TARGET_BUILD_MMITEST) || defined(TARGET_BUILD_CERTIFICATION) || defined(TARGET_BUILD_GCF) || defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+	FIXED_BATTERY_TEMPERATURE = <25>;
+#endif
+#include "battery_VK_TLi028C7_table_ext.dtsi"
+#include "battery_BYD_TLi028C1_table_ext.dtsi"
+};

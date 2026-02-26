@@ -699,6 +699,16 @@ void migrate_page_states(struct page *newpage, struct page *page)
 	if (page_is_idle(page))
 		set_page_idle(newpage);
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	if (PageProtect(page)) {
+		SetPageProtect(newpage);
+		ClearPageProtect(page);
+	}
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 	/*
 	 * Copy NUMA information to the new page, to prevent over-eager
 	 * future migrations of this same page.

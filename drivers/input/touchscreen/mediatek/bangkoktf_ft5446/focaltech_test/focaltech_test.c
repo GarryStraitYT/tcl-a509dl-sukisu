@@ -2,7 +2,7 @@
  *
  * FocalTech TouchScreen driver.
  *
- * Copyright (c) 2012-2019, FocalTech Systems, Ltd., all rights reserved.
+ * Copyright (c) 2012-2020, FocalTech Systems, Ltd., all rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -44,8 +44,7 @@
 struct fts_test *fts_ftest;
 
 struct test_funcs *test_func_list[] = {
-    &test_func_ft5422,
-	&test_func_ft5452,
+    &test_func_ft5472,
 };
 
 /*****************************************************************************
@@ -60,7 +59,7 @@ void sys_delay(int ms)
     msleep(ms);
 }
 
-int focal_abs(int value)
+int fts_abs(int value)
 {
     if (value < 0)
         value = 0 - value;
@@ -375,6 +374,36 @@ read_massdata_err:
     return ret;
 }
 
+int read_mass_data_u16(u8 addr, int byte_num, int *buf)
+{
+    int ret = 0;
+    int i = 0;
+    u8 *data = NULL;
+
+    data = (u8 *)fts_malloc(byte_num * sizeof(u8));
+    if (NULL == data) {
+        FTS_TEST_SAVE_ERR("mass data buffer malloc fail\n");
+        return -ENOMEM;
+    }
+
+    /* read rawdata buffer */
+    FTS_TEST_INFO("mass data len:%d", byte_num);
+    ret = fts_test_read(addr, data, byte_num);
+    if (ret < 0) {
+        FTS_TEST_SAVE_ERR("read mass data fail\n");
+        goto read_massdata_err;
+    }
+
+    for (i = 0; i < byte_num; i = i + 2) {
+        buf[i >> 1] = (int)(u16)((data[i] << 8) + data[i + 1]);
+    }
+
+    ret = 0;
+read_massdata_err:
+    fts_free(data);
+    return ret;
+}
+
 int short_get_adcdata_incell(u8 retval, u8 ch_num, int byte_num, int *adc_buf)
 {
     int ret = 0;
@@ -501,6 +530,7 @@ int start_scan(void)
 }
 
 static int read_rawdata(
+    struct fts_test *tdata,
     u8 off_addr,
     u8 off_val,
     u8 rawdata_addr,
@@ -516,7 +546,10 @@ static int read_rawdata(
         return ret;
     }
 
-    ret = read_mass_data(rawdata_addr, byte_num, data);
+    if (tdata->func->raw_u16)
+        ret = read_mass_data_u16(rawdata_addr, byte_num, data);
+    else
+        ret = read_mass_data(rawdata_addr, byte_num, data);
     if (ret < 0) {
         FTS_TEST_SAVE_ERR("read rawdata fail\n");
         return ret;
@@ -569,7 +602,7 @@ int get_rawdata(int *data)
     }
 
     byte_num = tdata->node.node_num * 2;
-    ret = read_rawdata(addr, val, rawdata_addr, byte_num, data);
+    ret = read_rawdata(tdata, addr, val, rawdata_addr, byte_num, data);
     if (ret < 0) {
         FTS_TEST_SAVE_ERR("read rawdata fail\n");
         return ret;
@@ -689,6 +722,7 @@ int get_cb_sc(int byte_num, int *cb_buf, enum byte_mode mode)
     int offset = 0;
     u8 cb_addr = 0;
     u8 off_addr = 0;
+    u8 off_h_addr = 0;
     struct fts_test *tdata = fts_ftest;
     u8 *cb = NULL;
 
@@ -706,6 +740,7 @@ int get_cb_sc(int byte_num, int *cb_buf, enum byte_mode mode)
     if (IC_HW_MC_SC == tdata->func->hwtype) {
         cb_addr = FACTORY_REG_MC_SC_CB_ADDR;
         off_addr = FACTORY_REG_MC_SC_CB_ADDR_OFF;
+        off_h_addr = FACTORY_REG_MC_SC_CB_H_ADDR_OFF;
     } else if (IC_HW_SC == tdata->func->hwtype) {
         cb_addr = FACTORY_REG_SC_CB_ADDR;
         off_addr = FACTORY_REG_SC_CB_ADDR_OFF;
@@ -728,6 +763,14 @@ int get_cb_sc(int byte_num, int *cb_buf, enum byte_mode mode)
         if (ret < 0) {
             FTS_TEST_SAVE_ERR("write cb addr offset fail\n");
             goto cb_err;
+        }
+
+        if (tdata->func->cb_high_support) {
+            ret = fts_test_write_reg(off_h_addr, offset >> 8);
+            if (ret < 0) {
+                FTS_TEST_SAVE_ERR("write cb_h addr offset fail\n");
+                goto cb_err;
+            }
         }
 
         ret = fts_test_read(cb_addr, cb + offset, read_num);
@@ -961,16 +1004,21 @@ int get_rawdata_mc_sc(enum wp_type wp, int *data)
         return -EINVAL;
     }
 
+    byte_num = tdata->sc_node.node_num * 2;
     addr = FACTORY_REG_LINE_ADDR;
     rawdata_addr = FACTORY_REG_RAWDATA_ADDR_MC_SC;
     if (WATER_PROOF_ON == wp) {
         val = 0xAC;
-    } else {
+    } else if (WATER_PROOF_OFF == wp) {
         val = 0xAB;
+    } else if (HIGH_SENSITIVITY == wp) {
+        val = 0xA0;
+    } else if (HOV == wp) {
+        val = 0xA1;
+        byte_num = 4 * 2;
     }
 
-    byte_num = tdata->sc_node.node_num * 2;
-    ret = read_rawdata(addr, val, rawdata_addr, byte_num, data);
+    ret = read_rawdata(tdata, addr, val, rawdata_addr, byte_num, data);
     if (ret < 0) {
         FTS_TEST_SAVE_ERR("read rawdata fail\n");
         return ret;
@@ -1021,10 +1069,24 @@ int short_get_adc_data_mc(u8 retval, int byte_num, int *adc_buf, u8 mode)
     int ret = 0;
     int i = 0;
     u8 short_state = 0;
+    u8 short_state_reg = 0;
+    u8 short_en_reg = 0;
+    u8 short_data_reg = 0;
+    struct fts_test *tdata = fts_ftest;
 
     FTS_TEST_FUNC_ENTER();
+    if (tdata->func->mc_sc_short_v2) {
+        short_en_reg = FACTROY_REG_SHORT2_TEST_EN;
+        short_state_reg = FACTROY_REG_SHORT2_TEST_STATE;
+        short_data_reg = FACTORY_REG_SHORT2_ADDR_MC;
+    } else {
+        short_en_reg = FACTROY_REG_SHORT_TEST_EN;
+        short_state_reg = FACTROY_REG_SHORT_TEST_EN;
+        short_data_reg = FACTORY_REG_SHORT_ADDR_MC;
+    }
+
     /* select short test mode & start test */
-    ret = fts_test_write_reg(FACTROY_REG_SHORT_TEST_EN, mode);
+    ret = fts_test_write_reg(short_en_reg, mode);
     if (ret < 0) {
         FTS_TEST_SAVE_ERR("write short test mode fail\n");
         goto test_err;
@@ -1033,12 +1095,11 @@ int short_get_adc_data_mc(u8 retval, int byte_num, int *adc_buf, u8 mode)
     for (i = 0; i < FACTORY_TEST_RETRY; i++) {
         sys_delay(FACTORY_TEST_RETRY_DELAY);
 
-        ret = fts_test_read_reg(FACTROY_REG_SHORT_TEST_EN, &short_state);
+        ret = fts_test_read_reg(short_state_reg, &short_state);
         if ((ret >= 0) && (retval == short_state))
             break;
         else
-            FTS_TEST_DBG("reg%x=%x,retry:%d",
-                         FACTROY_REG_SHORT_TEST_EN, short_state, i);
+            FTS_TEST_DBG("reg%x=%x,retry:%d", short_state_reg, short_state, i);
     }
     if (i >= FACTORY_TEST_RETRY) {
         FTS_TEST_SAVE_ERR("short test timeout, ADC data not OK\n");
@@ -1046,7 +1107,7 @@ int short_get_adc_data_mc(u8 retval, int byte_num, int *adc_buf, u8 mode)
         goto test_err;
     }
 
-    ret = read_mass_data(FACTORY_REG_SHORT_ADDR_MC, byte_num, adc_buf);
+    ret = read_mass_data(short_data_reg, byte_num, adc_buf);
     if (ret < 0) {
         FTS_TEST_SAVE_ERR("get short(adc) data fail\n");
     }
@@ -1113,20 +1174,6 @@ void show_data_mc_sc(int *data)
 }
 /* mc_sc end*/
 
-static int dev_mkdir(char *name, umode_t mode)
-{
-	int err;
-	mm_segment_t fs;
-
-	//printk("mkdir: %s\n", name);
-	fs = get_fs();
-	set_fs(KERNEL_DS);
-	err = ksys_mkdir(name, mode);
-	set_fs(fs);
-
-	return err;
-}
-
 #if CSV_SUPPORT || TXT_SUPPORT
 static int fts_test_save_test_data(char *file_name, char *data_buf, int len)
 {
@@ -1135,21 +1182,10 @@ static int fts_test_save_test_data(char *file_name, char *data_buf, int len)
     loff_t pos;
     mm_segment_t old_fs;
 
-    int rest = 0;
-
     FTS_TEST_FUNC_ENTER();
-    
-
-    rest = dev_mkdir(FTS_DATA_FILE_PATH, 0775);
-	if (rest && rest != -EEXIST){
-		printk(KERN_ERR "min.luo fts_test_save_test_data mkdir %s fail!\n",FTS_DATA_FILE_PATH);
-	}
-
-	printk(KERN_ERR "min.luo fts_test_save_test_data mkdir=%s!\n",FTS_DATA_FILE_PATH);
-
-
     memset(filepath, 0, sizeof(filepath));
-    snprintf(filepath, FILE_NAME_LENGTH, "%s%s", FTS_DATA_FILE_PATH, file_name);//FTS_INI_FILE_PATH
+    snprintf(filepath, FILE_NAME_LENGTH, "%s%s", FTS_INI_FILE_PATH, file_name);
+    FTS_INFO("save test data to %s", filepath);
     if (NULL == pfile) {
         pfile = filp_open(filepath, O_TRUNC | O_CREAT | O_RDWR, 0);
     }
@@ -1168,6 +1204,20 @@ static int fts_test_save_test_data(char *file_name, char *data_buf, int len)
     FTS_TEST_FUNC_EXIT();
     return 0;
 }
+
+#if defined(TEST_SAVE_FAIL_RESULT) && TEST_SAVE_FAIL_RESULT
+void fts_test_save_fail_result(
+    struct fts_test *tdata, char *prefix, char *suffix, char *buf, int len)
+{
+    char file_name[128];
+
+    if (false == tdata->result) {
+        snprintf(file_name, 128, "%s_%ld_%ld%s", prefix,
+                 (long)tdata->tv.tv_sec, (long)tdata->tv.tv_usec, suffix);
+        fts_test_save_test_data(file_name, buf, len);
+    }
+}
+#endif
 #endif
 
 static int fts_test_malloc_free_data_txt(struct fts_test *tdata, bool allocate)
@@ -1195,11 +1245,51 @@ static int fts_test_malloc_free_data_txt(struct fts_test *tdata, bool allocate)
     return 0;
 }
 
+#if CSV_SUPPORT
+static int fts_test_get_item_count_scap_csv(int index)
+{
+    int ret = 0;
+    int i = 0;
+    int select = 0;
+    u8 wc_sel = 0;
+    u8 hc_sel = 0;
+    u8 scap_select[4] = { 0 };
+
+    /* get waterproof channel select */
+    ret = fts_test_read_reg(FACTORY_REG_WC_SEL, &wc_sel);
+    if (ret < 0) {
+        FTS_TEST_SAVE_ERR("read water_channel_sel fail,ret=%d\n", ret);
+        return index;
+    }
+
+    ret = fts_test_read_reg(FACTORY_REG_HC_SEL, &hc_sel);
+    if (ret < 0) {
+        FTS_TEST_SAVE_ERR("read high_channel_sel fail,ret=%d\n", ret);
+        return index;
+    }
+
+    scap_select[0] = get_fw_wp(wc_sel, WATER_PROOF_ON);
+    scap_select[1] = get_fw_wp(wc_sel, WATER_PROOF_OFF);
+    scap_select[2] = (hc_sel & 0x03) ? 1 : 0;
+    scap_select[3] = (hc_sel & 0x04) ? 1 : 0;
+
+    for (i = 0; i < 4; i++) {
+        if (scap_select[i])
+            select++;
+        if (select == index)
+            break;
+    }
+
+    return (i + 1);
+}
+#endif
+
 static void fts_test_save_data_csv(struct fts_test *tdata)
 {
 #if CSV_SUPPORT
     int i = 0;
     int j = 0;
+    int index = 0;
     int k = 0;
     int tx = 0;
     int rx = 0;
@@ -1261,11 +1351,26 @@ static void fts_test_save_data_csv(struct fts_test *tdata)
         }
 
         for (j = 1; j <= data_count; j++) {
+            index = j;
+
+            if (tdata->func->hwtype == IC_HW_MC_SC) {
+                /*MC_SC, rawdata index will be 2*/
+                if ((info->code == CODE_M_RAWDATA_TEST) && (data_count == 1)) {
+                    index = 2;
+                }
+
+                /*MC_SC, SCAP index will be 1~4*/
+                if ((info->code == CODE_M_SCAP_CB_TEST)
+                    || (info->code == CODE_M_SCAP_RAWDATA_TEST)) {
+                    index = fts_test_get_item_count_scap_csv(j);
+                }
+            }
+
             line2_length += snprintf(line2_buffer + line2_length, \
                                      CSV_LINE2_BUFFER_LEN - line2_length, \
                                      "%s, %d, %d, %d, %d, %d, ", \
                                      info->name, info->code, tx, rx,
-                                     start_line, j);
+                                     start_line, index);
             start_line += tx;
             csv_item_count++;
         }
@@ -1297,7 +1402,7 @@ static void fts_test_save_data_csv(struct fts_test *tdata)
 
         if (info->mc_sc) {
             offset = 0;
-            for (j = 0; j < info->datalen; j++) {
+            for (j = 0; j < info->datalen;) {
                 for (k = 0; k < tdata->sc_node.node_num; k++) {
                     csv_length += snprintf(csv_buffer + csv_length, \
                                            CSV_BUFFER_LEN - csv_length, \
@@ -1330,6 +1435,12 @@ static void fts_test_save_data_csv(struct fts_test *tdata)
     FTS_TEST_INFO("csv length:%d", csv_length);
     fts_test_save_test_data(FTS_CSV_FILE_NAME, csv_buffer, csv_length);
 
+#if defined(TEST_SAVE_FAIL_RESULT) && TEST_SAVE_FAIL_RESULT
+    fts_test_save_fail_result(tdata, "testdata_fail", ".csv",
+                              csv_buffer, csv_length);
+#endif
+
+
 csv_save_err:
     if (line2_buffer) {
         vfree(line2_buffer);
@@ -1354,6 +1465,12 @@ static void fts_test_save_result_txt(struct fts_test *tdata)
     FTS_TEST_INFO("test result length in txt:%d", tdata->testresult_len);
     fts_test_save_test_data(FTS_TXT_FILE_NAME, tdata->testresult,
                             tdata->testresult_len);
+
+#if defined(TEST_SAVE_FAIL_RESULT) && TEST_SAVE_FAIL_RESULT
+    fts_test_save_fail_result(tdata, "testresult_fail", ".txt",
+                              tdata->testresult, tdata->testresult_len);
+#endif
+
 #endif
 }
 
@@ -1473,11 +1590,19 @@ static int fts_test_malloc_free_mc_sc(struct fts_test *tdata, bool allocate)
         fts_malloc_r(thr->scap_cb_off_max, buflen_sc);
         fts_malloc_r(thr->scap_cb_on_min, buflen_sc);
         fts_malloc_r(thr->scap_cb_on_max, buflen_sc);
+        fts_malloc_r(thr->scap_cb_hi_min, buflen_sc);
+        fts_malloc_r(thr->scap_cb_hi_max, buflen_sc);
+        fts_malloc_r(thr->scap_cb_hov_min, buflen_sc);
+        fts_malloc_r(thr->scap_cb_hov_max, buflen_sc);
 
         fts_malloc_r(thr->scap_rawdata_off_min, buflen_sc);
         fts_malloc_r(thr->scap_rawdata_off_max, buflen_sc);
         fts_malloc_r(thr->scap_rawdata_on_min, buflen_sc);
         fts_malloc_r(thr->scap_rawdata_on_max, buflen_sc);
+        fts_malloc_r(thr->scap_rawdata_hi_min, buflen_sc);
+        fts_malloc_r(thr->scap_rawdata_hi_max, buflen_sc);
+        fts_malloc_r(thr->scap_rawdata_hov_min, buflen_sc);
+        fts_malloc_r(thr->scap_rawdata_hov_max, buflen_sc);
 
         fts_malloc_r(thr->panel_differ_min, buflen);
         fts_malloc_r(thr->panel_differ_max, buflen);
@@ -1497,11 +1622,19 @@ static int fts_test_malloc_free_mc_sc(struct fts_test *tdata, bool allocate)
         fts_free(thr->scap_cb_off_max);
         fts_free(thr->scap_cb_on_min);
         fts_free(thr->scap_cb_on_max);
+        fts_free(thr->scap_cb_hi_min);
+        fts_free(thr->scap_cb_hi_max);
+        fts_free(thr->scap_cb_hov_min);
+        fts_free(thr->scap_cb_hov_max);
 
         fts_free(thr->scap_rawdata_off_min);
         fts_free(thr->scap_rawdata_off_max);
         fts_free(thr->scap_rawdata_on_min);
         fts_free(thr->scap_rawdata_on_max);
+        fts_free(thr->scap_rawdata_hi_min);
+        fts_free(thr->scap_rawdata_hi_max);
+        fts_free(thr->scap_rawdata_hov_min);
+        fts_free(thr->scap_rawdata_hov_max);
 
         fts_free(thr->panel_differ_min);
         fts_free(thr->panel_differ_max);
@@ -1675,8 +1808,8 @@ static int get_channel_num(struct fts_test *tdata)
             return ret;
         }
 
-        tdata->node.tx_num = 2;
-        tdata->node.rx_num = tx_num / 2;
+        tdata->node.tx_num = 1;
+        tdata->node.rx_num = tx_num;
         tdata->node.channel_num = tx_num;
         tdata->node.node_num = tx_num;
         key_num = rx_num;
@@ -1923,8 +2056,13 @@ static int fts_test_entry(char *ini_file_name)
     /* Start testing according to the test configuration */
     if (true == fts_test_start()) {
         FTS_TEST_SAVE_INFO("\n\n=======Tp test pass.\n");
+        fts_ftest->result = true;
     } else {
         FTS_TEST_SAVE_INFO("\n\n=======Tp test failure.\n");
+        fts_ftest->result = false;
+#if defined(TEST_SAVE_FAIL_RESULT) && TEST_SAVE_FAIL_RESULT
+        do_gettimeofday(&(fts_ftest->tv));
+#endif
     }
 
     ret = 0;
@@ -1937,7 +2075,20 @@ test_err:
 static ssize_t fts_test_show(
     struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return -EPERM;
+    struct fts_ts_data *ts_data = fts_data;
+    struct input_dev *input_dev = ts_data->input_dev;
+    ssize_t size = 0;
+
+    mutex_lock(&input_dev->mutex);
+    size += snprintf(buf + size, PAGE_SIZE, "FTS_INI_FILE_PATH:%s\n",
+                     FTS_INI_FILE_PATH);
+    size += snprintf(buf + size, PAGE_SIZE, "FTS_CSV_FILE_NAME:%s\n",
+                     FTS_CSV_FILE_NAME);
+    size += snprintf(buf + size, PAGE_SIZE, "FTS_TXT_FILE_NAME:%s\n",
+                     FTS_TXT_FILE_NAME);
+    mutex_unlock(&input_dev->mutex);
+
+    return size;
 }
 
 static ssize_t fts_test_store(
@@ -2006,7 +2157,7 @@ static int fts_test_func_init(struct fts_ts_data *ts_data)
 {
     int i = 0;
     int j = 0;
-    int ic_stype = ts_data->ic_info.ids.type;
+    u16 ic_stype = ts_data->ic_info.ids.type;
     struct test_funcs *func = test_func_list[0];
     int func_count = sizeof(test_func_list) / sizeof(test_func_list[0]);
 
@@ -2024,7 +2175,7 @@ static int fts_test_func_init(struct fts_ts_data *ts_data)
 
     for (i = 0; i < func_count; i++) {
         func = test_func_list[i];
-        for (j = 0; j < FTX_MAX_COMPATIBLE_TYPE; j++) {
+        for (j = 0; j < FTS_MAX_COMPATIBLE_TYPE; j++) {
             if (0 == func->ctype[j])
                 break;
             else if (func->ctype[j] == ic_stype) {

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _UAPILINUX_SERIAL_CORE_H
 #define _UAPILINUX_SERIAL_CORE_H
 
@@ -253,4 +253,6 @@
 /* MediaTek BTIF */
 #define PORT_MTK_BTIF	117
 
+/* Mediatek */
+#define PORT_MTK	118
 #endif /* _UAPILINUX_SERIAL_CORE_H */

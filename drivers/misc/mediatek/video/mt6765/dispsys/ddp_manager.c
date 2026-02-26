@@ -347,7 +347,7 @@ static int acquire_mutex(enum DDP_SCENARIO_ENUM scenario)
 
 	struct DDP_MANAGER_CONTEXT *ctx = _get_context();
 
-	ASSERT(scenario >= 0 && scenario < DDP_SCENARIO_MAX);
+	ASSERT(scenario < DDP_SCENARIO_MAX);
 	mutex_idx_free = ctx->mutex_idx;
 	while (mutex_idx_free) {
 		if (mutex_idx_free & 0x1) {
@@ -754,7 +754,7 @@ int dpmgr_path_set_dst_module(disp_path_handle dp_handle,
 	}
 
 	handle = (struct ddp_path_handle *)dp_handle;
-	if (!(handle->scenario >= 0 && handle->scenario < DDP_SCENARIO_MAX)) {
+	if (handle->scenario >= DDP_SCENARIO_MAX) {
 		ASSERT(0);
 		return -1;
 	}
@@ -788,7 +788,7 @@ enum DISP_MODULE_ENUM dpmgr_path_get_dst_module(disp_path_handle dp_handle)
 	}
 	handle = (struct ddp_path_handle *)dp_handle;
 
-	if (!(handle->scenario >= 0 && handle->scenario < DDP_SCENARIO_MAX)) {
+	if (handle->scenario >= DDP_SCENARIO_MAX) {
 		ASSERT(0);
 		return -1;
 	}

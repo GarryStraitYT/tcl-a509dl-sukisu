@@ -56,6 +56,10 @@ extern void __iomem *INT_POL_CTL0;
 #define GIC_PRIVATE_SIGNALS     (32)
 #endif
 
+/* GIC sensitive */
+#define SENS_EDGE	(0x2)
+#define SENS_LEVEL	(0x0)
+
 void mt_cirq_enable(void);
 void mt_cirq_disable(void);
 void mt_cirq_clone_gic(void);
@@ -84,6 +88,8 @@ struct cirq_events {
 	void __iomem *cirq_base;
 	struct list_head used_reg_head;
 };
+
+extern unsigned int mt_irq_get_sens(unsigned int irq);
 
 /*#define FAST_CIRQ_DEBUG*/
 /*#define LATENCY_CHECK*/

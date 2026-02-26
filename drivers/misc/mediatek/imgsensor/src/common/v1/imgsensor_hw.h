@@ -31,6 +31,21 @@ enum IMGSENSOR_RETURN imgsensor_hw_power(
 	struct IMGSENSOR_SENSOR *psensor,
 	char *curr_sensor_name,
 	enum IMGSENSOR_HW_POWER_STATUS pwr_status);
+#ifdef TCT_CAM_DRIVER_SUPPORT
+enum IMGSENSOR_RETURN imgsensor_hw_myPowers(
+	struct IMGSENSOR_HW *phw,
+	struct IMGSENSOR_SENSOR *psensor,
+	enum IMGSENSOR_HW_POWER_STATUS pwr_status,struct IMGSENSOR_HW_MYPOWER_INFO *pwr_info);
+#endif
 
+//zhongzhu add for tctcamera development start,2022/06/08
+extern enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
+		struct IMGSENSOR_HW             *phw,
+		enum   IMGSENSOR_SENSOR_IDX      sensor_idx,
+		enum   IMGSENSOR_HW_POWER_STATUS pwr_status,
+		struct IMGSENSOR_HW_POWER_SEQ   *ppower_sequence,
+		int power_size,
+		char *pcurr_idx);
+//zhongzhu add for tctcamera development end,2022/06/08
 #endif
 

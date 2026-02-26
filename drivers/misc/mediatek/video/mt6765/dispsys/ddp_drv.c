@@ -637,8 +637,13 @@ static int __init disp_late(void)
 	ret = display_bias_regulator_init();
 	if (ret < 0)
 		pr_info("get dsv_pos fail, ret = %d\n", ret);
-
+	#if 0
 	display_bias_enable();
+	#endif
+        #ifdef CONFIG_TCT_PROJECT_SONATA
+        display_bias_vsp_setting();
+	display_bias_vsn_setting();
+	#endif
 
 	DDPMSG("disp driver(1) disp_late end\n");
 	return 0;

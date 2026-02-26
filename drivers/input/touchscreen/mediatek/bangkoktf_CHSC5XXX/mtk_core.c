@@ -225,7 +225,7 @@ static int semi_power_source_ctrl(int enable)
 
 //end add by bo_liu for 11022639
 
-extern char ctp_module_name[256];
+extern char ctp_module_name1[256];
 
 static int semi_touch_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -243,7 +243,7 @@ static int semi_touch_probe(struct i2c_client *client, const struct i2c_device_i
 
     tpd_load_status = 1;
 
-    snprintf(ctp_module_name, 256, "CHSC5XXX:DWS\n");
+    snprintf(ctp_module_name1, 256, "CHSC5XXX:DWS\n");
 
     kernel_log_d("semitouch probe finished\r\n");
 
@@ -376,21 +376,28 @@ void semi_touch_resume_entry(struct device* dev)
         }
     }
 
-    //reset tp + iic detected
-    semi_touch_reset_and_detect();
-    //set_status_pointing(st_dev.stc.ctp_run_status);
-    semi_touch_clear_report();
-    //enable_irq(client->irq);
-
-    if(glove_activity)
+    if(is_guesture_function_en(st_dev.stc.custom_function_en))
     {
-        semi_touch_start_up_check(&bootCheckOk);
-        if(bootCheckOk)
-        {
-            semi_touch_glove_switch(1);
-        }
+        semi_touch_guesture_switch(0);
     }
-    kernel_log_d("tpd_resume...\r\n");
+    else
+    {
+        //reset tp + iic detected
+        semi_touch_device_prob();
+        //set_status_pointing(st_dev.stc.ctp_run_status);
+        semi_touch_clear_report();
+        //enable_irq(client->irq);
+
+        if(glove_activity)
+        {
+            semi_touch_start_up_check(&bootCheckOk);
+            if(bootCheckOk)
+            {
+                semi_touch_glove_switch(1);
+            }
+        }
+        kernel_log_d("tpd_resume...\r\n");
+    }
 }
 
 static struct tpd_driver_t tpd_device_driver = 

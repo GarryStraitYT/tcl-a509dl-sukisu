@@ -25,13 +25,46 @@ struct device;
 /*
  * LED Core
  */
-
+//Begin add by jingqing.yan for PWM mapping2047 task11447795 20210819
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+enum led_brightness {
+	LED_OFF		= 0,
+	LED_ON		= 8,
+	LED_HALF	= 1023,
+	LED_FULL	= 2047,
+	LED_HBM         = 4096,  
+};
+/*bo_liu add for jetta att/tf pwm 2047*/
+//Begin added by liangjiaqiang for MODEL3-1976 2022-09-23
+#elif defined(CONFIG_TCT_PROJECT_CRUZE_PRO) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE) || \
+	defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || \
+	defined(CONFIG_TCT_PROJECT_AUSTINTF) || \
+	defined(CONFIG_TCT_PROJECT_RAPID) || \
+	defined(CONFIG_TCT_PROJECT__JETTA) || \
+	defined(CONFIG_TCT_PROJECT_BORATF) || \
+        defined(CONFIG_TCT_PROJECT_SONATA) || \
+        defined(CONFIG_TCT_PROJECT_MODEL_3) || \
+        defined(CONFIG_TCT_PROJECT_CIVIC_S)
+//End added by liangjiaqiang for MODEL3-1976 2022-09-23
+enum led_brightness {
+	LED_OFF		= 0,
+	LED_ON		= 8,
+	LED_HALF	= 1023,
+	LED_FULL	= 2047,
+};
+#else
 enum led_brightness {
 	LED_OFF		= 0,
 	LED_ON		= 1,
 	LED_HALF	= 127,
 	LED_FULL	= 255,
 };
+
+#endif
+#endif
+//End add by jingqing.yan for PWM mapping2047  task11447795 20210819
 
 struct led_classdev {
 	const char		*name;

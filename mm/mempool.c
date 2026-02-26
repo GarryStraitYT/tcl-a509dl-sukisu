@@ -426,7 +426,11 @@ repeat_alloc:
 	 * FIXME: this should be io_schedule().  The timeout is there as a
 	 * workaround for some DM problems in 2.6.18.
 	 */
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	io_schedule_timeout(HZ/50);
+#else
 	io_schedule_timeout(5*HZ);
+#endif
 
 	finish_wait(&pool->wait, &wait);
 	goto repeat_alloc;

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <asm/page.h>
+#include <linux/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -14,6 +15,15 @@
 #include <memory/mediatek/emi.h>
 #include <devmpu.h>
 #include <devmpu_emi.h>
+
+#if IS_ENABLED(CONFIG_MTK_DEVMPU_SLOG)
+#define CREATE_TRACE_POINTS
+#include "devmpu_trace.h"
+#endif
+
+#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
+#include <mt-plat/aee.h>
+#endif
 
 #define LOG_TAG "[DEVMPU]"
 
@@ -122,7 +132,8 @@ void devmpu_vio_clear(unsigned int emi_id)
 	}
 }
 
-static int devmpu_rw_perm_get(uint64_t pa, size_t *rd_perm, size_t *wr_perm)
+static int devmpu_rw_perm_get(uint64_t pa,
+			      size_t *rd_perm, size_t *wr_perm)
 {
 	struct arm_smccc_res res;
 	struct devmpu_context *devmpu_ctx;
@@ -172,7 +183,7 @@ int devmpu_print_violation(uint64_t vio_addr, uint32_t vio_id,
 
 	uint32_t vio_axi_id;
 	uint32_t vio_port_id;
-	uint32_t page;
+	uint64_t page, temp = 0;
 	size_t rd_perm;
 	size_t wr_perm;
 
@@ -190,20 +201,19 @@ int devmpu_print_violation(uint64_t vio_addr, uint32_t vio_id,
 		vio_id = vio.id;
 		vio_addr = vio.addr;
 		vio_domain = vio.domain;
+		vio_addr += devmpu_ctx->prot_base;
 
 		/*
 		 * use 0b01/0b10 to specify write/read violation
 		 * to be consistent with EMI MPU violation handling
 		 */
 		vio_rw = (vio.is_write) ? 1 : 2;
-
-#ifdef CONFIG_MTK_ENABLE_GENIEZONE
-		if (vio_rw == 2 && vio_domain == 0)
-			return 0;
-#endif
 	}
 
-	vio_addr += devmpu_ctx->prot_base;
+#ifdef CONFIG_MTK_ENABLE_GENIEZONE
+	if (vio_rw == 2 && vio_domain == 0)
+		return 0;
+#endif
 
 	vio_axi_id = (vio_id >> 3) & 0x1FFF;
 	vio_port_id = vio_id & 0x7;
@@ -227,18 +237,38 @@ int devmpu_print_violation(uint64_t vio_addr, uint32_t vio_id,
 
 	if (!devmpu_rw_perm_get(vio_addr, &rd_perm, &wr_perm)) {
 		page = vio_addr - devmpu_ctx->prot_base;
-		page /= devmpu_ctx->page_size;
-		pr_info("Page#%x RD/WR : %08zx/%08zx (%lld)\n",
+		do_div(page, devmpu_ctx->page_size);
+
+		temp = page;
+
+		pr_info("Page#%llx RD/WR : %08zx/%08zx (%u)\n",
 			page,
 			switchValue(rd_perm),
 			switchValue(wr_perm),
-			(vio_addr / devmpu_ctx->page_size) % 4);
+			do_div(temp, 4));
 	}
 
 	if (!from_emimpu) {
 		pr_info("%s transaction\n",
 				(vio.is_ns) ? "non-secure" : "secure");
 	}
+
+#if IS_ENABLED(CONFIG_MTK_DEVMPU_SLOG)
+	pr_info("dump info to slog\n");
+	trace_devmpu_event(vio_addr, vio_id, vio_domain, vio_rw);
+#endif
+
+#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
+	pr_info("trigger aee exception\n");
+	aee_kernel_exception("DEVMPU", "%s\n"
+			     "%s(0x%x),%s(0x%x),%s(0x%x),%s(0x%llx)\n",
+			     "violation",
+			     "vio_id", vio_id,
+			     "vio_domain", vio_domain,
+			     "vio_rw", vio_rw,
+			     "vio_addr", vio_addr
+			     );
+#endif
 
 	return 0;
 }
@@ -252,7 +282,7 @@ static int devmpu_dump_perm(void)
 	uint32_t i;
 
 	uint64_t pa, pa_dump;
-	uint32_t pages;
+	uint64_t pages;
 
 	size_t rd_perm;
 	size_t wr_perm;
@@ -263,7 +293,9 @@ static int devmpu_dump_perm(void)
 	devmpu_ctx = &devmpu_ctx_ary[DEVMPU_DEFAULT_CTX];
 
 	pa = devmpu_ctx->prot_base;
-	pages = devmpu_ctx->prot_size / devmpu_ctx->page_size;
+
+	pages = devmpu_ctx->prot_size;
+	do_div(pages, devmpu_ctx->page_size);
 
 	pr_info("Page# (bus-addr)  :  RD/WR permissions\n");
 
@@ -350,11 +382,33 @@ static int devmpu_check_violation(void)
 	if (prop_addr && prop_size) {
 		pr_info("Check if DevMPU violation is at 0x%x\n", prop_addr);
 		reg_base = ioremap((phys_addr_t)prop_addr, prop_size);
-		pr_info("Read from %p\n", reg_base);
-		prop_value = *(uint64_t *)reg_base;
-		pr_info("value 0x%llx\n", prop_value);
-		pr_info("Write to %p\n", reg_base);
-		*(uint64_t *)reg_base = prop_value;
+		if (!reg_base)
+			return -EIO;
+
+		pr_info("Read from 0x%pK\n", reg_base);
+
+		prop_value = readq(reg_base);
+		pr_info("%s:%d value 0x%llx\n", __func__, __LINE__, prop_value);
+
+		if (prop_value) {
+			pr_info("%s:%d EMI didn't protect READ and check HP mode\n",
+				__func__, __LINE__);
+			BUG();
+		}
+
+		pr_info("Write to 0x%pK\n", reg_base);
+		writeq(prop_value | 0x5AA5AA55, reg_base);
+
+		prop_value = readq(reg_base);
+		pr_info("%s:%d value 0x%llx\n", __func__, __LINE__, prop_value);
+
+		if (prop_value) {
+			pr_info("%s:%d EMI didn't protect WRITE and check HP mode\n",
+				__func__, __LINE__);
+			BUG();
+		}
+
+		iounmap(reg_base);
 	}
 
 	return 0;

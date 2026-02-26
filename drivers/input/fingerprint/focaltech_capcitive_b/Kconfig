@@ -1,0 +1,12 @@
+
+# [TCTNB][FINGERPRINT]Added by Jiancong.Huang for F11394572 at 2021/8/12
+config FINGERPRINT_Focaltech_Capvitive_B
+    tristate "FOCAL Capvitive Fingerprint At Background"
+    default n
+    help
+      If you say Y to this option, support will be included for
+      the FocalTech's fingerprint sensor. This driver supports
+      both REE and TEE.
+
+      This driver can also be built as a module. If so, the module
+      will be called 'focaltech_fp'.

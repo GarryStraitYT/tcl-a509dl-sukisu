@@ -1,0 +1,3 @@
+obj-$(CONFIG_AW9610X_SAR)  += aw_bin_parse.o aw9610x.o
+
+#obj-y  += aw_bin_parse.o aw9610x.o

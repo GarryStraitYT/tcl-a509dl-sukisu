@@ -70,6 +70,17 @@ char *leds_name[MT65XX_LED_TYPE_TOTAL] = {
 };
 
 struct cust_mt65xx_led *pled_dtsi;
+//Begin add by bing-zhang for 11457260 on 20210915
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || \
+	defined(CONFIG_TCT_PROJECT_AUSTINTF) || \
+	defined(CONFIG_TCT_PROJECT_RAPID) || \
+        defined(CONFIG_TCT_PROJECT_SONATA) || \
+        defined(CONFIG_TCT_PROJECT_CIVIC_S)
+#define MAX_BRIGHTNESS_KERNEL	1023
+#endif
+#endif
+//End add by bing-zhang for 11457260 on 20210915
 /*****************PWM *************************************************/
 #define PWM_DIV_NUM 8
 
@@ -661,12 +672,222 @@ void mt_mt65xx_led_work(struct work_struct *work)
 	mutex_unlock(&leds_mutex);
 }
 
+
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING) && defined(CONFIG_TCT_PROJECT_PASSAT)
+int flag_hbm_enable = 0;
+#endif
+
+//Begin add by jingqing.yan for aod mode 2021.12.13
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+extern int flag_exit_aod_mode;
+#endif
+//End add by jingqing.yan for aod mode 2021.12.13
+
+
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING) && defined(CONFIG_TCT_PROJECT_JETTA)
+extern int is_1st_lcd;
+#endif
+
 void mt_mt65xx_led_set(struct led_classdev *led_cdev, enum led_brightness level)
 {
 	struct mt65xx_led_data *led_data =
 	    container_of(led_cdev, struct mt65xx_led_data, cdev);
 	/* unsigned long flags; */
 	/* spin_lock_irqsave(&leds_lock, flags); */
+/* Begin meng.zhang add for app 2047 level mapping to PWM 1023 */
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+	int real_map_pwm = 0;
+#endif
+/* End meng.zhang add for app 2047 level mapping to PWM 1023 */
+//Begin add by jingqing.yan for PWM mapping2047 task11447795 20210819
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+	if (level <= 0)
+			{
+			real_map_pwm = 0;
+			flag_hbm_enable = 0;	
+			}
+	else if (level <= 11)
+			{
+			real_map_pwm = 11;	
+			flag_hbm_enable = 0;
+			}
+	else if (level <= 2032)
+			{
+			real_map_pwm = (int) (level/2+6);
+			flag_hbm_enable = 0;
+			}
+	else if (level <= 3000)
+			{
+			real_map_pwm = 1022;
+			flag_hbm_enable = 0;
+			}
+	else if (level < 4096)
+			{
+			real_map_pwm = 1023;
+			flag_hbm_enable = 1;//add by jingqing.yan for pwm
+			}
+//Begin add by jingqing.yan for aod mode 2021.12.13
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	if(flag_exit_aod_mode == 1)
+	{
+		//	printk("tcl exit aod 6 level= %d,real_map_pwm =%d\n",level,real_map_pwm);
+			if(real_map_pwm <= 11)
+				{
+				level = level+1;
+				real_map_pwm = real_map_pwm+1;
+				}
+			else
+				{
+				level = level-1;
+				real_map_pwm = real_map_pwm-1;
+				}
+				flag_exit_aod_mode = 0;
+	}
+	
+#endif
+//end add by jingqing.yan for aod mode 2021.12.13
+#endif//CONFIG_TCT_PROJECT_PASSAT
+//Begin add by yan.gong for CIVIC_S on 2022/11/21
+#if defined(CONFIG_TCT_PROJECT_CIVIC_S)
+	if (level <= 0)
+			real_map_pwm = 0;
+	else if (level <= 11)
+			real_map_pwm = (int) ((30*level+670)/100);
+	else if (level <= 30)
+			real_map_pwm = (int) ((42*level+500)/100);
+	else if (level <= 2047)
+                        real_map_pwm = (int) ((498*level+3000)/1000);
+	else if (level > 2047)
+			real_map_pwm = 1023;
+        printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d",level, real_map_pwm);
+#endif
+//Begin add by yan.gong for CIVIC_S on 2022/11/21
+
+//Begin add by bing-zhang for BORATF-23 on 2022/07/08
+#if defined(CONFIG_TCT_PROJECT_BORATF)
+	if ((level >= 0) && (level <= 11))
+	{
+		real_map_pwm = level;
+	}else if ((level > 11) && (level <= 2033)){
+		real_map_pwm = level/2 + 6;
+	}else{
+		real_map_pwm = 1023;
+	}
+
+	printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d",level, real_map_pwm);
+#endif
+//End add by bing-zhang for BORATF-23 on 2022/07/08
+
+#if defined(CONFIG_TCT_PROJECT_CRUZE_PRO)
+	if (level <= 0)
+			real_map_pwm = 0;
+	else if (level <= 2)
+			real_map_pwm = 2;
+	else if (level <= 4)
+			real_map_pwm = 3;	
+	else if (level <= 13)
+			real_map_pwm = level-1;
+	else if (level <= 915)
+			real_map_pwm = (int) ((level+10)/2);
+	else if (level <= 2047)
+	     	  	real_map_pwm = (int) ((level/3)+157);
+	else if (level > 2047)
+			real_map_pwm = 839;
+
+//	printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d", level, real_map_pwm);
+#endif
+
+//Begin add by bing-zhang for 11457260 on 20210915
+#if defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || defined(CONFIG_TCT_PROJECT_RAPID)
+	if ((1 <= level) && (level <= 12)) {
+		real_map_pwm = level + 2;
+	}else if ((13 <= level) && (2029 >= level)) {
+		real_map_pwm = (int) (level/2 + 9);
+	}else if ((2030 <= level) && (2047 >= level)) {
+		real_map_pwm = MAX_BRIGHTNESS_KERNEL;
+	}else if (0 >= level) {
+		real_map_pwm = 0;
+	}
+	printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d", level, real_map_pwm);
+#endif
+//End add by bing-zhang for 11457260 on 20210915
+
+//End add by jingqing.yan for PWM mapping2047  task11447795 20210819
+
+/* Begin bo_liu add for app 2047 level mapping to PWM 1023 jetta att/tf 11458587 */
+#if defined(CONFIG_TCT_PROJECT_JETTA)
+	int real_map_pwm = 0;
+	if ((level >= 0) && (level <= 11))
+	{
+		real_map_pwm = level;
+	}else if ((level > 11) && (level <= 2033)){
+		real_map_pwm = level/2 + 6;
+	}else{
+		real_map_pwm = 1023;
+	}
+	if(is_1st_lcd == 1){
+		if (real_map_pwm >= 920)
+			real_map_pwm = 920;
+	}
+	printk(" is_1st_lcd=%d, mt_mt65xx_led_set() level=%d, real_map_pwm=%d", is_1st_lcd, level, real_map_pwm);
+#endif
+/* End bo_liu add for app 2047 level mapping to PWM 1023 jetta att/tf 11458587*/
+
+//Begin modify by bing-zhang for 11681759 on 2021/11/25
+#if defined(CONFIG_TCT_PROJECT_AUSTINTF)
+	real_map_pwm = 0;
+	if ((1 <= level) && (11 >= level)) {
+		real_map_pwm = (int)(level/2 + 1);
+	}else if ((11 < level) && (30 >= level)) {
+		real_map_pwm = (int)(level * 26/100 + 4);
+	}else if ((30 < level) && (2000 >= level)) {
+		real_map_pwm = (int)(level/2 - 4);
+	}else if ((2000 < level) && (2047 >= level)) {
+		real_map_pwm = (int)(level * 57/100 - 144);
+	}else if (0 >= level) {
+		real_map_pwm = 0;
+	}else {
+		real_map_pwm = MAX_BRIGHTNESS_KERNEL;
+	}
+
+	printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d", level, real_map_pwm);
+#endif
+//End modify by bing-zhang for 11681759 on 2021/11/25
+
+#if defined(CONFIG_TCT_PROJECT_SONATA)
+        if (0 >= level) {
+                real_map_pwm = 0;
+        }else if (5 >= level) {
+                real_map_pwm = level+2;
+        }else if (1548 >= level) {
+                real_map_pwm = (int)(level/2) + 5;
+        }else if (2047 >= level) {
+                real_map_pwm = (int)(level/3) + 248;
+        }else {
+		real_map_pwm = 930;
+        }
+        printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d", level, real_map_pwm);
+#endif
+
+//Begin added by liangjiaqiang for MODEL3-1976 2022-09-23
+#if defined(CONFIG_TCT_PROJECT_MODEL_3)
+        if (0 >= level) {
+                real_map_pwm = 0;
+        }else if (11 >= level) {
+                real_map_pwm = (int)(38*level+300) /100;
+        }else if (30 >= level) {
+                real_map_pwm = (int)(36*level+300) /100;
+        }else if (2047 >= level) {
+                real_map_pwm = (int)(40*level+100) /100;
+        }else {
+		real_map_pwm =819;
+        }
+        printk("mt_mt65xx_led_set() level=%d, real_map_pwm=%d", level, real_map_pwm);
+#endif
+//End added by liangjiaqiang for MODEL3-1976 2022-09-23
+
+#endif//CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING
 
 #ifdef CONFIG_MTK_AAL_SUPPORT
 	if (led_data->level != level) {
@@ -685,14 +906,46 @@ void mt_mt65xx_led_set(struct led_classdev *led_cdev, enum led_brightness level)
 				    255;
 			}
 			backlight_debug_log(led_data->level, level);
+//Begin add by jingqing.yan for PWM mapping2047 task11447795 20210819
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+			disp_pq_notify_backlight_changed(real_map_pwm);
+/* End meng.zhang add for app 2047 level mapping to PWM 1023 */
+
+#else
 			disp_pq_notify_backlight_changed((((1 <<
 					MT_LED_INTERNAL_LEVEL_BIT_CNT)
 							    - 1) * level +
 							   127) / 255);
+
+#endif
+//End add by jingqing.yan for PWM mapping2047  task11447795 20210819
+/* Begin meng.zhang add for app 2047 level mapping to PWM 1023 */
+#if  defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+			printk("tcl disp = %d,%d\n",real_map_pwm,flag_hbm_enable);
+
+			        disp_aal_notify_backlight_changed(real_map_pwm);
+//Begin added by liangjiaqiang for MODEL3-1976 2022-09-23
+#elif defined(CONFIG_TCT_PROJECT_JETTA) || \
+	defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || \
+	defined(CONFIG_TCT_PROJECT_AUSTINTF) || \
+	defined(CONFIG_TCT_PROJECT_RAPID) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE_PRO) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE) || \
+	defined(CONFIG_TCT_PROJECT_BORATF) || \
+        defined(CONFIG_TCT_PROJECT_SONATA) || \
+        defined(CONFIG_TCT_PROJECT_MODEL_3) || \
+        defined(CONFIG_TCT_PROJECT_CIVIC_S)
+//End added by liangjiaqiang for MODEL3-1976 2022-09-23
+			disp_aal_notify_backlight_changed(real_map_pwm);
+#else
+
 			disp_aal_notify_backlight_changed((((1 <<
 					MT_LED_INTERNAL_LEVEL_BIT_CNT)
 							    - 1) * level +
 							   127) / 255);
+#endif
+#endif//CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING
 		}
 	}
 #else
@@ -713,10 +966,15 @@ void mt_mt65xx_led_set(struct led_classdev *led_cdev, enum led_brightness level)
 				    255;
 			}
 			backlight_debug_log(led_data->level, level);
+/* Begin meng.zhang add for app 2047 level mapping to PWM 1023 */
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+			disp_pq_notify_backlight_changed(real_map_pwm);
+#else
 			disp_pq_notify_backlight_changed((((1 <<
 					MT_LED_INTERNAL_LEVEL_BIT_CNT)
 						- 1) * level +
 						127) / 255);
+#endif
 			if (led_data->cust.mode == MT65XX_LED_MODE_CUST_BLS_PWM)
 				mt_mt65xx_led_set_cust(&led_data->cust,
 					((((1 << MT_LED_INTERNAL_LEVEL_BIT_CNT)

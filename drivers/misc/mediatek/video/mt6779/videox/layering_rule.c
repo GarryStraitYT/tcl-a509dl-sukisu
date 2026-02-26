@@ -94,6 +94,12 @@ static bool is_rsz_valid(struct layer_config *c)
 	if (c->src_width > c->dst_width ||
 	    c->src_height > c->dst_height)
 		return false;
+
+	/* hw requirement: 4x4 < input resolution <= 1088x8192 */
+	if (c->src_width <= 4   || c->src_height <= 4 ||
+	    c->src_width > 1088 || c->src_height > 8192)
+		return false;
+
 	/*
 	 * HWC adjusts MDP layer alignment after query_valid_layer.
 	 * This makes the decision of layering rule unreliable. Thus we
@@ -431,7 +437,7 @@ static bool filter_by_hw_limitation(struct disp_layer_info *disp_info)
 
 static int get_mapping_table(enum DISP_HW_MAPPING_TB_TYPE tb_type, int param);
 
-void copy_hrt_bound_table(int is_larb, int *hrt_table)
+void copy_hrt_bound_table(int is_larb, int *hrt_table, int active_config_id)
 {
 	unsigned long flags = 0;
 	int valid_num, ovl_bound;
@@ -444,7 +450,7 @@ void copy_hrt_bound_table(int is_larb, int *hrt_table)
 	/* update table if hrt bw is enabled */
 	if (disp_helper_get_option(DISP_OPT_HRT_MODE) == 1) {
 		spin_lock_irqsave(&hrt_table_lock, flags);
-		valid_num = layering_get_valid_hrt();
+		valid_num = layering_get_valid_hrt(active_config_id);
 		ovl_bound = get_phy_layer_limit(
 			get_mapping_table(
 			DISP_HW_LAYER_TB,
@@ -581,7 +587,7 @@ unsigned long long layering_get_frame_bw(void)
 	return bw_base;
 }
 
-int layering_get_valid_hrt(void)
+int layering_get_valid_hrt(int active_cfg_id)
 {
 	unsigned long long dvfs_bw;
 #ifdef MTK_FB_MMDVFS_SUPPORT
@@ -600,7 +606,7 @@ int layering_get_valid_hrt(void)
 		dvfs_bw = 200;
 	}
 
-	DISPINFO("get avail HRT BW:%u : %llu %llu\n",
+	DISPINFO("get avail HRT %d cfg BW:%u : %llu %llu\n", active_cfg_id,
 		mm_hrt_get_available_hrt_bw(get_virtual_port(VIRTUAL_DISP)),
 		dvfs_bw, tmp);
 #endif
@@ -901,6 +907,53 @@ static void fbdc_restore_layout(struct disp_layer_info *dst_info,
 	}
 }
 
+static void clear_layer(struct disp_layer_info *disp_info)
+{
+	int di = 0;
+	int i = 0;
+	struct layer_config *c;
+
+	for (di = 0; di < 2; di++) {
+		int g_head = disp_info->gles_head[di];
+		int top = -1;
+
+		if (disp_info->layer_num[di] <= 0)
+			continue;
+		if (g_head == -1)
+			continue;
+
+		for (i = disp_info->layer_num[di] - 1; i >= g_head; i--) {
+			c = &disp_info->input_config[di][i];
+			if (has_layer_cap(c, LAYERING_OVL_ONLY) &&
+			    has_layer_cap(c, CLIENT_CLEAR_LAYER)) {
+				top = i;
+				break;
+			}
+		}
+		if (top == -1)
+			continue;
+		if (!is_gles_layer(disp_info, di, top))
+			continue;
+
+		c = &disp_info->input_config[di][top];
+		c->layer_caps |= DISP_CLIENT_CLEAR_LAYER;
+		DISPMSG("%s:D%d:L%d\n", __func__, di, top);
+
+		disp_info->gles_head[di] = 0;
+		disp_info->gles_tail[di] = disp_info->layer_num[di] - 1;
+		for (i = 0; i < disp_info->layer_num[di]; i++) {
+			c = &disp_info->input_config[di][i];
+
+			c->ext_sel_layer = -1;
+
+			if (i == top)
+				c->ovl_id = 0;
+			else
+				c->ovl_id = 1;
+		}
+	}
+}
+
 static struct layering_rule_ops l_rule_ops = {
 	.resizing_rule = lr_rsz_layout,
 	.rsz_by_gpu_info_change = lr_gpu_change_rsz_info,
@@ -921,4 +974,6 @@ static struct layering_rule_ops l_rule_ops = {
 	.fbdc_adjust_layout = fbdc_adjust_layout,
 	.fbdc_restore_layout = fbdc_restore_layout,
 	.fbdc_rule = filter_by_fbdc,
+	/* to support PIP */
+	.clear_layer = clear_layer,
 };

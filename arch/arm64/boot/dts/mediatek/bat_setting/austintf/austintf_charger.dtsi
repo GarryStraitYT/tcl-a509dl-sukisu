@@ -1,0 +1,231 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+&pe {
+	status = "okay";
+	ta_9v_support;
+	pe_ichg_level_threshold = <1000000>; /* uA */
+	ta_ac_12v_input_current = <1300000>;
+	ta_ac_9v_input_current = <1600000>;
+	ta_ac_7v_input_current = <2100000>;
+	pe_charger_current = <3000000>;  // max 15W as PE ta support
+	main_pct = <100>;
+	ta_stop_battery_soc = <80>;
+};
+
+&pe2 {
+	status = "okay";
+	sc_input_current = <1600000>;
+	sc_charger_current = <3000000>;
+	dcs_input_current = <2050000>;
+	dcs_chg1_charger_current = <1750000>;
+	dcs_chg2_charger_current = <1750000>;
+	main_pct = <50>;
+	ta_stop_battery_soc = <80>;
+};
+
+&pe4 {
+	status = "disabled";
+};
+
+&pdc {
+	status = "disabled";
+};
+
+&mtk_charger_type {
+	bc12_active = <1>;
+};
+
+&usb {
+	charger = <&mtk_charger_type>;
+};
+
+&u2port0 {
+	mediatek,eye-vrt = <7>;
+	mediatek,eye-term = <6>;
+	mediatek,eye-rev6 = <1>; /* 0~3 */
+	mediatek,host-eye-vrt = <7>; /* 0~7 */
+	mediatek,host-eye-term = <4>; /* 0~7 */
+	mediatek,host-eye-rev6 = <3>; /* 0~3 */
+};
+
+&extcon_usb {
+	charger = <&mtk_charger_type>;
+	vbus-supply;
+	vbus-voltage = <0>;
+	vbus-current = <0>;
+};
+
+&lk_charger {
+	enable_anime;
+	power_path_support;
+	max_charger_voltage = <10500000>;
+	fast_charge_voltage = <2900000>;
+
+	/* charging current */
+	usb_charger_current = <500000>;
+	ac_charger_current = <1000000>;
+	ac_charger_input_current = <1050000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <500000>;
+
+	led_brightness = <127>;
+	blinking_times = <6>;
+	blinking_period = <1500>;
+	temp_t4_threshold = <55>;
+	temp_t3_threshold = <45>;
+	temp_t1_threshold = <10>;
+	temp_t0_threshold = <1>;
+};
+
+&charger {
+	charger = <&mtk_charger_type>;
+	//charger_configuration= <0>;
+	charger_configuration= <2>;
+	/delete-property/enable_pe_3;
+	/delete-property/enable_pe_4;
+	/delete-property/enable_type_c;
+	enable_dynamic_mivr;
+	ac_charger_current = <2000000>;
+	ac_charger_input_current = <2050000>;
+	charging_host_charger_current = <1300000>;
+	battery_cv = <4400000>;
+	enable_hv_charging;
+	max_charger_voltage = <10500000>;
+	enable_sw_jeita;
+	/* sw jeita */
+	jeita_temp_above_t4_cv = <4100000>;
+	jeita_temp_t3_to_t4_cv = <4100000>;
+	jeita_temp_t2_to_t3_cv = <4390000>;
+	jeita_temp_t1_to_t2_cv = <4390000>;
+	jeita_temp_t0_to_t1_cv = <4390000>;
+	jeita_temp_below_t0_cv = <4400000>;
+	jeita_temp_above_t4_current = <0>;
+	jeita_temp_t3_to_t4_current = <2200000>;
+	jeita_temp_t2_to_t3_current = <3500000>;
+	jeita_temp_t1_to_t2_current = <800000>;
+	jeita_temp_t0_to_t1_current = <800000>;
+	jeita_temp_below_t0_current = <0>;
+
+#if defined(TARGET_BUILD_IEEE1725)
+	temp_t4_thres = <53>;
+#else
+	temp_t4_thres = <55>;
+#endif
+	temp_t4_thres_minus_x_degree = <51>;
+	temp_t3_thres = <42>;
+	temp_t3_thres_minus_x_degree = <43>;
+	temp_t2_thres = <11>;
+	temp_t2_thres_plus_x_degree = <10>;
+	temp_t1_thres = <6>;
+	temp_t1_thres_plus_x_degree = <5>;
+#if defined(TARGET_BUILD_IEEE1725)
+	temp_t0_thres = <5>;
+	temp_t0_thres_plus_x_degree = <3>;
+	temp_neg_10_thres = <5>;
+#else
+	temp_t0_thres = <1>;
+	temp_t0_thres_plus_x_degree = <0>;
+	temp_neg_10_thres = <1>;
+#endif
+
+	enable_min_charge_temp;
+#if defined(TARGET_BUILD_IEEE1725)
+	min_charge_temp = <3>;
+	min_charge_temp_plus_x_degree = <5>;
+	max_charge_temp = <53>;
+#else
+	min_charge_temp = <1>;
+	min_charge_temp_plus_x_degree = <1>;
+	max_charge_temp = <55>;
+#endif
+	max_charge_temp_minus_x_degree = <51>;
+
+	enable_step_chg;
+	step_chg_vbat = <4300000>;
+	step_chg_vbat_hysteresis = <70000>;
+	setp_chg_current = <3100000>;
+};
+
+&mt6370_pmu {
+	status = "disabled";
+};
+
+&i2c3 {
+	usb_typec_will:usb_type_c@60 {
+		compatible = "mediatek,usb_type_c";
+		reg = <0x60>;
+		interrupt-parent = <&pio>;
+		interrupts = <5 0>;
+		wusb3801,intr_gpio = <&pio 5 0x0>;
+		interrupt-names = "wusb3801_int_irq";
+		status = "okay";
+	};
+};
+
+&i2c5 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+	status = "okay";
+
+	bq2589x:bq2589x@6A {
+		compatible = "mediatek,bq25890h";
+		reg = <0x6A>;
+		interrupt-parent = <&pio>;
+		interrupts = <12 IRQ_TYPE_EDGE_FALLING>;
+		charger_name = "primary_chg";
+		/*ti,bq2589x,charge-detect-enable;*/
+		ti,bq2589x,usb-vlim = <4600>;
+		ti,bq2589x,usb-ilim = <500>;
+		ti,bq2589x,usb-vreg = <4400>;
+		ti,bq2589x,usb-ichg = <500>;
+		ti,bq2589x,precharge-current = <256>;
+		ti,bq2589x,termination-current = <60>;
+		ti,bq2589x,boost-voltage = <4998>;
+		ti,bq2589x,boost-current = <1200>;
+		ti,bq2589x,enable_term;
+		ti,bq2589x,stat-pin-ctrl = <3>;
+		ti,bq2589x,vac-ovp-threshold = <6500>;
+		bq2589x,intr_gpio =  <&pio 12 0x0>;
+		bq2589x,en_gpio =  <&pio 165 0x0>;
+		status = "okay";
+	};
+
+	sgm41542: sgm41542@3B {
+		compatible = "sgm,sgm41542";
+		reg = <0x3b>;
+		status = "okay";
+		charger_name = "primary_chg";
+		gpio_sgm4154x_en_num = <168>;
+		gpio_sgm4154x_en = <&pio 168 0x0>;
+		gpio_sgm4154x_intr_num = <12>; /* direct defined GPIO num */
+		gpio_sgm4154x_intr = <&pio 12 0x0>;
+		interrupt-names = "sgm41542_intr";
+	};
+
+	bq25601:bq25601@6B {
+		compatible = "mediatek,bq25601";
+		reg = <0x6B>;
+		charger_name = "secondary_chg";
+		alias_name = "bq25601";
+		interrupt-parent = <&pio>;
+		interrupts = <10 0>;
+		bq25601,intr_gpio = <&pio 10 0x0>;
+		bq25601,en_gpio = <&pio 161 0x0>;
+		gpio_bq25601_en = <&pio 161 0x0>;
+		gpio_bq25601_en_num = <161>;
+		status = "okay";
+	};
+
+	sgm41513:sgm41513@1A {
+		compatible = "sgm,sgm41513";
+		reg = <0x1A>;
+		charger_name = "secondary_chg";
+		alias_name = "sgm41513";
+		interrupt-parent = <&pio>;
+		interrupts = <10 0>;
+		gpio_sgm41513_intr = <&pio 10 0x0>;
+		gpio_sgm41513_en = <&pio 161 0x0>;
+		status = "okay";
+	};
+};

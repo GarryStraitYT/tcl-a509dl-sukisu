@@ -131,11 +131,23 @@ static const char *const compat_hwcap2_str[] = {
 	NULL
 };
 #endif /* CONFIG_COMPAT */
+/*Begin add by peisong.cao for 11669097*/
+#ifdef CONFIG_TCT_DEVICEINFO
+extern void set_cpu_devinfo(const char *name);
+extern char CPU_module_name[256];
+#endif
+/*End add by peisong.cao for 11669097*/
 
 /* setup machine descriptor */
 void machine_desc_set(const char *str)
 {
 	machine_desc_str = str;
+/*Begin add by peisong.cao for 11669097*/
+#ifdef CONFIG_TCT_DEVICEINFO
+	sprintf(CPU_module_name, str);
+        set_cpu_devinfo(CPU_module_name);
+#endif
+/*End add by peisong.cao for 11669097*/
 }
 
 static int c_show(struct seq_file *m, void *v)
@@ -358,6 +370,7 @@ static void __cpuinfo_store_cpu(struct cpuinfo_arm64 *info)
 	info->reg_id_aa64dfr1 = read_cpuid(ID_AA64DFR1_EL1);
 	info->reg_id_aa64isar0 = read_cpuid(ID_AA64ISAR0_EL1);
 	info->reg_id_aa64isar1 = read_cpuid(ID_AA64ISAR1_EL1);
+	info->reg_id_aa64isar2 = read_cpuid(ID_AA64ISAR2_EL1);
 	info->reg_id_aa64mmfr0 = read_cpuid(ID_AA64MMFR0_EL1);
 	info->reg_id_aa64mmfr1 = read_cpuid(ID_AA64MMFR1_EL1);
 	info->reg_id_aa64mmfr2 = read_cpuid(ID_AA64MMFR2_EL1);

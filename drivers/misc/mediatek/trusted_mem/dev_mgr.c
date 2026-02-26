@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
+
 
 #define PR_FMT_HEADER_MUST_BE_INCLUDED_BEFORE_ALL_HDRS
 #include "private/tmem_pr_fmt.h" PR_FMT_HEADER_MUST_BE_INCLUDED_BEFORE_ALL_HDRS
@@ -66,11 +67,13 @@ void trusted_mem_ut_cmd_invoke(u64 cmd, u64 param1, u64 param2, u64 param3)
 	run_ut_with_memory_leak_check(cmd, param1, param2, param3);
 }
 
-#define VALID_MEM_TYPE(type) (type != TRUSTED_MEM_INVALID)
+#define VALID_MEM_TYPE(type)                                                   \
+	((type >= TRUSTED_MEM_START) && (type < TRUSTED_MEM_MAX))
 struct trusted_mem_device *
 get_trusted_mem_device(enum TRUSTED_MEM_TYPE mem_type)
 {
-	if (VALID_MEM_TYPE(tmem_dev[mem_type].mem_type)
+	if (VALID_MEM_TYPE(mem_type)
+	    && VALID_MEM_TYPE(tmem_dev[mem_type].mem_type)
 	    && VALID(tmem_dev[mem_type].device))
 		return tmem_dev[mem_type].device;
 

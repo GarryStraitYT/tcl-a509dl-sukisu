@@ -41,6 +41,20 @@
 #include <linux/kthread.h>
 #include <linux/init.h>
 #include <linux/mmu_notifier.h>
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2022/02/22, add tcl_action_monitor
+#ifdef CONFIG_HELAEYE_BSP_OOM
+#include <tcl/tkperf.h>
+#include <linux/tcl_kversion.h>
+#endif
+// #endif /* VENDER_EDIT */
+#ifdef CONFIG_MTK_ION
+#include "mtk/ion_drv.h"
+#endif
+
+#if IS_ENABLED(CONFIG_MTK_GPU_SUPPORT)
+#include <mt-plat/mtk_gpu_utility.h>
+#endif
 
 #include <asm/tlb.h>
 #include "internal.h"
@@ -52,6 +66,7 @@
 int sysctl_panic_on_oom;
 int sysctl_oom_kill_allocating_task;
 int sysctl_oom_dump_tasks = 1;
+int sysctl_reap_mem_on_sigkill = 1;
 
 /*
  * Serializes oom killer invocations (out_of_memory()) from all contexts to
@@ -62,6 +77,8 @@ int sysctl_oom_dump_tasks = 1;
  * and mark_oom_victim
  */
 DEFINE_MUTEX(oom_lock);
+/* Serializes oom_score_adj and oom_score_adj_min updates */
+DEFINE_MUTEX(oom_adj_mutex);
 
 #ifdef CONFIG_NUMA
 /**
@@ -428,6 +445,18 @@ static void dump_tasks(struct mem_cgroup *memcg, const nodemask_t *nodemask)
 	rcu_read_unlock();
 }
 
+/* dump extra info: HW memory usage */
+static void oom_dump_extra_info(void)
+{
+#ifdef CONFIG_MTK_ION
+	ion_mm_heap_memory_detail();
+#endif
+#if IS_ENABLED(CONFIG_MTK_GPU_SUPPORT)
+	if (mtk_dump_gpu_memory_usage() == false)
+		pr_info("mtk_dump_gpu_memory_usage not support\n");
+#endif
+}
+
 static void dump_header(struct oom_control *oc, struct task_struct *p)
 {
 	pr_warn("%s invoked oom-killer: gfp_mask=%#x(%pGg), nodemask=%*pbl, order=%d, oom_score_adj=%hd\n",
@@ -448,6 +477,8 @@ static void dump_header(struct oom_control *oc, struct task_struct *p)
 	}
 	if (sysctl_oom_dump_tasks)
 		dump_tasks(oc->memcg, oc->nodemask);
+
+	oom_dump_extra_info();
 }
 
 /*
@@ -544,7 +575,6 @@ bool __oom_reap_task_mm(struct mm_struct *mm)
 static bool oom_reap_task_mm(struct task_struct *tsk, struct mm_struct *mm)
 {
 	bool ret = true;
-
 	if (!down_read_trylock(&mm->mmap_sem)) {
 		trace_skip_task_reaping(tsk->pid);
 		return false;
@@ -660,6 +690,16 @@ static inline void wake_oom_reaper(struct task_struct *tsk)
 }
 #endif /* CONFIG_MMU */
 
+static void __mark_oom_victim(struct task_struct *tsk)
+{
+	struct mm_struct *mm = tsk->mm;
+
+	if (!cmpxchg(&tsk->signal->oom_mm, NULL, mm)) {
+		mmgrab(tsk->signal->oom_mm);
+		set_bit(MMF_OOM_VICTIM, &mm->flags);
+	}
+}
+
 /**
  * mark_oom_victim - mark the given task as OOM victim
  * @tsk: task to mark
@@ -672,18 +712,13 @@ static inline void wake_oom_reaper(struct task_struct *tsk)
  */
 static void mark_oom_victim(struct task_struct *tsk)
 {
-	struct mm_struct *mm = tsk->mm;
-
 	WARN_ON(oom_killer_disabled);
-	/* OOM killer might race with memcg OOM */
+	/* OOM killer might race with; memcg OOM */
 	if (test_and_set_tsk_thread_flag(tsk, TIF_MEMDIE))
 		return;
 
 	/* oom_mm is bound to the signal struct life time. */
-	if (!cmpxchg(&tsk->signal->oom_mm, NULL, mm)) {
-		mmgrab(tsk->signal->oom_mm);
-		set_bit(MMF_OOM_VICTIM, &mm->flags);
-	}
+	__mark_oom_victim(tsk);
 
 	/*
 	 * Make sure that the task is woken up from uninterruptible sleep
@@ -835,6 +870,12 @@ static void __oom_kill_process(struct task_struct *victim)
 	struct task_struct *p;
 	struct mm_struct *mm;
 	bool can_oom_reap = true;
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2022/02/22, add tcl_action_monitor
+#ifdef CONFIG_HELAEYE_BSP_OOM
+	char time_stamp[32];
+#endif
+// #endif /* VENDER_EDIT */
 
 	p = find_lock_task_mm(victim);
 	if (!p) {
@@ -866,6 +907,19 @@ static void __oom_kill_process(struct task_struct *victim)
 		K(get_mm_counter(victim->mm, MM_ANONPAGES)),
 		K(get_mm_counter(victim->mm, MM_FILEPAGES)),
 		K(get_mm_counter(victim->mm, MM_SHMEMPAGES)));
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2022/02/22, add tcl_action_monitor
+#ifdef CONFIG_HELAEYE_BSP_OOM
+	memset(time_stamp, 0, sizeof(time_stamp));
+	get_time_stamp(time_stamp, 32);
+	pr_err("triggered oom_kill_process!\n");
+	heraeye_log(GFP_KERNEL, "%s %s %d %d %s %ld %s %s", "oom_info",
+			current->comm, current->pid, task_pid_nr(victim), victim->comm,
+			si_mem_available(),
+			time_stamp, TCL_KVERSION);
+out:
+#endif
+// #endif /* VENDER_EDIT */
 	task_unlock(victim);
 
 	/*
@@ -1158,4 +1212,35 @@ void pagefault_out_of_memory(void)
 		return;
 	out_of_memory(&oc);
 	mutex_unlock(&oom_lock);
+}
+
+void add_to_oom_reaper(struct task_struct *p)
+{
+	static DEFINE_RATELIMIT_STATE(reaper_rs, DEFAULT_RATELIMIT_INTERVAL,
+						 DEFAULT_RATELIMIT_BURST);
+
+	if (!sysctl_reap_mem_on_sigkill)
+		return;
+
+	p = find_lock_task_mm(p);
+	if (!p)
+		return;
+
+	get_task_struct(p);
+	if (task_will_free_mem(p)) {
+		__mark_oom_victim(p);
+		wake_oom_reaper(p);
+	}
+
+	task_unlock(p);
+
+	if (strcmp(current->comm, ULMK_MAGIC) && __ratelimit(&reaper_rs)
+			&& p->signal->oom_score_adj == 0) {
+		show_mem(SHOW_MEM_FILTER_NODES, NULL);
+		//show_mem_call_notifiers();
+		if (sysctl_oom_dump_tasks)
+			dump_tasks(NULL, NULL);
+	}
+
+	put_task_struct(p);
 }

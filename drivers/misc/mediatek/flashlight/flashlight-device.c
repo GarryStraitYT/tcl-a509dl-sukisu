@@ -43,14 +43,30 @@ const struct flashlight_device_id flashlight_id[] = {
 	{0, 1, 0, "flashlights-rt5081", 1, 0},
 };
 #elif defined(mt6761)
-//begin lihao for  Tokyo_Lite_TMO 20200910
-	#ifdef CONFIG_MTK_FLASHLIGHT_AW36518
+	#ifdef CONFIG_MTK_FLASHLIGHT_AW3644
 	const struct flashlight_device_id flashlight_id[] = {
 	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
-	{0, 0, 0, "flashlights-aw36518", 0, 0},
+		{0, 0, 0, "flashlights-aw3644", 0, 1},
+		{1, 0, 0, "flashlights-aw3644", 1, 1},
 	};
+	
+	/*begin 20210719 ljt add for jettatf camera*/
+	#elif defined(CONFIG_MTK_FLASHLIGHT_AW36518)
+	const struct flashlight_device_id flashlight_id[] = {
+		/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
+		{0, 0, 0, "flashlights-aw36518", 0, 0},
+	};
+	/*end 20210719 ljt add for jettatf camera*/
+
+	//Begin 20220112 junyiliu add for rapidtf camera porting*/
+	#elif defined(CONFIG_MTK_FLASHLIGHT_AW3641E)
+	const struct flashlight_device_id flashlight_id[] = {
+	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
+		{0, 0, 0, "flashlights-aw3641e", 0, 0},
+	};
+	//End 20220112 junyiliu add for rapidtf camera porting*/
+
 	#else
-//end lihao for  Tokyo_Lite_TMO 20200910
 	const struct flashlight_device_id flashlight_id[] = {
 	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
 		{0, 0, 0, "flashlights-none", -1, 0},
@@ -69,6 +85,38 @@ const struct flashlight_device_id flashlight_id[] = {
 	{0, 0, 0, "flashlights-mt6370", 0, 0},
 	{0, 1, 0, "flashlights-mt6370", 1, 0},
 };
+/*Begin  majinrui [Task:11650481] for austintf flashlight bring up 20211022*/
+#elif defined(mt6765)
+	#if defined CONFIG_MTK_FLASHLIGHT_AW36515
+	const struct flashlight_device_id flashlight_id[] = {
+		/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
+		{0, 0, 0, "flashlights-aw36515", 0, 0},
+		{0, 1, 0, "flashlights-aw36515", 1, 0},
+	};
+	#elif defined(CONFIG_MTK_FLASHLIGHT_AW36518)
+	const struct flashlight_device_id flashlight_id[] = {
+		/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
+		{0, 0, 0, "flashlights-aw36518", 0, 0},
+	};
+	#elif defined(CONFIG_MTK_FLASHLIGHT_AW3641E_PWM)
+	const struct flashlight_device_id flashlight_id[] = {
+	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
+		{0, 0, 0, "flashlights-aw3641e-pwm", 0, 0},
+	};
+	#else
+	const struct flashlight_device_id flashlight_id[] = {
+	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
+		{0, 0, 0, "flashlights-mt6370", 0, 0},
+		{0, 1, 0, "flashlights-mt6370", 1, 0},
+		{1, 0, 0, "flashlights-none", -1, 0},
+		{1, 1, 0, "flashlights-none", -1, 0},
+		{0, 0, 1, "flashlights-none", -1, 0},
+		{0, 1, 1, "flashlights-none", -1, 0},
+		{1, 0, 1, "flashlights-none", -1, 0},
+		{1, 1, 1, "flashlights-none", -1, 0},
+	};
+	#endif
+/*End  majinrui [Task:11650481] for austintf flashlight bring up 20211022*/
 #elif defined(mt6799)
 const struct flashlight_device_id flashlight_id[] = {
 	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
@@ -88,19 +136,19 @@ const struct flashlight_device_id flashlight_id[] = {
 #else
 const struct flashlight_device_id flashlight_id[] = {
 	/* {TYPE, CT, PART, "NAME", CHANNEL, DECOUPLE} */
-//begin 20200814 liujunting modify for bangkok-tf
+/*begin 20210719 ljt add for jettatf camera*/
 #ifdef CONFIG_MTK_FLASHLIGHT_AW36518
         {0, 0, 0, "flashlights-aw36518", 0, 0},
 #endif
-	/*{0, 0, 0, "flashlights-none", -1, 0},
+/*end 20210719 ljt add for jettatf camera*/
+	{0, 0, 0, "flashlights-none", -1, 0},
 	{0, 1, 0, "flashlights-none", -1, 0},
 	{1, 0, 0, "flashlights-none", -1, 0},
 	{1, 1, 0, "flashlights-none", -1, 0},
 	{0, 0, 1, "flashlights-none", -1, 0},
 	{0, 1, 1, "flashlights-none", -1, 0},
 	{1, 0, 1, "flashlights-none", -1, 0},
-	{1, 1, 1, "flashlights-none", -1, 0},*/
-//end 20200814 liujunting modify for bangkok-tf
+	{1, 1, 1, "flashlights-none", -1, 0},
 };
 #endif
 

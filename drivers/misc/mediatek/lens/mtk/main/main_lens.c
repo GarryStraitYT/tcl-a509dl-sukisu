@@ -75,10 +75,20 @@ static struct stAF_OisPosInfo OisPosInfo;
 /* ------------------------- */
 
 static struct stAF_DrvList g_stAF_DrvList[MAX_NUM_OF_LENS] = {
+	/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+	{1, AFDRV_AW86014AF, AW86014AF_SetI2Cclient, AW86014AF_Ioctl,
+	 AW86014AF_Release, AW86014AF_GetFileName, NULL},
+	{1, AFDRV_AW8601XAF, AW8601xAF_SetI2Cclient, AW8601xAF_Ioctl,
+	 AW8601xAF_Release, AW8601xAF_GetFileName, NULL},
+	 /*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
 	{1, AFDRV_DW9718TAF, DW9718TAF_SetI2Cclient, DW9718TAF_Ioctl,
 	 DW9718TAF_Release, DW9718TAF_GetFileName, NULL},
- 	{1, AFDRV_DW9718T2NDAF, DW9718T2NDAF_SetI2Cclient, DW9718T2NDAF_Ioctl,
-	 DW9718T2NDAF_Release, DW9718T2NDAF_GetFileName, NULL},
+	//Add by majinrui make Hi846 be compatible with two VCM_drivers(DW9718TAF & DW9718PAF for ODIN5GTMO-4733 on 20220529
+	{1, AFDRV_DW9718PAF, DW9718PAF_SetI2Cclient, DW9718PAF_Ioctl,
+	 DW9718PAF_Release, DW9718PAF_GetFileName, NULL},
+	//Add by majinrui make Hi846 be compatible with two VCM_drivers(DW9718TAF & DW9718PAF for ODIN5GTMO-4733 on 20220529
+	{1, AFDRV_GT9772AF, GT9772AF_SetI2Cclient, GT9772AF_Ioctl,
+	 GT9772AF_Release, GT9772AF_GetFileName, NULL},
 	{1, AFDRV_AK7371AF, AK7371AF_SetI2Cclient, AK7371AF_Ioctl,
 	 AK7371AF_Release, AK7371AF_GetFileName, NULL},
 	{1, AFDRV_BU6424AF, BU6424AF_SetI2Cclient, BU6424AF_Ioctl,
@@ -100,8 +110,16 @@ static struct stAF_DrvList g_stAF_DrvList[MAX_NUM_OF_LENS] = {
 	},
 	{1, AFDRV_DW9714AF, DW9714AF_SetI2Cclient, DW9714AF_Ioctl,
 	 DW9714AF_Release, DW9714AF_GetFileName, NULL},
+//#Begain modified by chengyixuan for CIVIC-3005 on 2022-07-12
+	{1, AFDRV_DW9714AFCIVI, DW9714AFCIVI_SetI2Cclient, DW9714AFCIVI_Ioctl,
+	 DW9714AFCIVI_Release, DW9714AFCIVI_GetFileName, NULL},
+//#Begain modified by chengyixuan for CIVIC-3005 on 2022-07-12
 	{1, AFDRV_DW9718SAF, DW9718SAF_SetI2Cclient, DW9718SAF_Ioctl,
 	 DW9718SAF_Release, DW9718SAF_GetFileName, NULL},
+/*begin 20211207 ljt add for 2nd sensor*/
+	{1, AFDRV_DW9718SAF2ND, DW9718SAF2ND_SetI2Cclient, DW9718SAF2ND_Ioctl,
+	 DW9718SAF2ND_Release, DW9718SAF2ND_GetFileName, NULL},
+/*end 20211207 ljt add for 2nd sensor*/
 	{1, AFDRV_DW9719TAF, DW9719TAF_SetI2Cclient, DW9719TAF_Ioctl,
 	 DW9719TAF_Release, DW9719TAF_GetFileName, NULL},
 	{1, AFDRV_DW9763AF, DW9763AF_SetI2Cclient, DW9763AF_Ioctl,
@@ -110,6 +128,10 @@ static struct stAF_DrvList g_stAF_DrvList[MAX_NUM_OF_LENS] = {
 	 LC898212XDAF_Release, LC898212XDAF_GetFileName, NULL},
 	{1, AFDRV_DW9800WAF, DW9800WAF_SetI2Cclient, DW9800WAF_Ioctl,
 	DW9800WAF_Release, DW9800WAF_GetFileName, NULL},
+    //Begin added by juting.huang for civic plus macro mode
+    {1, AFDRV_DW9800WAFMAC, DW9800WAFMAC_SetI2Cclient, DW9800WAFMAC_Ioctl,
+    DW9800WAFMAC_Release, DW9800WAFMAC_GetFileName, NULL},
+    //End added by juting.huang for civic plus macro mode
 	{1, AFDRV_DW9814AF, DW9814AF_SetI2Cclient, DW9814AF_Ioctl,
 	 DW9814AF_Release, DW9814AF_GetFileName, NULL},
 	{1, AFDRV_DW9839AF, DW9839AF_SetI2Cclient, DW9839AF_Ioctl,
@@ -120,6 +142,10 @@ static struct stAF_DrvList g_stAF_DrvList[MAX_NUM_OF_LENS] = {
 	 DW9718AF_Release, DW9718AF_GetFileName, NULL},
 	{1, AFDRV_GT9764AF, GT9764AF_SetI2Cclient, GT9764AF_Ioctl,
 	GT9764AF_Release, GT9764AF_GetFileName, NULL},
+//#ifdef SUPPORT_GT9768AF
+	{1, AFDRV_GT9768AF, GT9768AF_SetI2Cclient, GT9768AF_Ioctl,
+	GT9768AF_Release, GT9768AF_GetFileName, NULL},
+//#endif
 	{1, AFDRV_LC898212AF, LC898212AF_SetI2Cclient, LC898212AF_Ioctl,
 	 LC898212AF_Release, LC898212AF_GetFileName, NULL},
 	{1, AFDRV_LC898214AF, LC898214AF_SetI2Cclient, LC898214AF_Ioctl,
@@ -158,9 +184,14 @@ static struct pinctrl *vcamaf_pio;
 static struct pinctrl_state *vcamaf_pio_on;
 static struct pinctrl_state *vcamaf_pio_off;
 
+#if defined(TCT_CAMERA_PROJECT_BUFFALOTF)
+#define CAMAF_PMIC     "vtp"
+#else
 #define CAMAF_PMIC     "camaf_m1_pmic"
-#define CAMAF_GPIO_ON  "camaf_m1_gpio_on"
-#define CAMAF_GPIO_OFF "camaf_m1_gpio_off"
+#endif
+
+#define CAMAF_GPIO_ON  "cam0_ldo_vcamaf_1"
+#define CAMAF_GPIO_OFF "cam0_ldo_vcamaf_0"
 
 static void camaf_power_init(void)
 {
@@ -220,6 +251,13 @@ static void camaf_power_on(void)
 	int ret;
 
 	if (vcamaf_ldo) {
+
+// Begain add by yixuan.cheng for buffalo tmo up os lens voltage 2022-3-05
+#if (defined(TCT_CAMERA_PROJECT_BUFFALOTMO) || defined(TCT_CAMERA_PROJECT_BUFFALOTF))
+		regulator_set_voltage(vcamaf_ldo, 2800000, 2800000);
+#endif
+// End add by yixuan.cheng for buffalo tmo up os lens voltage 2022-3-05
+
 		ret = regulator_enable(vcamaf_ldo);
 		LOG_INF("regulator enable (%d)\n", ret);
 	}
@@ -303,6 +341,11 @@ void AF_PowerDown(void)
 #ifdef CONFIG_MACH_MT6761
 		DW9718SAF_PowerDown(g_pstAF_I2Cclient, &g_s4AF_Opened);
 #endif
+/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+#ifdef CONFIG_MTK_LENS_AW86014AF_SUPPORT
+		AW86014AF_PowerDown(g_pstAF_I2Cclient, &g_s4AF_Opened);
+#endif
+/*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
 	}
 	// MAIN2AF_PowerDown();
 }
@@ -365,6 +408,10 @@ static long AF_ControlParam(unsigned long a_u4Param)
 		monotonicTime = archcounter_timesync_to_monotonic(hwTickCnt);
 		/* do_div(monotonicTime, 1000); */ /* ns to us */
 		CtrlCmd.i8Param[1] = monotonicTime;
+
+		if (copy_to_user(pCtrlCmd, &CtrlCmd,
+			sizeof(struct stAF_CtrlCmd)))
+			LOG_INF("copy to user failed\n");
 #endif
 		}
 		i4RetValue = 1;
@@ -372,12 +419,6 @@ static long AF_ControlParam(unsigned long a_u4Param)
 	default:
 		i4RetValue = -1;
 		break;
-	}
-
-	if (i4RetValue > 0) {
-		if (copy_to_user(pCtrlCmd, &CtrlCmd,
-			sizeof(struct stAF_CtrlCmd)))
-			LOG_INF("copy to user failed\n");
 	}
 
 	return i4RetValue;

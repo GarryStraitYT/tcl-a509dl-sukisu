@@ -1,2 +1,7 @@
 config FREEZER
 	def_bool PM_SLEEP || CGROUP_FREEZER
+
+config TCT_IOLIMIT
+    def_bool n
+	help
+	  limite io read or write when process in the cgroup

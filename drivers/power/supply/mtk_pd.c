@@ -88,9 +88,19 @@ static int _pd_init_algo(struct chg_alg_device *alg)
 		pd->state = PD_HW_READY;
 
 	if (alg->config == DUAL_CHARGERS_IN_PARALLEL) {
+        /* Begin add by weijun for pd charing on 2022-8-12 */
+        #if IS_ENABLED(CONFIG_TCT_CHARGER)
+        cnt = pd_hal_get_charger_cnt(alg);
+        if (cnt == 2)
+            alg->config = DUAL_CHARGERS_IN_PARALLEL;
+        else
+            alg->config = SINGLE_CHARGER;
+        #else
 		pd_err("%s does not support DUAL_CHARGERS_IN_PARALLEL\n",
 			__func__);
 		alg->config = SINGLE_CHARGER;
+        #endif
+        /* End add by weijun for pd charing on 2022-8-12 */
 	} else if (alg->config == DUAL_CHARGERS_IN_SERIES) {
 		cnt = pd_hal_get_charger_cnt(alg);
 		if (cnt == 2)
@@ -129,12 +139,19 @@ static int _pd_is_algo_ready(struct chg_alg_device *alg)
 		ret_value = pd_hal_is_pd_adapter_ready(alg);
 		if (ret_value == ALG_READY) {
 			uisoc = pd_hal_get_uisoc(alg);
+            /* Begin add by weijun for pd charing on 2022-8-12 */
+            #if IS_ENABLED(CONFIG_TCT_CHARGER)
+			if (uisoc >= pd->pd_stop_battery_soc)
+				ret_value = ALG_NOT_READY;
+            #else
 			if (pd->input_current_limit1 != -1 ||
 				pd->charging_current_limit1 != -1 ||
 				pd->input_current_limit2 != -1 ||
 				pd->charging_current_limit2 != -1 ||
 				uisoc >= pd->pd_stop_battery_soc)
 				ret_value = ALG_NOT_READY;
+            #endif
+            /* End add by weijun for pd charing on 2022-8-12 */
 		} else if (ret_value == ALG_TA_NOT_SUPPORT)
 			pd->state = PD_TA_NOT_SUPPORT;
 		else if (ret_value == ALG_TA_CHECKING)
@@ -343,7 +360,14 @@ int __mtk_pdc_setup(struct chg_alg_device *alg, int idx)
 			force_update = true;
 
 		chg_cnt = pd_hal_get_charger_cnt(alg);
+		/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (chg_cnt > 1 && 
+			(alg->config == DUAL_CHARGERS_IN_SERIES || alg->config == DUAL_CHARGERS_IN_PARALLEL)) {
+		#else
 		if (chg_cnt > 1 && alg->config == DUAL_CHARGERS_IN_SERIES) {
+		#endif
+		/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 			for (i = CHG2; i < CHG_MAX; i++) {
 				is_chip_enabled =
 						pd_hal_is_chip_enable(alg, i);
@@ -372,6 +396,8 @@ int __mtk_pdc_setup(struct chg_alg_device *alg, int idx)
 		pd_hal_get_input_current(alg, CHG1, &oldmA);
 		oldmA = oldmA / 1000;
 
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 #ifdef FIXME
 		if (info->data.parallel_vbus && (oldmA * 2 > pd->cap.ma[idx])) {
 			charger_dev_set_input_current(info->chg1_dev,
@@ -386,11 +412,25 @@ int __mtk_pdc_setup(struct chg_alg_device *alg, int idx)
 		if (oldmA > pd->cap.ma[idx])
 			pd_hal_set_input_current(alg, CHG1,
 				pd->cap.ma[idx] * 1000);
+#else
+		if (alg->config == DUAL_CHARGERS_IN_PARALLEL && (oldmA * 2 > pd->cap.ma[idx])) {
+			pd_hal_set_input_current(alg, CHG1,
+					pd->cap.ma[idx] * 1000 / 2);
+			pd_hal_set_input_current(alg, CHG2,
+					pd->cap.ma[idx] * 1000 / 2);
+		} else if (alg->config == DUAL_CHARGERS_IN_SERIES &&
+			(oldmA > pd->cap.ma[idx]))
+			pd_hal_set_input_current(alg, CHG1,
+				pd->cap.ma[idx] * 1000);
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 
 		ret = pd_hal_set_adapter_cap(alg, pd->cap.max_mv[idx],
 			pd->cap.ma[idx]);
 
 		if (ret == 0) {
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 #ifdef FIXME
 			if (info->data.parallel_vbus &&
 				(oldmA * 2 < pd->cap.ma[idx])) {
@@ -407,6 +447,19 @@ int __mtk_pdc_setup(struct chg_alg_device *alg, int idx)
 			if (oldmA < pd->cap.ma[idx])
 				pd_hal_set_input_current(alg, CHG1,
 					pd->cap.ma[idx] * 1000);
+#else
+			if (alg->config == DUAL_CHARGERS_IN_PARALLEL  &&
+				(oldmA * 2 < pd->cap.ma[idx])) {
+				pd_hal_set_input_current(alg, CHG1,
+						pd->cap.ma[idx] * 1000 / 2);
+				pd_hal_set_input_current(alg, CHG2,
+						pd->cap.ma[idx] * 1000 / 2);
+			} else if (alg->config == DUAL_CHARGERS_IN_SERIES &&
+				(oldmA < pd->cap.ma[idx]))
+				pd_hal_set_input_current(alg, CHG1,
+						pd->cap.ma[idx] * 1000);
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 
 			if ((pd->cap.max_mv[idx] - PD_VBUS_IR_DROP_THRESHOLD)
 				> mivr)
@@ -415,6 +468,8 @@ int __mtk_pdc_setup(struct chg_alg_device *alg, int idx)
 
 			pd_hal_set_mivr(alg, CHG1, mivr * 1000);
 		} else {
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 #ifdef FIXME
 			if (info->data.parallel_vbus &&
 				(oldmA * 2 > pd->cap.ma[idx])) {
@@ -430,6 +485,19 @@ int __mtk_pdc_setup(struct chg_alg_device *alg, int idx)
 			if (oldmA > pd->cap.ma[idx])
 				pd_hal_set_input_current(alg, CHG1,
 					oldmA * 1000);
+#else
+			if (alg->config == DUAL_CHARGERS_IN_PARALLEL &&
+				(oldmA * 2 > pd->cap.ma[idx])) {
+				pd_hal_set_input_current(alg, CHG1,
+						oldmA * 1000 / 2);
+				pd_hal_set_input_current(alg, CHG2,
+						oldmA * 1000 / 2);
+			} else if (alg->config == DUAL_CHARGERS_IN_SERIES &&
+				(oldmA > pd->cap.ma[idx]))
+				pd_hal_set_input_current(alg, CHG1,
+					oldmA * 1000);
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 
 			pd_hal_set_mivr(alg, CHG1, oldmivr);
 		}
@@ -475,6 +543,11 @@ int __mtk_pdc_get_setting(struct chg_alg_device *alg, int *newvbus, int *newcur,
 	bool chg1_mivr = false;
 	bool chg2_mivr = false;
 	int chg_cnt, i, is_chip_enabled;
+	/* [BSP]Begin added by bitao.xiong for SNTTF-635 on 2023/02/08 */
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int ibat = 0, chg1_ibat = 0, chg2_ibat = 0;
+	#endif
+	/* [BSP]End added by bitao.xiong for SNTTF-635 on 2023/02/08 */
 
 
 	__mtk_pdc_init_table(alg);
@@ -492,6 +565,8 @@ int __mtk_pdc_get_setting(struct chg_alg_device *alg, int *newvbus, int *newcur,
 		return -1;
 	}
 
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 #ifdef FIXME
 	if (info->data.parallel_vbus) {
 		ret = charger_dev_get_ibat(info->chg1_dev, &chg1_ibat);
@@ -514,12 +589,42 @@ int __mtk_pdc_get_setting(struct chg_alg_device *alg, int *newvbus, int *newcur,
 			__func__, chg2_watt, chg2_ibat, chg1_ibat, ibat * 100);
 	}
 #endif
+#else
+	#define CHG2_EFF 85
+	if (alg->config == DUAL_CHARGERS_IN_PARALLEL) {
+		ret = pd_hal_get_ibat(alg, CHG1, &chg1_ibat);
+		if (ret < 0)
+			pd_err("[%s] get ibat fail\n", __func__);
+
+		ret = pd_hal_get_ibat(alg, CHG2, &chg2_ibat);
+		if (ret < 0) {
+			ibat = pd_hal_get_bat_current(alg);
+			chg2_ibat = ibat - chg1_ibat;
+		}
+		if (ibat < 0 || chg2_ibat < 0)
+			chg2_watt = 0;
+		else
+			chg2_watt = chg2_ibat / 1000 * pd_hal_get_bat_voltage(alg) / CHG2_EFF * 100;
+
+		pd_err("[%s] chg2_watt:%d ibat2:%d ibat1:%d ibat:%d\n",
+			__func__, chg2_watt, chg2_ibat, chg1_ibat, ibat);
+	}
+	#undef CHG2_EFF
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 
 	pd_hal_get_mivr_state(alg, CHG1, &chg1_mivr);
 	pd_hal_get_mivr(alg, CHG1, &mivr1);
 
 	chg_cnt = pd_hal_get_charger_cnt(alg);
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (chg_cnt > 1 && 
+		(alg->config == DUAL_CHARGERS_IN_SERIES || alg->config == DUAL_CHARGERS_IN_PARALLEL)) {
+#else
 	if (chg_cnt > 1 && alg->config == DUAL_CHARGERS_IN_SERIES) {
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 		for (i = CHG2; i < CHG_MAX; i++) {
 			is_chip_enabled =
 					pd_hal_is_chip_enable(alg, i);
@@ -674,7 +779,7 @@ static int pd_sc_set_charger(struct chg_alg_device *alg)
 	pd_hal_set_cv(alg,
 		CHG1, pd->cv);
 
-	pd_dbg("%s m:%d s:%d cv:%d chg1:%d,%d min:%d:%d\n", __func__,
+	pd_err("%s m:%d s:%d cv:%d chg1:%d,%d min:%d:%d\n", __func__,
 		alg->config,
 		pd->state,
 		pd->cv,
@@ -767,7 +872,13 @@ static int pd_dcs_set_charger(struct chg_alg_device *alg)
 
 		pd_hal_set_eoc_current(alg, CHG1,
 			pd->dual_polling_ieoc);
+        /* Begin add by weijun for pd charing on 2022-8-12 */
+        #if IS_ENABLED(CONFIG_TCT_CHARGER)
+        pd_hal_enable_termination(alg, CHG1, true);
+        #else
 		pd_hal_enable_termination(alg, CHG1, false);
+        #endif
+        /* End add by weijun for pd charing on 2022-8-12 */
 		pd_hal_safety_check(alg, pd->dual_polling_ieoc);
 	} else if (pd->state == PD_TUNING) {
 		if (!chg2_chip_enabled)
@@ -791,7 +902,7 @@ static int pd_dcs_set_charger(struct chg_alg_device *alg)
 	pd_hal_set_cv(alg,
 		CHG1, pd->cv);
 
-	pd_dbg("%s m:%d s:%d cv:%d chg1:%d,%d chg2:%d,%d chg2en:%d min:%d,%d,%d\n",
+	pd_err("%s m:%d s:%d cv:%d chg1:%d,%d chg2:%d,%d chg2en:%d min:%d,%d,%d\n",
 		__func__,
 		alg->config,
 		pd->state,
@@ -813,6 +924,8 @@ static int __pd_run(struct chg_alg_device *alg)
 	struct mtk_pd *pd = dev_get_drvdata(&alg->dev);
 	int vbus, cur, idx, ret, ret_value = ALG_RUNNING;
 
+    pd_err("PD state:%d\n", pd->state);
+
 	ret = __mtk_pdc_get_setting(alg, &vbus, &cur, &idx);
 
 	if (ret != -1 && idx != -1) {
@@ -826,8 +939,14 @@ static int __pd_run(struct chg_alg_device *alg)
 		pd->charging_current_limit1 =
 			PD_FAIL_CURRENT;
 	}
-
+/* Begin add by weijun for pd charing on 2022-8-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+    if (alg->config == DUAL_CHARGERS_IN_SERIES ||
+        alg->config == DUAL_CHARGERS_IN_PARALLEL) {
+#else
 	if (alg->config == DUAL_CHARGERS_IN_SERIES) {
+#endif
+/* End add by weijun for pd charing on 2022-8-12 */
 		if (pd_dcs_set_charger(alg) != 0) {
 			ret_value = ALG_DONE;
 			//goto out;
@@ -869,7 +988,17 @@ static int _pd_start_algo(struct chg_alg_device *alg)
 				pd->state = PD_TA_NOT_SUPPORT;
 			else if (ret_value == ALG_READY) {
 				uisoc = pd_hal_get_uisoc(alg);
-				if (pd->input_current_limit1 != -1 ||
+            /* Begin add by weijun for pd charing on 2022-8-12 */
+            #if IS_ENABLED(CONFIG_TCT_CHARGER)
+            if (uisoc >= pd->pd_stop_battery_soc)
+					ret_value = ALG_NOT_READY;
+				else {
+					pd->state = PD_RUN;
+					again = true;
+				}
+			}
+            #else
+            if (pd->input_current_limit1 != -1 ||
 					pd->charging_current_limit1 != -1 ||
 					pd->input_current_limit2 != -1 ||
 					pd->charging_current_limit2 != -1 ||
@@ -880,7 +1009,9 @@ static int _pd_start_algo(struct chg_alg_device *alg)
 					again = true;
 				}
 			}
-			break;
+            #endif
+            /* End add by weijun for pd charing on 2022-8-12 */
+            break;
 		case PD_TA_NOT_SUPPORT:
 			ret_value = ALG_TA_NOT_SUPPORT;
 			break;
@@ -944,7 +1075,13 @@ static int _pd_stop_algo(struct chg_alg_device *alg)
 		pd_hal_set_cv(alg,
 			CHG1, pd->cv);
 		pd->state = PD_HW_READY;
+		/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (alg->config == DUAL_CHARGERS_IN_SERIES || alg->config == DUAL_CHARGERS_IN_PARALLEL) {
+		#else
 		if (alg->config == DUAL_CHARGERS_IN_SERIES) {
+		#endif
+		/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 			pd_hal_enable_charger(alg, CHG2, false);
 			pd_hal_charger_enable_chip(alg,
 			CHG2, false);
@@ -978,7 +1115,13 @@ static int pd_full_evt(struct chg_alg_device *alg)
 	case PD_TUNING:
 	case PD_POSTCC:
 	case PD_RUN:
+		/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (alg->config == DUAL_CHARGERS_IN_SERIES || alg->config == DUAL_CHARGERS_IN_PARALLEL) {
+		#else
 		if (alg->config == DUAL_CHARGERS_IN_SERIES) {
+		#endif
+		/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 			pd_hal_is_charger_enable(
 				alg, CHG2, &chg_en);
 			chg2_enabled = pd_hal_is_chip_enable(alg, CHG2);
@@ -1052,7 +1195,13 @@ static int pd_plugout_reset(struct chg_alg_device *alg)
 	case PD_POSTCC:
 	case PD_RUN:
 		pd->state = PD_HW_READY;
+		/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (alg->config == DUAL_CHARGERS_IN_SERIES || alg->config == DUAL_CHARGERS_IN_PARALLEL) {
+		#else
 		if (alg->config == DUAL_CHARGERS_IN_SERIES) {
+		#endif
+		/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2023/02/08 */
 			pd_hal_enable_charger(alg, CHG2, false);
 			pd_hal_charger_enable_chip(alg,
 			CHG2, false);
@@ -1100,6 +1249,7 @@ static void mtk_pd_parse_dt(struct mtk_pd *pd,
 	struct device_node *np = dev->of_node;
 	u32 val;
 
+	val = 0;
 	if (of_property_read_u32(np, "min_charger_voltage", &val) >= 0)
 		pd->min_charger_voltage = val;
 	else {
@@ -1107,7 +1257,8 @@ static void mtk_pd_parse_dt(struct mtk_pd *pd,
 		pd->min_charger_voltage = V_CHARGER_MIN;
 	}
 
-	/* PD */
+	/*	 PD	 */
+	val = 0;
 	if (of_property_read_u32(np, "pd_vbus_upper_bound", &val) >= 0) {
 		pd->vbus_h = val / 1000;
 	} else {
@@ -1222,7 +1373,28 @@ int _pd_set_setting(struct chg_alg_device *alg_dev,
 	struct chg_limit_setting *setting)
 {
 	struct mtk_pd *pd;
+/* Begin add by weijun for pd charing on 2022-8-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	pd_err("%s cv:%d icl:%d,%d cc:%d,%d total=%d,%d\n",
+		__func__,
+		setting->cv,
+		setting->input_current_limit1,
+		setting->input_current_limit2,
+		setting->charging_current_limit1,
+		setting->charging_current_limit2,
+		setting->total_ibus_limit,
+		setting->total_ibatt_limit);
+	pd = dev_get_drvdata(&alg_dev->dev);
 
+	mutex_lock(&pd->access_lock);
+	pd->cv = setting->cv;
+	pd->input_current_limit1 = setting->total_ibus_limit/2;
+	pd->charging_current_limit1 = setting->total_ibatt_limit/2;
+	pd->input_current_limit2 = setting->total_ibus_limit - pd->input_current_limit1;
+	pd->charging_current_limit2 = setting->total_ibatt_limit - pd->charging_current_limit1;
+	mutex_unlock(&pd->access_lock);
+
+#else
 	pd_dbg("%s cv:%d icl:%d,%d cc:%d,%d\n",
 		__func__,
 		setting->cv,
@@ -1239,6 +1411,8 @@ int _pd_set_setting(struct chg_alg_device *alg_dev,
 	pd->input_current_limit2 = setting->input_current_limit2;
 	pd->charging_current_limit2 = setting->charging_current_limit2;
 	mutex_unlock(&pd->access_lock);
+#endif
+/* End add by weijun for pd charing on 2022-8-12 */
 
 	return 0;
 }
@@ -1277,6 +1451,9 @@ static int mtk_pd_probe(struct platform_device *pdev)
 	mutex_init(&pd->access_lock);
 	mutex_init(&pd->data_lock);
 	mtk_pd_parse_dt(pd, &pdev->dev);
+	pd->bat_psy = devm_power_supply_get_by_phandle(&pdev->dev, "gauge");
+	if (IS_ERR_OR_NULL(pd->bat_psy))
+		pd_err("%s: devm power fail to get bat_psy\n", __func__);
 
 	pd->alg = chg_alg_device_register("pd", &pdev->dev,
 					pd, &pd_alg_ops, NULL);

@@ -50,6 +50,7 @@ TRACE_DEFINE_ENUM(CP_RECOVERY);
 TRACE_DEFINE_ENUM(CP_DISCARD);
 TRACE_DEFINE_ENUM(CP_TRIMMED);
 TRACE_DEFINE_ENUM(CP_PAUSE);
+TRACE_DEFINE_ENUM(CP_RESIZE);
 
 #define show_block_type(type)						\
 	__print_symbolic(type,						\
@@ -120,13 +121,15 @@ TRACE_DEFINE_ENUM(CP_PAUSE);
 
 #define show_alloc_mode(type)						\
 	__print_symbolic(type,						\
-		{ LFS,	"LFS-mode" },					\
-		{ SSR,	"SSR-mode" })
+		{ LFS,		"LFS-mode" },				\
+		{ SSR,		"SSR-mode" },				\
+		{ AT_SSR,	"AT_SSR-mode" })
 
 #define show_victim_policy(type)					\
 	__print_symbolic(type,						\
 		{ GC_GREEDY,	"Greedy" },				\
-		{ GC_CB,	"Cost-Benefit" })
+		{ GC_CB,	"Cost-Benefit" },			\
+		{ GC_AT,	"Age-threshold" })
 
 #define show_cpreason(type)						\
 	__print_flags(type, "|",					\
@@ -136,7 +139,8 @@ TRACE_DEFINE_ENUM(CP_PAUSE);
 		{ CP_RECOVERY,	"Recovery" },				\
 		{ CP_DISCARD,	"Discard" },				\
 		{ CP_PAUSE,	"Pause" },				\
-		{ CP_TRIMMED,	"Trimmed" })
+		{ CP_TRIMMED,	"Trimmed" },				\
+		{ CP_RESIZE,	"Resize" })
 
 #define show_fsync_cpreason(type)					\
 	__print_symbolic(type,						\
@@ -1847,6 +1851,8 @@ TRACE_EVENT(f2fs_iostat,
 		__field(unsigned long long,	app_rio)
 		__field(unsigned long long,	app_mrio)
 		__field(unsigned long long,	fs_drio)
+		__field(unsigned long long,	fs_gdrio)
+		__field(unsigned long long,	fs_cdrio)
 		__field(unsigned long long,	fs_nrio)
 		__field(unsigned long long,	fs_mrio)
 		__field(unsigned long long,	fs_discard)
@@ -1871,6 +1877,8 @@ TRACE_EVENT(f2fs_iostat,
 		__entry->app_rio	= iostat[APP_READ_IO];
 		__entry->app_mrio	= iostat[APP_MAPPED_READ_IO];
 		__entry->fs_drio	= iostat[FS_DATA_READ_IO];
+		__entry->fs_gdrio	= iostat[FS_GDATA_READ_IO];
+		__entry->fs_cdrio	= iostat[FS_CDATA_READ_IO];
 		__entry->fs_nrio	= iostat[FS_NODE_READ_IO];
 		__entry->fs_mrio	= iostat[FS_META_READ_IO];
 		__entry->fs_discard	= iostat[FS_DISCARD];
@@ -1882,16 +1890,121 @@ TRACE_EVENT(f2fs_iostat,
 		"gc [data=%llu, node=%llu], "
 		"cp [data=%llu, node=%llu, meta=%llu], "
 		"app [read=%llu (direct=%llu, buffered=%llu), mapped=%llu], "
-		"fs [data=%llu, node=%llu, meta=%llu]",
+		"fs [data=%llu, (gc_data=%llu, compr_data=%llu), "
+		"node=%llu, meta=%llu]",
 		show_dev(__entry->dev), __entry->app_wio, __entry->app_dio,
 		__entry->app_bio, __entry->app_mio, __entry->fs_dio,
 		__entry->fs_nio, __entry->fs_mio, __entry->fs_discard,
 		__entry->fs_gc_dio, __entry->fs_gc_nio, __entry->fs_cp_dio,
 		__entry->fs_cp_nio, __entry->fs_cp_mio,
 		__entry->app_rio, __entry->app_drio, __entry->app_brio,
-		__entry->app_mrio, __entry->fs_drio, __entry->fs_nrio,
-		__entry->fs_mrio)
+		__entry->app_mrio, __entry->fs_drio, __entry->fs_gdrio,
+		__entry->fs_cdrio, __entry->fs_nrio, __entry->fs_mrio)
 );
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-11-30 add for f2fs antiaging
+#ifdef CONFIG_F2FS_TCT_EXT
+TRACE_EVENT(tf2fs_gc_interrupted,
+
+	TP_PROTO(struct f2fs_sb_info *sbi, unsigned int wait_ms),
+
+	TP_ARGS(sbi, wait_ms),
+
+	TP_STRUCT__entry(
+		__field(dev_t,	dev)
+		__field(unsigned int,	wait_ms)
+	),
+
+	TP_fast_assign(
+		__entry->dev		= sbi->sb->s_dev;
+		__entry->wait_ms	= wait_ms;
+	),
+
+	TP_printk("f2fs tcl ext: (%d,%d) bg gc thread io interrupt, wait_ms:%u.",
+		show_dev(__entry->dev),
+		__entry->wait_ms)
+);
+
+TRACE_EVENT(tf2fs_need_ssr_gc,
+
+	TP_PROTO(struct f2fs_sb_info *sbi),
+
+	TP_ARGS(sbi),
+
+	TP_STRUCT__entry(
+		__field(dev_t,	dev)
+	),
+
+	TP_fast_assign(
+		__entry->dev		= sbi->sb->s_dev;
+	),
+
+	TP_printk("f2fs tcl ext: (%d,%d) bg gc thread need_ssr_gc trigger.",
+		show_dev(__entry->dev))
+);
+
+TRACE_EVENT(tf2fs_fg_gc,
+
+	TP_PROTO(struct f2fs_sb_info *sbi),
+
+	TP_ARGS(sbi),
+
+	TP_STRUCT__entry(
+		__field(dev_t,	dev)
+	),
+
+	TP_fast_assign(
+		__entry->dev		= sbi->sb->s_dev;
+	),
+
+	TP_printk("f2fs tcl ext: (%d,%d) bg gc thread fg gc trigger.",
+		show_dev(__entry->dev))
+);
+
+TRACE_EVENT(tf2fs_tune_wait_ms,
+
+	TP_PROTO(struct f2fs_sb_info *sbi, char *reason, unsigned int wait_ms, unsigned int min_time),
+
+	TP_ARGS(sbi, reason, wait_ms, min_time),
+
+	TP_STRUCT__entry(
+		__string(string,	reason)
+		__field(unsigned int,	wait_ms)
+		__field(unsigned int,	min_time)
+		__field(dev_t,	dev)
+	),
+
+	TP_fast_assign(
+		__assign_str(string, reason);
+		__entry->wait_ms	= wait_ms;
+		__entry->min_time	= min_time;
+		__entry->dev		= sbi->sb->s_dev;
+	),
+
+	TP_printk("f2fs tcl ext: (%d,%d) tune_wait reason:%s, wait_ms:%u, min_time:%u.",
+		show_dev(__entry->dev), __get_str(string), __entry->wait_ms, __entry->min_time)
+);
+
+TRACE_EVENT(tf2fs_storge_idle,
+
+	TP_PROTO(unsigned int nr_pending),
+
+	TP_ARGS(nr_pending),
+
+	TP_STRUCT__entry(
+		__field(unsigned int,	nr_pending)
+	),
+
+	TP_fast_assign(
+		__entry->nr_pending	= nr_pending;
+	),
+
+	TP_printk("f2fs tcl ext: tf2fs storage idle, nr_pending:%u.",
+		__entry->nr_pending)
+);
+#endif /* CONFIG_F2FS_TCT_EXT */
+// #endif /*VENDOR_EDIT*/
 
 #endif /* _TRACE_F2FS_H */
 

@@ -62,9 +62,6 @@ static long mt6357tsbuck2_cur_temp;
 static int mt6357tsbuck2_get_temp(struct thermal_zone_device *thermal, int *t)
 {
 	*t = mt6357tsbuck2_get_hw_temp();
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 	mt6357tsbuck2_cur_temp = *t;
 
 	if ((int)*t >= polling_trip_temp1)

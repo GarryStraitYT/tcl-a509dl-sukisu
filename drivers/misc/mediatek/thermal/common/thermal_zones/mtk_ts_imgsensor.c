@@ -34,7 +34,7 @@ enum CAMERA_DUAL_CAMERA_SENSOR_ENUM senDevId, MUINT8 *valid, MUINT32 *temp)
 }
 
 
-#define RESERVED_TZS (8)
+#define RESERVED_TZS (20)
 #define MTK_IMGS_TEMP_CRIT 120000	/* 120.000 degree Celsius */
 
 #define mtk_imgs_dprintk(fmt, args...)   \
@@ -281,13 +281,12 @@ static int mtk_imgs_get_temp(struct thermal_zone_device *thermal, int *t)
 	}
 
 	mtk_imgs_dprintk("%s ts%d =%d\n", __func__, index, curr_temp);
-
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-camera] %s t_camera=%d\n", __func__, curr_temp);
+#endif
 	g_tsData[index].cTemp = curr_temp;
 	*t = curr_temp;
 
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 	if ((int)*t >= polling_trip_temp1)
 		thermal->polling_delay = g_tsData[index].interval;
 	else if ((int)*t < polling_trip_temp2)
@@ -656,6 +655,18 @@ PROC_FOPS_RW(4);
 PROC_FOPS_RW(5);
 PROC_FOPS_RW(6);
 PROC_FOPS_RW(7);
+PROC_FOPS_RW(8);
+PROC_FOPS_RW(9);
+PROC_FOPS_RW(10);
+PROC_FOPS_RW(11);
+PROC_FOPS_RW(12);
+PROC_FOPS_RW(13);
+PROC_FOPS_RW(14);
+PROC_FOPS_RW(15);
+PROC_FOPS_RW(16);
+PROC_FOPS_RW(17);
+PROC_FOPS_RW(18);
+PROC_FOPS_RW(19);
 
 static const struct file_operations *thz_fops[RESERVED_TZS] = {
 	FOPS(0),
@@ -666,6 +677,18 @@ static const struct file_operations *thz_fops[RESERVED_TZS] = {
 	FOPS(5),
 	FOPS(6),
 	FOPS(7),
+	FOPS(8),
+	FOPS(9),
+	FOPS(10),
+	FOPS(11),
+	FOPS(12),
+	FOPS(13),
+	FOPS(14),
+	FOPS(15),
+	FOPS(16),
+	FOPS(17),
+	FOPS(18),
+	FOPS(19)
 };
 
 static int mtk_imgs_cooler_get_index(struct thermal_cooling_device *cdev)

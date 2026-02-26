@@ -36,20 +36,82 @@
 #include <linux/reboot.h>
 
 #include "mtk_charger.h"
-#if defined(TARGET_BUILD_MMITEST)
-#include "mtk_battery.h"
-#else
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 #include "mtk_battery.h"
 #endif
+
+
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
 #endif
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+
+#define NONSTANDARD_CHARGER_NONE 0x0
+#define NONSTANDARD_CHARGER_NONSTAND 0x1
+#define NONSTANDARD_CHARGER_SLOW 0x2
+#define NONSTANDARD_CHARGER_INVALIED 0xFF
+#endif
+
+#endif
+
+/* Begin modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+extern signed int g_chr_vol;
+extern signed int g_chr_type;
+#endif
+/* End modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+
 struct tag_bootmode {
 	u32 size;
 	u32 tag;
 	u32 bootmode;
 	u32 boottype;
 };
+
+/* Begin added by jin.wang for task 11700191 on 2022-1-17 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#define MINI_SUSPEND_CHG_SOC	(62)
+#define MINI_RESUME_CHG_SOC	(45)
+static int mini_soc_limited = 0;
+static int soc_limited = 1;
+#endif
+/* End added by jin.wang */
+
+/* Begin added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static struct mtk_battery *gm = NULL;
+#endif
+/* End added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+
+/* Begin added by bitao.xiong for ENCORECKT-2669 on 2022-08-31 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static bool is_mmitest = false;
+static bool is_inproductionflag = false;
+static int __init inproductionflag_setup(char *str)
+{
+	if (!strncmp(str, "true", 4))
+		is_inproductionflag = true;
+	else
+		is_inproductionflag = false;
+	return 0;
+}
+__setup("androidboot.inproductionflag=", inproductionflag_setup);
+
+static int __init mmitest_setup(char *str)
+{
+	if (!strncmp(str, "true", 4))
+		is_mmitest = true;
+	else
+		is_mmitest = false;
+	return 0;
+}
+__setup("androidboot.mmitest=", mmitest_setup);
+#endif
+/* End added by bitao.xiong for ENCORECKT-2669 on 2022-08-31 */
 
 int chr_get_debug_level(void)
 {
@@ -115,6 +177,105 @@ int mtk_charger_notifier(struct mtk_charger *info, int event)
 	return srcu_notifier_call_chain(&info->evt_nh, event, NULL);
 }
 
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#define CHARGER_PROP_READ(para, prop_str, default_val)\
+do {\
+	if (of_property_read_u32(np, prop_str, &val) >= 0)\
+		para = val;\
+	else {\
+		chr_err("use default "#default_val":%d\n", default_val);\
+		para = default_val;\
+	}\
+} while (0)
+
+#define CHARGER_PROP_READ_SUFFIX(para, prop_str, suffix)\
+do {\
+	snprintf(prop_name, sizeof(prop_name), "%s_%s", prop_str, suffix);\
+	if (of_property_read_u32(np, prop_name, &val) >= 0) {\
+		para = val;\
+	} else {\
+		chr_err("prop: %s not found,use defalut parameter\n", prop_name);\
+	}\
+} while (0)
+
+static void read_charger_para(struct mtk_charger *info,
+							  struct device_node *np)
+{
+	u32 val;
+	CHARGER_PROP_READ(info->data.jeita_temp_above_t4_current,
+					  "jeita_temp_above_t4_current",
+					  JEITA_TEMP_ABOVE_T4_CURRENT);
+	CHARGER_PROP_READ(info->data.jeita_temp_t3_to_t4_current,
+					  "jeita_temp_t3_to_t4_current",
+					  JEITA_TEMP_T3_TO_T4_CURRENT);
+	CHARGER_PROP_READ(info->data.jeita_temp_t2_to_t3_current,
+					  "jeita_temp_t2_to_t3_current",
+					  JEITA_TEMP_T2_TO_T3_CURRENT);
+	CHARGER_PROP_READ(info->data.jeita_temp_t1_to_t2_current,
+					  "jeita_temp_t1_to_t2_current",
+					  JEITA_TEMP_T1_TO_T2_CURRENT);
+	CHARGER_PROP_READ(info->data.jeita_temp_t0_to_t1_current,
+					  "jeita_temp_t0_to_t1_current",
+					  JEITA_TEMP_T0_TO_T1_CURRENT);
+	CHARGER_PROP_READ(info->data.jeita_temp_below_t0_current,
+					  "jeita_temp_below_t0_current",
+					  JEITA_TEMP_BELOW_T0_CURRENT);
+
+	/*---------------------slave charger config                               */
+	CHARGER_PROP_READ(info->data.slave_jeita_temp_above_t4_current,
+					  "slave_jeita_temp_above_t4_current",
+					  SLAVE_JEITA_TEMP_ABOVE_T4_CURRENT);
+	CHARGER_PROP_READ(info->data.slave_jeita_temp_t3_to_t4_current,
+					  "slave_jeita_temp_t3_to_t4_current",
+					  SLAVE_JEITA_TEMP_T3_TO_T4_CURRENT);
+	CHARGER_PROP_READ(info->data.slave_jeita_temp_t2_to_t3_current,
+					  "slave_jeita_temp_t2_to_t3_current",
+					  SLAVE_JEITA_TEMP_T2_TO_T3_CURRENT);
+	CHARGER_PROP_READ(info->data.slave_jeita_temp_t1_to_t2_current,
+					  "slave_jeita_temp_t1_to_t2_current",
+					  SLAVE_JEITA_TEMP_T1_TO_T2_CURRENT);
+	CHARGER_PROP_READ(info->data.slave_jeita_temp_t0_to_t1_current,
+					  "slave_jeita_temp_t0_to_t1_current",
+					  SLAVE_JEITA_TEMP_T0_TO_T1_CURRENT);
+	CHARGER_PROP_READ(info->data.slave_jeita_temp_below_t0_current,
+					  "slave_jeita_temp_below_t0_current",
+					  SLAVE_JEITA_TEMP_BELOW_T0_CURRENT);
+
+	info->enable_step_chg = of_property_read_bool(np, "enable_step_chg");
+	CHARGER_PROP_READ(info->data.step_chg_vbat,
+					  "step_chg_vbat",
+					  STEP_CHG_VBAT);
+	CHARGER_PROP_READ(info->data.step_chg_vbat_hysteresis,
+					  "step_chg_vbat_hysteresis",
+					  STEP_CHG_VBAT_HYSTERESIS);
+	CHARGER_PROP_READ(info->data.setp_chg_current,
+					  "setp_chg_current",
+					  STEP_CHG_CURRENT);
+	CHARGER_PROP_READ(info->data.slave_setp_chg_current,
+					  "slave_setp_chg_current",
+					  SLAVE_STEP_CHG_CURRENT);
+}
+
+static void override_charger_para(struct mtk_charger *info,
+								  struct device_node *np)
+{
+	char prop_name[128];
+	u32 val;
+
+	if (info->chg1_dev &&
+		info->chg1_dev->props.alias_name) {
+		CHARGER_PROP_READ_SUFFIX(info->data.max_charger_voltage,
+								 "max_charger_voltage",
+								 info->chg1_dev->props.alias_name);
+		info->data.max_charger_voltage_setting = info->data.max_charger_voltage;
+	} else {
+		chr_err("not found charger,use default charger parameter\n");
+	}
+}
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
+
 static void mtk_charger_parse_dt(struct mtk_charger *info,
 				struct device *dev)
 {
@@ -153,6 +314,13 @@ static void mtk_charger_parse_dt(struct mtk_charger *info,
 		chr_err("found Pulse\n");
 		mtk_pulse_charger_init(info);
 	}
+
+/* Begin added by jin.wang for task 11466469 on 2021-9-3 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	info->enable_hv_charging =
+			of_property_read_bool(np, "enable_hv_charging");
+#endif
+/* End added by jin.wang for task 11466469 on 2021-9-3 */
 
 	info->disable_charger = of_property_read_bool(np, "disable_charger");
 	info->enable_sw_safety_timer =
@@ -193,6 +361,13 @@ static void mtk_charger_parse_dt(struct mtk_charger *info,
 
 	/* sw jeita */
 	info->enable_sw_jeita = of_property_read_bool(np, "enable_sw_jeita");
+/* Begin added by dapeng.qiao for task 11024165 on 2021-04-13 */
+#if IS_ENABLED(TARGET_BUILD_MMITEST)
+	info->enable_sw_jeita = false;
+	info->sw_jeita.sm = TEMP_T2_TO_T3;
+	chr_err("disable for Mini SW enable_sw_jeita=%d\n", info->enable_sw_jeita);
+#endif
+/* End added by dapeng.qiao for task 11024165 on 2021-04-13 */
 	if (of_property_read_u32(np, "jeita_temp_above_t4_cv", &val) >= 0)
 		info->data.jeita_temp_above_t4_cv = val;
 	else {
@@ -240,24 +415,6 @@ static void mtk_charger_parse_dt(struct mtk_charger *info,
 			JEITA_TEMP_BELOW_T0_CV);
 		info->data.jeita_temp_below_t0_cv = JEITA_TEMP_BELOW_T0_CV;
 	}
-
-	/* Begin added by bitao.xiong for task-9796564 on 2020-08-20 */
-	if (of_property_read_u32(np, "jeita_temp_t1_to_t2_cc", &val) >= 0)
-		info->data.jeita_temp_t1_to_t2_cc = val;
-	else {
-		chr_err("use default JEITA_TEMP_T1_TO_T2_CC:%d\n",
-			USB_CHARGER_CURRENT);
-		info->data.jeita_temp_t1_to_t2_cc = USB_CHARGER_CURRENT;
-	}
-
-	if (of_property_read_u32(np, "jeita_temp_t3_to_t4_cc", &val) >= 0)
-		info->data.jeita_temp_t3_to_t4_cc = val;
-	else {
-		chr_err("use default JEITA_TEMP_T3_TO_T4_CC:%d\n",
-			USB_CHARGER_CURRENT);
-		info->data.jeita_temp_t3_to_t4_cc = USB_CHARGER_CURRENT;
-	}
-	/* End added by bitao.xiong for task-9796564 on 2020-08-20 */
 
 	if (of_property_read_u32(np, "temp_t4_thres", &val) >= 0)
 		info->data.temp_t4_thres = val;
@@ -418,6 +575,18 @@ static void mtk_charger_parse_dt(struct mtk_charger *info,
 		info->data.ac_charger_input_current = AC_CHARGER_INPUT_CURRENT;
 	}
 
+/* [BSP]Begin added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER) && IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+	if (of_property_read_u32(np, "weak_ac_charger_input_current", &val) >= 0)
+		info->data.weak_ac_charger_input_current = val;
+	else {
+		chr_err("use default WEAK_AC_CHARGER_INPUT_CURRENT:%d\n",
+			WEAK_AC_CHARGER_INPUT_CURRENT);
+		info->data.weak_ac_charger_input_current = WEAK_AC_CHARGER_INPUT_CURRENT;
+	}
+#endif
+/* [BSP]End added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+
 	if (of_property_read_u32(np, "charging_host_charger_current", &val)
 		>= 0) {
 		info->data.charging_host_charger_current = val;
@@ -431,6 +600,8 @@ static void mtk_charger_parse_dt(struct mtk_charger *info,
 	/* dynamic mivr */
 	info->enable_dynamic_mivr =
 			of_property_read_bool(np, "enable_dynamic_mivr");
+	info->enable_sw_aicl =
+			of_property_read_bool(np, "enable_sw_aicl");
 
 	if (of_property_read_u32(np, "min_charger_voltage_1", &val) >= 0)
 		info->data.min_charger_voltage_1 = val;
@@ -454,6 +625,13 @@ static void mtk_charger_parse_dt(struct mtk_charger *info,
 		info->data.max_dmivr_charger_current =
 					MAX_DMIVR_CHARGER_CURRENT;
 	}
+
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	read_charger_para(info, np);
+	override_charger_para(info, np);
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
 }
 
 static void mtk_charger_start_timer(struct mtk_charger *info)
@@ -480,8 +658,8 @@ static void mtk_charger_start_timer(struct mtk_charger *info)
 	alarm_start(&info->charger_timer, ktime);
 }
 
-/* Begin modified by bitao.xiong for task-9878355 on 2020-09-05 */
-#if !defined(TARGET_BUILD_MMITEST)
+/* Begin modified by hailong.chen for task 9777034 on 2020-08-20 */
+#if !IS_ENABLED(TARGET_BUILD_MMITEST)
 static void check_battery_exist(struct mtk_charger *info)
 {
 	unsigned int i = 0;
@@ -498,8 +676,10 @@ static void check_battery_exist(struct mtk_charger *info)
 
 #ifdef FIXME
 	if (count >= 3) {
-		if (boot_mode == META_BOOT || boot_mode == ADVMETA_BOOT ||
-		    boot_mode == ATE_FACTORY_BOOT)
+		/*1 = META_BOOT, 5 = ADVMETA_BOOT*/
+		/*6 = ATE_FACTORY_BOOT */
+		if (boot_mode == 1 || boot_mode == 5 ||
+		    boot_mode == 6)
 			chr_info("boot_mode = %d, bypass battery check\n",
 				boot_mode);
 		else {
@@ -510,8 +690,10 @@ static void check_battery_exist(struct mtk_charger *info)
 #endif
 }
 #endif
-/* End modified by bitao.xiong for task-9878355 on 2020-09-05 */
+/* End modified by hailong.chen for task 9777034 on 2020-08-20 */
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 static void check_dynamic_mivr(struct mtk_charger *info)
 {
 	int i = 0, ret = 0;
@@ -546,13 +728,58 @@ static void check_dynamic_mivr(struct mtk_charger *info)
 				info->data.min_charger_voltage);
 	}
 }
+#endif
+/* End del by jin.wang */
 
-/* Begin modified by bitao.xiong for task-9878355 on 2020-09-05 */
-#if defined(TARGET_BUILD_MMITEST)
-void do_sw_jeita_state_machine(struct mtk_charger *info)
+/* Begin added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+#if defined(CONFIG_TCT_CHARGER)
+static int health = POWER_SUPPLY_HEALTH_GOOD;
+static void sw_jeita_state_machine_init(struct mtk_charger *info)
 {
 	struct sw_jeita_data *sw_jeita;
 
+	if (IS_ERR_OR_NULL(info))
+		return;
+
+	if (info->enable_sw_jeita == true) {
+		sw_jeita = &info->sw_jeita;
+		info->battery_temp = get_battery_temperature(info);
+
+		if (info->battery_temp >= info->data.temp_t4_thres)
+			sw_jeita->sm = TEMP_ABOVE_T4;
+		else if (info->battery_temp > info->data.temp_t3_thres)
+			sw_jeita->sm = TEMP_T3_TO_T4;
+		else if (info->battery_temp >= info->data.temp_t2_thres)
+			sw_jeita->sm = TEMP_T2_TO_T3;
+		else if (info->battery_temp >= info->data.temp_t1_thres)
+			sw_jeita->sm = TEMP_T1_TO_T2;
+		else if (info->battery_temp >= info->data.temp_t0_thres)
+			sw_jeita->sm = TEMP_T0_TO_T1;
+		else
+			sw_jeita->sm = TEMP_BELOW_T0;
+
+		chr_err("[%s] tmp:%d sm:%d\n", __func__, info->battery_temp, sw_jeita->sm);
+	}
+}
+
+static void battery_update_health(int health)
+{
+	struct battery_data *bat_data = NULL;
+	if (gm == NULL)
+		gm = get_mtk_battery();
+	if (gm) {
+		bat_data = &gm->bs_data;
+		bat_data->bat_health = health;
+	}
+}
+#endif
+/* End added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+
+/* Begin modified by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(TARGET_BUILD_MMITEST)
+void do_sw_jeita_state_machine(struct mtk_charger *info)
+{
+	struct sw_jeita_data *sw_jeita;
 	sw_jeita = &info->sw_jeita;
 	sw_jeita->pre_sm = sw_jeita->sm;
 	sw_jeita->charging = true;
@@ -568,6 +795,11 @@ void do_sw_jeita_state_machine(struct mtk_charger *info)
 void do_sw_jeita_state_machine(struct mtk_charger *info)
 {
 	struct sw_jeita_data *sw_jeita;
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int vbat_now = 0;
+#endif
+/* End add by hailong.chen */
 
 	sw_jeita = &info->sw_jeita;
 	sw_jeita->pre_sm = sw_jeita->sm;
@@ -664,8 +896,12 @@ void do_sw_jeita_state_machine(struct mtk_charger *info)
 			sw_jeita->cv = info->data.jeita_temp_above_t4_cv;
 		else if (sw_jeita->sm == TEMP_T3_TO_T4)
 			sw_jeita->cv = info->data.jeita_temp_t3_to_t4_cv;
+/* Begin del by jin.wang for jira 2064 on 2021-10-25 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 		else if (sw_jeita->sm == TEMP_T2_TO_T3)
 			sw_jeita->cv = 0;
+#endif
+/* End del by jin.wang */
 		else if (sw_jeita->sm == TEMP_T1_TO_T2)
 			sw_jeita->cv = info->data.jeita_temp_t1_to_t2_cv;
 		else if (sw_jeita->sm == TEMP_T0_TO_T1)
@@ -675,15 +911,74 @@ void do_sw_jeita_state_machine(struct mtk_charger *info)
 		else
 			sw_jeita->cv = info->data.battery_cv;
 	} else {
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		sw_jeita->cv = info->data.battery_cv;
+#else
 		sw_jeita->cv = 0;
+#endif
+	}
+/* End mod by jin.wang */
+
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if ((info->enable_step_chg) && (sw_jeita->sm == TEMP_T2_TO_T3)) {
+		vbat_now = get_battery_voltage(info) * 1000;
+		if (info->chg_data[CHG1_SETTING].charging_current_limit_by_vbat == -1) {
+			if(vbat_now > info->data.step_chg_vbat) {
+				info->chg_data[CHG1_SETTING].charging_current_limit_by_vbat = info->data.setp_chg_current;
+				info->chg_data[CHG2_SETTING].charging_current_limit_by_vbat = info->data.slave_setp_chg_current;
+			}
+		} else {
+			if (vbat_now < (info->data.step_chg_vbat - info->data.step_chg_vbat_hysteresis)) {
+				info->chg_data[CHG1_SETTING].charging_current_limit_by_vbat = -1;
+				info->chg_data[CHG2_SETTING].charging_current_limit_by_vbat = -1;
+			}
+		}
+	} else {
+		info->chg_data[CHG1_SETTING].charging_current_limit_by_vbat = -1;
+		info->chg_data[CHG2_SETTING].charging_current_limit_by_vbat = -1;
 	}
 
+	chr_err("[SW_JEITA]preState:%d newState:%d tmp:%d cv:%d chg:(%d %d) vbat_now:%d\n",
+			sw_jeita->pre_sm, sw_jeita->sm, info->battery_temp,
+			sw_jeita->cv, info->chg_data[CHG1_SETTING].charging_current_limit_by_vbat,
+			info->chg_data[CHG2_SETTING].charging_current_limit_by_vbat, vbat_now);
+#else
 	chr_err("[SW_JEITA]preState:%d newState:%d tmp:%d cv:%d\n",
 		sw_jeita->pre_sm, sw_jeita->sm, info->battery_temp,
 		sw_jeita->cv);
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
+
+/* Begin added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	switch(sw_jeita->sm) {
+	case TEMP_BELOW_T0:
+		health = POWER_SUPPLY_HEALTH_COLD;
+		break;
+	case TEMP_T0_TO_T1:
+	case TEMP_T1_TO_T2:
+		health = POWER_SUPPLY_HEALTH_COOL;
+		break;
+	case TEMP_T2_TO_T3:
+		health = POWER_SUPPLY_HEALTH_GOOD;
+		break;
+	case TEMP_T3_TO_T4:
+		health = POWER_SUPPLY_HEALTH_WARM;
+		break;
+	case TEMP_ABOVE_T4:
+		health = POWER_SUPPLY_HEALTH_OVERHEAT;
+		break;
+	default:
+		health = POWER_SUPPLY_HEALTH_GOOD;
+		break;
+	}
+	battery_update_health(health);
+#endif
+/* End added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
 }
 #endif
-/* End modified by bitao.xiong for task-9878355 on 2020-09-05 */
+/* End modified by hailong.chen for task 9777034 on 2020-08-20 */
 
 static int mtk_chgstat_notify(struct mtk_charger *info)
 {
@@ -697,6 +992,38 @@ static int mtk_chgstat_notify(struct mtk_charger *info)
 
 	return ret;
 }
+
+/* Begin add by jin.wang for jira on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static ssize_t thermal_disable_show(struct device *dev, struct device_attribute *attr,
+					       char *buf)
+{
+	struct mtk_charger *pinfo = dev->driver_data;
+
+	chr_err("%s: %d\n", __func__, pinfo->thermal_disable);
+	return sprintf(buf, "%d\n", pinfo->thermal_disable);
+}
+
+static ssize_t thermal_disable_store(struct device *dev, struct device_attribute *attr,
+						const char *buf, size_t size)
+{
+	struct mtk_charger *pinfo = dev->driver_data;
+	signed int temp;
+
+	if (kstrtoint(buf, 10, &temp) == 0) {
+		if (temp == 0)
+			pinfo->thermal_disable = false;
+		else
+			pinfo->thermal_disable = true;
+
+	} else {
+		chr_err("%s: format error!\n", __func__);
+	}
+	return size;
+}
+static DEVICE_ATTR_RW(thermal_disable);
+#endif
+/* End add by jin.wang */
 
 static ssize_t sw_jeita_show(struct device *dev, struct device_attribute *attr,
 					       char *buf)
@@ -794,6 +1121,33 @@ static ssize_t ADC_Charger_Voltage_show(struct device *dev,
 
 static DEVICE_ATTR_RO(ADC_Charger_Voltage);
 
+static ssize_t Charger_Config_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct mtk_charger *pinfo = dev->driver_data;
+	int chg_cfg = pinfo->config;
+
+	chr_err("%s: %d\n", __func__, chg_cfg);
+	return sprintf(buf, "%d\n", chg_cfg);
+}
+
+static DEVICE_ATTR_RO(Charger_Config);
+
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static ssize_t input_current_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct mtk_charger *pinfo = dev->driver_data;
+	int aicr = 0;
+
+	//mutex_lock(&pinfo->charger_lock);
+	aicr = pinfo->chg_data[CHG1_SETTING].ibus_limit_by_test;
+	pr_err("%s: %d\n", __func__, aicr);
+	//mutex_unlock(&pinfo->charger_lock);
+	return sprintf(buf, "%d\n", aicr);
+}
+#else
 static ssize_t input_current_show(struct device *dev,
 				  struct device_attribute *attr, char *buf)
 {
@@ -804,7 +1158,34 @@ static ssize_t input_current_show(struct device *dev,
 	chr_err("%s: %d\n", __func__, aicr);
 	return sprintf(buf, "%d\n", aicr);
 }
+#endif
+/* End mod by jin.wang */
 
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static ssize_t input_current_store(struct device *dev,
+				   struct device_attribute *attr,
+				   const char *buf, size_t size)
+{
+	struct mtk_charger *pinfo = dev->driver_data;
+	struct charger_data *chg_data;
+	signed int temp;
+
+	mutex_lock(&pinfo->charger_lock);
+	chg_data = &pinfo->chg_data[CHG1_SETTING];
+	if (kstrtoint(buf, 10, &temp) == 0) {
+		if (temp < 0)
+			chg_data->ibus_limit_by_test = -1;
+		else
+			chg_data->ibus_limit_by_test = temp;
+	} else {
+		chr_err("%s: format error!\n", __func__);
+	}
+	pr_err("%s: userspace set ibus: %d\n", __func__, temp);
+	mutex_unlock(&pinfo->charger_lock);
+	return size;
+}
+#else
 static ssize_t input_current_store(struct device *dev,
 				   struct device_attribute *attr,
 				   const char *buf, size_t size)
@@ -824,6 +1205,8 @@ static ssize_t input_current_store(struct device *dev,
 	}
 	return size;
 }
+#endif
+/* End mod by jin.wang */
 
 static DEVICE_ATTR_RW(input_current);
 
@@ -890,6 +1273,68 @@ static ssize_t BatteryNotify_store(struct device *dev,
 }
 
 static DEVICE_ATTR_RW(BatteryNotify);
+
+/* Begin added by bin.song.hz for defect10297066 on 2020.12.03 */
+static ssize_t BatJeitaStatus_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct mtk_charger *pinfo = dev->driver_data;
+	int sm = BAT_TEMP_NORMAL;
+	if (pinfo->enable_sw_jeita) {
+		if (TEMP_BELOW_T0 == pinfo->sw_jeita.sm) {//init value is TEMP_BELOW_T0
+			if (pinfo->battery_temp <= pinfo->data.temp_t0_thres_plus_x_degree)
+				sm = BAT_TEMP_LOW;
+			else if (pinfo->battery_temp >= pinfo->data.temp_t4_thres)
+				sm = BAT_TEMP_HIGH;
+			else
+				sm = BAT_TEMP_NORMAL;
+		} else if (TEMP_ABOVE_T4 == pinfo->sw_jeita.sm)
+			sm = BAT_TEMP_HIGH;
+		else
+			sm = BAT_TEMP_NORMAL;
+	} else {
+		if (BAT_TEMP_LOW == pinfo->thermal.sm) {//init value is BAT_TEMP_LOW
+			if (pinfo->battery_temp < pinfo->thermal.min_charge_temp_plus_x_degree)
+				sm =BAT_TEMP_LOW;
+			else if (pinfo->battery_temp >= pinfo->thermal.max_charge_temp)
+				sm =BAT_TEMP_HIGH;
+			else
+				sm = BAT_TEMP_NORMAL;
+		} else
+			sm = pinfo->thermal.sm;
+	}
+	return sprintf(buf, "%u\n", sm);
+}
+
+static DEVICE_ATTR_RO(BatJeitaStatus);
+/* End added by bin.song.hz for defect10297066 on 2020.12.03 */
+
+/* Begin modify by tangshan for GAIAGL-5497 on 20230731 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static ssize_t show_soc_limited(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	pr_debug("[minisw] %s : %d\n", __func__, soc_limited);
+	return sprintf(buf, "%u\n", soc_limited);
+}
+
+static ssize_t store_soc_limited(struct device *dev,
+		struct device_attribute *attr, const char *buf,  size_t size)
+{
+	unsigned int val = 0;
+	int ret;
+
+	if (buf != NULL && size != 0) {
+		ret = kstrtouint(buf, 10, &val);
+		soc_limited = val;
+		pr_err("[minisw] store soc_limited = %d\n", soc_limited);
+	}
+	return size;
+}
+static DEVICE_ATTR(soc_limited, 0644, show_soc_limited, store_soc_limited);
+#endif
+/* End modify by tangshan for GAIAGL-5497 on 20230731 */
+/* End add by jin.wang */
 
 /* procfs */
 static int mtk_chg_current_cmd_show(struct seq_file *m, void *data)
@@ -1016,13 +1461,20 @@ static int mtk_chg_en_safety_timer_show(struct seq_file *m, void *data)
 {
 	struct mtk_charger *pinfo = m->private;
 	bool safety_timer_en = false;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	int ret = 0;
+#endif
 
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	ret = charger_dev_is_safety_timer_enabled(pinfo->chg1_dev, &safety_timer_en);
 	if (ret < 0)
 		seq_printf(m, "%d\n", pinfo->enable_sw_safety_timer);
 	else
 		seq_printf(m, "%d\n", safety_timer_en);
+#else
+	charger_dev_is_safety_timer_enabled(pinfo->chg1_dev, &safety_timer_en);
+	seq_printf(m, "%d\n", safety_timer_en);
+#endif
 
 	return 0;
 }
@@ -1116,12 +1568,34 @@ int mtk_chg_enable_vbus_ovp(bool enable)
 	return ret;
 }
 
+/* Begin added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+int battery_do_health_update(struct mtk_charger *info)
+{
+	if (info != NULL && (!mutex_is_locked(&info->charger_lock))) {
+		info->battery_temp = get_battery_temperature(info);
+		do_sw_jeita_state_machine(info);
+		chr_err("%s:  (jeita:%d sm:%d cv:%d en:%d) \n", __func__,
+		info->enable_sw_jeita, info->sw_jeita.sm,
+		info->sw_jeita.cv, info->sw_jeita.charging);
+	}
+	return 0;
+}
+EXPORT_SYMBOL(battery_do_health_update);
+#endif
+/* End added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+
 /* return false if vbus is over max_charger_voltage */
 static bool mtk_chg_check_vbus(struct mtk_charger *info)
 {
 	int vchr = 0;
 
 	vchr = get_vbus(info) * 1000; /* uV */
+/* Begin modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+    g_chr_vol = vchr;
+#endif
+/* End modified by dapeng.qiao for task 11038299 on 2021-05-1 */
 	if (vchr > info->data.max_charger_voltage) {
 		chr_err("%s: vbus(%d mV) > %d mV\n", __func__, vchr / 1000,
 			info->data.max_charger_voltage / 1000);
@@ -1225,15 +1699,14 @@ static void mtk_battery_notify_check(struct mtk_charger *info)
 {
 	if (info->notify_test_mode == 0x0000) {
 		mtk_battery_notify_VCharger_check(info);
-		/* Begin modified by bitao.xiong for task-10031392 on 2020-10-15 */
-		if (strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_TF") || strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_NA_OM"))
-			mtk_battery_notify_VBatTemp_check(info);
-		/* End modified by bitao.xiong for task-10031392 on 2020-10-15 */
+		mtk_battery_notify_VBatTemp_check(info);
 	} else {
 		mtk_battery_notify_UI_test(info);
 	}
 }
 
+/* Begin del by jin.wang for task 2064 on 2021-10-5 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 static void mtk_chg_get_tchg(struct mtk_charger *info)
 {
 	int ret;
@@ -1264,10 +1737,17 @@ static void mtk_chg_get_tchg(struct mtk_charger *info)
 		}
 	}
 }
+#endif
+/* End del by jin.wang */
 
+
+/* Begin mod by jin.wang for androidT on 2022-4-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+#if !IS_ENABLED(TARGET_BUILD_MMITEST)
+/* [BSP]Begin deleted by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+#if 0
 /* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 static int pmic_get_charging_current(void)
 {
 	int ret = 0;
@@ -1283,6 +1763,7 @@ static int pmic_get_charging_current(void)
 
 	return ((v_isense - v_batsns) * 1000 / 68) * 1000;
 }
+#endif
 
 static void mtk_charger_check_input_avg_current(struct mtk_charger *info, bool is_charger_on)
 {
@@ -1297,7 +1778,11 @@ static void mtk_charger_check_input_avg_current(struct mtk_charger *info, bool i
 	if (is_charger_on == true) {
 		for (i = 0; i < 5; i++) {
 			msleep(200);
+			#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 			ichg = pmic_get_charging_current();
+			#else
+			ichg = get_ibus(info) * 1000;
+			#endif
 			if (ichg <= 0)
 				return;
 			chg_current += ichg;
@@ -1308,64 +1793,209 @@ static void mtk_charger_check_input_avg_current(struct mtk_charger *info, bool i
 	}
 }
 
+/* Begin added by bitao.xiong for defect-11669535 on 2021-11-16 */
+static bool is_nonstandard_charger_by_current(struct mtk_charger *info)
+{
+	int threshold = 70;
+	int vbat = 0;
+	int ret;
+
+	if (info == NULL)
+		return false;
+
+	ret = gauge_get_property(GAUGE_PROP_BATTERY_VOLTAGE, &vbat);
+	if (ret)
+		return false;
+#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
+	if (vbat < 3800)
+		threshold = 100;
+	else if (vbat < 4000)
+		threshold = 90;
+	else
+		threshold = 85;
+#endif
+	chr_err("%s, vbat=%d, threshold=%d, input_avg_current=%d, ac_charger_current=%d, \
+			 ac_charger_input_current=%d, threshold_current=%d\n", __func__, vbat, threshold,
+					info->input_avg_current, info->data.ac_charger_current,
+					info->data.ac_charger_input_current,
+					info->data.ac_charger_input_current * threshold / 100);
+	if (info->input_avg_current > 0  && info->input_avg_current < info->data.ac_charger_input_current * threshold / 100)
+		return true;
+	else
+		return false;
+}
+/* End added by bitao.xiong for defect-11669535 on 2021-11-16 */
+
+static void mtk_charger_check_nonstandard_charger(struct mtk_charger *info, bool is_charger_on)
+{
+	struct charger_data *chg_data;
+	bool is_fast_charge = false;
+	struct chg_alg_device *alg = NULL;
+	int i = 0, ret;
+	int chr_type;
+	struct timespec time_now, diff_time;
+
+	if (info == NULL) {
+		info->input_avg_current = 0;
+		return;
+	}
+	chg_data = &info->chg_data[CHG1_SETTING];
+	chr_type = get_charger_type(info);
+	chr_err("%s, chg_type=%d, %d, %d, %d, %d, enable_hv_charging=%d\n", __func__, get_charger_type(info),
+		chg_data->thermal_input_current_limit, chg_data->thermal_charging_current_limit,
+		info->enable_sw_jeita,info->sw_jeita.sm, info->enable_hv_charging);
+
+	if (info->nonstand_chg_type != NONSTANDARD_CHARGER_INVALIED)
+		return;
+
+	if (chr_type == POWER_SUPPLY_TYPE_USB || chr_type == POWER_SUPPLY_TYPE_USB_CDP)
+		info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+	else if (chr_type == POWER_SUPPLY_TYPE_USB_FLOAT) {
+		get_monotonic_boottime(&time_now);
+		diff_time = timespec_sub(time_now, info->charging_begin_time);
+		if((diff_time.tv_sec < 25)&&(diff_time.tv_sec >= 10)) {
+			info->nonstand_chg_type = NONSTANDARD_CHARGER_NONSTAND;
+			if (!IS_ERR_OR_NULL(info->bat_psy))
+				power_supply_changed(info->bat_psy);
+		}
+	} else if (chr_type == POWER_SUPPLY_TYPE_USB_DCP && is_charger_on) {
+		if (chg_data->thermal_input_current_limit == -1 &&
+				chg_data->thermal_charging_current_limit == -1 &&
+				info->enable_sw_jeita && info->sw_jeita.sm == TEMP_T2_TO_T3 &&
+				get_uisoc(info) < 80 && get_uisoc(info) > 1) {
+			get_monotonic_boottime(&time_now);
+			diff_time = timespec_sub(time_now, info->charging_begin_time);
+			if((diff_time.tv_sec < 70)&&(diff_time.tv_sec >= 40)) {
+				for (i = 0; i < MAX_ALG_NO; i++) {
+					alg = info->alg[i];
+					if (alg == NULL)
+						continue;
+					ret = chg_alg_is_algo_ready(alg);
+					if (ret == ALG_RUNNING) {
+						is_fast_charge = true;
+						info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+						break;
+					}
+				}
+
+				if (!is_fast_charge) {
+					mtk_charger_check_input_avg_current(info, is_charger_on);
+					if (is_nonstandard_charger_by_current(info)) {
+						info->nonstand_chg_type = NONSTANDARD_CHARGER_SLOW;
+						if (!IS_ERR_OR_NULL(info->bat_psy))
+							power_supply_changed(info->bat_psy);
+					} else {
+						info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+					}
+				}
+				chr_err("%s, nonstand_chg_type=0x%x, is_fast_charge=%d\n", __func__,  info->nonstand_chg_type, is_fast_charge);
+			}
+		}
+	}
+}
+
 static ssize_t nonstand_charge_type_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
-	int nonstand_chg_type= 0;
 	struct mtk_charger *info = dev->driver_data;
-	struct charger_data *chg_data;
+#if IS_ENABLED(TARGET_BUILD_CERTIFICATION) || IS_ENABLED(TARGET_BUILD_MMITEST) \
+		|| IS_ENABLED(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+	chr_err("%s: This is not cu Version, nonstand_charge_type is always NONSTANDARD_CHARGER_NONE\n", __func__);
+	info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+#else
+	chr_err("%s: type:0x%x, input_avg_current=%d\n", __func__, info->nonstand_chg_type, info->input_avg_current);
+#endif
+	return sprintf(buf, "0x%x\n", info->nonstand_chg_type);
+}
+#endif
+/* [BSP]End deleted by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
 
-	chg_data = &info->chg_data[CHG1_SETTING];
+/* [BSP]Begin modified by bitao.xiong for BORANAOM-2761 on 2023/01/31 */
+#if 0
+static ssize_t nonstand_charge_type_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+	struct mtk_charger *info = dev->driver_data;
+	struct charger_data *pdata1 = &info->chg_data[CHG1_SETTING];
+	const int weak_chg_input_current = info->data.weak_ac_charger_input_current;
+
+	if (get_charger_type(info) == POWER_SUPPLY_TYPE_UNKNOWN)
+		info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+
+	if (info->nonstand_chg_type != NONSTANDARD_CHARGER_INVALIED)
+		return sprintf(buf, "0x%x\n", info->nonstand_chg_type);
+
 	if (get_charger_type(info) == POWER_SUPPLY_TYPE_USB_FLOAT)
-		nonstand_chg_type = 0x1;
-
-	if (get_charger_type(info) == POWER_SUPPLY_TYPE_USB_DCP) {
-		if (chg_data->thermal_input_current_limit == -1 &&
-			chg_data->thermal_charging_current_limit == -1 &&
-			info->enable_sw_jeita && info->sw_jeita.sm == TEMP_T2_TO_T3 &&
-			get_uisoc(info) < 80 && get_uisoc(info) > 1) {
-			if (info->input_avg_current < info->data.ac_charger_current * 85 / 100)
-				nonstand_chg_type = 0x2;
+		info->nonstand_chg_type = NONSTANDARD_CHARGER_NONSTAND;
+	else if(get_charger_type(info) == POWER_SUPPLY_TYPE_USB_DCP) {
+		if (get_uisoc(info) < 80) {
+			if (pdata1->input_current_limit_by_aicl > 0) {
+				if (pdata1->input_current_limit_by_aicl <= weak_chg_input_current)
+					info->nonstand_chg_type = NONSTANDARD_CHARGER_SLOW;
+				else
+					info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+			} else {
+				info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+			}
+		} else {
+			info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
 		}
+	} else {
+		info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
 	}
 
-	chr_err("%s: type:0x%x, input_avg_current=%d\n", __func__, nonstand_chg_type, info->input_avg_current);
-	return sprintf(buf, "0x%x\n", nonstand_chg_type);
+	chr_err("[cwldebug %s] input_current_limit_by_aicl=%d nonstand_chg_type=%d\n", __func__, pdata1->input_current_limit_by_aicl, info->nonstand_chg_type);
+	return sprintf(buf, "0x%x\n", info->nonstand_chg_type);
 }
-DEVICE_ATTR_RO(nonstand_charge_type);
-#endif
-/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+#else
+static ssize_t nonstand_charge_type_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+	struct mtk_charger *info = dev->driver_data;
 
+	if (info->nonstand_chg_type != NONSTANDARD_CHARGER_INVALIED)
+		return sprintf(buf, "0x%x\n", info->nonstand_chg_type);
+
+	if (get_charger_type(info) == POWER_SUPPLY_TYPE_USB_FLOAT)
+		info->nonstand_chg_type = NONSTANDARD_CHARGER_NONSTAND;
+	else
+		info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+
+	chr_err("[cwldebug %s] nonstand_chg_type=%d\n", __func__, info->nonstand_chg_type);
+	return sprintf(buf, "0x%x\n", info->nonstand_chg_type);
+}
+#endif
+/* [BSP]End modified by bitao.xiong for BORANAOM-2761 on 2023/01/31 */
+DEVICE_ATTR_RO(nonstand_charge_type);
+/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+#endif
+#endif
+/* End mod by jin.wang */
+
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+extern int charger_driver_lasterrcode;
+extern int charger_driver_lasterrcode_value;
+void heraeye_bat_check_temp(int errtype, int charger_driver_value);
+#endif
+
+/* Begin mod by jin.wang for androidT on 2022-4-14 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 static void charger_check_status(struct mtk_charger *info)
 {
 	bool charging = true;
 	int temperature;
 	struct battery_thermal_protection_data *thermal;
-	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
-	union power_supply_propval prop;
-	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
-	/* Begin added by bitao.xiong for task-9878354 on 2020-09-05 */
-	#if defined(TARGET_BUILD_MMITEST)
-	static bool mini_chg_disabled = false;
-	struct mtk_battery *gm;
-	struct fuel_gauge_custom_data *fg_cust_data;
-	#endif
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2022/11/04 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int uisoc = 1;
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2022/11/04 */
 
-	#if !defined(TARGET_BUILD_MMITEST)
-	const char *default_batt_type = "Unknown Battery";
-	#endif
-	int ret;
-	/* End added by bitao.xiong for task-9878354 on 2020-09-05 */
+	struct mtk_battery *gm = get_mtk_battery();
 
 	if (get_charger_type(info) == POWER_SUPPLY_TYPE_UNKNOWN)
 		return;
 
-	/* Begin added by bitao.xiong for defect-10164762  on 2020-11-18 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
-	charger_dev_kick_wdt(info->chg1_dev);
-	#endif
-	/* End added by bitao.xiong for defect-10164762  on 2020-11-18 */
 	temperature = info->battery_temp;
 	thermal = &info->thermal;
 
@@ -1382,6 +2012,9 @@ static void charger_check_status(struct mtk_charger *info)
 				chr_err("Battery Under Temperature or NTC fail %d %d\n",
 					temperature, thermal->min_charge_temp);
 				thermal->sm = BAT_TEMP_LOW;
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+				heraeye_bat_check_temp(BAT_TEMP_LOW,temperature);
+#endif
 				charging = false;
 				goto stop_charging;
 			} else if (thermal->sm == BAT_TEMP_LOW) {
@@ -1404,6 +2037,9 @@ static void charger_check_status(struct mtk_charger *info)
 				temperature, thermal->max_charge_temp);
 			thermal->sm = BAT_TEMP_HIGH;
 			charging = false;
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+				heraeye_bat_check_temp(BAT_TEMP_HIGH,temperature);
+#endif
 			goto stop_charging;
 		} else if (thermal->sm == BAT_TEMP_HIGH) {
 			if (temperature
@@ -1420,34 +2056,260 @@ static void charger_check_status(struct mtk_charger *info)
 		}
 	}
 
+	if (!mtk_chg_check_vbus(info)) {
+		charging = false;
+		goto stop_charging;
+	}
+
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2022/11/04 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (is_mmitest || is_inproductionflag) {
+		chr_err("[minisw] soc_limited = %d\n", soc_limited);
+		if (soc_limited) {
+			uisoc = get_uisoc(info);
+			if (uisoc >= MINI_SUSPEND_CHG_SOC) {
+				chr_err("uisoc up to %d(%d), stop chg!!\n",
+						uisoc, MINI_SUSPEND_CHG_SOC);
+				mini_soc_limited = 1;
+				charging = false;
+				goto stop_charging;
+			} else if (mini_soc_limited) {
+				if (uisoc <= MINI_RESUME_CHG_SOC) {
+					chr_err("uisoc down to %d(%d), resume chg!!\n",
+							uisoc, MINI_RESUME_CHG_SOC);
+					mini_soc_limited = 0;
+				} else {
+					charging = false;
+					goto stop_charging;
+				}
+			}
+		} else {
+			mini_soc_limited = 0;
+		}
+	}
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2022/11/04 */
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (gm && gm->chg_disable) {
+		chr_err("cmd disable charging\n");
+		charging = false;
+		goto stop_charging;
+	}
+
+	if (!strncmp(get_battery_type(info), "NA:NA:NA:NA", strlen("NA:NA:NA:NA"))) {
+		chr_err("Third-party battery,stop charging\n");
+		charging = false;
+		goto stop_charging;
+	}
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+
+	if (info->cmd_discharging)
+		charging = false;
+	if (info->safety_timeout)
+		charging = false;
+	if (info->vbusov_stat)
+		charging = false;
+	/* Begin Added by tangshan.bai for LEVIN-6148 */
+    #if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    if (gm->peak_enforce_full)
+		charging = false;
+    #endif
+    /* End Added by tangshan.bai for LEVIN-6148 */
+
+stop_charging:
+	/* Begin Added by tangshan.bai for LEVIN-6148 */
+    #if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    if (gm->peak_enforce_full)
+    	gm->bat_state = BAT_ENFORCE_TO_FULL;
+    else{
+		if (false == charging)
+			gm->bat_state = BAT_NOTCHARGING;
+		else
+			gm->bat_state = BAT_CHARGING;
+    }
+
+    #endif
+    /* End Added by tangshan.bai for LEVIN-6148 */
+
+	mtk_battery_notify_check(info);
+
+	chr_err("tmp:%d (jeita:%d sm:%d cv:%d en:%d) (sm:%d) en:%d c:%d s:%d ov:%d %d %d\n",
+		temperature, info->enable_sw_jeita, info->sw_jeita.sm,
+		info->sw_jeita.cv, info->sw_jeita.charging, thermal->sm,
+		charging, info->cmd_discharging, info->safety_timeout,
+		info->vbusov_stat, info->can_charging, charging);
+
+	if (charging != info->can_charging)
+		_mtk_enable_charging(info, charging);
+
+	info->can_charging = charging;
+	/* [BSP]Begin added by bitao.xiong for SNTBBH-2995 on 2022/11/22 */
+	#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+	#if !defined(TARGET_BUILD_MMITEST)
+	/* [BSP]Begin deleted by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+	#if 0
+	mtk_charger_check_nonstandard_charger(info, info->can_charging);
+	#endif
+	/* [BSP]End deleted by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+	#endif
+	#endif
+	/* [BSP]End added by bitao.xiong for SNTBBH-2995 on 2022/11/22 */
+}
+#else
+static void charger_check_status(struct mtk_charger *info)
+{
+	bool charging = true;
+	int temperature;
+	struct battery_thermal_protection_data *thermal;
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int uisoc = 1;
+	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
+	union power_supply_propval prop;
+	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
+	/* Begin added by bitao.xiong for task-9878354 on 2020-09-05 */
+	struct fuel_gauge_custom_data *fg_cust_data;
+	int ret;
+	/* End added by bitao.xiong for task-9878354 on 2020-09-05 */
+	#endif
+
+	if (get_charger_type(info) == POWER_SUPPLY_TYPE_UNKNOWN)
+		return;
+
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
+    if (info->chg1_dev != NULL)
+        charger_dev_kick_wdt(info->chg1_dev);
+
+    if (info->chg2_dev != NULL)
+        charger_dev_kick_wdt(info->chg2_dev);
+	#endif
+
+	temperature = info->battery_temp;
+	thermal = &info->thermal;
+
+	if (info->enable_sw_jeita == true) {
+		do_sw_jeita_state_machine(info);
+		if (info->sw_jeita.charging == false) {
+			charging = false;
+			goto stop_charging;
+		}
+	} else {
+
+		if (thermal->enable_min_charge_temp) {
+			if (temperature < thermal->min_charge_temp) {
+				chr_err("Battery Under Temperature or NTC fail %d %d\n",
+					temperature, thermal->min_charge_temp);
+				thermal->sm = BAT_TEMP_LOW;
+				charging = false;
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+				heraeye_bat_check_temp(BAT_TEMP_LOW,temperature);
+#endif
+				goto stop_charging;
+			} else if (thermal->sm == BAT_TEMP_LOW) {
+				if (temperature >=
+				    thermal->min_charge_temp_plus_x_degree) {
+					chr_err("Battery Temperature raise from %d to %d(%d), allow charging!!\n",
+					thermal->min_charge_temp,
+					temperature,
+					thermal->min_charge_temp_plus_x_degree);
+					thermal->sm = BAT_TEMP_NORMAL;
+				} else {
+					charging = false;
+					goto stop_charging;
+				}
+			}
+		}
+
+		if (temperature >= thermal->max_charge_temp) {
+			chr_err("Battery over Temperature or NTC fail %d %d\n",
+				temperature, thermal->max_charge_temp);
+			thermal->sm = BAT_TEMP_HIGH;
+			charging = false;
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+			heraeye_bat_check_temp(BAT_TEMP_HIGH,temperature);
+#endif
+			goto stop_charging;
+		} else if (thermal->sm == BAT_TEMP_HIGH) {
+			if (temperature
+			    < thermal->max_charge_temp_minus_x_degree) {
+				chr_err("Battery Temperature raise from %d to %d(%d), allow charging!!\n",
+				thermal->max_charge_temp,
+				temperature,
+				thermal->max_charge_temp_minus_x_degree);
+				thermal->sm = BAT_TEMP_NORMAL;
+			} else {
+				charging = false;
+				goto stop_charging;
+			}
+		}
+	}
+
+/* Begin del by jin.wang for task 2064 on 2021-10-5 */
+#if !defined(CONFIG_TCT_CHARGER)
 	mtk_chg_get_tchg(info);
+#endif
+/* End del by jin.wang */
 
 	if (!mtk_chg_check_vbus(info)) {
 		charging = false;
 		goto stop_charging;
 	}
 
-/* Begin added by bitao.xiong for task-9878354 on 2020-09-05 */
-#if defined(TARGET_BUILD_MMITEST)
-	gm = get_mtk_battery();
-	fg_cust_data = &gm->fg_cust_data;
-	if (fg_cust_data->embedded_sel) {
-		/* KERNEL_POWER_OFF_CHARGING_BOOT or LOW_POWER_OFF_CHARGING_BOOT */
-		if ((info->bootmode == 8) || (info->bootmode == 9)) {
-			if (get_uisoc(info) >= 65) {
-				chr_err("mini sw stop charging,uisoc >=65\n");
-				mini_chg_disabled = true;
-			} else if (get_uisoc(info) <= 60) {
-				chr_err("mini sw start charging,uisoc <=60\n");
-				mini_chg_disabled = false;
+/* Begin modified by bitao.xiong for ENCORECKT-2669 on 2022-08-31 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (gm == NULL)
+		gm = get_mtk_battery();
+	if (is_mmitest || is_inproductionflag) {
+		fg_cust_data = &gm->fg_cust_data;
+		chr_err("[minisw] soc_limited = %d\n", soc_limited);
+		if (fg_cust_data->embedded_sel && soc_limited) {
+			uisoc = get_uisoc(info);
+			if (uisoc >= MINI_SUSPEND_CHG_SOC) {
+				chr_err("uisoc up to %d(%d), stop chg!!\n",
+						uisoc, MINI_SUSPEND_CHG_SOC);
+				mini_soc_limited = 1;
+				charging = false;
+				goto stop_charging;
+			} else if (mini_soc_limited) {
+				if (uisoc <= MINI_RESUME_CHG_SOC) {
+					chr_err("uisoc down to %d(%d), resume chg!!\n",
+							uisoc, MINI_RESUME_CHG_SOC);
+					mini_soc_limited = 0;
+				} else {
+					charging = false;
+					goto stop_charging;
+				}
 			}
+		} else {
+			mini_soc_limited = 0;
 		}
-
-		if (mini_chg_disabled)
-			charging = false;
 	}
 #endif
-/* End added by bitao.xiong for task-9878354 on 2020-09-05 */
+/* End modified by bitao.xiong for ENCORECKT-2669 on 2022-08-31 */
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if defined(CONFIG_TCT_CHARGER)
+	if (gm->chg_disable) {
+		chr_err("cmd disable charging\n");
+		charging = false;
+		goto stop_charging;
+	}
+//Begin delete by tanghsan.bai for task 10968812 on 20 2021-03-29
+//Begin add by rd.linsheng.liu for default 10430693 on 2020/12/15
+ //   #ifndef CONFIG_WRIGHTPRO_DEVICEINFO
+	if (!strncmp(get_battery_type(info), "NA:NA:NA:NA", strlen("NA:NA:NA:NA"))) {
+			chr_err("Third-party battery,stop charging\n");
+			charging = false;
+			goto stop_charging;
+	}
+ //   #endif
+//End add by rd.linsheng.liu for default 10430693 on 2020/12/15
+// End delete by tanghsan.bai for task 10968812 on 20 2021-03-29
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+
 	if (info->cmd_discharging)
 		charging = false;
 	if (info->safety_timeout)
@@ -1455,29 +2317,32 @@ static void charger_check_status(struct mtk_charger *info)
 	if (info->vbusov_stat)
 		charging = false;
 
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
-	if (IS_ERR_OR_NULL(info->battery_psy)) {
-		info->battery_psy = power_supply_get_by_name("battery");
-		if (IS_ERR_OR_NULL(info->battery_psy)) {
+	if (IS_ERR_OR_NULL(info->bat_psy)) {
+		info->bat_psy = devm_power_supply_get_by_phandle(&info->pdev->dev,
+			"gauge");
+		if (IS_ERR_OR_NULL(info->bat_psy)) {
 			chr_err("%s: get battery power supply failed\n", __func__);
 			charging = false;
 		}
 	} else {
 		#if !defined(TARGET_BUILD_MMITEST)
-		ret = power_supply_get_property(info->battery_psy,
-				POWER_SUPPLY_PROP_BATTERY_TYPE, &prop);
-		if (!ret && strcmp(default_batt_type, prop.strval) == 0) {
+		ret = power_supply_get_property(info->bat_psy,
+				POWER_SUPPLY_PROP_DEBUG_BATTERY, &prop);
+		if (!ret && prop.intval) {
 			chr_err("%s: disable charge for 3rd battery\n", __func__);
 			charging = false;
 		}
 		#endif
-		ret = power_supply_get_property(info->battery_psy,
+		ret = power_supply_get_property(info->bat_psy,
 				POWER_SUPPLY_PROP_CHARGING_ENABLED, &prop);
 		if (!ret && !prop.intval) {
 			charging = false;
 		}
 	}
 	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
+	#endif
 
 stop_charging:
 	mtk_battery_notify_check(info);
@@ -1492,19 +2357,69 @@ stop_charging:
 		_mtk_enable_charging(info, charging);
 
 	info->can_charging = charging;
-	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
-	mtk_charger_check_input_avg_current(info, info->can_charging);
+	#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+	#if !defined(TARGET_BUILD_MMITEST)
+	/* [BSP]Begin deleted by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+	#if 0
+	mtk_charger_check_nonstandard_charger(info, info->can_charging);
 	#endif
-	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+	/* [BSP]End deleted by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+	#endif
+	#endif
 }
+#endif
 
 static bool charger_init_algo(struct mtk_charger *info)
 {
-	struct chg_alg_device *alg;
+/* Begin mod by jin.wang task 2064 on 2021.10.25 */
+#if IS_ENABLED(CONFIG_MTK_PUMP_EXPRESS_40_SUPPORT) \
+	|| IS_ENABLED(CONFIG_MTK_PD_SUPPORT) \
+	|| IS_ENABLED(CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT) \
+	|| IS_ENABLED(CONFIG_MTK_PUMP_EXPRESS_PLUS_SUPPORT)
+	struct chg_alg_device * alg = NULL;
 	int idx = 0;
+#endif
+/* End mod by jin.wang */
 
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	info->chg1_dev = get_charger_by_name("primary_chg");
+	if (info->chg1_dev) {
+/* [BSP]Begin added by bitao.xiong for SNTTF-5676 on 2022/11/29 */
+#if defined(TARGET_BUILD_MMITEST)
+		info->enable_sw_safety_timer = false;
+		charger_dev_enable_safety_timer(info->chg1_dev, false);
+#else
+		charger_dev_enable_safety_timer(info->chg1_dev, true);
+#endif
+/* [BSP]End added by bitao.xiong for SNTTF-5676 on 2022/11/29 */
+		chr_err("Found primary charger\n");
+	} else {
+		chr_err("*** Error : can't find primary charger ***\n");
+		return false;
+	}
+
+	chr_err("[%s], config is %d\n", __func__, info->config);
+	if ((info->config == DUAL_CHARGERS_IN_PARALLEL)
+		|| (info->config == DUAL_CHARGERS_IN_SERIES)) {
+		info->chg2_dev = get_charger_by_name("secondary_chg");
+		if (info->chg2_dev) {
+/* [BSP]Begin added by bitao.xiong for SNTTF-5676 on 2022/11/29 */
+#if defined(TARGET_BUILD_MMITEST)
+			charger_dev_enable_safety_timer(info->chg2_dev, false);
+#else
+			charger_dev_enable_safety_timer(info->chg2_dev, true);
+#endif
+/* [BSP]End added by bitao.xiong for SNTTF-5676 on 2022/11/29 */
+			chr_err("Found secondary charger\n");
+		} else {
+			chr_err("*** Warning : can't find secondary charger ***\n");
+			info->config = SINGLE_CHARGER;
+		}
+	}
+#endif
+
+#if IS_ENABLED(CONFIG_MTK_PUMP_EXPRESS_40_SUPPORT)
 	alg = get_chg_alg_by_name("pe4");
 	info->alg[idx] = alg;
 	if (alg == NULL)
@@ -1516,7 +2431,9 @@ static bool charger_init_algo(struct mtk_charger *info)
 		register_chg_alg_notifier(alg, &info->chg_alg_nb);
 	}
 	idx++;
+#endif
 
+#if IS_ENABLED(CONFIG_MTK_PD_SUPPORT)
 	alg = get_chg_alg_by_name("pd");
 	info->alg[idx] = alg;
 	if (alg == NULL)
@@ -1528,11 +2445,20 @@ static bool charger_init_algo(struct mtk_charger *info)
 		register_chg_alg_notifier(alg, &info->chg_alg_nb);
 	}
 	idx++;
+#endif
 
+#if IS_ENABLED(CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT)
 	alg = get_chg_alg_by_name("pe2");
 	info->alg[idx] = alg;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (alg == NULL) {
+		chr_err("Error: get pe2 fail, wait\n");
+		return false;
+	}
+#else
 	if (alg == NULL)
 		chr_err("get pe2 fail\n");
+#endif
 	else {
 		chr_err("get pe2 success\n");
 		alg->config = info->config;
@@ -1540,18 +2466,31 @@ static bool charger_init_algo(struct mtk_charger *info)
 		register_chg_alg_notifier(alg, &info->chg_alg_nb);
 	}
 	idx++;
+#endif
 
+#if IS_ENABLED(CONFIG_MTK_PUMP_EXPRESS_PLUS_SUPPORT)
 	alg = get_chg_alg_by_name("pe");
 	info->alg[idx] = alg;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (alg == NULL) {
+		chr_err("Error: get pe fail, delay\n");
+		return false;
+	}
+#else
 	if (alg == NULL)
 		chr_err("get pe fail\n");
+#endif
 	else {
 		chr_err("get pe success\n");
 		alg->config = info->config;
 		chg_alg_init_algo(alg);
 		register_chg_alg_notifier(alg, &info->chg_alg_nb);
 	}
+#endif
+/* End mod by jin.wang */
 
+/* Begin del by jin.wang task 2064 on 2021.10.8 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	info->chg1_dev = get_charger_by_name("primary_chg");
 	if (info->chg1_dev)
 		chr_err("Found primary charger\n");
@@ -1560,7 +2499,8 @@ static bool charger_init_algo(struct mtk_charger *info)
 		return false;
 	}
 
-	chr_err("config is %d\n", info->config);
+/* Begin modified by dapeng.qiao task 10672631 porting for prague on 2021.1.13 */
+	chr_err("[%s], config is %d\n", __func__, info->config);
 	if (info->config == DUAL_CHARGERS_IN_SERIES) {
 		info->chg2_dev = get_charger_by_name("secondary_chg");
 		if (info->chg2_dev)
@@ -1570,6 +2510,8 @@ static bool charger_init_algo(struct mtk_charger *info)
 			return false;
 		}
 	}
+#endif
+/* End del by jin.wang */
 
 	chr_err("register chg1 notifier %d %d\n",
 		info->chg1_dev != NULL, info->algo.do_event != NULL);
@@ -1594,11 +2536,24 @@ static int mtk_charger_plug_out(struct mtk_charger *info)
 
 	chr_err("%s\n", __func__);
 	info->chr_type = POWER_SUPPLY_TYPE_UNKNOWN;
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+    g_chr_type = POWER_SUPPLY_TYPE_UNKNOWN;
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
 	info->charger_thread_polling = false;
-
+/* Begin added by geng.sun for PR SNTTF-4846 on 2022-09-22 */
+	info->pd_reset = false;
+/* End added by geng.sun for PR SNTTF-4846 on 2022-09-22 */
 	pdata1->disable_charging_count = 0;
-	pdata1->input_current_limit_by_aicl = -1;
 	pdata2->disable_charging_count = 0;
+
+/* Begin add by jin.wang for jira-2064 on 2021-11-25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	pdata1->ibus_limit_by_others = -1;
+	pdata1->ibat_limit_by_others = -1;
+#endif
+/* End add by jin.wang */
 
 	notify.evt = EVT_PLUG_OUT;
 	notify.value = 0;
@@ -1611,6 +2566,28 @@ static int mtk_charger_plug_out(struct mtk_charger *info)
 	charger_dev_set_mivr(info->chg1_dev, info->data.min_charger_voltage);
 	charger_dev_plug_out(info->chg1_dev);
 
+/* Begin mod by jin.wang for androidT on 2022-4-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+	info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+	info->input_avg_current = 0;
+#endif
+/* End mod by jin.wang */
+
+/* Begin add by jin.wang for jira on 2021-10-25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	set_hv_flag(0);
+#endif
+/* End add by jin.wang */
+
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    chr_err("peak managment function CABLE_PLUG_OUT\n");
+    calculate_coulomb_charged(EVT_PLUG_OUT);//CABLE_PLUG_out
+    gm->bat_state = BAT_DISCHARGING;
+#endif
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 	return 0;
 }
 
@@ -1619,18 +2596,60 @@ static int mtk_charger_plug_in(struct mtk_charger *info,
 {
 	struct chg_alg_device *alg;
 	struct chg_alg_notify notify;
+	/* [BSP]Begin added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	struct charger_data *pdata1 = &info->chg_data[CHG1_SETTING];
+	static struct power_supply *chg_psy;
+	#endif
+	/* [BSP]End added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
 	int i;
 
 	chr_debug("%s\n",
 		__func__);
+/*Begin: modify for BORATF-6962 by wanglin.chen on 2023.07.06*/
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (info->chr_type == POWER_SUPPLY_TYPE_UNKNOWN) {
+		if (chg_psy == NULL) {
+			chg_psy = power_supply_get_by_name("mtk_charger_type");
+		}
+		charger_dev_set_input_current(info->chg1_dev, 500000);
+		charger_dev_set_charging_current(info->chg1_dev, 500000);
+		charger_dev_enable(info->chg1_dev, true);
+		power_supply_changed(chg_psy);
+	}
+#endif
+/*End: modify for BORATF-6962 by wanglin.chen on 2023.07.06*/
 
 	info->chr_type = chr_type;
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+    g_chr_type = info->chr_type;
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
 	info->charger_thread_polling = true;
 
 	info->can_charging = true;
 	//info->enable_dynamic_cv = true;
 	info->safety_timeout = false;
 	info->vbusov_stat = false;
+/* [BSP]Begin added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	info->data.sw_aicl_done = false; 
+	pdata1->input_current_limit_by_aicl = -1;
+#endif
+/* [BSP]End added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+/* Begin add by jin.wang task 2064 on 2021.11.30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	info->first_redet = true;
+#endif
+/* End add by jin.wang */
+
+/* Begin added by jin.wang for task 11700191 on 2022-1-25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+if (is_mmitest || is_inproductionflag)
+	mini_soc_limited = 0;
+#endif
+/* End add by jin.wang */
 
 	chr_err("mtk_is_charger_on plug in, type:%d\n", chr_type);
 
@@ -1642,7 +2661,38 @@ static int mtk_charger_plug_in(struct mtk_charger *info,
 	}
 
 	charger_dev_plug_in(info->chg1_dev);
+	get_monotonic_boottime(&info->charging_begin_time);
 
+/* Begin mod by jin.wang for androidT on 2022-4-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+#if IS_ENABLED(TARGET_BUILD_CERTIFICATION) || IS_ENABLED(TARGET_BUILD_MMITEST) \
+		|| IS_ENABLED(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+	info->nonstand_chg_type = NONSTANDARD_CHARGER_NONE;
+#else
+	info->nonstand_chg_type = NONSTANDARD_CHARGER_INVALIED;
+#endif
+#endif
+/* End mod by jin.wang */
+
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2022/10/29 */
+#if !IS_ENABLED(CONFIG_TCT_PROJECT_SONATA)
+	// add begin by TCT-cuiping.shi
+	charger_dev_set_eoc_current(info->chg1_dev, 200000);
+	charger_dev_enable_termination(info->chg1_dev, true);
+	// add end by TCT-cuiping.shi
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2022/10/29 */
+
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    chr_err("peak managment function CABLE_PLUG_IN\n");
+    calculate_coulomb_charged(EVT_PLUG_IN);//CABLE_PLUG_IN
+    gm->bat_state = BAT_CHARGING;
+	get_monotonic_boottime(&gm->old_time);
+#endif
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 	return 0;
 }
 
@@ -1650,6 +2700,19 @@ static int mtk_charger_plug_in(struct mtk_charger *info,
 static bool mtk_is_charger_on(struct mtk_charger *info)
 {
 	int chr_type;
+
+// 0713 find a bug 
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+
+//  int vbus_value=get_vbus(info);
+ 
+//  if(vbus_value<4000)
+//	{
+//		 heraeye_bat_check_temp(CHARGER_DRV_VBUS_ERROR,vbus_value);
+// }
+
+#endif
+
 
 	chr_type = get_charger_type(info);
 	if (chr_type == POWER_SUPPLY_TYPE_UNKNOWN) {
@@ -1680,6 +2743,76 @@ static bool mtk_is_charger_on(struct mtk_charger *info)
 	return true;
 }
 
+static void kpoc_power_off_check(struct mtk_charger *info)
+{
+	unsigned int boot_mode = info->bootmode;
+	int vbus = 0;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int vbus_absent_cnt = 0;
+	bool vbus_online = true;
+#endif
+	/* 8 = KERNEL_POWER_OFF_CHARGING_BOOT */
+	/* 9 = LOW_POWER_OFF_CHARGING_BOOT */
+	if (boot_mode == 8 || boot_mode == 9) {	
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	/*Begin: modify for ENCORETF-10841 by wanglin.chen on 2023.05.10*/
+		#if 0
+		vbus = get_vbus(info);
+		if (vbus >= 0 && vbus < 2500 && !mtk_is_charger_on(info) && !info->pd_reset) 
+		#else
+		do {
+			vbus = get_vbus(info);
+			if (vbus >= 0 && vbus < 2500 && !mtk_is_charger_on(info) && !info->pd_reset) {
+				msleep(100);
+				vbus_absent_cnt++;
+				vbus_online = false;
+			} else {
+				vbus_online = true;
+				break;
+			}
+		} while(vbus_absent_cnt < 3);
+		if (vbus_online == false)
+		#endif
+	/*End: modify for ENCORETF-10841 by wanglin.chen on 2023.05.10*/
+	#endif
+		{
+			chr_err("Unplug Charger/USB in KPOC mode, vbus=%d, shutdown\n", vbus);
+			kernel_power_off();
+		}
+	}
+}
+
+// Begin modified by zhangkun for MODEL3-4826 on 2022-11-21
+#ifdef CONFIG_TCT_PROJECT_MODEL_3
+static void model3_kpoc_power_off_check(struct mtk_charger *info)
+{
+	unsigned int boot_mode = info->bootmode;
+	int vbus = 0;
+        int i=0;
+	/* 8 = KERNEL_POWER_OFF_CHARGING_BOOT */
+	/* 9 = LOW_POWER_OFF_CHARGING_BOOT */
+	if (boot_mode == 8 || boot_mode == 9) {
+		vbus = get_vbus(info);
+		if (vbus >= 0 && vbus < 2500 && !mtk_is_charger_on(info) && !info->pd_reset) {
+			chr_err("Unplug Charger/USB in KPOC mode, vbus=%d, shutdown\n", vbus);
+				for (i=0;i<3;i++){
+					mdelay(1000);
+					if (vbus >= 0 && vbus < 2500 && !mtk_is_charger_on(info) && !info->pd_reset){
+                                                printk("model3_kpoc_power_off_check=%d",i);
+		                                if(i==2)
+						kernel_power_off();
+					}
+                                        else{
+                                                printk("model3_kpoc_power_off_check_NO=%d",i);
+						break;
+                                        }
+                                }
+                        }
+		}
+}
+#endif
+// End modified by zhangkun for MODEL3-4826 on 2022-11-21
+
 static char *dump_charger_type(int type)
 {
 	switch (type) {
@@ -1698,25 +2831,89 @@ static char *dump_charger_type(int type)
 	}
 }
 
-static void kpoc_power_off_check(struct mtk_charger *info)
-{
-	unsigned int boot_mode = info->bootmode;
-	int vbus = 0;
+/* Begin mod by jin.wang task 2064 on 2021.11.30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+extern void tct_start_det_charger(int delay_ms);
+extern void tct_stop_det_charger(void);
+#else
+/* Begin added by bin.song.hz for task 10431118 on 2020-12-07 */
+extern void tct_detect_charger(void);
+/* End added by bin.song.hz for task 10431118 on 2020-12-07 */
+#endif
+/* End mod by jin.wang */
 
-	/* 8 = KERNEL_POWER_OFF_CHARGING_BOOT */
-	/* 9 = LOW_POWER_OFF_CHARGING_BOOT */
-	if (boot_mode == 8 || boot_mode == 9) {
-		vbus = get_vbus(info);
-		if (vbus >= 0 && vbus < 2500 && !mtk_is_charger_on(info) && !info->pd_reset) {
-			chr_err("Unplug Charger/USB in KPOC mode, vbus=%d, shutdown\n", vbus);
-			kernel_power_off();
+/* [BSP]Begin added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+void sw_dev_run_aicl(struct mtk_charger *info, int *sw_aicl)
+{
+	struct charger_data *pdata1 = &info->chg_data[CHG1_SETTING];
+	/*note: do not modify vchr_min modify by wanglin.chen on 2022.12.15*/
+	const int vchr_min = 4500000;//4700000;
+	int aicl[]={500000, 600000, 700000, 800000, 900000,
+		1000000, 1100000, 1200000, 1300000, 1400000,
+		1500000, 1600000, 1700000, 1800000, 1900000, 2000000, 2100000};
+	/*note: do not modify vchr_min modify by wanglin.chen on 2022.12.15*/
+	int step_max = sizeof(aicl)/sizeof(aicl[0]);
+	int step = 0;
+	int vchr = 0;
+	int bat_temp = 0;
+
+	if(info->can_charging == false) {
+		*sw_aicl = -1;
+		return;
+	}
+
+	if (pdata1->input_current_limit_by_aicl < 0) {
+		charger_dev_enable(info->chg1_dev, true);
+		do {
+			charger_dev_set_input_current(info->chg1_dev, aicl[step]);
+			charger_dev_set_charging_current(info->chg1_dev, aicl[step]);
+			vchr = get_vbus(info) * 1000; /* uV */
+			chr_err("[cwldebug %s] step=%d vchr=%d\n", __func__, step, vchr);
+			if(vchr >= vchr_min)
+				step++;
+			else
+				break;
+			msleep(100);
+		} while(step < step_max);
+		step--;
+		if (step < 0) {
+			*sw_aicl = -1;
+		} else {
+			*sw_aicl = aicl[step];
 		}
 	}
 }
 
-/* Begin added by bin.song.hz for task 10431118 on 2020-12-07 */
-extern void tct_detect_charger(void);
-/* End added by bin.song.hz for task 10431118 on 2020-12-07 */
+static void sw_check_aicl(struct mtk_charger *info)
+{
+	struct charger_data *pdata1 = &info->chg_data[CHG1_SETTING];
+	int hw_aicl = -1, sw_aicl = -1;
+
+	/* AICL */
+	if (info->chr_type == POWER_SUPPLY_TYPE_USB_DCP) {
+		if (get_uisoc(info) < 80 && !info->data.sw_aicl_done) {
+			charger_dev_run_aicl(info->chg1_dev, &hw_aicl);
+
+			if (hw_aicl > 0) {
+				pdata1->input_current_limit_by_aicl = hw_aicl;
+			} else {
+		/*Begin: add dts contrl sw_aicl by wanglin.chen on 2023.02.10*/
+				if ((info->enable_sw_aicl) && (!info->data.sw_aicl_done)) {
+					sw_dev_run_aicl(info, &sw_aicl);
+					if (sw_aicl > 0) {
+						pdata1->input_current_limit_by_aicl = sw_aicl;
+						info->data.sw_aicl_done = true;
+					}
+				}
+			}
+		/*End: add dts contrl sw_aicl  by wanglin.chen on 2023.02.10*/
+			chr_err("[cwldebug %s] sw_aicl=%d hw_aicl=%d\n", __func__, sw_aicl, hw_aicl);
+		}
+	}
+}
+#endif
+/* [BSP]End added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
 
 static int charger_routine_thread(void *arg)
 {
@@ -1724,6 +2921,20 @@ static int charger_routine_thread(void *arg)
 	unsigned long flags;
 	static bool is_module_init_done;
 	bool is_charger_on;
+
+/* Begin mod by jin.wang task 2064 on 2021.10.25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int is_basic = 1;
+	static int last_basic = 1;
+#endif
+/* End mod by jin.wang */
+
+/* Begin add by jin.wang ALM 11700191 on 2022.1.13 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH) \
+	&& IS_ENABLED(TARGET_BUILD_MMITEST)
+	struct power_supply *psy = NULL;
+#endif
+/* End add by jin.wang */
 
 	while (1) {
 		wait_event(info->wait_que,
@@ -1737,6 +2948,12 @@ static int charger_routine_thread(void *arg)
 				msleep(5000);
 			}
 		}
+
+/* Begin add by jin.wang for androidT on 2022.4.12 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		pr_err("%s: v4 starting\n", __func__);
+#endif
+/* End add by jin.wang */
 
 		mutex_lock(&info->charger_lock);
 		spin_lock_irqsave(&info->slock, flags);
@@ -1759,26 +2976,94 @@ static int charger_routine_thread(void *arg)
 
 		is_charger_on = mtk_is_charger_on(info);
 
-		/* Begin added by bin.song.hz for task 10431118 on 2020-12-07 */
-		if(get_vbus(info) < 2000 && is_charger_on)
-		{
-			chr_err("is_charger_on = %d, vbus is too low!\n", is_charger_on);
-			tct_detect_charger();
+/* Begin mod by jin.wang task 2064 on 2021.11.30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		if (is_charger_on) {
+			if (get_vbus(info) < 2000) {
+				chr_err("vbus is too low, retry det!\n");
+				tct_start_det_charger(0);
+			} else if ((info->chr_type == POWER_SUPPLY_TYPE_USB_FLOAT)
+						&& info->first_redet) {
+				chr_err("float type, retry det!\n");
+				info->first_redet = false;
+				tct_start_det_charger(5000);
+			}
+		} else {
+			tct_stop_det_charger();
 		}
-		/* End added by bin.song.hz for task 10431118 on 2020-12-07 */
+#else
+        /* Begin added by tangshan for CIVICS-3955 (2V->4V) 20230208 */
+        /* Begin added by bin.song.hz for task 10431118 on 2020-12-07 */
+        if(get_vbus(info) < 4000 && is_charger_on)
+        {
+            chr_err("is_charger_on = %d, vbus is too low(%d)!\n", is_charger_on, get_vbus(info));
+            tct_detect_charger();
+        }
+        /* End added by bin.song.hz for task 10431118 on 2020-12-07 */
+        /* End added by tangshan for CIVICS-3955 (2V->4V) 20230208 */
+#endif
+/* End mod by jin.wang */
 
 		if (info->charger_thread_polling == true)
 			mtk_charger_start_timer(info);
 
-/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
-#if !defined(TARGET_BUILD_MMITEST)
+/* Begin modified by hailong.chen for task 9777034 on 2020-08-20 */
+#if !IS_ENABLED(TARGET_BUILD_MMITEST)
 		check_battery_exist(info);
 #endif
-/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
-		check_dynamic_mivr(info);
-		charger_check_status(info);
-		kpoc_power_off_check(info);
+/* End modified by hailong.chen for task 9777034 on 2020-08-20 */
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		check_dynamic_mivr(info);
+#endif
+/* End del by jin.wang */
+		charger_check_status(info);
+/* [BSP]Begin added by wanglin.chen for SNTBBH-4343 on 2023/01/04 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		sw_check_aicl(info);
+#endif
+/* [BSP]End added by wanglin.chen for SNTBBH-4343 on 2022/01/04 */
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    	record_fg_maxvalue_batteryverify();
+//#ifdef TCT_BMS_SW_SUPPORT
+        cal_batt_life_discharge_or_charging();
+        if (gm == NULL)
+			gm = get_mtk_battery();
+		if(gm->peak_enforce_full && gm->display_soc < 10000)
+			uisoc_tracking_to_full_work();
+//#endif
+#endif
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
+// Begin modified by zhangkun for MODEL3-4826 on 2022-11-21
+#ifdef CONFIG_TCT_PROJECT_MODEL_3
+		model3_kpoc_power_off_check(info);
+#else
+		kpoc_power_off_check(info);
+#endif
+// Eed modified by zhangkun for MODEL3-4826 on 2022-11-21
+/* Begin mod by jin.wang task 2064 on 2021.10.25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		is_basic = 1;
+		if (is_disable_charger(info) == false &&
+			is_charger_on == true &&
+			info->can_charging == true) {
+			if (info->algo.do_algorithm)
+				is_basic = info->algo.do_algorithm(info);
+		} else {
+			chr_debug("disable charging %d %d %d\n",
+					is_disable_charger(info),
+					is_charger_on,
+					info->can_charging);
+		}
+		if (last_basic != is_basic) {
+			set_hv_flag(!is_basic);
+			last_basic = is_basic;
+		}
+#else
 		if (is_disable_charger(info) == false &&
 			is_charger_on == true &&
 			info->can_charging == true) {
@@ -1789,13 +3074,43 @@ static int charger_routine_thread(void *arg)
 			is_disable_charger(info),
 			is_charger_on,
 			info->can_charging);
+#endif
+/* End mod by jin.wang */
 
 		spin_lock_irqsave(&info->slock, flags);
 		__pm_relax(info->charger_wakelock);
 		spin_unlock_irqrestore(&info->slock, flags);
+
+/*Add-start by weijun for task JTVZ-7583 on 2022/02/23*/
+#if defined(CONFIG_TCT_CHG_JETTA_VZW)
+    if (is_charger_on == true)
+       power_supply_changed(info->bat_psy);
+#endif
+/*End added by weijun for task JTVZ-7583 on 2022/02/23*/
+
+/* Begin add by jin.wang task 2064 on 2021.11.23 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		if (info->chg1_dev != NULL)
+			charger_dev_dump_registers(info->chg1_dev);
+		if (info->chg2_dev != NULL)
+			charger_dev_dump_registers(info->chg2_dev);
+#endif
+/* End add by jin.wang */
+
 		chr_debug("%s end , %d\n",
 			__func__, info->charger_thread_timeout);
 		mutex_unlock(&info->charger_lock);
+
+/* Begin add by jin.wang for androidT on 2022.4.12 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH) \
+	&& IS_ENABLED(TARGET_BUILD_MMITEST)
+		if (IS_ERR_OR_NULL(psy)) {
+			psy = power_supply_get_by_name("battery");
+		}
+		if (!IS_ERR_OR_NULL(psy))
+			power_supply_changed(psy);
+#endif
+/* End add by jin.wang */
 	}
 
 	return 0;
@@ -1875,6 +3190,14 @@ static int mtk_charger_setup_files(struct platform_device *pdev)
 	struct proc_dir_entry *battery_dir = NULL, *entry = NULL;
 	struct mtk_charger *info = platform_get_drvdata(pdev);
 
+/* Begin add by jin.wang for jira on 2021-11-5 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	ret = device_create_file(&(pdev->dev), &dev_attr_thermal_disable);
+	if (ret)
+		goto _out;
+#endif
+/* End add by jin.wang */
+
 	ret = device_create_file(&(pdev->dev), &dev_attr_sw_jeita);
 	if (ret)
 		goto _out;
@@ -1890,6 +3213,11 @@ static int mtk_charger_setup_files(struct platform_device *pdev)
 	ret = device_create_file(&(pdev->dev), &dev_attr_ADC_Charger_Voltage);
 	if (ret)
 		goto _out;
+
+	ret = device_create_file(&(pdev->dev), &dev_attr_Charger_Config);
+	if (ret)
+		goto _out;
+
 	ret = device_create_file(&(pdev->dev), &dev_attr_input_current);
 	if (ret)
 		goto _out;
@@ -1903,14 +3231,31 @@ static int mtk_charger_setup_files(struct platform_device *pdev)
 	if (ret)
 		goto _out;
 
-	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+/* Begin mod by jin.wang for androidT on 2022-4-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+#if !IS_ENABLED(TARGET_BUILD_MMITEST)
 	ret = device_create_file(&(pdev->dev), &dev_attr_nonstand_charge_type);
 	if (ret)
 		goto _out;
-	#endif
-	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+#endif
+#endif
+/* End mod by jin.wang */
+
+/* Begin added by bin.song.hz for defect10297066 on 2020.12.03 */
+	ret = device_create_file(&(pdev->dev), &dev_attr_BatJeitaStatus);
+	if (ret)
+		goto _out;
+/* End added by bin.song.hz for defect10297066 on 2020.12.03 */
+
+/* Begin add by jin.wang for jira 11700191 on 2022-1-17 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (is_mmitest || is_inproductionflag){
+		ret = device_create_file(&(pdev->dev), &dev_attr_soc_limited);
+		if (ret)
+			goto _out;
+	}
+#endif
+/* End add by jin.wang */
 
 	battery_dir = proc_mkdir("mtk_battery_cmd", NULL);
 	if (!battery_dir) {
@@ -1983,6 +3328,13 @@ static int psy_charger_property_is_writeable(struct power_supply *psy,
 		return 1;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
 		return 1;
+/* Begin add by jin.wang for jira on 2021-11-5 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	case POWER_SUPPLY_PROP_OTHERS_IBUS_LIMIT:
+	case POWER_SUPPLY_PROP_OTHERS_IBAT_LIMIT:
+		return 1;
+#endif
+/* End add by jin.wang */
 	default:
 		return 0;
 	}
@@ -1996,6 +3348,12 @@ static enum power_supply_property charger_psy_properties[] = {
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
+/* Begin add by jin.wang for jira on 2021-11-5 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	POWER_SUPPLY_PROP_OTHERS_IBUS_LIMIT,
+	POWER_SUPPLY_PROP_OTHERS_IBAT_LIMIT,
+#endif
+/* End add by jin.wang */
 };
 
 static int psy_charger_get_property(struct power_supply *psy,
@@ -2059,6 +3417,30 @@ static int psy_charger_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_VOLTAGE_BOOT:
 		val->intval = get_charger_zcv(info, chg);
 		break;
+/* Begin add by jin.wang for jira on 2021-11-5 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	case POWER_SUPPLY_PROP_OTHERS_IBUS_LIMIT:
+		if (chg == info->chg1_dev)
+			val->intval =
+				info->chg_data[CHG1_SETTING].ibus_limit_by_others;
+		else if (chg == info->chg2_dev)
+			val->intval =
+				info->chg_data[CHG2_SETTING].ibus_limit_by_others;
+		else
+			return -EINVAL;
+		break;
+	case POWER_SUPPLY_PROP_OTHERS_IBAT_LIMIT:
+		if (chg == info->chg1_dev)
+			val->intval =
+				info->chg_data[CHG1_SETTING].ibat_limit_by_others;
+		else if (chg == info->chg2_dev)
+			val->intval =
+				info->chg_data[CHG2_SETTING].ibat_limit_by_others;
+		else
+			return -EINVAL;
+		break;
+#endif
+/* End add by jin.wang */
 	default:
 		return -EINVAL;
 	}
@@ -2073,7 +3455,11 @@ int psy_charger_set_property(struct power_supply *psy,
 	struct mtk_charger *info;
 	int idx;
 
+/* Begin del by jin.wang for jira on 2021-11-5 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	chr_err("%s: prop:%d %d\n", __func__, psp, val->intval);
+#endif
+/* End del by jin.wang */
 
 	info = (struct mtk_charger *)power_supply_get_drvdata(psy);
 
@@ -2090,19 +3476,90 @@ int psy_charger_set_property(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+/* Begin mod by jin.wang for jira on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		if (info->thermal_disable) {
+			pr_err("%s: skip thermal vbus limit:%d\n",
+				__func__, val->intval);
+		} else {
+			if (val->intval > 0)
+				info->enable_hv_charging = true;
+			else
+				info->enable_hv_charging = false;
+
+			pr_err("%s: thermal vbus limit:%d\n",
+					__func__, val->intval);
+		}
+#else
 		if (val->intval > 0)
 			info->enable_hv_charging = true;
 		else
 			info->enable_hv_charging = false;
+#endif
+/* End mod by jin.wang */
 		break;
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+/* Begin mod by jin.wang for jira on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		mutex_lock(&info->charger_lock);
+		if (info->thermal_disable) {
+			pr_err("%s: skip thermal ibat limit [%d]:%d\n",
+					__func__, idx, val->intval);
+			info->chg_data[idx].thermal_charging_current_limit = -1;
+		} else {
+			info->chg_data[idx].thermal_charging_current_limit =
+					val->intval;
+			pr_err("%s: thermal ibat limit [%d]:%d\n",
+					__func__, idx, val->intval);
+		}
+		mutex_unlock(&info->charger_lock);
+#else
 		info->chg_data[idx].thermal_charging_current_limit =
 			val->intval;
+#endif
+/* End mod by jin.wang */
 		break;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+/* Begin mod by jin.wang for jira on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		mutex_lock(&info->charger_lock);
+		if (info->thermal_disable) {
+			pr_err("%s: skip thermal ibus limit [%d]:%d\n",
+					__func__, idx, val->intval);
+			info->chg_data[idx].thermal_input_current_limit = -1;
+		} else {
+			info->chg_data[idx].thermal_input_current_limit =
+					val->intval;
+			pr_err("%s: thermal ibus limit [%d]:%d\n",
+					__func__, idx, val->intval);
+		}
+		mutex_unlock(&info->charger_lock);
+#else
 		info->chg_data[idx].thermal_input_current_limit =
 			val->intval;
+#endif
+/* End mod by jin.wang */
 		break;
+/* Begin add by jin.wang for jira on 2021-11-25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	case POWER_SUPPLY_PROP_OTHERS_IBUS_LIMIT:
+		mutex_lock(&info->charger_lock);
+		info->chg_data[idx].ibus_limit_by_others =
+				val->intval;
+		chr_err("%s: others ibus limit [%d]:%d\n",
+				__func__, idx, val->intval);
+		mutex_unlock(&info->charger_lock);
+		break;
+	case POWER_SUPPLY_PROP_OTHERS_IBAT_LIMIT:
+		mutex_lock(&info->charger_lock);
+		info->chg_data[idx].ibat_limit_by_others =
+				val->intval;
+		chr_err("%s: others ibat limit [%d]:%d\n",
+				__func__, idx, val->intval);
+		mutex_unlock(&info->charger_lock);
+		break;
+#endif
+/* End add by jin.wang */
 	default:
 		return -EINVAL;
 	}
@@ -2119,10 +3576,13 @@ static void mtk_charger_external_power_changed(struct power_supply *psy)
 	int ret;
 
 	info = (struct mtk_charger *)power_supply_get_drvdata(psy);
-	chg_psy = devm_power_supply_get_by_phandle(&info->pdev->dev,
-						       "charger");
+	chg_psy = info->chg_psy;
+
 	if (IS_ERR_OR_NULL(chg_psy)) {
 		pr_notice("%s Couldn't get chg_psy\n", __func__);
+		chg_psy = devm_power_supply_get_by_phandle(&info->pdev->dev,
+			"charger");
+		info->chg_psy = chg_psy;
 	} else {
 		ret = power_supply_get_property(chg_psy,
 			POWER_SUPPLY_PROP_ONLINE, &prop);
@@ -2260,9 +3720,32 @@ static int mtk_charger_probe(struct platform_device *pdev)
 	for (i = 0; i < CHGS_SETTING_MAX; i++) {
 		info->chg_data[i].thermal_charging_current_limit = -1;
 		info->chg_data[i].thermal_input_current_limit = -1;
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		info->chg_data[i].charging_current_limit_by_jeita = -1;
+		info->chg_data[i].charging_current_limit_by_vbat = -1;
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
 		info->chg_data[i].input_current_limit_by_aicl = -1;
+/* Begin add by jin.wang task 2064 on 2021.11.5 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		info->chg_data[i].ibus_limit_by_others = -1;
+		info->chg_data[i].ibat_limit_by_others = -1;
+#endif
+/* End add by jin.wang */
+
+/* Begin add by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		info->chg_data[i].ibus_limit_by_test = -1;
+#endif
+/* End add by jin.wang */
 	}
+
+/* Begin del by jin.wang for task 11466469 on 2021-9-3 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	info->enable_hv_charging = true;
+#endif
+/* End del by jin.wang for task 11466469 on 2021-9-3 */
 
 	info->psy_desc1.name = "mtk-master-charger";
 	info->psy_desc1.type = POWER_SUPPLY_TYPE_UNKNOWN;
@@ -2277,6 +3760,16 @@ static int mtk_charger_probe(struct platform_device *pdev)
 	info->psy_cfg1.drv_data = info;
 	info->psy1 = power_supply_register(&pdev->dev, &info->psy_desc1,
 			&info->psy_cfg1);
+
+	info->chg_psy = devm_power_supply_get_by_phandle(&pdev->dev,
+		"charger");
+	if (IS_ERR_OR_NULL(info->chg_psy))
+		chr_err("%s: devm power fail to get chg_psy\n", __func__);
+
+	info->bat_psy = devm_power_supply_get_by_phandle(&pdev->dev,
+		"gauge");
+	if (IS_ERR_OR_NULL(info->bat_psy))
+		chr_err("%s: devm power fail to get bat_psy\n", __func__);
 
 	if (IS_ERR(info->psy1))
 		chr_err("register psy1 fail:%d\n",
@@ -2311,11 +3804,13 @@ static int mtk_charger_probe(struct platform_device *pdev)
 
 	info->chg_alg_nb.notifier_call = chg_alg_event;
 
-	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
-	info->battery_psy = power_supply_get_by_name("battery");
-	if (!info->battery_psy)
-		chr_err("%s: get battery power supply failed\n", __func__);
-	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
+/* Begin add by jin.wang for jira on 2021-10-25 */
+#if defined(CONFIG_TCT_CHARGER)
+	info->sw_jeita.charging = true;
+	info->battery_temp = get_battery_temperature(info); // Add for init the temp before power off charge display by geng.sun
+	sw_jeita_state_machine_init(info); /* Added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+#endif
+/* End add by jin.wang */
 
 	kthread_run(charger_routine_thread, info, "charger_thread");
 

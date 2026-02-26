@@ -286,6 +286,22 @@ int charger_dev_is_charging_done(struct charger_device *chg_dev, bool *done)
 }
 EXPORT_SYMBOL(charger_dev_is_charging_done);
 
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+int charger_dev_get_charging_status(struct charger_device *charger_dev,
+				      int *status)
+{
+	if (charger_dev != NULL && charger_dev->ops != NULL &&
+	    charger_dev->ops->get_chg_status)
+		return charger_dev->ops->get_chg_status(charger_dev,
+							       status);
+
+	return -ENOTSUPP;
+}
+EXPORT_SYMBOL(charger_dev_get_charging_status);
+#endif
+/* End add by jin.wang */
+
 int charger_dev_enable_vbus_ovp(struct charger_device *chg_dev, bool en)
 {
 	if (chg_dev != NULL && chg_dev->ops != NULL &&

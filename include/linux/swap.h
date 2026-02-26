@@ -306,7 +306,16 @@ struct vma_swap_readahead {
 };
 
 /* linux/mm/workingset.c */
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 void *workingset_eviction(struct address_space *mapping, struct page *page);
+#else
+void workingset_age_nonresident(struct lruvec *lruvec, unsigned long nr_pages);
+void *workingset_eviction(struct page *page, struct mem_cgroup *target_memcg);
+#endif
+// #endif /* VENDOR_EDIT */
+
 void workingset_refault(struct page *page, void *shadow);
 void workingset_activation(struct page *page);
 
@@ -333,6 +342,14 @@ extern unsigned long nr_free_pagecache_pages(void);
 
 
 /* linux/mm/swap.c */
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+extern void lru_note_cost(struct lruvec *lruvec, bool file,
+			  unsigned int nr_pages);
+extern void lru_note_cost_page(struct page *);
+#endif
+// #endif /* VENDOR_EDIT */
 extern void lru_cache_add(struct page *);
 extern void lru_cache_add_anon(struct page *page);
 extern void lru_cache_add_file(struct page *page);
@@ -374,6 +391,17 @@ extern unsigned long shrink_all_memory(unsigned long nr_pages);
 extern int vm_swappiness;
 extern int remove_mapping(struct address_space *mapping, struct page *page);
 extern unsigned long vm_total_pages;
+#ifdef CONFIG_TCT_DMCC
+#define DMCC_MODE_ANON   1
+#define DMCC_MODE_FILE   2
+extern int try_to_free_pages_ex(int nr_pages, int mode);
+#endif
+
+#ifdef CONFIG_TCT_DMCC
+#define DMCC_MODE_ANON   1
+#define DMCC_MODE_FILE   2
+extern int try_to_free_pages_ex(int nr_pages, int mode);
+#endif
 
 #ifdef CONFIG_NUMA
 extern int node_reclaim_mode;
@@ -417,9 +445,20 @@ extern struct address_space *swapper_spaces[];
 extern unsigned long total_swapcache_pages(void);
 extern void show_swap_cache_info(void);
 extern int add_to_swap(struct page *page);
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 extern int add_to_swap_cache(struct page *, swp_entry_t, gfp_t);
 extern int __add_to_swap_cache(struct page *page, swp_entry_t entry);
 extern void __delete_from_swap_cache(struct page *);
+#else
+extern int add_to_swap_cache(struct page *, swp_entry_t, gfp_t, void **shadowp);
+extern int __add_to_swap_cache(struct page *page, swp_entry_t entry, void ** shadowp);
+extern void __delete_from_swap_cache(struct page *, void *shadow);
+extern void clear_shadow_from_swap_cache(int type, unsigned long begin,
+				unsigned long end);
+#endif
+// #endif /* VENDOR_EDIT */
 extern void delete_from_swap_cache(struct page *);
 extern void free_page_and_swap_cache(struct page *);
 extern void free_pages_and_swap_cache(struct page **, int);
@@ -436,7 +475,9 @@ extern struct page *swap_cluster_readahead(swp_entry_t entry, gfp_t flag,
 				struct vm_fault *vmf);
 extern struct page *swapin_readahead(swp_entry_t entry, gfp_t flag,
 				struct vm_fault *vmf);
-
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+extern bool free_swap_is_low(void);
+#endif
 extern bool swap_use_vma_readmore(void);
 /* linux/mm/swapfile.c */
 extern atomic_long_t nr_swap_pages;
@@ -568,6 +609,9 @@ static inline int add_to_swap(struct page *page)
 	return 0;
 }
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
 							gfp_t gfp_mask)
 {
@@ -577,6 +621,23 @@ static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
 static inline void __delete_from_swap_cache(struct page *page)
 {
 }
+#else
+static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
+							gfp_t gfp_mask, void **shadowp)
+{
+	return -1;
+}
+
+static inline void __delete_from_swap_cache(struct page *page, void *shadow)
+{
+}
+
+static inline void clear_shadow_from_swap_cache(int type, unsigned long begin,
+				unsigned long end)
+{
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 static inline void delete_from_swap_cache(struct page *page)
 {

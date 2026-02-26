@@ -122,7 +122,7 @@ static int initAF(void)
 		char puSendCmd3[2] = {0x03, 0xD2}; /* Move 210 Code */
 
 		char puSendCmd4[2] = {0x01, 0x39}; /* sac3 Mode */
-		char puSendCmd5[2] = {0x05, 0x7C}; /* SAC period Setting */
+		char puSendCmd5[2] = {0x05, 0x07}; /* SAC period Setting */
 
 		g_pstAF_I2Cclient->addr = AF_I2C_SLAVE_ADDR;
 		g_pstAF_I2Cclient->addr = g_pstAF_I2Cclient->addr >> 1;
@@ -257,11 +257,31 @@ int DW9718SAF_Release(struct inode *a_pstInode, struct file *a_pstFile)
 {
 	/* power down mode */
 	char puSendCmd[2] = {0x00, 0x01};
+	unsigned long step=25;
 
 	LOG_INF("Start\n");
 
 	if (*g_pAF_Opened == 2) {
 		LOG_INF("apply +\n");
+                //begin 20211022 ljt add for jetta camera lens when closing
+		if (g_u4CurrPosition > g_u4AF_INF && g_u4CurrPosition <= g_u4AF_MACRO) {
+  			while (g_u4CurrPosition > 50) {
+ 				if (g_u4CurrPosition > 400)
+  					step = 100;
+  				else if (g_u4CurrPosition > 180)
+ 					step = 50;
+  				else
+  					step = 30;
+				
+                        g_u4CurrPosition = g_u4CurrPosition - step;
+			s4AF_WriteReg((unsigned short)g_u4CurrPosition);
+  			mdelay(2);
+  			if (g_u4CurrPosition <= 0 || g_u4CurrPosition > 1023)
+  				break;
+  			}
+ 		}
+                s4AF_WriteReg(0);
+                //end 20211022 ljt add for jetta camera lens when closing
 		LOG_INF("apply -\n");
 	}
 

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #include "tpd.h"
 #include <linux/slab.h>
 #include <linux/device.h>
@@ -38,25 +39,31 @@ struct pinctrl *pinctrl1;
 struct pinctrl_state *pins_default;
 struct pinctrl_state *eint_as_int, *eint_output0,
 		*eint_output1, *rst_output0, *rst_output1;
+#ifdef CONFIG_TOUCHSCREEN_LUNA_CHSC5XXX_I2C
+struct pinctrl_state *semi_touch_eint_as_int;
+#endif
 const struct of_device_id touch_of_match[] = {
 	{ .compatible = "mediatek,touch", },
+	{ .compatible = "mediatek,mt8167-touch", },
+	{ .compatible = "mediatek,touch-himax", },
+	{ .compatible = "goodix,touch", },
 	{},
 };
 
 int tpd_vendor_num = 0;
-char ctp_module_name[256] = "NA:NA:0";
+char ctp_module_name1[256] = "NA:NA:0";
 int tp_firmware_version = 0;
 int open_gesture = 0;
 
 static ssize_t  ctpinfo_show(struct device *dev, 
                                   struct device_attribute *attr, char *buf)
 {      
-     printk("Dump  %s \n",ctp_module_name);
+     printk("Dump  %s \n",ctp_module_name1);
 
     if (!dev ) {
         return 0;
     }
-    return snprintf(buf, PAGE_SIZE, "%s\n", ctp_module_name);    
+    return snprintf(buf, PAGE_SIZE, "%s\n", ctp_module_name1);    
 }
 
 static ssize_t ctpinfo_store(struct device* dev,
@@ -109,7 +116,7 @@ static void Create_ctpinfo_node_ForMMI(void)
 void tpd_get_dts_info(void)
 {
 	struct device_node *node1 = NULL;
-	int key_dim_local[16], i;
+	int key_dim_local[16] = {0}, i = 0;
 
 	node1 = of_find_matching_node(node1, touch_of_match);
 	if (node1) {
@@ -200,16 +207,26 @@ static DEFINE_MUTEX(tpd_set_gpio_mutex);
 void tpd_gpio_as_int(int pin)
 {
 	mutex_lock(&tpd_set_gpio_mutex);
-	TPD_DEBUG("[tpd]tpd_gpio_as_int\n");
+	TPD_DEBUG("[tpd] %s\n", __func__);
 	if (pin == 1)
 		pinctrl_select_state(pinctrl1, eint_as_int);
 	mutex_unlock(&tpd_set_gpio_mutex);
 }
+#ifdef CONFIG_TOUCHSCREEN_LUNA_CHSC5XXX_I2C
+void semi_touch_gpio_as_int(int pin)
+{
+        mutex_lock(&tpd_set_gpio_mutex);
+	TPD_DEBUG("[tpd] %s\n", __func__);
+	if (pin == 1)
+		pinctrl_select_state(pinctrl1, semi_touch_eint_as_int);
+	mutex_unlock(&tpd_set_gpio_mutex);
+}
+#endif
 
 void tpd_gpio_output(int pin, int level)
 {
 	mutex_lock(&tpd_set_gpio_mutex);
-	TPD_DEBUG("tpd_gpio_output pin = %d, level = %d\n", pin, level);
+	TPD_DEBUG("%s pin = %d, level = %d\n", __func__, pin, level);
 	if (pin == 1) {
 		if (level)
 			pinctrl_select_state(pinctrl1, eint_output1);
@@ -243,17 +260,27 @@ int tpd_get_gpio_info(struct platform_device *pdev)
 		dev_info(&pdev->dev, "fwq Cannot find pinctrl1!\n");
 		return ret;
 	}
+#ifndef CONFIG_TOUCHSCREEN_HIMAX_CHIPSET_8789P1_8185P3
 	pins_default = pinctrl_lookup_state(pinctrl1, "default");
 	if (IS_ERR(pins_default)) {
 		ret = PTR_ERR(pins_default);
 		TPD_DMESG("Cannot find pinctrl default %d!\n", ret);
 	}
+#endif
 	eint_as_int = pinctrl_lookup_state(pinctrl1, "state_eint_as_int");
 	if (IS_ERR(eint_as_int)) {
 		ret = PTR_ERR(eint_as_int);
 		TPD_DMESG("Cannot find pinctrl state_eint_as_int!\n");
 		return ret;
 	}
+#ifdef CONFIG_TOUCHSCREEN_LUNA_CHSC5XXX_I2C
+	semi_touch_eint_as_int = pinctrl_lookup_state(pinctrl1, "semi_touch_state_eint_as_int");
+	if (IS_ERR(semi_touch_eint_as_int)) {
+		ret = PTR_ERR(semi_touch_eint_as_int);
+		TPD_DMESG("Cannot find pinctrl semi_touch_eint_as_int!\n");
+		return ret;
+	}
+#endif
 	eint_output0 = pinctrl_lookup_state(pinctrl1, "state_eint_output0");
 	if (IS_ERR(eint_output0)) {
 		ret = PTR_ERR(eint_output0);
@@ -465,7 +492,7 @@ static struct notifier_block tpd_fb_notifier;
 /* use fb_notifier */
 static void touch_resume_workqueue_callback(struct work_struct *work)
 {
-	TPD_DEBUG("GTP touch_resume_workqueue_callback\n");
+	TPD_DEBUG("GTP %s\n", __func__);
 	g_tpd_drv->resume(NULL);
 	tpd_suspend_flag = 0;
 }
@@ -477,7 +504,7 @@ static int tpd_fb_notifier_callback(
 	int blank;
 	int err = 0;
 
-	TPD_DEBUG("tpd_fb_notifier_callback event=%d\n",(int)event);
+	TPD_DEBUG("%s\n", __func__);
 
 	evdata = data;
 	/* If we aren't interested in this event, skip it immediately ... */
@@ -506,6 +533,7 @@ static int tpd_fb_notifier_callback(
 	case FB_BLANK_POWERDOWN:
 		if (event == FB_EARLY_EVENT_BLANK){
 		TPD_DMESG("LCD OFF Notify,tpd_suspend_flag:%d\n",tpd_suspend_flag);
+		msleep(100);
 		if (g_tpd_drv && !tpd_suspend_flag) {
 			err = cancel_work_sync(&touch_resume_work);
 			if (!err)
@@ -515,7 +543,7 @@ static int tpd_fb_notifier_callback(
 
                 //begin add by kun.zheng for defect 9494525 on 2020/06/09
                 //#ifdef CONFIG_TOKYO_LITE_TMO
-		#if defined(CONFIG_TOKYO_LITE_TMO) || defined(CONFIG_BANGKOK_TF)
+		#if 1//defined(CONFIG_TOKYO_LITE_TMO) || defined(CONFIG_BANGKOK_TF)
                 else if (tpd_suspend_flag == 1)
                 {
                     TPD_DMESG("ctp suspend fail because tpd_suspend_flag is not zero! msleep 200ms for resume finished\n");
@@ -526,7 +554,7 @@ static int tpd_fb_notifier_callback(
                         err = cancel_work_sync(&touch_resume_work);
                         if (!err)
                             TPD_DMESG("cancel touch_resume_workqueue err = %d\n", err);
-                            g_tpd_drv->suspend(NULL);
+                        g_tpd_drv->suspend(NULL);
                     }
                     else
                         TPD_DMESG("ctp tpd_suspend_flag is still not zero after msleep 200ms\n");
@@ -629,6 +657,7 @@ static int tpd_probe(struct platform_device *pdev)
 #endif
 
 	TPD_DMESG("enter %s, %d\n", __func__, __LINE__);
+	pr_info("enter %s, %d\n", __func__, __LINE__);
 
 	if (misc_register(&tpd_misc_device))
 		pr_info("mtk_tpd: tpd_misc_device register failed\n");
@@ -690,8 +719,18 @@ static int tpd_probe(struct platform_device *pdev)
 
 	if (2560 == TPD_RES_X)
 		TPD_RES_X = 2048;
+//Begin modified by liangjiaqiang for MODEL3-1922 on 2022-09-21
+#ifdef CONFIG_TCT_PROJECT_MODEL_3
+	if (1600 == TPD_RES_Y)
+		TPD_RES_Y = 1600;
+#else
+    #ifndef CONFIG_TCT_PROJECT_BUFFALO
 	if (1600 == TPD_RES_Y)
 		TPD_RES_Y = 1536;
+    #endif
+#endif
+//End modified by liangjiaqiang for MODEL3-1922 on 2022-09-21
+
 	pr_debug("mtk_tpd: TPD_RES_X = %lu, TPD_RES_Y = %lu\n",
 		TPD_RES_X, TPD_RES_Y);
 
@@ -729,7 +768,7 @@ static int tpd_probe(struct platform_device *pdev)
 			tpd_driver_list[i].tpd_local_init();
 			/* msleep(1); */
 			if (tpd_load_status == 1) {
-				TPD_DMESG("tpd_probe, tpd_driver_name=%s\n",
+				TPD_DMESG("%s, tpd_driver_name=%s\n", __func__,
 					  tpd_driver_list[i].tpd_device_name);
 				g_tpd_drv = &tpd_driver_list[i];
 				break;
@@ -822,8 +861,7 @@ static void tpd_init_work_callback(struct work_struct *work)
 static int __init tpd_device_init(void)
 {
 	int res = 0;
-
-        printk(KERN_ERR "PBW touch init\n");
+	pr_info("[%s-%s-%d]\n", __FILE__, __func__, __LINE__);
 	tpd_init_workqueue = create_singlethread_workqueue("mtk-tpd");
 	INIT_WORK(&tpd_init_work, tpd_init_work_callback);
 

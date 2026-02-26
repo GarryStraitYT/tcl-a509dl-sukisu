@@ -23,3 +23,33 @@ config MTK_LCM_DEVICE_TREE_SUPPORT
 	  Please also turn on MTK_LCM_DEVICE_TREE_SUPPORT in ProjectConfig.mk.
 	  If not define MTK_LCM_DEVICE_TREE_SUPPORT
 	  there will not connect between display driver and LCM devices.
+
+#/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+config LCM_GPIO_TCT
+	depends on MTK_LCM_DEVICE_TREE_SUPPORT
+	bool "third way to config lcm gpio"
+	help
+	  Except MTK_LEGACY and PINCTRL, we need another way to config lcm gpio state.
+          Depend on lcm_util structure function.
+
+#[SYSD SYS]Begin added by yangao.chen for T10722530 on 2021-05-10
+config TCT_FEATURE_PARAM_SEPARATION
+	bool "config TCT Lcm and Ctp patch"
+    default n
+	help
+	  config TCT Lcm and Ctp patch.
+#[SYSD SYS]End added by yangao.chen for T10722530 on 2021-05-10
+#/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
+#Begin added by peisong.cao for task 11692038 on 2021-12-17
+config TCT_LCM_NL9911_VERF
+	bool "lcm nl9911 verf function"
+    default n
+	help
+	  just for lcm nl9911 verf function 
+#End added by peisong.cao for task 11692038 on 2021-12-17
+config TCT_PROJECT_SONATA_BIAS
+    bool "sonata lcm bias"
+    default n
+    help
+      sonata lcm bias
+

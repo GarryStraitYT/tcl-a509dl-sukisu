@@ -1,0 +1,2 @@
+obj-$(CONFIG_TCT_PROJECT_FAS4480) := fsa4480-i2c.o
+

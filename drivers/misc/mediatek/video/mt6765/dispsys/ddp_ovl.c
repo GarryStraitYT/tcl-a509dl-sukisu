@@ -729,8 +729,8 @@ int ovl_clock_on(enum DISP_MODULE_ENUM module, void *handle)
 
 int ovl_clock_off(enum DISP_MODULE_ENUM module, void *handle)
 {
-	DDPDBG("%s clock_off\n", ddp_get_module_name(module));
 #ifdef ENABLE_CLK_MGR
+	DISPCHECK("%s clock_off\n", ddp_get_module_name(module));
 	ddp_clk_disable_unprepare(ddp_get_module_clk_id(module));
 #endif
 	return 0;
@@ -1275,8 +1275,8 @@ static unsigned long long full_trans_bw_calc(struct sbch *data,
 
 	if (data->sbch_en_cnt == SBCH_EN_NUM) {
 		pConfig->read_dum_reg[module] = 1;
-	} else if (data->sbch_en_cnt == SBCH_EN_NUM + 1) {
-
+	} else if ((data->sbch_en_cnt == SBCH_EN_NUM + 1) &&
+		(pgc != NULL)) {
 		if (primary_display_is_video_mode())
 			cmdqBackupReadSlot(pgc->ovl_status_info,
 					0, &status);
@@ -1587,7 +1587,8 @@ static unsigned long long sbch_calc(enum DISP_MODULE_ENUM module,
 	DISP_REG_SET(handle, ovl_base_addr(module) + DISP_REG_OVL_SBCH_EXT,
 		ext_bit[UPDATE] | ext_bit[TRANS_EN] | ext_bit[CNST_EN]);
 	/* clear slot */
-	cmdqBackupWriteSlot(pgc->ovl_dummy_info, module, 0);
+	if (pgc != NULL)
+		cmdqBackupWriteSlot(pgc->ovl_dummy_info, module, 0);
 
 	return full_trans_bw;
 }

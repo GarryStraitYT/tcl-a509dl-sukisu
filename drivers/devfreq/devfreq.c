@@ -28,6 +28,13 @@
 #include <linux/hrtimer.h>
 #include <linux/of.h>
 #include "governor.h"
+// #ifdef VENDOR_EDIT
+// shu5.zhang@tcl.com 2021/06/24 add for GPU frep governor
+#ifdef CONFIG_GPU_DEVFREQ
+#include <trace/events/power.h>
+#include <tcl/gpu_devfreq.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 #define MAX(a,b)	((a > b) ? a : b)
 #define MIN(a,b)	((a < b) ? a : b)
@@ -110,9 +117,18 @@ static int devfreq_get_freq_level(struct devfreq *devfreq, unsigned long freq)
 {
 	int lev;
 
-	for (lev = 0; lev < devfreq->profile->max_state; lev++)
-		if (freq == devfreq->profile->freq_table[lev])
-			return lev;
+// #ifndef VENDOR_EDIT
+// shu5.zhang@tcl.com 2021/09/6 add for GPU frep governor
+//	for (lev = 0; lev < devfreq->profile->max_state; lev++)
+//		if (freq == devfreq->profile->freq_table[lev])
+//			return lev;
+// #else
+	if (devfreq->profile->freq_table != NULL) {
+		for (lev = 0; lev < devfreq->profile->max_state; lev++)
+			if (freq == devfreq->profile->freq_table[lev])
+				return lev;
+	}
+// #endif /* VENDOR_EDIT */
 
 	return -EINVAL;
 }
@@ -541,10 +557,22 @@ static int devfreq_notifier_call(struct notifier_block *nb, unsigned long type,
 	int err = -EINVAL;
 
 	mutex_lock(&devfreq->lock);
-
+// #ifndef VENDOR_EDIT
+// shu5.zhang@tcl.com 2021/06/23 add for GPU frep governor
+#ifdef CONFIG_GPU_DEVFREQ
+	if (strcmp(devfreq->governor_name, GPU_DEFAULT_GOVERNOR) == 0) {
+		devfreq->scaling_max_freq = devfreq->profile->freq_table[devfreq->profile->max_state - 1];
+		devfreq->scaling_min_freq = devfreq->profile->freq_table[0];
+	} else {
+		devfreq->scaling_min_freq = find_available_min_freq(devfreq);
+		devfreq->scaling_max_freq = find_available_max_freq(devfreq);
+	}
+#else
 	devfreq->scaling_min_freq = find_available_min_freq(devfreq);
 
 	devfreq->scaling_max_freq = find_available_max_freq(devfreq);
+#endif
+// #endif /* VENDOR_EDIT */
 	if (!devfreq->scaling_max_freq) {
 		devfreq->scaling_max_freq = ULONG_MAX;
 		goto out;
@@ -645,10 +673,24 @@ struct devfreq *devfreq_add_device(struct device *dev,
 		mutex_lock(&devfreq->lock);
 	}
 
+// #ifndef VENDOR_EDIT
+// shu5.zhang@tcl.com 2021/06/23 add for GPU frep governor
+#ifdef CONFIG_GPU_DEVFREQ
+	if (strcmp(devfreq->governor_name, GPU_DEFAULT_GOVERNOR) == 0) {
+		devfreq->scaling_max_freq = devfreq->profile->freq_table[devfreq->profile->max_state - 1];
+		devfreq->scaling_min_freq = devfreq->profile->freq_table[0];
+	} else {
+		devfreq->scaling_min_freq = find_available_min_freq(devfreq);
+		devfreq->scaling_max_freq = find_available_max_freq(devfreq);
+	}
+#else
 	devfreq->scaling_min_freq = find_available_min_freq(devfreq);
+	devfreq->scaling_max_freq = find_available_max_freq(devfreq);
+#endif
+// #endif /* VENDOR_EDIT */
+
 	devfreq->min_freq = devfreq->scaling_min_freq;
 
-	devfreq->scaling_max_freq = find_available_max_freq(devfreq);
 	if (!devfreq->scaling_max_freq) {
 		mutex_unlock(&devfreq->lock);
 		err = -EINVAL;
@@ -1646,3 +1688,14 @@ void devm_devfreq_unregister_notifier(struct device *dev,
 			       devm_devfreq_dev_match, devfreq));
 }
 EXPORT_SYMBOL(devm_devfreq_unregister_notifier);
+
+// #ifdef VENDOR_EDIT
+// shu5.zhang@tcl.com 2021/06/24 add for GPU frep governor
+#ifdef CONFIG_GPU_DEVFREQ
+void mali_trace_clock_set_rate(char *s, int clk_val)
+{
+	trace_clock_set_rate(s, clk_val, 0);
+}
+EXPORT_SYMBOL(mali_trace_clock_set_rate);
+#endif
+// #endif /* VENDOR_EDIT */

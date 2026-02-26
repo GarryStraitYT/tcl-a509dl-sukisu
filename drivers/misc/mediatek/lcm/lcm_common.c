@@ -13,6 +13,11 @@
 #include "lcm_pmic.h"
 #include "lcm_util.h"
 
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#define LCD_PARAMETER_DEBUG(str, ...) //pr_err("[LCM][DEBUG]%s(%d)"str, __func__, __LINE__, ##__VA_ARGS__)
+#endif
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
 
 /* #define LCM_DEBUG */
 
@@ -30,13 +35,123 @@ static struct LCM_UTIL_FUNCS lcm_util;
 #define read_reg_v2(cmd, buffer, buffer_size) \
 		lcm_util.dsi_dcs_read_lcm_reg_v2(cmd, buffer, buffer_size)
 
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#define dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update) \
+	        lcm_util.dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update)
+#define dsi_set_cmdq_V2(cmd, count, ppara, force_update) \
+	        lcm_util.dsi_set_cmdq_V2(cmd, count, ppara, force_update)
+#define wrtie_cmd(cmd) lcm_util.dsi_write_cmd(cmd)
+#define write_regs(addr, pdata, byte_nums) \
+	        lcm_util.dsi_write_regs(addr, pdata, byte_nums)
+#define read_reg(cmd) \
+	        lcm_util.dsi_dcs_read_lcm_reg(cmd)
+#define set_gpio_lcd_enp(cmd) \
+	        lcm_util.set_gpio_lcd_enp_bias(cmd)
+#define set_gpio_lcd_enn(cmd) \
+	        lcm_util.set_gpio_lcd_enn_bias(cmd)
+#define set_gpio_lcd_vdd3v3(cmd) \
+	        lcm_util.set_gpio_lcd_vdd3v3(cmd)
+
+typedef void (*callback_func)(void);
+callback_func tp_suspend_func = NULL;
+callback_func tp_resume_func = NULL;
+/*Begin added by peisong.cao for task 11692038 on 2021-12-17*/
+#if defined(CONFIG_TCT_LCM_NL9911_VERF)
+struct LCM_DATA_T3 Data_verf_password[] = {
+			{0xF0,0x02,{0x5A,0x59}},
+			{0xF1,0x02,{0xA5,0xA6}},
+			{0xF6,0x01,{0x31}}
+		};
+extern unsigned char lcm_name_flag;
+unsigned char Temp_F6 ;
+int temp_F6_get(char *str)
+{
+	unsigned long val;
+	kstrtoul(str, 0, &val);
+	Temp_F6 = val;
+	return 0;
+}
+__setup("NL9911C_Temp_F6=",temp_F6_get);
+#endif
+/*End added by peisong.cao for task 11692038 on 2021-12-17*/
+void lcm_common_register_tp_suspend_func(callback_func fun)
+{
+	LCD_PARAMETER_DEBUG("setting lcm suspend callback function: %p\n", fun);
+	tp_suspend_func = fun;
+}
+EXPORT_SYMBOL(lcm_common_register_tp_suspend_func);
+
+void lcm_common_register_tp_resume_func(callback_func fun)
+{
+	LCD_PARAMETER_DEBUG("setting lcm resume callback function: %p\n", fun);
+	tp_resume_func = fun;
+}
+EXPORT_SYMBOL(lcm_common_register_tp_resume_func);
+
+enum LCM_STATUS tct_lcm_gpio_set_data(char type, const struct LCM_DATA_T1 *t1)
+{
+	switch (type) {
+		case LCM_GPIO_MODE:
+		case LCM_GPIO_BIAS_ENN_MODE:
+		case LCM_GPIO_BIAS_ENP_MODE:
+		case TP_GPIO_RESET_MODE:
+		case LCM_GPIO_DIR:
+		case LCM_GPIO_BIAS_ENN_DIR:
+		case LCM_GPIO_BIAS_ENP_DIR:
+		case TP_GPIO_RESET_DIR:
+		case LCM_GPIO_VDD3V3_EN_MODE:
+    	case LCM_GPIO_VDD3V3_EN_DIR:
+			// TODO ignore pinmux setting, already set in pinctrl by mtkfb driver
+			break;
+		case LCM_GPIO_OUT:
+		case LCM_GPIO_BIAS_ENP_OUT:
+			set_gpio_lcd_enp((unsigned int)t1->data);
+			break;
+		case LCM_GPIO_BIAS_ENN_OUT:
+			set_gpio_lcd_enn((unsigned int)t1->data);
+			break;
+		case LCM_GPIO_VDD3V3_EN_OUT:
+			set_gpio_lcd_vdd3v3((unsigned int)t1->data);
+		case TP_GPIO_RESET_OUT:
+			// TODO ignore seting ctp reset pin, no need to set it on display side
+			break;
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+        case TP_GPIO_READ_COMPARE:
+            return LCM_STATUS_OK;
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
+
+		default:
+			pr_err("[LCM][ERROR] %s:%d unknown command type: %d\n", __func__, __LINE__, type);
+			return LCM_STATUS_ERROR;
+	}
+	return LCM_STATUS_OK;
+}
+#endif //CONFIG_TCT_FEATURE_PARAM_SEPARATION
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
 /* ------------------------------------------------------------------------- */
 /* LCM Driver Implementations */
 /* ------------------------------------------------------------------------- */
 void lcm_common_parse_dts(const struct LCM_DTS *DTS, unsigned char force_update)
 {
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#if defined(LCM_DEBUG)
+	unsigned int i;
+	unsigned char *tmp;
+#endif
+#endif
 	struct LCM_PARAMS *dts_params = &_LCM_DTS.params;
 	struct LCM_DATA *dts_init = &(_LCM_DTS.init[0]);
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	struct LCM_DATA *dts_pre_suspend = &(_LCM_DTS.pre_suspend[0]);
+	struct LCM_DATA *dts_post_suspend = &(_LCM_DTS.post_suspend[0]);
+	struct LCM_DATA *dts_pre_resume = &(_LCM_DTS.pre_resume[0]);
+	struct LCM_DATA *dts_post_resume = &(_LCM_DTS.post_resume[0]);
+	struct LCM_DATA *dts_aod_enter = &(_LCM_DTS.aod_enter[0]);
+	struct LCM_DATA *dts_aod_exit = &(_LCM_DTS.aod_exit[0]);
+	struct LCM_DATA *dts_hbm_enable = &(_LCM_DTS.hbm_enable[0]);
+	struct LCM_DATA *dts_hbm_disable = &(_LCM_DTS.hbm_disable[0]);
+#endif
 	struct LCM_DATA *dts_compare_id = &(_LCM_DTS.compare_id[0]);
 	struct LCM_DATA *dts_suspend = &(_LCM_DTS.suspend[0]);
 	struct LCM_DATA *dts_backlight = &(_LCM_DTS.backlight[0]);
@@ -646,6 +761,43 @@ void lcm_common_parse_dts(const struct LCM_DTS *DTS, unsigned char force_update)
 #endif
 
 #if defined(LCM_DEBUG)
+#else
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	memset(dts_pre_suspend, 0, sizeof(struct LCM_DATA)*(DTS->pre_suspend_size));
+	memcpy(dts_pre_suspend, &(DTS->pre_suspend[0]), sizeof(struct LCM_DATA)*(DTS->pre_suspend_size));
+	_LCM_DTS.pre_suspend_size = DTS->pre_suspend_size;
+
+	memset(dts_post_suspend, 0, sizeof(struct LCM_DATA)*(DTS->post_suspend_size));
+	memcpy(dts_post_suspend, &(DTS->post_suspend[0]), sizeof(struct LCM_DATA)*(DTS->post_suspend_size));
+	_LCM_DTS.post_suspend_size = DTS->post_suspend_size;
+
+	memset(dts_pre_resume, 0, sizeof(struct LCM_DATA)*(DTS->pre_resume_size));
+	memcpy(dts_pre_resume, &(DTS->pre_resume[0]), sizeof(struct LCM_DATA)*(DTS->pre_resume_size));
+	_LCM_DTS.pre_resume_size = DTS->pre_resume_size;
+
+	memset(dts_post_resume, 0, sizeof(struct LCM_DATA)*(DTS->post_resume_size));
+	memcpy(dts_post_resume, &(DTS->post_resume[0]), sizeof(struct LCM_DATA)*(DTS->post_resume_size));
+	_LCM_DTS.post_resume_size = DTS->post_resume_size;
+
+	memset(dts_aod_enter, 0, sizeof(struct LCM_DATA)*(DTS->aod_enter_size));
+	memcpy(dts_aod_enter, &(DTS->aod_enter[0]), sizeof(struct LCM_DATA)*(DTS->aod_enter_size));
+	_LCM_DTS.aod_enter_size = DTS->aod_enter_size;
+
+	memset(dts_aod_exit, 0, sizeof(struct LCM_DATA)*(DTS->aod_exit_size));
+	memcpy(dts_aod_exit, &(DTS->aod_exit[0]), sizeof(struct LCM_DATA)*(DTS->aod_exit_size));
+	_LCM_DTS.aod_exit_size = DTS->aod_exit_size;
+
+	memset(dts_hbm_enable, 0, sizeof(struct LCM_DATA)*(DTS->hbm_enable_size));
+	memcpy(dts_hbm_enable, &(DTS->hbm_enable[0]), sizeof(struct LCM_DATA)*(DTS->hbm_enable_size));
+	_LCM_DTS.hbm_enable_size = DTS->hbm_enable_size;
+
+	memset(dts_hbm_disable, 0, sizeof(struct LCM_DATA)*(DTS->hbm_disable_size));
+	memcpy(dts_hbm_disable, &(DTS->hbm_disable[0]), sizeof(struct LCM_DATA)*(DTS->hbm_disable_size));
+	_LCM_DTS.hbm_disable_size = DTS->hbm_disable_size;
+#endif
+#endif
+
+#if defined(LCM_DEBUG)
 	/* LCM DTS compare_id data set */
 	_LCM_DTS.compare_id_size = 0;
 	memset(dts_compare_id, 0, sizeof(struct LCM_DATA) * COMPARE_ID_SIZE);
@@ -791,14 +943,46 @@ void lcm_common_init(void)
 
 	for (i = 0; i < _LCM_DTS.init_size; i++) {
 		init = &(_LCM_DTS.init[i]);
+/*Begin added by peisong.cao for task 11692038 on 2021-12-17*/
+#if defined(CONFIG_TCT_LCM_NL9911_VERF)			
+		if(lcm_name_flag&&(init->data_t3.cmd == 0x11)){
+				Data_verf_password[2].data[0] = Temp_F6;
+				lcm_util_set_write_cmd_v2(&lcm_util, &Data_verf_password[0], 1);
+				lcm_util_set_write_cmd_v2(&lcm_util, &Data_verf_password[1], 1);
+				lcm_util_set_write_cmd_v2(&lcm_util, &Data_verf_password[2], 1);
+			}
+#endif
+/*End added by peisong.cao for task 11692038 on 2021-12-17				*/
 		switch (init->func) {
 		case LCM_FUNC_GPIO:
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#ifdef CONFIG_LCM_GPIO_TCT
+			tct_lcm_gpio_set_data(init->type, &init->data_t1);
+#else
 			lcm_gpio_set_data(init->type, &init->data_t1);
+#endif
+#else
+			lcm_gpio_set_data(init->type, &init->data_t1);
+#endif
 			break;
 
 		case LCM_FUNC_I2C:
-			lcm_i2c_set_data(init->type, &init->data_t2);
+//begin add by zhiquan.wen.hz for xr11451676 on 20211109
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+			switch (init->type) {
+				case LCM_I2C_WRITE:
+					lcm_i2c_set_data(init->type, &init->data_t2);
+					break;
+				case LCM_I2C_SET_CONFIG:
+					lcm_i2c_set_config_data(init->type, &init->data_t2);
+					break;
+				default:
+					pr_debug("[LCM][ERROR] %s/%d: %d\n",__func__, __LINE__, init->type);
+					return;
+			}
+#endif
 			break;
+//end add by zhiquan.wen.hz for xr11451676 on 20211109
 
 		case LCM_FUNC_UTIL:
 			lcm_util_set_data(&lcm_util,
@@ -824,6 +1008,26 @@ void lcm_common_init(void)
 			}
 			break;
 
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+		case LCM_FUNC_TP:
+			switch(init->type) {
+				case LCM_TP_FUNC_SUSPEND:
+					if (tp_suspend_func != NULL) {
+						tp_suspend_func();
+					}
+					break;
+				case LCM_TP_FUNC_RESUME:
+					if (tp_resume_func != NULL) {
+						tp_resume_func();
+					}
+					break;
+				default:
+					pr_err("[LCM][ERROR] %s/%d: %d\n",
+						__func__, __LINE__, init->type);
+					return;
+			}
+			break;
+#endif
 		default:
 			pr_debug("[LCM][ERROR] %s/%d: %d\n",
 				__func__, __LINE__, init->func);
@@ -832,6 +1036,446 @@ void lcm_common_init(void)
 	}
 }
 
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+void lcm_common_pre_suspend(void)
+{
+	if (_LCM_DTS.pre_suspend_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power pre suspend table overflow %d \n", __func__, 
+_LCM_DTS.pre_suspend_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.pre_suspend_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		unsigned int cmd[1];
+		struct LCM_DATA *pre_suspend;
+
+		for (i = 0; i < _LCM_DTS.pre_suspend_size; i++) {
+			pre_suspend = &(_LCM_DTS.pre_suspend[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, pre_suspend->func, pre_suspend->type, pre_suspend->size);
+			switch (pre_suspend->func) {
+				case LCM_FUNC_GPIO:
+#ifdef CONFIG_LCM_GPIO_TCT
+					tct_lcm_gpio_set_data(pre_suspend->type, &pre_suspend->data_t1);
+#else
+					lcm_gpio_set_data(pre_suspend->type, &pre_suspend->data_t1);
+#endif
+					break;
+
+				case LCM_FUNC_I2C:
+					lcm_i2c_set_data(pre_suspend->type, &pre_suspend->data_t2);
+					break;
+
+				case LCM_FUNC_UTIL:
+					lcm_util_set_data(&lcm_util, pre_suspend->type, &pre_suspend->data_t1);
+					break;
+
+				case LCM_FUNC_CMD:
+					switch (pre_suspend->type) {
+						case LCM_UTIL_WRITE_CMD_V1:
+							lcm_util_set_write_cmd_v1(&lcm_util, &pre_suspend->data_t5, 1);
+							break;
+
+						case LCM_UTIL_WRITE_CMD_V2:
+							lcm_util_set_write_cmd_v2(&lcm_util, &pre_suspend->data_t3, 1);
+							break;
+
+						case LCM_UTIL_SET_CMDQ:
+							cmd[0] = pre_suspend->data_t6.cmd[0] | (pre_suspend->data_t6.cmd[1] << 8) | (pre_suspend->data_t6.cmd[2] << 16) | (pre_suspend->data_t6.cmd[3] << 24);
+							dsi_set_cmdq(cmd, pre_suspend->data_t6.queue_size, pre_suspend->data_t6.force_update);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)pre_suspend->type);
+							return;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)pre_suspend->func);
+					return;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+void lcm_common_post_suspend(void)
+{
+	if (_LCM_DTS.post_suspend_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power post suspend table overflow %d \n", __func__, 
+_LCM_DTS.post_suspend_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.post_suspend_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		unsigned int cmd[1];
+		struct LCM_DATA *post_suspend;
+
+		for (i = 0; i < _LCM_DTS.post_suspend_size; i++) {
+			post_suspend = &(_LCM_DTS.post_suspend[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, post_suspend->func, post_suspend->type, post_suspend->size);
+			switch (post_suspend->func) {
+				case LCM_FUNC_GPIO:
+#ifdef CONFIG_LCM_GPIO_TCT
+					tct_lcm_gpio_set_data(post_suspend->type, &post_suspend->data_t1);
+#else
+					lcm_gpio_set_data(post_suspend->type, &post_suspend->data_t1);
+#endif
+					break;
+
+				case LCM_FUNC_I2C:
+					lcm_i2c_set_data(post_suspend->type, &post_suspend->data_t2);
+					break;
+
+				case LCM_FUNC_UTIL:
+					lcm_util_set_data(&lcm_util, post_suspend->type, &post_suspend->data_t1);
+					break;
+
+				case LCM_FUNC_CMD:
+					switch (post_suspend->type) {
+						case LCM_UTIL_WRITE_CMD_V1:
+							lcm_util_set_write_cmd_v1(&lcm_util, &post_suspend->data_t5, 1);
+							break;
+
+						case LCM_UTIL_WRITE_CMD_V2:
+							lcm_util_set_write_cmd_v2(&lcm_util, &post_suspend->data_t3, 1);
+							break;
+
+						case LCM_UTIL_SET_CMDQ:
+							cmd[0] = post_suspend->data_t6.cmd[0] | (post_suspend->data_t6.cmd[1] << 8) | (post_suspend->data_t6.cmd[2] << 16) | (post_suspend->data_t6.cmd[3] << 24);
+							dsi_set_cmdq(cmd, post_suspend->data_t6.queue_size, post_suspend->data_t6.force_update);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)post_suspend->type);
+							return;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)post_suspend->func);
+					return;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+void lcm_common_pre_resume(void)
+{
+	if (_LCM_DTS.pre_resume_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power pre resume table overflow %d \n", __func__, 
+_LCM_DTS.pre_resume_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.pre_resume_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		unsigned int cmd[1];
+		struct LCM_DATA *pre_resume;
+
+		for (i = 0; i < _LCM_DTS.pre_resume_size; i++) {
+			pre_resume = &(_LCM_DTS.pre_resume[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, pre_resume->func, pre_resume->type, pre_resume->size);
+			switch (pre_resume->func) {
+				case LCM_FUNC_GPIO:
+#ifdef CONFIG_LCM_GPIO_TCT
+					tct_lcm_gpio_set_data(pre_resume->type, &pre_resume->data_t1);
+#else
+					lcm_gpio_set_data(pre_resume->type, &pre_resume->data_t1);
+#endif
+					break;
+
+				case LCM_FUNC_I2C:
+					lcm_i2c_set_data(pre_resume->type, &pre_resume->data_t2);
+					break;
+
+				case LCM_FUNC_UTIL:
+					lcm_util_set_data(&lcm_util, pre_resume->type, &pre_resume->data_t1);
+					break;
+
+				case LCM_FUNC_CMD:
+					switch (pre_resume->type) {
+						case LCM_UTIL_WRITE_CMD_V1:
+							lcm_util_set_write_cmd_v1(&lcm_util, &pre_resume->data_t5, 1);
+							break;
+
+						case LCM_UTIL_WRITE_CMD_V2:
+							lcm_util_set_write_cmd_v2(&lcm_util, &pre_resume->data_t3, 1);
+							break;
+
+						case LCM_UTIL_SET_CMDQ:
+							cmd[0] = pre_resume->data_t6.cmd[0] | (pre_resume->data_t6.cmd[1] << 8) | (pre_resume->data_t6.cmd[2] << 16) | (pre_resume->data_t6.cmd[3] << 24);
+							dsi_set_cmdq(cmd, pre_resume->data_t6.queue_size, pre_resume->data_t6.force_update);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)pre_resume->type);
+							return;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)pre_resume->func);
+					return;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+void lcm_common_post_resume(void)
+{
+	if (_LCM_DTS.post_resume_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power post resume table overflow %d \n", __func__, 
+_LCM_DTS.post_resume_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.post_resume_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		unsigned int cmd[1];
+		struct LCM_DATA *post_resume;
+
+		for (i = 0; i < _LCM_DTS.post_resume_size; i++) {
+			post_resume = &(_LCM_DTS.post_resume[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, post_resume->func, post_resume->type, post_resume->size);
+			switch (post_resume->func) {
+				case LCM_FUNC_GPIO:
+#ifdef CONFIG_LCM_GPIO_TCT
+					tct_lcm_gpio_set_data(post_resume->type, &post_resume->data_t1);
+#else
+					lcm_gpio_set_data(post_resume->type, &post_resume->data_t1);
+#endif
+					break;
+
+				case LCM_FUNC_I2C:
+					lcm_i2c_set_data(post_resume->type, &post_resume->data_t2);
+					break;
+
+				case LCM_FUNC_UTIL:
+					lcm_util_set_data(&lcm_util, post_resume->type, &post_resume->data_t1);
+					break;
+
+				case LCM_FUNC_CMD:
+					switch (post_resume->type) {
+						case LCM_UTIL_WRITE_CMD_V1:
+							lcm_util_set_write_cmd_v1(&lcm_util, &post_resume->data_t5, 1);
+							break;
+
+						case LCM_UTIL_WRITE_CMD_V2:
+							lcm_util_set_write_cmd_v2(&lcm_util, &post_resume->data_t3, 1);
+							break;
+
+						case LCM_UTIL_SET_CMDQ:
+							cmd[0] = post_resume->data_t6.cmd[0] | (post_resume->data_t6.cmd[1] << 8) | (post_resume->data_t6.cmd[2] << 16) | (post_resume->data_t6.cmd[3] << 24);
+							dsi_set_cmdq(cmd, post_resume->data_t6.queue_size, post_resume->data_t6.force_update);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)post_resume->type);
+							return;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)post_resume->func);
+					return;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+static __attribute__((unused)) void lcm_common_hbm_enable(void *handle)
+{
+	if (_LCM_DTS.hbm_enable_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power hbm_enable table overflow %d \n", __func__, 
+				_LCM_DTS.hbm_enable_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.hbm_enable_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		struct LCM_DATA *hbm_enable;
+
+		for (i = 0; i < _LCM_DTS.hbm_enable_size; i++) {
+			hbm_enable = &(_LCM_DTS.hbm_enable[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, hbm_enable->func, hbm_enable->type, hbm_enable->size);
+			switch (hbm_enable->func) {
+				case LCM_FUNC_CMD:
+					switch (hbm_enable->type) {
+						case LCM_UTIL_WRITE_CMD_V22:
+							lcm_util_set_write_cmd_v22(&lcm_util, handle, &hbm_enable->data_t3, 1);
+							break;
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)hbm_enable->type);
+							return;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)hbm_enable->func);
+					break;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+static __attribute__((unused)) void lcm_common_hbm_disable(void *handle)
+{
+	if (_LCM_DTS.hbm_disable_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power post resume table overflow %d \n", __func__, 
+				_LCM_DTS.hbm_disable_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.hbm_disable_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		struct LCM_DATA *hbm_disable;
+
+		for (i = 0; i < _LCM_DTS.hbm_disable_size; i++) {
+			hbm_disable = &(_LCM_DTS.hbm_disable[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, hbm_disable->func, hbm_disable->type, hbm_disable->size);
+			switch (hbm_disable->func) {
+				case LCM_FUNC_CMD:
+					switch (hbm_disable->type) {
+						case LCM_UTIL_WRITE_CMD_V22:
+							lcm_util_set_write_cmd_v22(&lcm_util, handle, &hbm_disable->data_t3, 1);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)hbm_disable->type);
+							break;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)hbm_disable->func);
+					break;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+static void lcm_common_aod_enter(void *handle)
+{
+	if (_LCM_DTS.aod_enter_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power aod_enter table overflow %d \n", __func__, 
+				_LCM_DTS.aod_enter_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.aod_enter_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		struct LCM_DATA *aod_enter;
+
+		for (i = 0; i < _LCM_DTS.aod_enter_size; i++) {
+			aod_enter = &(_LCM_DTS.aod_enter[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, aod_enter->func, aod_enter->type, aod_enter->size);
+			switch (aod_enter->func) {
+				case LCM_FUNC_CMD:
+					switch (aod_enter->type) {
+						case LCM_UTIL_WRITE_CMD_V22:
+							lcm_util_set_write_cmd_v22(&lcm_util, handle, &aod_enter->data_t3, 1);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)aod_enter->type);
+							break;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)aod_enter->func);
+					break;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+static void lcm_common_aod_exit(void *handle)
+{
+	if (_LCM_DTS.aod_exit_size > ADDITIONAL_SIZE) {
+		pr_err("[LCM][ERROR] %s: Power aod_exit table overflow %d \n", __func__, 
+				_LCM_DTS.aod_exit_size);
+		return;
+	}
+
+	LCD_PARAMETER_DEBUG("%s: entry:%d\n", __func__, _LCM_DTS.aod_exit_size);
+	if (_LCM_DTS.parsing != 0) {
+		unsigned int i;
+		struct LCM_DATA *aod_exit;
+
+		for (i = 0; i < _LCM_DTS.aod_exit_size; i++) {
+			aod_exit = &(_LCM_DTS.aod_exit[i]);
+			LCD_PARAMETER_DEBUG("%s() [i]%d, %d, %d\n", 
+				__func__, i, aod_exit->func, aod_exit->type, aod_exit->size);
+			switch (aod_exit->func) {
+				case LCM_FUNC_CMD:
+					switch (aod_exit->type) {
+						case LCM_UTIL_WRITE_CMD_V22:
+							lcm_util_set_write_cmd_v22(&lcm_util, handle, &aod_exit->data_t3, 1);
+							break;
+
+						default:
+							pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)aod_exit->type);
+							break;
+					}
+					break;
+
+				default:
+					pr_err("[LCM][ERROR] %s: %d \n", __func__, (unsigned int)aod_exit->func);
+					break;
+			}
+		}
+	} else {
+		pr_err("[LCM][ERROR] %s: DTS is not parsed \n", __func__);
+		return;
+	}
+}
+
+static void lcm_common_tct_set_aod(int enter, void *handle)
+{
+	if (enter)
+		lcm_common_aod_enter(handle);
+	else
+		lcm_common_aod_exit(handle);
+}
+#endif //CONFIG_TCT_FEATURE_PARAM_SEPARATION
 
 void lcm_common_suspend(void)
 {
@@ -854,7 +1498,15 @@ void lcm_common_suspend(void)
 		suspend = &(_LCM_DTS.suspend[i]);
 		switch (suspend->func) {
 		case LCM_FUNC_GPIO:
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#ifdef CONFIG_LCM_GPIO_TCT
+			tct_lcm_gpio_set_data(suspend->type, &suspend->data_t1);
+#else
 			lcm_gpio_set_data(suspend->type, &suspend->data_t1);
+#endif
+#else
+			lcm_gpio_set_data(suspend->type, &suspend->data_t1);
+#endif
 			break;
 
 		case LCM_FUNC_I2C:
@@ -892,8 +1544,15 @@ void lcm_common_suspend(void)
 		}
 	}
 }
-
-
+/*Begin add by peisong.cao for 11717776  on 2022-04-06*/
+#if defined(CONFIG_TCT_LCM_NL9911_VERF) 
+void factory_reset(void)
+{
+	lcm_common_suspend();
+}
+EXPORT_SYMBOL(factory_reset);
+#endif
+/*End add by peisong.cao for 11717776  on 2022-04-06*/
 void lcm_common_resume(void)
 {
 	lcm_common_init();
@@ -1066,7 +1725,15 @@ void lcm_common_setbacklight(unsigned int level)
 
 		switch (backlight->func) {
 		case LCM_FUNC_GPIO:
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#ifdef CONFIG_LCM_GPIO_TCT
+			tct_lcm_gpio_set_data(backlight->type, &backlight->data_t1);
+#else
 			lcm_gpio_set_data(backlight->type, &backlight->data_t1);
+#endif
+#else
+			lcm_gpio_set_data(backlight->type, &backlight->data_t1);
+#endif
 			break;
 
 		case LCM_FUNC_I2C:
@@ -1113,6 +1780,9 @@ unsigned int lcm_common_compare_id(void)
 	/* default: skip compare id */
 	unsigned int compare = 1;
 	unsigned int i;
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	unsigned int cmd[1];
+#endif
 	struct LCM_DATA *compare_id;
 
 	if (_LCM_DTS.compare_id_size > COMPARE_ID_SIZE) {
@@ -1131,8 +1801,20 @@ unsigned int lcm_common_compare_id(void)
 		compare_id = &(_LCM_DTS.compare_id[i]);
 		switch (compare_id->func) {
 		case LCM_FUNC_GPIO:
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#ifdef CONFIG_LCM_GPIO_TCT
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210819*/
+			if (compare_id->type == TP_GPIO_READ_COMPARE)
+				return 0;
+/*end add by zhiquan.wen.hz for xr11451676 on 20210825*/
+			tct_lcm_gpio_set_data(compare_id->type, &compare_id->data_t1);
+#else
 			lcm_gpio_set_data(compare_id->type,
 				&compare_id->data_t1);
+#endif
+#else
+			lcm_gpio_set_data(compare_id->type,&compare_id->data_t1);
+#endif
 			break;
 
 		case LCM_FUNC_I2C:
@@ -1158,10 +1840,29 @@ unsigned int lcm_common_compare_id(void)
 				break;
 
 			case LCM_UTIL_READ_CMD_V2:
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+				if (lcm_util_set_read_cmd_v2(&lcm_util,
+					&compare_id->data_t4, &compare) == LCM_STATUS_ERROR) {
+					pr_info("[LCM][ERROR] %s: cmd: 0x%x, location: 0x%x, data: 0x%x\n", __func__, compare_id->data_t4.cmd, compare_id->data_t4.location, compare_id->data_t4.data);
+					return 0;
+				} else {
+					if (compare == 0){
+						pr_err("[LCM][INFO] %s: compare fail\n", __func__);
+						return 0;
+					}
+				}
+#else
 				lcm_util_set_read_cmd_v2(&lcm_util,
 					&compare_id->data_t4, &compare);
+#endif
 				break;
 
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+			case LCM_UTIL_SET_CMDQ:
+				cmd[0] = compare_id->data_t6.cmd[0] | (compare_id->data_t6.cmd[1] << 8) | (compare_id->data_t6.cmd[2] << 16) | (compare_id->data_t6.cmd[3] << 24);
+				dsi_set_cmdq(cmd, compare_id->data_t6.queue_size, compare_id->data_t6.force_update);
+				break;
+#endif
 			default:
 				pr_debug("[LCM][ERROR] %s/%d: %d\n",
 					__func__, __LINE__, compare_id->type);
@@ -1187,7 +1888,55 @@ unsigned int lcm_common_ata_check(unsigned char *buffer)
 #endif
 }
 
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#define MIPI_DCS_SET_DISPLAY_BRIGHTNESS 0x51
 
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+extern int flag_hbm_enable; //flag for hbm
+extern int flag_tct_hbm_mode;
+#endif
+
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+extern int tct_pgc_pm;
+extern int tct_pgc_lcm_ps;
+#endif
+
+void lcm_common_setbacklight_cmdq(void *handle, unsigned int level)
+{
+	u8 cmd[2] = { level >> 8 & 0xff, level & 0xff };
+	pr_info("%s, level:%d, cmd:0x%x,0x%x", __func__, level, cmd[0], cmd[1]);
+
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	pr_info("%s, tcl tct_pgc_pm=%d,tct_pgc_lcm_ps=%d\n", __func__, tct_pgc_pm,tct_pgc_lcm_ps);
+	if (tct_pgc_pm == 3 && tct_pgc_lcm_ps == 2) {
+		pr_info("%s, tcl aod mode enter =%d\n",__func__, level);
+		lcm_common_aod_enter(handle);
+		return;
+	}
+#endif
+	//for LGE backlight IC mapping table
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING) && defined(CONFIG_TCT_PROJECT_PASSAT)
+	if (flag_hbm_enable == 1 && flag_tct_hbm_mode == 0) {//temp set at 3000
+		pr_info("%s, enter HBM mode\n", __func__);
+		flag_tct_hbm_mode = 1;
+		lcm_common_hbm_enable(handle);
+		return;
+	} else if (flag_hbm_enable == 1 && flag_tct_hbm_mode == 1) {
+		pr_info("%s, tcl in HBM mode,do nothing\n", __func__);
+		return;
+	} else if(flag_hbm_enable == 0 && flag_tct_hbm_mode == 1) {
+		pr_info("%s, tcl exit HBM mode", __func__);
+		flag_tct_hbm_mode = 0;
+		lcm_common_hbm_disable(handle);
+		return;
+	} else {
+#endif
+	dsi_set_cmdq_V22(handle, MIPI_DCS_SET_DISPLAY_BRIGHTNESS, sizeof(cmd), cmd, 1);
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+	}
+#endif
+}
+#else
 void lcm_common_setbacklight_cmdq(void *handle, unsigned int level)
 {
 	unsigned int i;
@@ -1253,6 +2002,7 @@ void lcm_common_setbacklight_cmdq(void *handle, unsigned int level)
 		}
 	}
 }
+#endif
 
 #if defined(R63419_WQHD_TRULY_PHANTOM_2K_CMD_OK)
 void lcm_common_setroi(int x, int y, int width, int height, void *handle)
@@ -1457,6 +2207,15 @@ struct LCM_DRIVER lcm_common_drv = {
 	.set_util_funcs = lcm_common_set_util_funcs,
 	.get_params = lcm_common_get_params,
 	.init = lcm_common_init,
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	.pre_suspend	= lcm_common_pre_suspend,
+	.post_suspend	= lcm_common_post_suspend,
+	.pre_resume	= lcm_common_pre_resume,
+	.post_resume	= lcm_common_post_resume,
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	.aod = lcm_common_tct_set_aod,
+#endif
+#endif
 	.suspend = lcm_common_suspend,
 	.resume = lcm_common_resume,
 	.compare_id = lcm_common_compare_id,

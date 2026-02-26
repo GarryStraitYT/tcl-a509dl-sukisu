@@ -93,6 +93,7 @@ phys_addr_t scp_mem_base_phys;
 void __iomem *scp_mem_base_virt;
 phys_addr_t scp_mem_size;
 struct scp_regs scpreg;
+unsigned int mpu_region_id;
 
 unsigned char *scp_send_buff[SCP_CORE_TOTAL];
 unsigned char *scp_recv_buff[SCP_CORE_TOTAL];
@@ -319,9 +320,12 @@ static void scp_A_notify_ws(struct work_struct *ws)
 	/*clear reset status and unlock wake lock*/
 	pr_debug("[SCP] clear scp reset flag and unlock\n");
 #ifndef CONFIG_FPGA_EARLY_PORTING
+#if defined(CONFIG_MACH_MT6781)
+	scp_resource_req(SCP_REQ_RELEASE);
+#else
 	spm_resource_req(SPM_RESOURCE_USER_SCP, SPM_RESOURCE_RELEASE);
-
-#endif	// CONFIG_FPGA_EARLY_PORTING
+#endif
+#endif  // CONFIG_FPGA_EARLY_PORTING
 	/* register scp dvfs*/
 	msleep(2000);
 	__pm_relax(scp_reset_lock);
@@ -522,16 +526,9 @@ int reset_scp(int reset)
 static int scp_pm_event(struct notifier_block *notifier
 			, unsigned long pm_event, void *unused)
 {
-	int retval;
 
 		switch (pm_event) {
 		case PM_POST_HIBERNATION:
-			pr_debug("[SCP] %s: reboot\n", __func__);
-			retval = reset_scp(1);
-			if (retval < 0) {
-				retval = -EINVAL;
-				pr_debug("[SCP] %s: reboot fail\n", __func__);
-			}
 			return NOTIFY_DONE;
 		}
 	return NOTIFY_OK;
@@ -903,7 +900,7 @@ static int create_files(void)
 
 phys_addr_t scp_get_reserve_mem_phys(enum scp_reserve_mem_id_t id)
 {
-	if (id >= NUMS_MEM_ID || id < 0) {
+	if (id >= NUMS_MEM_ID) {
 		pr_err("[SCP] no reserve memory for %d", id);
 		return 0;
 	} else
@@ -913,7 +910,7 @@ EXPORT_SYMBOL_GPL(scp_get_reserve_mem_phys);
 
 phys_addr_t scp_get_reserve_mem_virt(enum scp_reserve_mem_id_t id)
 {
-	if (id >= NUMS_MEM_ID || id < 0) {
+	if (id >= NUMS_MEM_ID) {
 		pr_err("[SCP] no reserve memory for %d", id);
 		return 0;
 	} else
@@ -923,7 +920,7 @@ EXPORT_SYMBOL_GPL(scp_get_reserve_mem_virt);
 
 phys_addr_t scp_get_reserve_mem_size(enum scp_reserve_mem_id_t id)
 {
-	if (id >= NUMS_MEM_ID || id < 0) {
+	if (id >= NUMS_MEM_ID) {
 		pr_err("[SCP] no reserve memory for %d", id);
 		return 0;
 	} else
@@ -1029,7 +1026,7 @@ static int scp_reserve_memory_ioremap(struct platform_device *pdev)
 		}
 
 		scp_reserve_mblock[m_idx].size = m_size;
-		pr_err("@@@@ reserved: <%d  %d>\n", m_idx, m_size);
+		pr_err("[SCP] reserved: <%d  %d>\n", m_idx, m_size);
 	}
 
 	/* set virtual and physical address for the reserved memory */
@@ -1075,7 +1072,7 @@ void set_scp_mpu(void)
 {
 	struct emi_region_info_t region_info;
 
-	region_info.region = MPU_REGION_ID_SCP_SMEM;
+	region_info.region = mpu_region_id;
 	region_info.start = scp_mem_base_phys;
 	region_info.end =  scp_mem_base_phys + scp_mem_size - 0x1;
 
@@ -1085,8 +1082,8 @@ void set_scp_mpu(void)
 			FORBIDDEN, FORBIDDEN, FORBIDDEN, FORBIDDEN,
 			NO_PROTECTION, FORBIDDEN, FORBIDDEN, NO_PROTECTION);
 
-	pr_debug("[SCP] MPU protect SCP Share region<%d:%08llx:%08llx> %x, %x\n",
-			MPU_REGION_ID_SCP_SMEM,
+	pr_notice("[SCP] MPU protect SCP Share region<%d:%08llx:%08llx> %x, %x\n",
+			region_info.region,
 			(uint64_t)region_info.start,
 			(uint64_t)region_info.end,
 			region_info.apc[1], region_info.apc[1]);
@@ -1096,18 +1093,24 @@ void set_scp_mpu(void)
 #else
 void set_scp_mpu(void)
 {
-	struct emimpu_region_t md_region;
+	struct emimpu_region_t md_region = {};
 
-	mtk_emimpu_init_region(&md_region, MPU_REGION_ID_SCP_SMEM);
-	mtk_emimpu_set_addr(&md_region, scp_mem_base_phys,
-		scp_mem_base_phys + scp_mem_size - 1);
-	mtk_emimpu_set_apc(&md_region, MPU_DOMAIN_D0,
-		MTK_EMIMPU_NO_PROTECTION);
-	mtk_emimpu_set_apc(&md_region, MPU_DOMAIN_D3,
-		MTK_EMIMPU_NO_PROTECTION);
-	if (mtk_emimpu_set_protection(&md_region))
-		pr_notice("[SCP]mtk_emimpu_set_protection fail\n");
-	mtk_emimpu_free_region(&md_region);
+	int ret = mtk_emimpu_init_region(&md_region, mpu_region_id);
+
+	if (ret == -1) {
+		pr_notice("[SCP] %s: emimpu_region init fail\n", __func__);
+		WARN_ON(1);
+	} else {
+		mtk_emimpu_set_addr(&md_region, scp_mem_base_phys,
+			scp_mem_base_phys + scp_mem_size - 1);
+		mtk_emimpu_set_apc(&md_region, MPU_DOMAIN_D0,
+			MTK_EMIMPU_NO_PROTECTION);
+		mtk_emimpu_set_apc(&md_region, MPU_DOMAIN_D3,
+			MTK_EMIMPU_NO_PROTECTION);
+		if (mtk_emimpu_set_protection(&md_region))
+			pr_notice("[SCP]mtk_emimpu_set_protection fail\n");
+		mtk_emimpu_free_region(&md_region);
+	}
 }
 #endif
 #endif
@@ -1376,7 +1379,11 @@ void scp_sys_reset_ws(struct work_struct *ws)
 
 #ifndef CONFIG_FPGA_EARLY_PORTING
 	/* keep 26Mhz */
+#if defined(CONFIG_MACH_MT6781)
+	scp_resource_req(SCP_REQ_26M);
+#else
 	spm_resource_req(SPM_RESOURCE_USER_SCP, SPM_RESOURCE_CK_26M);
+#endif
 #endif  // CONFIG_FPGA_EARLY_PORTING
 	/*request pll clock before turn off scp */
 	pr_debug("[SCP] %s(): scp_pll_ctrl_set\n", __func__);
@@ -1627,6 +1634,15 @@ static int scp_device_probe(struct platform_device *pdev)
 	}
 	pr_debug("[SCP] scpreg.scp_tcmsize = %d\n", scpreg.scp_tcmsize);
 
+	of_property_read_u32(pdev->dev.of_node,
+			"scp_mpuRegionId",
+			&mpu_region_id);
+	if (!mpu_region_id) {
+		pr_err("[SCP] mpu_region_id not found\n");
+		return -1;
+	}
+	pr_notice("[SCP] mpu_region_id=%d\n", mpu_region_id);
+
 	/* get number of feature settings in dts */
 	scp_feature_num = of_property_count_u32_elems(
 				pdev->dev.of_node,
@@ -1663,7 +1679,7 @@ static int scp_device_probe(struct platform_device *pdev)
 		}
 
 		feature_table[f_idx].freq = f_mcps;
-		pr_err("@@@@: <%d  %d>\n", f_idx, f_mcps);
+		pr_err("[SCP] feature maps: <%d  %d>\n", f_idx, f_mcps);
 	}
 
 	/*scp core 1*/
@@ -1775,17 +1791,31 @@ static int __init scp_init(void)
 
 #ifndef CONFIG_FPGA_EARLY_PORTING
 	/* keep 26Mhz */
+#if defined(CONFIG_MACH_MT6781)
+	scp_resource_req(SCP_REQ_26M);
+#else
 	spm_resource_req(SPM_RESOURCE_USER_SCP, SPM_RESOURCE_CK_26M);
+#endif
 #endif  // CONFIG_FPGA_EARLY_PORTING
+
+	if (platform_driver_register(&mtk_scpsys_device)) {
+		pr_err("[SCP] scpsys probe fail\n");
+		goto err_1;
+	}
+
+	if(scpreg.scpsys == 0) {
+		pr_err("[SCP] skip the scpsys probe\n");
+		goto err_1;
+	}
 
 	if (platform_driver_register(&mtk_scp_device)) {
 		pr_err("[SCP] scp probe fail\n");
 		goto err;
 	}
 
-	if (platform_driver_register(&mtk_scpsys_device)) {
-		pr_err("[SCP] scpsys probe fail\n");
-		goto err_1;
+	if(scpreg.sram == 0) {
+		pr_err("[SCP] skip the scp probe\n");
+		goto err;
 	}
 
 	/* skip initial if dts status = "disable" */

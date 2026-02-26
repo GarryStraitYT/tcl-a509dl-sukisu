@@ -85,6 +85,13 @@ extern struct IMGSENSOR_HW_POWER_SEQ platform_power_sequence[];
 extern struct IMGSENSOR_HW_POWER_SEQ sensor_power_sequence[];
 extern enum IMGSENSOR_RETURN (*hw_open[IMGSENSOR_HW_ID_MAX_NUM])
 					(struct IMGSENSOR_HW_DEVICE **);
-
+//zhongzhu add for tctcamera development start,2022/02/22
+extern enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
+		struct IMGSENSOR_HW             *phw,
+		enum   IMGSENSOR_SENSOR_IDX      sensor_idx,
+		enum   IMGSENSOR_HW_POWER_STATUS pwr_status,
+		struct IMGSENSOR_HW_POWER_SEQ   *ppower_sequence,
+		char *pcurr_idx);
+//zhongzhu add for tctcamera development end,2022/02/22
 #endif
 

@@ -140,11 +140,11 @@ static int mtktscharger_get_hw_temp(void)
 static int mtktscharger_get_temp(struct thermal_zone_device *thermal, int *t)
 {
 	*t = mtktscharger_get_hw_temp();
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 
 	mtktscharger_dprintk("%s %d\n", __func__, *t);
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-charger] %s t_charger2=%d\n", __func__, *t);
+#endif
 
 	if (*t >= 85000)
 		mtktscharger_dprintk_always("HT %d\n", *t);

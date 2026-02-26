@@ -28,6 +28,16 @@ char *migrate_reason_names[MR_TYPES] = {
 
 const struct trace_print_flags pageflag_names[] = {
 	__def_pageflag_names,
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	{1UL << PG_protect, "protect"},
+#endif
+#if defined(CONFIG_TCL_FINE_MM_ZRAM2DISK)
+	{1UL << PG_hottest, "hottest"},
+#endif
+
+// #endif /* VENDOR_EDIT */
 	{0, NULL}
 };
 

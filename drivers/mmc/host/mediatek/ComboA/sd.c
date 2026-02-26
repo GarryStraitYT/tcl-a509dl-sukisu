@@ -51,6 +51,49 @@
 #endif
 
 #include "dbg.h"
+//[SYSD SYS] add tp hela by jinggao.zhou@tcl.com for Online Quality OLQ-11
+
+#ifdef CONFIG_HELAEYE_BSP_EMMC_UFS_SD_ON
+
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+
+extern int emmc_ufs_sd_lasterrcode;
+extern char hela_emmc_errinfo[128];
+#define SD_INIT_BADCARD 1<<7
+
+char *bootprof_get_ap_platform(void);
+
+void heraeye_mmc_fail(){
+	char heraeye_cur_chipinfo[128] = {0};
+  char heraeye_cur_time[128] = {0};
+	char kernel_version[16]={0};
+  const char *strval = UTS_RELEASE;
+	char heraeye_info[64]={0};
+  strncpy(kernel_version,strval,8);
+
+  heraeye_curtime_to_str(heraeye_cur_time);
+  sprintf(heraeye_cur_chipinfo, "%s_%s_%s_%s",bootprof_get_ap_platform(),
+  heraeye_get_project_str(),kernel_version,"mmc");
+  if (emmc_ufs_sd_lasterrcode>0) {
+  pr_info("hela_mmc %s %s %s %d %s 0x%x",
+            TKPERF_PERF_EMMC_UFS_SD_INFO,
+            heraeye_cur_time,
+            heraeye_cur_chipinfo,
+            emmc_ufs_sd_lasterrcode,
+            hela_emmc_errinfo,
+            TKPERF_EMMC_UFS_SD_EVENTID);
+
+  heraeye_driver_log(TKPERF_DRIVER_EMMC,"%s %s %s %d %s 0x%x",
+            TKPERF_PERF_EMMC_UFS_SD_INFO,
+            heraeye_cur_time,
+            heraeye_cur_chipinfo,
+            emmc_ufs_sd_lasterrcode,
+            hela_emmc_errinfo,
+            TKPERF_EMMC_UFS_SD_EVENTID);
+}
+}
+#endif
 
 #define CAPACITY_2G             (2 * 1024 * 1024 * 1024ULL)
 
@@ -169,51 +212,6 @@ int msdc_rsp[] = {
 	memset(BUF, 0, BUF_SZ); \
 	BUF_CUR = BUF; \
 }
-
-//begin add by gaoxiang.zou for task 8271804 2019/08/20
-static ssize_t sdcard_slot_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-    return snprintf(buf, PAGE_SIZE, "%u\n", gpio_get_value(cd_gpio) ? 1 : 0);
-}
-static ssize_t sdcard_slot_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-    return count;
-}
-
-
-static DEVICE_ATTR(slot_present, 0644, sdcard_slot_show, sdcard_slot_store);
-static struct class * sdcard_device_class;
-static struct device * sdcard_slot_dev;
-static int sdcard_slot_flag = 0;
-static void sdcard_class_device_register(void)
-{
-    int rc = 0;
-    if (sdcard_slot_flag == 0)
-    {
-        sdcard_slot_flag = 1;
-        sdcard_device_class = class_create(THIS_MODULE, "sdcard_device");
-        if (IS_ERR(sdcard_device_class))
-            pr_err("Failed to create class(sdcard_device_class)!\n");
-
-        sdcard_slot_dev = device_create(sdcard_device_class, NULL, 0, NULL, "sdcard_slot");
-        if (IS_ERR(sdcard_slot_dev))
-            pr_err("Failed to create device(sdcard_slot)!\n");
-
-        device_create_file(sdcard_slot_dev, &dev_attr_slot_present);
-        if ( rc < 0)
-            pr_err("Failed to create device file(%s)!\n", dev_attr_slot_present.attr.name);
-    }
-}
-
-static void sdcard_class_device_unregister(void)
-{
-    if (sdcard_device_class != NULL) {
-        class_destroy(sdcard_device_class);
-        sdcard_device_class = NULL;
-        sdcard_slot_flag = 0;
-    }
-}
-//end add by gaoxiang.zou for task 8271804 2019/08/20
 
 void msdc_dump_register_core(char **buff, unsigned long *size,
 	struct seq_file *m, struct msdc_host *host)
@@ -1086,6 +1084,16 @@ static void msdc_set_power_mode(struct msdc_host *host, u8 mode)
 					pr_notice("[%s]: msdc%d power off at clk %dhz set block_bad_card = %d\n",
 						__func__, host->id, host->mclk,
 						host->block_bad_card);
+
+#ifdef CONFIG_HELAEYE_BSP_EMMC_UFS_SD_ON
+
+emmc_ufs_sd_lasterrcode=SD_INIT_BADCARD;
+memset(hela_emmc_errinfo, 0, sizeof(hela_emmc_errinfo));
+sprintf(hela_emmc_errinfo,"msdc_set_power_mode_%d:_block_bad_card_%d",
+		host->power_cycle_cnt, host->block_bad_card);
+heraeye_mmc_fail();
+#endif
+
 				}
 			}
 
@@ -1109,7 +1117,7 @@ int msdc_switch_part(struct msdc_host *host, char part_id)
 	if (ret)
 		return ret;
 
-	if ((part_id >= 0) && (part_id != (l_buf[EXT_CSD_PART_CONFIG] & 0x7))) {
+	if (part_id != (l_buf[EXT_CSD_PART_CONFIG] & 0x7)) {
 		l_buf[EXT_CSD_PART_CONFIG] &= ~0x7;
 		l_buf[EXT_CSD_PART_CONFIG] |= (part_id & 0x7);
 		ret = mmc_switch(host->mmc->card, 0, EXT_CSD_PART_CONFIG,
@@ -3548,9 +3556,12 @@ int msdc_error_tuning(struct mmc_host *mmc,  struct mmc_request *mrq)
 	}
 
 	/* send stop command if device not in transfer state */
-	if (R1_CURRENT_STATE(status) != R1_STATE_TRAN &&
-		msdc_stop_and_wait_busy(host))
-		goto recovery;
+	if (R1_CURRENT_STATE(status) == R1_STATE_DATA ||
+		R1_CURRENT_STATE(status) == R1_STATE_RCV) {
+		ret = msdc_stop_and_wait_busy(host);
+		if (ret)
+			goto recovery;
+	}
 
 start_tune:
 	msdc_pmic_force_vcore_pwm(true);
@@ -4417,8 +4428,15 @@ static int msdc_ops_switch_volt(struct mmc_host *mmc, struct mmc_ios *ios)
 		 * Must keep clock gate 5ms before switch voltage
 		 */
 		usleep_range(10000, 10500);
+
 		/* set as 500T -> 1.25ms for 400KHz or 1.9ms for 260KHz */
 		msdc_set_vol_change_wait_count(VOL_CHG_CNT_DEFAULT_VAL);
+
+		/*  CMD11 will enable SWITCH detect while mmc core layer trriger
+		 *  switch voltage flow without cmd11 for somecase,so also enable switch
+		 *  detect before switch.Otherwise will hang in this func.
+		 */
+		MSDC_SET_BIT32(SDC_CMD, SDC_CMD_VOLSWTH);
 		/* start to provide clock to device */
 		MSDC_SET_BIT32(MSDC_CFG, MSDC_CFG_BV18SDT);
 		/* Delay 1ms wait HW to finish voltage switch */
@@ -4936,6 +4954,41 @@ static void msdc_dvfs_kickoff(struct work_struct *work)
 {
 }
 
+
+/*Begin added by YuBin for sd card slot present node */
+static struct mmc_host *slot_host;
+static ssize_t sdcard_slot_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct msdc_host *host = mmc_priv(slot_host);
+	return snprintf(buf, PAGE_SIZE, "%u\n", (host->hw->cd_level == __gpio_get_value(cd_gpio)) ? 1 : 0);
+}
+static ssize_t sdcard_slot_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	return count;
+}
+
+static DEVICE_ATTR(slot_present, 0644, sdcard_slot_show, sdcard_slot_store);
+static void sdcard_class_device_register(struct mmc_host *mmc)
+{
+	int rc = 0;
+	struct class * sdcard_device_class;
+	struct device * sdcard_slot_dev;
+	slot_host = mmc;
+	sdcard_device_class = class_create(THIS_MODULE, "sdcard_device");
+	if (IS_ERR(sdcard_device_class))
+		pr_err("Failed to create class(sdcard_device_class)!\n");
+
+	sdcard_slot_dev = device_create(sdcard_device_class, NULL, 0, NULL, "sdcard_slot");
+	if (IS_ERR(sdcard_slot_dev))
+		pr_err("Failed to create device(sdcard_slot)!\n");
+
+	rc = device_create_file(sdcard_slot_dev, &dev_attr_slot_present);
+	if ( rc < 0)
+		pr_err("Failed to create device file(%s)!\n", dev_attr_slot_present.attr.name);
+}
+/*end added by YuBin for sd card slot present node */
+
+
 static int msdc_drv_probe(struct platform_device *pdev)
 {
 	struct mmc_host *mmc = NULL;
@@ -5160,9 +5213,14 @@ static int msdc_drv_probe(struct platform_device *pdev)
 
 	if (host->hw->host_function == MSDC_EMMC)
 		msdc_debug_proc_init_bootdevice();
-//begin add by gaoxiang.zou for task 8271804 2019/08/20
-	sdcard_class_device_register();
-//end add by gaoxiang.zou for task 8271804 2019/08/20
+
+
+/*begin added by YuBin for sd card slot present node */
+  	if (host->hw->host_function == MSDC_SD) {
+  		sdcard_class_device_register(mmc);
+  	}
+/*end added by YuBin for sd card slot present node */
+
 
 	return 0;
 
@@ -5207,9 +5265,7 @@ static int msdc_drv_remove(struct platform_device *pdev)
 
 	if (mem)
 		release_mem_region(mem->start, mem->end - mem->start + 1);
-//begin add by gaoxiang.zou for task 8271804 2019/08/20
-	sdcard_class_device_unregister();
-//end add by gaoxiang.zou for task 8271804 2019/08/20
+
 	msdc_remove_host(host);
 
 	return 0;

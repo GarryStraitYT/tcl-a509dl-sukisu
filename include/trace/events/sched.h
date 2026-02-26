@@ -106,47 +106,6 @@ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
 	     TP_PROTO(struct task_struct *p),
 	     TP_ARGS(p));
 
-#ifdef CONFIG_TCT_UI_TURBO
-/*
- * Tracepoint for sched uiturbo
- */
-DECLARE_EVENT_CLASS(sched_uiturbo_template,
-
-	TP_PROTO(struct task_struct *p, char *msg),
-
-	TP_ARGS(__perf_task(p), msg),
-
-	TP_STRUCT__entry(
-		__array(	char,	comm,	TASK_COMM_LEN	)
-		__field(	pid_t,	pid			)
-		__field(	int,	prio			)
-		__array(	char,	msg, 	UITURBO_MSG_LEN	)
-		__field(	int,	target_cpu		)
-		__field(    u64,    dynamic_uiturbo)
-		__field(    int,    uiturbo_depth)
-	),
-
-	TP_fast_assign(
-		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
-		__entry->pid		= p->pid;
-		__entry->prio		= p->prio;
-		memcpy(__entry->msg, msg, min((size_t)UITURBO_MSG_LEN, strlen(msg)+1));
-		__entry->target_cpu	= task_cpu(p);
-		__entry->dynamic_uiturbo   = atomic64_read(&p->dynamic_uiturbo);
-		__entry->uiturbo_depth     = p->uiturbo_depth;
-	),
-
-	TP_printk("comm=%s pid=%d prio=%d msg=%s target_cpu=%03d dynamic_uiturbo:%llx uiturbo_depth:%d",
-		  __entry->comm, __entry->pid, __entry->prio,
-		  __entry->msg, __entry->target_cpu, __entry->dynamic_uiturbo, __entry->uiturbo_depth)
-);
-
-DEFINE_EVENT(sched_uiturbo_template, sched_uiturbo_event,
-	     TP_PROTO(struct task_struct *p, char *msg),
-	     TP_ARGS(p, msg));
-
-#endif
-
 #ifdef CREATE_TRACE_POINTS
 static inline long __trace_sched_switch_state(bool preempt, struct task_struct *p)
 {
@@ -449,6 +408,28 @@ DECLARE_EVENT_CLASS(sched_stat_template,
 			(unsigned long long)__entry->delay)
 );
 
+/*
+ * Tracepoint for schedutil governor
+ */
+TRACE_EVENT(sched_util,
+	TP_PROTO(int cid, unsigned int next_freq, u64 time),
+	TP_ARGS(cid, next_freq, time),
+	TP_STRUCT__entry(
+		__field(int, cid)
+		__field(unsigned int, next_freq)
+		__field(u64, time)
+	),
+	TP_fast_assign(
+		__entry->cid		= cid;
+		__entry->next_freq	= next_freq;
+		__entry->time		= time;
+	),
+	TP_printk("cid=%d next=%u last_freq_update_time=%lld",
+		__entry->cid,
+		__entry->next_freq,
+		__entry->time
+	)
+);
 
 /*
  * Tracepoint for accounting wait time (time the task is runnable
@@ -504,6 +485,46 @@ TRACE_EVENT(sched_blocked_reason,
 
 	TP_printk("pid=%d iowait=%d caller=%pS", __entry->pid, __entry->io_wait, __entry->caller)
 );
+
+//[Performance] Add begin xizheng.mo for 9808406 on 2020-08-24
+DECLARE_EVENT_CLASS(sched_iolimit_template,
+
+	TP_PROTO(struct task_struct *p, char *msg,int limit_count, int write_used, int may_cnt, int io_switch),
+
+	TP_ARGS(__perf_task(p), msg,limit_count, write_used, may_cnt, io_switch),
+
+	TP_STRUCT__entry(
+		__array(	char,	comm,	TASK_COMM_LEN	)
+		__field(	pid_t,	pid			)
+		__field(	int,	prio			)
+		__array(	char,	msg, 	TASK_COMM_LEN	)
+		__field(	int,	limit_count		)
+		__field(    int,    write_used)
+		__field(    int,    may_cnt)
+		__field(    int,    io_switch)
+	),
+
+	TP_fast_assign(
+		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
+		__entry->pid		= p->pid;
+		__entry->prio		= p->prio;
+		memcpy(__entry->msg, msg, strlen(msg)+1 );
+		__entry->limit_count	= limit_count;
+		__entry->write_used   = write_used;
+		__entry->may_cnt     = may_cnt;
+		__entry->io_switch     = io_switch;
+	),
+
+	TP_printk("comm=%s pid=%d prio=%d msg=%s limit_count=%d write_used:=%d may_cnt:=%d io_switch=%d",
+		  __entry->comm, __entry->pid, __entry->prio,
+		  __entry->msg, __entry->limit_count, __entry->write_used, __entry->may_cnt,__entry->io_switch)
+);
+
+DEFINE_EVENT(sched_iolimit_template, sched_iolimit_event,
+	     TP_PROTO(struct task_struct *p, char *msg,int limit_count, int write_used, int may_cnt, int io_switch),
+	     TP_ARGS(p, msg,limit_count, write_used, may_cnt, io_switch));
+
+//[Performance] Add end by xizheng.mo for 9808406 on 2020-08-24
 
 /*
  * Tracepoint for accounting runtime (time the task is executing
@@ -1115,6 +1136,38 @@ TRACE_EVENT(sched_overutilized,
 );
 
 #endif /* CONFIG_SMP */
+
+#ifdef CONFIG_UCLAMP_TASK
+
+struct rq;
+
+TRACE_EVENT(schedutil_uclamp_util,
+
+	TP_PROTO(int cpu, unsigned long util),
+
+	TP_ARGS(cpu, util),
+
+	TP_STRUCT__entry(
+		__field(int,		cpu)
+		__field(unsigned long,	util)
+		__field(unsigned int,	util_min)
+		__field(unsigned int,	util_max)
+	),
+
+	TP_fast_assign(
+		__entry->cpu			= cpu;
+		__entry->util		= util;
+		__entry->util_min	= uclamp_value(cpu, UCLAMP_MIN);
+		__entry->util_max	= uclamp_value(cpu, UCLAMP_MAX);
+	),
+
+	TP_printk("cpu=%d util=%lu util_min=%u util_max=%u",
+		  __entry->cpu,
+		  __entry->util,
+		  __entry->util_min,
+		  __entry->util_max)
+);
+#endif /* CONFIG_UCLAMP_TASK */
 #endif /* _TRACE_SCHED_H */
 
 /* This part must be outside protection */

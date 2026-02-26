@@ -87,12 +87,18 @@ s32 cmdq_op_write_reg(struct cmdqRecStruct *handle, u32 addr,
 s32 cmdqRecWrite(struct cmdqRecStruct *handle, u32 addr, u32 value, u32 mask);
 
 void cmdq_task_set_mtee(struct cmdqRecStruct *handle, const bool enable);
+
+void cmdq_task_set_secure_id(struct cmdqRecStruct *handle, s32 sec_id);
 s32 cmdq_op_write_reg_secure(struct cmdqRecStruct *handle, u32 addr,
 	enum CMDQ_SEC_ADDR_METADATA_TYPE type, u64 baseHandle,
-	u32 offset, u32 size, u32 port);
+	u32 offset, u32 size, u32 port, uint32_t sec_id);
 s32 cmdqRecWriteSecure(struct cmdqRecStruct *handle,
 	u32 addr, enum CMDQ_SEC_ADDR_METADATA_TYPE type,
 	u64 baseHandle, u32 offset, u32 size, u32 port);
+
+s32 cmdqRecWriteSecureMetaData(struct cmdqRecStruct *handle,
+	u32 addr, enum CMDQ_SEC_ADDR_METADATA_TYPE type,
+	u64 baseHandle, u32 offset, u32 size, u32 port, uint32_t sec_id);
 
 s32 cmdq_op_poll(struct cmdqRecStruct *handle, u32 addr, u32 value, u32 mask);
 s32 cmdqRecPoll(struct cmdqRecStruct *handle, u32 addr, u32 value, u32 mask);
@@ -364,5 +370,4 @@ s32 cmdq_op_read_reg(struct cmdqRecStruct *handle, u32 addr,
 s32 cmdq_op_read_mem(struct cmdqRecStruct *handle,
 	cmdqBackupSlotHandle h_backup_slot, u32 slot_index,
 	CMDQ_VARIABLE *arg_out);
-
 #endif	/* __CMDQ_RECORD_H__ */

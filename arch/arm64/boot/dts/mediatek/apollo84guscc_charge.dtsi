@@ -1,0 +1,156 @@
+// SPDX-License-Identifier: GPL-2.0+
+&mt6370_pmu {
+	status = "disabled";
+};
+
+&mt6370_typec {
+	status = "disabled";
+};
+
+&mt6370_chg {
+/* 0  mt6370 get bc12, 1 mtk_charger_type get bc12, 2 ext_charger_type get bc12 */
+	bc12_sel = <1>;
+	status = "disabled";
+};
+
+&mt6357_charger {
+	status = "disabled";
+};
+
+&mtk_charger_type {
+	bc12_active = <1>;
+};
+
+&usb {
+	charger = <&mtk_charger_type>;
+};
+
+&extcon_usb {
+	charger = <&mtk_charger_type>;
+	vbus-supply;
+};
+
+&pe {
+	status = "disabled";
+};
+
+&pe2 {
+	status = "disabled";
+};
+
+&pe4 {
+	status = "disabled";
+};
+
+&pdc {
+	status = "disabled";
+};
+
+&lk_charger {
+	compatible = "mediatek,lk_charger";
+	enable_anime;
+	power_path_support;
+
+	/* common */
+	max_charger_voltage = <6500000>;
+	fast_charge_voltage = <2800000>;
+
+	/* charging current */
+	usb_charger_current = <500000>;
+	ac_charger_current = <1000000>;
+	ac_charger_input_current = <2050000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <500000>;
+
+	/* battery temperature protection */
+	temp_t4_threshold = <55>;
+	temp_t3_threshold = <45>;
+	temp_t1_threshold = <6>;
+	temp_t0_threshold = <1>;
+
+	/*charging indicator*/
+	led_brightness = <127>;
+	blinking_times = <6>;
+	blinking_period = <1500>;
+};
+
+&charger {
+	compatible = "mediatek,charger";
+	charger = <&mtk_charger_type>;
+	/delete-property/enable_pe_plus;
+	/delete-property/enable_pe_2;
+	/delete-property/enable_pe_3;
+	/delete-property/enable_pe_4;
+	/delete-property/enable_type_c;
+	/delete-property/enable_min_charge_temp;
+	/delete-property/enable_dynamic_mivr;
+
+	/* common */
+	power_path_support;
+	battery_cv = <4400000>;
+
+	/* charging current */
+	ac_charger_input_current = <2050000>;
+	ac_charger_current = <2000000>;
+	charging_host_charger_current = <1300000>;
+
+	/* sw jeita */
+	enable_sw_jeita;
+	jeita_temp_above_t4_cv = <4100000>;
+	jeita_temp_t3_to_t4_cv = <4100000>;
+	jeita_temp_t2_to_t3_cv = <4400000>;
+	jeita_temp_t1_to_t2_cv = <4400000>;
+	jeita_temp_t0_to_t1_cv = <4400000>;
+	jeita_temp_below_t0_cv = <4400000>;
+	jeita_temp_above_t4_current = <0>;
+	jeita_temp_t3_to_t4_current = <1200000>;
+	jeita_temp_t2_to_t3_current = <2000000>;
+	jeita_temp_t1_to_t2_current = <800000>;
+	jeita_temp_t0_to_t1_current = <800000>;
+	jeita_temp_below_t0_current = <0>;
+
+	temp_t4_thres = <55>;
+	temp_t4_thres_minus_x_degree = <50>;
+	temp_t3_thres = <43>;
+	temp_t3_thres_minus_x_degree = <42>;
+	temp_t2_thres = <11>;
+	temp_t2_thres_plus_x_degree = <10>;
+	temp_t1_thres = <6>;
+	temp_t1_thres_plus_x_degree = <5>;
+	temp_t0_thres = <1>;
+	temp_t0_thres_plus_x_degree = <0>;
+	temp_neg_10_thres = <1>;
+
+	/* battery temperature protection */
+	enable_min_charge_temp;
+	min_charge_temp = <1>;
+	min_charge_temp_plus_x_degree = <2>;
+	max_charge_temp = <55>;
+	max_charge_temp_minus_x_degree = <51>;
+};
+
+&i2c5 {
+/* Modify-start by baiwei.peng for usb otg function porting on 2021/11/15 */
+	usb_typec_will:usb_type_c@60 {
+		compatible = "mediatek,usb_type_c";
+		reg = <0x60>;
+		interrupt-parent = <&pio>;
+		interrupts = <9 0>;
+		wusb3801,intr_gpio = <&pio 9 0x0>;
+		interrupt-names = "wusb3801_int_irq";
+		status = "okay";
+	};
+/* Modify-end by baiwei.peng for usb otg function porting on 2021/11/15 */
+
+	bq25601:bq25601@6B {
+		compatible = "mediatek,bq25601";
+		reg = <0x6B>;
+		charger_name = "primary_chg";
+		alias_name = "bq25601";
+		interrupt-parent = <&pio>;
+		interrupts = <12 0>;
+		bq25601,intr_gpio = <&pio 12 0x0>;
+		bq25601,en_gpio = <&pio 165 0x0>;
+		status = "okay";
+	};
+};

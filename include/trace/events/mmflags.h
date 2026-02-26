@@ -61,6 +61,15 @@
 #define IF_HAVE_PG_MLOCK(flag,string)
 #endif
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+#define IF_HAVE_PG_PROTECT(flag, string) ,{1UL << flag, string}
+#else
+#define IF_HAVE_PG_PROTECT(flag, string)
+#endif
+// #endif /* VENDOR_EDIT */
+
 #ifdef CONFIG_ARCH_USES_PG_UNCACHED
 #define IF_HAVE_PG_UNCACHED(flag,string) ,{1UL << flag, string}
 #else
@@ -105,7 +114,8 @@ IF_HAVE_PG_MLOCK(PG_mlocked,		"mlocked"	)		\
 IF_HAVE_PG_UNCACHED(PG_uncached,	"uncached"	)		\
 IF_HAVE_PG_HWPOISON(PG_hwpoison,	"hwpoison"	)		\
 IF_HAVE_PG_IDLE(PG_young,		"young"		)		\
-IF_HAVE_PG_IDLE(PG_idle,		"idle"		)
+IF_HAVE_PG_IDLE(PG_idle,		"idle"		),		\
+	{1UL << PG_iommu,		"iommu"		}
 
 #define show_page_flags(flags)						\
 	(flags) ? __print_flags(flags, "|",				\

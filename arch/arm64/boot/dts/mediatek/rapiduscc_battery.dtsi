@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+#include <dt-bindings/iio/mt635x-auxadc.h>
+&mtk_gauge {
+	EMBEDDED_SEL = <(0)>;
+	/* Configures whether using embedded battery or not */
+	DIFFERENCE_FULLOCV_ITH = <(250)>;
+	TEMPERATURE_T4 = <(-10)>;
+	/delete-property/TEMPERATURE_T5;
+	ACTIVE_TABLE = <(5)>;
+	charger = <&bq24158>;
+        bootvoltage = <&chosen>;
+	io-channels = <&pmic_auxadc AUXADC_BAT_TEMP>,
+		<&pmic_auxadc AUXADC_BATADC>,
+		<&pmic_auxadc AUXADC_VBIF>,
+		<&pmic_auxadc AUXADC_IMP>,
+		<&pmic_auxadc AUXADC_ISENSE>,
+		<&auxadc 2>;
+	io-channel-names = "pmic_battery_temp",
+		"pmic_battery_voltage",
+		"pmic_bif_voltage",
+		"pmic_ptim_voltage",
+		"pmic_isense_voltage",
+		"battery_id";
+	#include "mediatek/bat_setting/Jetta_tf_battery_VK_TLi028C7_table_ext.dtsi"
+	#include "mediatek/bat_setting/Jetta_tf_battery_BYD_TLi028C1_table_ext.dtsi"
+#if defined(TARGET_BUILD_MMITEST) || defined(TARGET_BUILD_CERTIFICATION) || defined(TARGET_BUILD_GCF) || defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+	FIXED_BATTERY_TEMPERATURE = <25>;
+#endif
+	battery-id-pullup-ohm = <(24000)>;
+	pmic = <&main_pmic>;
+	CAR_TUNE_VALUE = <(98)>;
+};

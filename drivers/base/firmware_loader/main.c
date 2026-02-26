@@ -278,9 +278,19 @@ static void free_fw_priv(struct fw_priv *fw_priv)
 static char fw_path_para[256];
 static const char * const fw_path[] = {
 	fw_path_para,
-        "/vendor/etc/firmware", //Added by baiwei.peng for TP porting on 2020/09/03
-	"/lib/firmware/updates/" UTS_RELEASE,
+//Begin modified by donghai.wu for  SOCAOSP13-6708  on 2022/05/23
+#if (defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION) && defined(CONFIG_TCT_FEATURE_BT_PARAM_SEPARATION))
+	"/mnt/tcdpersist/bt_param/firmware",
+	"/odm",
+#endif
+//End modified by donghai.wu for  SOCAOSP13-6708 on 2022/05/23
+    "/lib/firmware/updates/" UTS_RELEASE,
 	"/lib/firmware/updates",
+/* Begin haimei.liu@tcl.com.task:11061043.2021/4/29.audio speaker pa aw87359 porting. */
+	"/vendor/etc/firmware", 
+	"/system/vendor/firmware",
+	"/system/etc/firmware",
+/* End haimei.liu@tcl.com.task:11061043.2021/4/29.audio speaker pa aw87359 porting. */
 	"/lib/firmware/" UTS_RELEASE,
 	"/lib/firmware"
 };

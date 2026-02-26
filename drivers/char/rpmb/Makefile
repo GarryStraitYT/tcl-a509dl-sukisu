@@ -31,7 +31,11 @@ endif
 # Linux Kernel. Mediatek won't take the responsibility for loss incurred
 # by the key revealing.
 #
+#ccflags-y += -DCFG_RPMB_KEY_PROGRAMED_IN_KERNEL
+
+# begin add by jianjian.luo for rpmb key on 20210809 - task 11391853
 ccflags-y += -DCFG_RPMB_KEY_PROGRAMED_IN_KERNEL
+# end add by jianjian.luo for rpmb key on 20210809 - task 11391853
 
 ifeq ($(CONFIG_MTK_HW_FDE_AES),y)
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/fde_aes/$(MTK_PLATFORM)

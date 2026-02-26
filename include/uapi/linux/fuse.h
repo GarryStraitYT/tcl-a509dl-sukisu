@@ -116,7 +116,6 @@
  *
  *  7.27
  *  - add FUSE_ABORT_ERROR
- *  - add FUSE_MAX_PAGES, add max_pages to init_out
  */
 
 #ifndef _LINUX_FUSE_H
@@ -252,7 +251,6 @@ struct fuse_file_lock {
  * FUSE_HANDLE_KILLPRIV: fs handles killing suid/sgid/cap on write/chown/trunc
  * FUSE_POSIX_ACL: filesystem supports posix acls
  * FUSE_ABORT_ERROR: reading the device after abort returns ECONNABORTED
- * FUSE_MAX_PAGES: init_out.max_pages contains the max number of req pages
  */
 #define FUSE_ASYNC_READ		(1 << 0)
 #define FUSE_POSIX_LOCKS	(1 << 1)
@@ -276,8 +274,7 @@ struct fuse_file_lock {
 #define FUSE_HANDLE_KILLPRIV	(1 << 19)
 #define FUSE_POSIX_ACL		(1 << 20)
 #define FUSE_ABORT_ERROR	(1 << 21)
-#define FUSE_MAX_PAGES		(1 << 22)
-#define FUSE_PASSTHROUGH	(1 << 27)
+#define FUSE_PASSTHROUGH	(1 << 31)
 
 /**
  * CUSE INIT request/reply flags
@@ -510,7 +507,7 @@ struct fuse_create_in {
 struct fuse_open_out {
 	uint64_t	fh;
 	uint32_t	open_flags;
-	uint32_t	padding;
+	uint32_t	passthrough_fh;
 };
 
 struct fuse_release_in {
@@ -617,9 +614,7 @@ struct fuse_init_out {
 	uint16_t	congestion_threshold;
 	uint32_t	max_write;
 	uint32_t	time_gran;
-	uint16_t	max_pages;
-	uint16_t	padding;
-	uint32_t	unused[8];
+	uint32_t	unused[9];
 };
 
 #define CUSE_INIT_INFO_MAX 4096
@@ -713,8 +708,8 @@ struct fuse_in_header {
 	uint32_t	padding;
 };
 
+/* fuse_passthrough_out for passthrough V1 */
 struct fuse_passthrough_out {
-	uint64_t	unique;
 	uint32_t	fd;
 	/* For future implementation */
 	uint32_t	len;
@@ -796,8 +791,10 @@ struct fuse_notify_retrieve_in {
 };
 
 /* Device ioctls: */
-#define FUSE_DEV_IOC_CLONE		_IOR(229, 0, uint32_t)
-#define FUSE_DEV_IOC_PASSTHROUGH_OPEN	_IOW(229, 1, struct fuse_passthrough_out)
+#define FUSE_DEV_IOC_MAGIC		229
+#define FUSE_DEV_IOC_CLONE		_IOR(FUSE_DEV_IOC_MAGIC, 0, uint32_t)
+/* 127 is reserved for the V1 interface implementation in Android */
+#define FUSE_DEV_IOC_PASSTHROUGH_OPEN	_IOW(FUSE_DEV_IOC_MAGIC, 127, struct fuse_passthrough_out)
 
 struct fuse_lseek_in {
 	uint64_t	fh;

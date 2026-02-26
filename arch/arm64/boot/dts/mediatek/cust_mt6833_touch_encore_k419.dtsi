@@ -1,0 +1,54 @@
+/* TOUCH start */
+
+&spi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+    mediatek,pad-select = <0>, <1>;
+	
+	tct,touch@0{
+		status = "okay";
+		compatible = "tct,touch";
+		reg = <0>;
+		chipone,irq-gpio = <&pio 13 0x00>;
+		chipone,rst-gpio = <&pio 15 0x00>;
+
+		chipone,x-res = <720>;
+		chipone,y-res = <1612>;
+
+		spi-max-frequency = <10000000>;
+
+		chipone,test-reset-pin;
+		chipone,test-rawdata;
+		chipone,test-rawdata-frames = <1>;
+		chipone,rawdata-min = <1202>;
+		chipone,rawdata-max = <2903>;
+		chipone,test-noise;
+		chipone,test-noise-frames = <30>;
+		chipone,noise-max = <79>;
+		chipone,test-open;
+		chipone,open-min = <1980>;
+		chipone,test-short;
+		chipone,short-min = <1500>;
+		chipone,test-compensate-cap;
+		chipone,compensate-cap-min = <1>;
+		chipone,compensate-cap-max = <126>;
+	};
+	
+    focaltech,touch@0 {
+        status = "okay";
+            compatible = "focaltech,fts";
+            reg = <0x1>;
+            interrupt-parent = <&pio>;
+            interrupts = <0 IRQ_TYPE_EDGE_FALLING 0 0>;          
+            spi-max-frequency = <2000000>;
+	    focaltech,reset-gpio = <&pio 15 0x00>; 
+	    focaltech,irq-gpio = <&pio 13 0x0>; 	
+            focaltech,max-touch-number = <10>;			
+	    focaltech,display-coords =  <0 0 720 1612>;
+    };
+	
+};
+/* TOUCH end */
+
+

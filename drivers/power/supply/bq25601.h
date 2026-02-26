@@ -184,6 +184,7 @@
 #define CON11_Rev_MASK           0x03
 #define CON11_Rev_SHIFT          0
 
+#if 0
 //CON0----------------------------------------------------
 extern void bq25601_set_en_hiz(unsigned int val);
 extern void bq25601_set_vindpm(unsigned int val);
@@ -234,5 +235,6 @@ extern unsigned int bq25601_read_interface(unsigned char RegNum,
 		unsigned char *val, unsigned char MASK, unsigned char SHIFT);
 extern unsigned int bq25601_config_interface(unsigned char RegNum,
 		unsigned char val, unsigned char MASK, unsigned char SHIFT);
-#endif // _bq25601_SW_H_
+#endif
 
+#endif // _bq25601_SW_H_

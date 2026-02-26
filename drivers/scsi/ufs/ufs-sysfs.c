@@ -210,8 +210,11 @@ static ssize_t ufs_sysfs_read_desc_param(struct ufs_hba *hba,
 	if (param_size > 8)
 		return -EINVAL;
 
+	pm_runtime_get_sync(hba->dev);
 	ret = ufshcd_read_desc_param(hba, desc_id, desc_index,
 				param_offset, desc_buf, param_size);
+	pm_runtime_put_sync(hba->dev);
+
 	if (ret)
 		return -EINVAL;
 	switch (param_size) {
@@ -267,7 +270,7 @@ UFS_DEVICE_DESC_PARAM(manufacturing_date, _MANF_DATE, 2);
 UFS_DEVICE_DESC_PARAM(manufacturer_id, _MANF_ID, 2);
 UFS_DEVICE_DESC_PARAM(rtt_capability, _RTT_CAP, 1);
 UFS_DEVICE_DESC_PARAM(rtc_update, _FRQ_RTC, 2);
-UFS_DEVICE_DESC_PARAM(ufs_features, _UFS_FEAT, 1);
+UFS_DEVICE_DESC_PARAM(ufs_features, _FEAT_SUP, 1);
 UFS_DEVICE_DESC_PARAM(ffu_timeout, _FFU_TMT, 1);
 UFS_DEVICE_DESC_PARAM(queue_depth, _Q_DPTH, 1);
 UFS_DEVICE_DESC_PARAM(device_version, _DEV_VER, 2);
@@ -558,6 +561,7 @@ static ssize_t _name##_show(struct device *dev,				\
 	desc_buf = kzalloc(QUERY_DESC_MAX_SIZE, GFP_ATOMIC);		\
 	if (!desc_buf)                                                  \
 		return -ENOMEM;                                         \
+	pm_runtime_get_sync(hba->dev);					\
 	ret = ufshcd_query_descriptor_retry(hba,			\
 		UPIU_QUERY_OPCODE_READ_DESC, QUERY_DESC_IDN_DEVICE,	\
 		0, 0, desc_buf, &desc_len);				\
@@ -574,6 +578,7 @@ static ssize_t _name##_show(struct device *dev,				\
 		goto out;						\
 	ret = snprintf(buf, PAGE_SIZE, "%s\n", desc_buf);		\
 out:									\
+	pm_runtime_put_sync(hba->dev);					\
 	kfree(desc_buf);						\
 	return ret;							\
 }									\
@@ -605,9 +610,13 @@ static ssize_t _name##_show(struct device *dev,				\
 {									\
 	bool flag;							\
 	struct ufs_hba *hba = dev_get_drvdata(dev);			\
+	pm_runtime_get_sync(hba->dev);					\
 	if (ufshcd_query_flag(hba, UPIU_QUERY_OPCODE_READ_FLAG,		\
-		QUERY_FLAG_IDN##_uname, &flag))				\
+		QUERY_FLAG_IDN##_uname, &flag)) {				\
+		pm_runtime_put_sync(hba->dev);				\
 		return -EINVAL;						\
+	}								\
+	pm_runtime_put_sync(hba->dev);					\
 	return sprintf(buf, "%s\n", flag ? "true" : "false");		\
 }									\
 static DEVICE_ATTR_RO(_name)
@@ -644,9 +653,13 @@ static ssize_t _name##_show(struct device *dev,				\
 {									\
 	struct ufs_hba *hba = dev_get_drvdata(dev);			\
 	u32 value;							\
+	pm_runtime_get_sync(hba->dev);					\
 	if (ufshcd_query_attr(hba, UPIU_QUERY_OPCODE_READ_ATTR,		\
-		QUERY_ATTR_IDN##_uname, 0, 0, &value))			\
+		QUERY_ATTR_IDN##_uname, 0, 0, &value)) {			\
+		pm_runtime_put_sync(hba->dev);				\
 		return -EINVAL;						\
+	}								\
+	pm_runtime_put_sync(hba->dev);					\
 	return sprintf(buf, "0x%08X\n", value);				\
 }									\
 static DEVICE_ATTR_RO(_name)
@@ -713,7 +726,7 @@ static ssize_t _pname##_show(struct device *dev,			\
 	struct scsi_device *sdev = to_scsi_device(dev);			\
 	struct ufs_hba *hba = shost_priv(sdev->host);			\
 	u8 lun = ufshcd_scsi_to_upiu_lun(sdev->lun);			\
-	if (!ufs_is_valid_unit_desc_lun(&hba->dev_info, lun))		\
+	if (!ufs_is_valid_unit_desc_lun(lun))		\
 		return -EINVAL;						\
 	return ufs_sysfs_read_desc_param(hba, QUERY_DESC_IDN_##_duname,	\
 		lun, _duname##_DESC_PARAM##_puname, buf, _size);	\

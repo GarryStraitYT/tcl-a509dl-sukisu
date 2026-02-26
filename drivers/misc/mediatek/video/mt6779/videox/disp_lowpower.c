@@ -1249,6 +1249,7 @@ static int hrt_bw_cond_change_cb(struct notifier_block *nb,
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	int ret, i;
 	unsigned int hrt_idx;
+	int active_cfg_id = 0;
 
 	primary_display_manual_lock();
 
@@ -1261,11 +1262,17 @@ static int hrt_bw_cond_change_cb(struct notifier_block *nb,
 			break;
 		}
 
-		/* switch to decouple mode */
+		/*
+		 * switch to decouple mode for normal case,
+		 * secure case do repaint to prevent DC mode issue.
+		 */
 		if (disp_mgr_has_mem_session() ||
-				layering_get_valid_hrt() >= 400) {
+		    primary_is_sec() ||
+		    layering_get_valid_hrt(active_cfg_id) >= 400) {
 			/* enable HRT throttle */
 			DISPINFO("Cam trigger repain\n");
+			if (primary_is_sec())
+				DISPINFO("trigger reason: secure mode!\n");
 			hrt_idx = layering_rule_get_hrt_idx();
 			hrt_idx++;
 			trigger_repaint(REFRESH_FOR_IDLE);

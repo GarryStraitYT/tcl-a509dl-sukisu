@@ -90,6 +90,13 @@ void memcg_drain_all_list_lrus(int src_idx, struct mem_cgroup *dst_memcg);
  */
 bool list_lru_add(struct list_lru *lru, struct list_head *item);
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+void list_lru_move(struct list_lru *lru, struct list_head *item);
+#endif
+// #endif /* VENDOR_EDIT */
+
 /**
  * list_lru_del: delete an element to the lru list
  * @list_lru: the lru pointer

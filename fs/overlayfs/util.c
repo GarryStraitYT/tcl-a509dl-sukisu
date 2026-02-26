@@ -957,3 +957,18 @@ invalid:
 	kfree(buf);
 	return ERR_PTR(res);
 }
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+struct file *get_real_file(struct file *filp)
+{
+	struct inode *inode = file_inode(filp);
+
+	if (inode && inode->i_fop == &ovl_file_operations)
+		return get_real_file(filp->private_data);
+	else
+		return filp;
+}
+#endif
+// #endif /* VENDOR_EDIT */

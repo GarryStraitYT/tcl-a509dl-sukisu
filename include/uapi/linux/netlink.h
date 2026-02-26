@@ -2,7 +2,7 @@
 #ifndef _UAPI__LINUX_NETLINK_H
 #define _UAPI__LINUX_NETLINK_H
 
-#include <linux/kernel.h>
+#include <linux/const.h>
 #include <linux/socket.h> /* for __kernel_sa_family_t */
 #include <linux/types.h>
 
@@ -29,8 +29,29 @@
 #define NETLINK_RDMA		20
 #define NETLINK_CRYPTO		21	/* Crypto layer */
 #define NETLINK_SMC		22	/* SMC monitoring */
+#define NETLINK_MM_STATE	24
 
 #define NETLINK_INET_DIAG	NETLINK_SOCK_DIAG
+#ifdef CONFIG_TCT_MMPRESSURE_DETECT
+#define NETLINK_MM_STATE	24
+#endif
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL 2021.11.30 add for wakeup process
+#ifdef CONFIG_TCL_FREEZE
+#define NETLINK_TFREEZE		23
+#endif
+// #endif /* VENDOR_EDIT */
+
+#ifdef CONFIG_TKPERF
+// yipeng.jiang@tcl.com, 2020/11/21, add for kernel perf event
+#define NETLINK_TKPERF  25
+#endif
+
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com 2022/03/02 add for logp support heraeye
+#define NETLINK_HERA  28
+// // #endif /* VENDOR_EDIT */
 
 #define MAX_LINKS 32		
 

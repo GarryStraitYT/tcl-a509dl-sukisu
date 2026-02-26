@@ -733,7 +733,7 @@ void __ref move_pfn_range_to_zone(struct zone *zone, unsigned long start_pfn,
 	 * are reserved so nobody should be touching them so we should be safe
 	 */
 	memmap_init_zone(nr_pages, nid, zone_idx(zone), start_pfn,
-			MEMMAP_HOTPLUG, altmap);
+			 MEMINIT_HOTPLUG, altmap);
 
 	set_zone_contiguous(zone);
 }
@@ -879,6 +879,9 @@ int __ref online_pages(unsigned long pfn, unsigned long nr_pages, int online_typ
 	if (onlined_pages) {
 		kswapd_run(nid);
 		kcompactd_run(nid);
+#ifdef CONFIG_TCL_FINE_MM_CORE
+		zswapd_run(nid);
+#endif
 	}
 
 	vm_total_pages = nr_free_pagecache_pages();
@@ -1102,7 +1105,8 @@ int __ref add_memory_resource(int nid, struct resource *res, bool online)
 	}
 
 	/* link memory sections under this node.*/
-	ret = link_mem_sections(nid, PFN_DOWN(start), PFN_UP(start + size - 1));
+	ret = link_mem_sections(nid, PFN_DOWN(start), PFN_UP(start + size - 1),
+				MEMINIT_HOTPLUG);
 	BUG_ON(ret);
 
 	/* create new memmap entry */
@@ -1674,6 +1678,9 @@ repeat:
 	if (arg.status_change_nid >= 0) {
 		kswapd_stop(node);
 		kcompactd_stop(node);
+#ifdef CONFIG_TCL_FINE_MM_CORE
+		zswapd_stop(node);
+#endif
 	}
 
 	vm_total_pages = nr_free_pagecache_pages();

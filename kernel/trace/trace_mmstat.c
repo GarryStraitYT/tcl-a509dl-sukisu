@@ -196,9 +196,16 @@ static void mmstat_trace_vmstat(void)
 	}
 
 	/* workingset_refsult */
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 	v[NR_VMSTAT_PARTIAL_ITEMS - 1] =
 		global_node_page_state(WORKINGSET_REFAULT);
-
+#else
+	v[NR_VMSTAT_PARTIAL_ITEMS - 1] =
+		global_node_page_state(WORKINGSET_REFAULT_ANON) + global_node_page_state(WORKINGSET_REFAULT_FILE);
+#endif
+// #endif /* VENDOR_EDIT */
 	trace_mmstat_trace_vmstat((unsigned long *)v, NR_VMSTAT_PARTIAL_ITEMS,
 			NR_VMSTAT_PARTIAL_ITEMS);
 }

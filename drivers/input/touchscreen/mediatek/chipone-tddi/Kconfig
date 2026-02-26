@@ -1,0 +1,10 @@
+config TOUCHSCREEN_CHIPONE_CIVI
+	tristate "Chipone TDDI touchscreen for Mediatek package"
+	default n
+	help
+	  Say y here if you have chipone TDDI touch panel.
+	  If unsure, say N.
+
+config TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP
+	bool "tp ps power control in bsp"
+	default n

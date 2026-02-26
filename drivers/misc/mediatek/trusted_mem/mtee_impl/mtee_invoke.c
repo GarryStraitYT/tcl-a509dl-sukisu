@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
+
 
 #define PR_FMT_HEADER_MUST_BE_INCLUDED_BEFORE_ALL_HDRS
 #include "private/tmem_pr_fmt.h" PR_FMT_HEADER_MUST_BE_INCLUDED_BEFORE_ALL_HDRS
@@ -17,7 +18,7 @@
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
-#if IS_ENABLED(CONFIG_MTK_GZ_KREE)
+#if defined(CONFIG_MTK_GZ_KREE)
 #include <tz_cross/ta_mem.h>
 #endif
 

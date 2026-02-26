@@ -8,6 +8,13 @@
 #include <linux/blk-mq.h>
 
 #include <trace/events/block.h>
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+#include <trace/events/fgio.h>
+#include <tcl/tcl_fgio.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 #include "blk.h"
 #include "blk-mq.h"
@@ -69,6 +76,15 @@ void blk_mq_sched_restart(struct blk_mq_hw_ctx *hctx)
 		return;
 	clear_bit(BLK_MQ_S_SCHED_RESTART, &hctx->state);
 
+	/*
+	 * Order clearing SCHED_RESTART and list_empty_careful(&hctx->dispatch)
+	 * in blk_mq_run_hw_queue(). Its pair is the barrier in
+	 * blk_mq_dispatch_rq_list(). So dispatch code won't see SCHED_RESTART,
+	 * meantime new request added to hctx->dispatch is missed to check in
+	 * blk_mq_run_hw_queue().
+	 */
+	smp_mb();
+
 	blk_mq_run_hw_queue(hctx, true);
 }
 
@@ -85,6 +101,13 @@ static void blk_mq_do_dispatch_sched(struct blk_mq_hw_ctx *hctx)
 
 	do {
 		struct request *rq;
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+		mq_check_dispatch(hctx);
+#endif
+// #endif /* VENDOR_EDIT */
 
 		if (e->type->ops.mq.has_work &&
 				!e->type->ops.mq.has_work(hctx))
@@ -350,6 +373,12 @@ static bool blk_mq_sched_bypass_insert(struct blk_mq_hw_ctx *hctx,
 {
 	/* dispatch flush rq directly */
 	if (rq->rq_flags & RQF_FLUSH_SEQ) {
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+		trace_blk_mq_sched_bypass_insert(rq);
+#endif
+// #endif /* VENDOR_EDIT */
 		spin_lock(&hctx->lock);
 		list_add(&rq->queuelist, &hctx->dispatch);
 		spin_unlock(&hctx->lock);

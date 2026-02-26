@@ -1,0 +1,463 @@
+// SPDX-License-Identifier: GPL-2.0
+
+#define LOG_TAG "LCM"
+
+#ifndef BUILD_LK
+#include <linux/string.h>
+#include <linux/kernel.h>
+#endif
+
+#include "lcm_drv.h"
+
+
+#ifdef BUILD_LK
+#include <platform/upmu_common.h>
+#include <platform/mt_gpio.h>
+#include <platform/mt_i2c.h>
+#include <platform/mt_pmic.h>
+#include <string.h>
+#elif defined(BUILD_UBOOT)
+#include <asm/arch/mt_gpio.h>
+#endif
+
+static struct LCM_UTIL_FUNCS lcm_util;
+
+#define SET_RESET_PIN(v)	(lcm_util.set_reset_pin((v)))
+#define MDELAY(n)		(lcm_util.mdelay(n))
+#define UDELAY(n)		(lcm_util.udelay(n))
+
+#define dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update) \
+	lcm_util.dsi_set_cmdq_V22(cmdq, cmd, count, ppara, force_update)
+#define dsi_set_cmdq_V2(cmd, count, ppara, force_update) \
+	lcm_util.dsi_set_cmdq_V2(cmd, count, ppara, force_update)
+#define dsi_set_cmdq(pdata, queue_size, force_update) \
+		lcm_util.dsi_set_cmdq(pdata, queue_size, force_update)
+#define wrtie_cmd(cmd) lcm_util.dsi_write_cmd(cmd)
+#define write_regs(addr, pdata, byte_nums) \
+		lcm_util.dsi_write_regs(addr, pdata, byte_nums)
+#define read_reg(cmd) \
+	  lcm_util.dsi_dcs_read_lcm_reg(cmd)
+#define read_reg_v2(cmd, buffer, buffer_size) \
+		lcm_util.dsi_dcs_read_lcm_reg_v2(cmd, buffer, buffer_size)
+#define icnl9916_zgd 1
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+#if defined(CONFIG_TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP)
+extern int  cts_get_prox_en(void);
+static int tp_ps_work_skip_lcd_poweroff_flag=0;
+#endif
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+
+#ifndef BUILD_LK
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/i2c.h>
+#include <linux/irq.h>
+/* #include <linux/jiffies.h> */
+/* #include <linux/delay.h> */
+#include <linux/uaccess.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#endif
+
+#define LCM_DSI_CMD_MODE 0
+#define FRAME_WIDTH		(720)
+#define FRAME_HEIGHT		(1612)
+
+#define REGFLAG_DELAY		0xFFFC
+#define REGFLAG_UDELAY		0xFFFB
+#define REGFLAG_END_OF_TABLE	0xFFFD
+#define REGFLAG_RESET_LOW	0xFFFE
+#define REGFLAG_RESET_HIGH	0xFFFF
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+extern int display_bias_enable_VSP(void);
+extern int display_bias_enable_VSN(void);
+
+struct LCM_setting_table {
+	unsigned int cmd;
+	unsigned char count;
+	unsigned char para_list[64];
+};
+
+static struct LCM_setting_table lcm_suspend_setting[] = {
+	{0xF0,2,{0x5A,0x59}},
+	{0xF1,2,{0xA5,0xA6}},
+	{0xBB,8,{0x01,0x02,0x03,0x0A,0x04,0x13,0x14,0x12}},
+	{0x6D,2,{0x25,0x00}},
+	{0x28,2,{0x00,0x00}},
+	{REGFLAG_DELAY, 10, {} },
+	{0x10,2,{0x00,0x00}},
+	{REGFLAG_DELAY, 120, {} },
+	{0xC9,2,{0x01,0x00}},
+	{REGFLAG_END_OF_TABLE, 0x00, {} }
+};
+
+static struct LCM_setting_table init_setting[] = {
+	{0xF0,2,{0x5A,0x59}},
+	{0xF1,2,{0xA5,0xA6}},
+	//CGOUT FORWARD SCAN
+	{0xB6,30,{0x00,0x00,0x00,0x2A,0x08,0x0A,0x04,0x06,0x2E,0x2F,
+		  0x0C,0x0E,0x10,0x12,0x14,0x16,0x28,0x00,0x00,0x00,
+		  0x00,0x00,0x00,0x00,0x00,0x00,0xC0,0x00,0x3C,0x00}},
+		  
+	{0xB7,30,{0x00,0x00,0x00,0x2B,0x09,0x0B,0x05,0x07,0x2E,0x2F,
+		  0x0D,0x0F,0x11,0x13,0x15,0x17,0x29,0x00,0x00,0x00,
+		  0x00,0x00,0x00,0x00,0x00,0x00,0xC0,0x00,0x3C,0x00}},
+
+	//{0x36,1,{0x03}},   
+	//{0xB2,25,{0x03,0x02,0x8a,0x8b,0x55,0x55,0x82,0x86,0x55,0x0B,0xA4,0x0B,0xA4,0x0B,0xA4,0x0B,0xA4,0x0B,0xA4,0x0B,0xA4,0x00,0x00,0x00,0x00}},
+	  {0xB2,25,{0x03,0x02,0x8a,0x8b,0x33,0x33,0x82,0x86,0x33,0x0b,0xA4,0x0b,0xA4,0x0b,0xA4,0x0b,0xA4,0x0b,0xa4,0x0b,0xa4,0x00,0x00,0x00,0x00}},  
+	{0xB3,34,{0xb3,0x01,0x01,0x01,0x81,0x0b,0x00,0x00,0xA4,0x00,
+		  0x00,0x00,0x65,0x4A,0x00,0x00,0x00,0x00,0x00,0x00,
+		  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+		  
+	{0xB4,14,{0xF3,0x01,0x01,0x01,0x81,0x65,0x00,0x00,0x4A,0x00,0x00,0x00,0x65,0x4A}},
+	{0xB5,14,{0x10,0x00,0x06,0x0B,0x06,0x26,0x26,0x00,0x00,0x33,0x44,0x3B,0x00,0x00}},
+	{0xB8,12,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+
+	{0xBC,13,{0x00,0x00,0x00,0x00,0x04,0x00,0xFF,0xF0,0x0B,0x33,0x50,0x5B,0x33}},
+	{0xBD,6,{0xA1,0xA2,0x52,0x2E,0x00,0x8F}},
+	{0xBE,16,{0x0C,0x88,0x43,0x38,0x33,0x00,0x00,0x38,0x00,0xB2,0xAF,0xB2,0xAF,0x00,0x00,0x33}},
+	{0xBF,9,{0x0C,0x19,0x0C,0x19,0x00,0x11,0x04,0x18,0x50}},
+	
+	{0xC1,32,{0x00,0x20,0x20,0xBE,0x04,0x30,0x30,0x04,0x4C,0x06,
+		  0x22,0x70,0x33,0x31,0x07,0x11,0x84,0x4C,0x00,0x93,
+		  0x13,0x63,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+		  
+	{0xC0,1,{0x00}},
+	//TE
+	{0xC2,1,{0x00}},
+	{0xC3,8,{0x06,0x00,0xFF,0x00,0xFF,0x40,0x4D,0x01}},
+	
+	{0xC4,21,{0x04,0x32,0xB8,0x40,0x00,0xBC,0x00,0x00,0x00,0x00,
+		  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xE0,0x20,0xF0}},
+		  
+	{0xC5,32,{0x03,0x21,0x96,0xC8,0x3E,0x00,0x03,0x01,0x14,0x04,
+		  0x04,0x18,0x22,0x05,0x00,0x20,0x0A,0x18,0xC6,0x03,
+		  0x64,0xFF,0x01,0x14,0x38,0x20,0x00,0x00,0x00,0x00,0x00,0x00}},
+		  
+	{0xC6,32,{0xA0,0x24,0x13,0x2B,0x2B,0x28,0x3F,0x02,0x16,0x16,
+		  0x00,0x01,0x40,0x00,0x98,0x98,0x60,0x80,0x1B,0x00,
+		  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+		  
+	{0xD4,1,{0x31}},
+	//VGH=15V VGL=-15V
+	{0xFB,2,{0x55,0x55}},
+	
+	{0xCA,32,{0x35,0x40,0x00,0x19,0x46,0x94,0x41,0x8F,0x33,0x11,
+	0x36,0x55,0x55,0x55,0x3B,0x5A,0x5A,0x5A,0x33,0x00,0x01,
+	0x01,0x11,0x06,0x22,0x00,0x05,0x00,0x00,0x5A,0x5A,0x04}},
+
+	//VCOM//已经烧录vcom的模组，请屏蔽0x89
+	//{0x89,3,{0xFA,0xFA,0x11}},
+
+	//GAMMA
+	{0xC7,27,{0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x70,0x77,
+		  0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x70,0x31,0x00,
+		  0x0D,0xFF,0xFF,0x40,0x13,0x13,0x43}},
+		  
+	{0x80,32,{0xFF,0xFB,0xF4,0xEE,0xE8,0xE3,0xDE,0xDA,0xD6,0xC8,
+		  0xBD,0xAB,0x9D,0x91,0x87,0x7E,0x75,0x74,0x6C,0x63,
+		  0x5A,0x4F,0x43,0x33,0x28,0x1B,0x18,0x14,0x0F,0x0B,0x07,0x03}},
+		  
+	{0x81,32,{0xFF,0xFA,0xF3,0xEC,0xE6,0xE0,0xDB,0xD7,0xD3,0xC5,
+		  0xB9,0xA8,0x9A,0x8F,0x85,0x7C,0x73,0x72,0x6A,0x62,
+		  0x58,0x4E,0x42,0x32,0x28,0x1B,0x17,0x13,0x0F,0x0B,0x06,0x03}},
+		  
+	{0x82,32,{0xFF,0xFB,0xF3,0xED,0xE7,0xE1,0xDD,0xD8,0xD4,0xC6,
+		  0xBB,0xA9,0x9B,0x90,0x86,0x7D,0x74,0x73,0x6B,0x62,
+		  0x59,0x4F,0x42,0x32,0x28,0x1B,0x17,0x13,0x0F,0x0B,0x06,0x03}},
+		  
+	{0x83,13,{0x01,0x01,0x00,0x01,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+	
+	{0x84,27,{0x24,0x44,0x10,0x24,0x72,0x74,0xF0,0xD1,0x70,0x20,
+		  0x3D,0x1D,0x84,0x78,0xE1,0x0A,0x4C,0x30,0x08,0x32,
+		  0xB6,0xD4,0x77,0x8A,0x5F,0x8C,0x30}},
+		  
+	{0xF1,2,{0x5A,0x59}},
+	{0xF0,2,{0xA5,0xA6}},
+	{0x35,1,{0x00}},
+
+	{0x11,2,{0x00,0x00}},
+	{REGFLAG_DELAY, 120, {} },
+	{0x29,2,{0x00,0x00}},
+	{REGFLAG_DELAY, 10, {} },
+	{0x6D,2,{0x02,0x00}},
+	{REGFLAG_END_OF_TABLE, 0x00, {} }
+};
+
+static void push_table(void *cmdq, struct LCM_setting_table *table,
+	unsigned int count, unsigned char force_update)
+{
+	unsigned int i;
+	unsigned int cmd;
+
+	for (i = 0; i < count; i++) {
+		cmd = table[i].cmd;
+
+		switch (cmd) {
+
+		case REGFLAG_DELAY:
+			if (table[i].count <= 10)
+				MDELAY(table[i].count);
+			else
+				MDELAY(table[i].count);
+			break;
+
+		case REGFLAG_UDELAY:
+			UDELAY(table[i].count);
+			break;
+
+		case REGFLAG_END_OF_TABLE:
+			break;
+
+		default:
+			dsi_set_cmdq_V22(cmdq, cmd, table[i].count,
+				table[i].para_list, force_update);
+		}
+	}
+}
+
+#ifdef CONFIG_SR_HARDWARE_INFOMATION
+extern void sr_add_lcd_ic_name(char *name);
+extern void sr_add_lcd_vendor_name(char *name);
+extern void sr_add_lcd_size_name(char *name);
+#endif
+static void lcm_set_util_funcs(const struct LCM_UTIL_FUNCS *util)
+{
+	memcpy(&lcm_util, util, sizeof(struct LCM_UTIL_FUNCS));
+#ifdef CONFIG_SR_HARDWARE_INFOMATION
+	sr_add_lcd_ic_name("NL9916AC");
+	sr_add_lcd_vendor_name("ZGD");
+	sr_add_lcd_size_name("6.56");
+#endif
+}
+
+
+
+int lcd_ic_9916_zgd=0;
+
+static void lcm_get_params(struct LCM_PARAMS *params)
+{
+	memset(params, 0, sizeof(struct LCM_PARAMS));
+
+	params->type = LCM_TYPE_DSI;
+
+	params->width = FRAME_WIDTH;
+	params->height = FRAME_HEIGHT;
+	params->physical_width = 68;
+	params->physical_height = 152;
+
+#if (LCM_DSI_CMD_MODE)
+	params->dsi.mode   = CMD_MODE;
+#else
+	params->dsi.mode   = SYNC_EVENT_VDO_MODE;
+#endif
+
+	/* DSI */
+	/* Command mode setting */
+	params->dsi.LANE_NUM = LCM_FOUR_LANE;
+	/* The following defined the fomat for data coming from LCD engine. */
+	params->dsi.data_format.color_order = LCM_COLOR_ORDER_RGB;
+	params->dsi.data_format.trans_seq = LCM_DSI_TRANS_SEQ_MSB_FIRST;
+	params->dsi.data_format.padding = LCM_DSI_PADDING_ON_LSB;
+	params->dsi.data_format.format = LCM_DSI_FORMAT_RGB888;
+
+	/* Highly depends on LCD driver capability. */
+	params->dsi.packet_size = 256;
+	/* video mode timing */
+
+	params->dsi.PS = LCM_PACKED_PS_24BIT_RGB888;
+
+	params->dsi.vertical_sync_active = 4;
+	params->dsi.vertical_backporch = 32;
+	params->dsi.vertical_frontporch = 190;
+	params->dsi.vertical_active_line = FRAME_HEIGHT;
+
+	params->dsi.horizontal_sync_active = 4;
+	params->dsi.horizontal_backporch = 48;
+	params->dsi.horizontal_frontporch = 48;
+	params->dsi.horizontal_active_pixel = FRAME_WIDTH;
+	params->dsi.ssc_disable  = 1;
+
+	params->dsi.PLL_CLOCK = 295;
+
+	params->dsi.esd_check_enable = 1;
+	params->dsi.customization_esd_check_enable = 1;
+	params->dsi.lcm_esd_check_table[0].cmd = 0x0A;
+	params->dsi.lcm_esd_check_table[0].count = 1;
+	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x9C;
+	
+	lcd_ic_9916_zgd=1;
+	printk("icnl9916 zgd lcd_ic_9916_zgd=1\n");
+
+}
+
+static void lcm_init_power(void)
+{
+	printk("icnl9916 zgd %s enter\n", __func__);
+	//display_bias_enable();
+}
+
+static void lcm_suspend_power(void)
+{
+	printk("icnl9916 zgd %s enter\n", __func__);
+	
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+#if defined(CONFIG_TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP)
+	if(tp_ps_work_skip_lcd_poweroff_flag)
+	{
+		printk("icnl9916 zgd %s enter skip\n", __func__);
+		return;
+	}	
+#endif
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+
+	display_bias_disable();
+}
+
+static void lcm_resume_power(void)
+{
+	printk("icnl9916 zgd %s enter\n", __func__);
+
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+#if defined(CONFIG_TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP)	
+	if(tp_ps_work_skip_lcd_poweroff_flag)
+	{
+		printk("icnl9916 zgd %s enter skip\n", __func__);
+	}
+#endif
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+	
+	//SET_RESET_PIN(0);
+	//display_bias_enable();
+}
+
+static void lcm_init(void)
+{
+	unsigned int size;
+	
+	printk("icnl9916 zgd %s enter\n", __func__);
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+#if defined(CONFIG_TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP)	
+	tp_ps_work_skip_lcd_poweroff_flag=0;
+#endif
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+	
+	display_bias_enable_VSP();	
+	MDELAY(8);
+	SET_RESET_PIN(0);	
+	MDELAY(6);
+	SET_RESET_PIN(1);
+	MDELAY(25);
+    display_bias_enable_VSN();
+    MDELAY(5);
+	SET_RESET_PIN(0);
+	MDELAY(12);
+	SET_RESET_PIN(1);
+	MDELAY(12);   
+   
+
+	size = sizeof(init_setting) /
+		sizeof(struct LCM_setting_table);
+		
+	push_table(NULL, init_setting, size, 1);
+
+}
+
+static void lcm_suspend(void)
+{
+	printk("icnl9916 zgd %s enter\n", __func__);
+
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+#if defined(CONFIG_TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP)	
+	tp_ps_work_skip_lcd_poweroff_flag=cts_get_prox_en();	
+	if(tp_ps_work_skip_lcd_poweroff_flag)	
+	{
+		printk("icnl9916 zgd %s enter skip\n", __func__);
+		return;
+	}	
+#endif
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+
+	push_table(NULL, lcm_suspend_setting,
+		sizeof(lcm_suspend_setting) / sizeof(struct LCM_setting_table),
+		1);
+		
+	MDELAY(10);
+	
+	/* SET_RESET_PIN(0); */
+}
+
+static void lcm_resume(void)
+{
+	printk("icnl9916 zgd %s enter\n", __func__);
+
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+#if defined(CONFIG_TP_PROXIMITY_SLEEP_CONTROLL_IN_BSP)	
+	if(tp_ps_work_skip_lcd_poweroff_flag)
+	{
+		printk("icnl9916 zgd %s enter skip\n", __func__);
+		return;
+	}
+#endif
+//guozhiliang add TP lcd sleep in PROXIMITY mode 
+	
+	lcm_init();
+}
+
+static unsigned int lcm_compare_id(void)
+{
+	return 1;
+}
+static unsigned int lcm_ata_check(unsigned char *buffer)
+{   
+#ifndef BUILD_LK
+    char buffer_data[2];
+    char id0 = 0;
+    char id1 = 0;
+ 
+    buffer_data[0] = 0x0;
+    buffer_data[1] = 0x0;
+ 
+    read_reg_v2(0xDA, buffer_data, 1);
+    read_reg_v2(0xDB, buffer_data + 1, 1);
+ 
+    id0 = buffer_data[0];
+    id1 = buffer_data[1];
+ 
+    if((id0 != 0x00) || (id1 != 0x00)){
+        pr_warn("Disp LCM ATA check Success\n");
+        return 1;
+    }
+    pr_warn("Disp LCM ATA check Fail\n");
+    return 0;
+#else
+    return 0;
+#endif
+}
+struct LCM_DRIVER icnl9916_hdplus1612_dsi_vdo_zgd_xe665_lcm_drv = {
+	.name = "icnl9916_hdplus1612_dsi_vdo_zgd_xe665",
+	.set_util_funcs = lcm_set_util_funcs,
+	.get_params = lcm_get_params,
+	.init = lcm_init,
+	.suspend = lcm_suspend,
+	.resume = lcm_resume,
+	.compare_id = lcm_compare_id,
+	.init_power = lcm_init_power,
+	.resume_power = lcm_resume_power,
+	.suspend_power = lcm_suspend_power,
+	.ata_check = lcm_ata_check,
+};

@@ -1359,7 +1359,14 @@ static int shmem_writepage(struct page *page, struct writeback_control *wbc)
 	if (list_empty(&info->swaplist))
 		list_add_tail(&info->swaplist, &shmem_swaplist);
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 	if (add_to_swap_cache(page, swap, GFP_ATOMIC) == 0) {
+#else
+	if (add_to_swap_cache(page, swap, GFP_ATOMIC, NULL) == 0) {
+#endif
+// #endif /* VENDOR_EDIT */
 		spin_lock_irq(&info->lock);
 		shmem_recalc_inode(inode);
 		info->swapped++;
@@ -2289,8 +2296,18 @@ static int shmem_mfill_atomic_pte(struct mm_struct *dst_mm,
 	pgoff_t offset, max_off;
 
 	ret = -ENOMEM;
-	if (!shmem_inode_acct_block(inode, 1))
+	if (!shmem_inode_acct_block(inode, 1)) {
+		/*
+		 * We may have got a page, returned -ENOENT triggering a retry,
+		 * and now we find ourselves with -ENOMEM. Release the page, to
+		 * avoid a BUG_ON in our caller.
+		 */
+		if (unlikely(*pagep)) {
+			put_page(*pagep);
+			*pagep = NULL;
+		}
 		goto out;
+	}
 
 	if (!*pagep) {
 		page = shmem_alloc_page(gfp, info, pgoff);
@@ -3224,15 +3241,16 @@ static const struct xattr_handler shmem_trusted_xattr_handler = {
 	.get = shmem_xattr_handler_get,
 	.set = shmem_xattr_handler_set,
 };
-//begin add by kaiyi.chen  for task 9843862(HDT2), 2020-09-01
-//kaiyi.chen Task: 9625590 should support user.* in production mode
-static const struct xattr_handler shmem_user_xattr_handler = {
-	.prefix = XATTR_USER_PREFIX,
-	.get = shmem_xattr_handler_get,
-	.set = shmem_xattr_handler_set,
-};
-//end add by kaiyi.chen  for task 9843862(HDT2), 2020-09-01
 
+//[SYSD SYS][tct_mfg]Begin added by kaiyi.chen for task 11662147 on 2021-11-04
+//should support user.* in production mode
+static const struct xattr_handler shmem_user_xattr_handler = {
+       .prefix = XATTR_USER_PREFIX,
+       .get = shmem_xattr_handler_get,
+       .set = shmem_xattr_handler_set,
+};
+
+//[SYSD SYS][tct_mfg]End added by kaiyi.chen for task 11662147 on 2021-11-04
 static const struct xattr_handler *shmem_xattr_handlers[] = {
 #ifdef CONFIG_TMPFS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
@@ -3240,7 +3258,7 @@ static const struct xattr_handler *shmem_xattr_handlers[] = {
 #endif
 	&shmem_security_xattr_handler,
 	&shmem_trusted_xattr_handler,
-	&shmem_user_xattr_handler,//add by kaiyi.chen  for task 9843862(HDT2), 2020-09-01
+	&shmem_user_xattr_handler,//[SYSD SYS][tct_mfg]Added by kaiyi.chen for task 11662147 on 2021-11-04
 	NULL
 };
 

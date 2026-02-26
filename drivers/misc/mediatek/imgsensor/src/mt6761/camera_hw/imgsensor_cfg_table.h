@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
-#include "imgsensor_common.h"
 
-#include <linux/atomic.h>
 
 #ifndef __IMGSENSOR_CFG_TABLE_H__
 #define __IMGSENSOR_CFG_TABLE_H__
+#include "imgsensor_common.h"
+
+#include <linux/atomic.h>
 
 #define IMGSENSOR_DEV_NAME "kd_camera_hw"
 
@@ -139,6 +140,8 @@ struct IMGSENSOR_HW_DEVICE {
 extern struct IMGSENSOR_HW_CFG       imgsensor_custom_config[];
 extern struct IMGSENSOR_HW_POWER_SEQ platform_power_sequence[];
 extern struct IMGSENSOR_HW_POWER_SEQ sensor_power_sequence[];
+extern int platform_power_sequence_size;
+extern int sensor_power_sequence_size;
 extern enum IMGSENSOR_RETURN
 	(*hw_open[IMGSENSOR_HW_ID_MAX_NUM])(struct IMGSENSOR_HW_DEVICE **);
 

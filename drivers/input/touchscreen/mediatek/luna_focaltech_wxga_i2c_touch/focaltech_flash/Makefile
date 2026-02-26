@@ -1,0 +1,1 @@
+obj-$(CONFIG_TOUCHSCREEN_LUNA_FOCALTECH_I2C) += focaltech_upgrade_ft5446u.o

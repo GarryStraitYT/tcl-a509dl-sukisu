@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (C) 2012-2019, Focaltech Systems (R)£¬All Rights Reserved.
+* Copyright (c) 2012-2020, Focaltech Systems (R)£¬All Rights Reserved.
 *
 * File Name: focaltech_test_ini.c
 *
@@ -15,6 +15,8 @@
 /*****************************************************************************
 * Private constant and macro definitions using #define
 *****************************************************************************/
+#define FTS_INI_REQUEST_SUPPORT              0
+
 struct ini_ic_type ic_types[] = {
     {"FT5X46",  0x54000002},
     {"FT5X46i", 0x54010002},
@@ -31,23 +33,23 @@ struct ini_ic_type ic_types[] = {
     {"FT7511",  0x540C0002},
     {"FT7421",  0x540D0002},
     {"FT7311",  0x54100002},
-    {"FT3327DQQ-001", 0x41000082},
-    {"FT5446DQS-W01", 0x40000082},
-    {"FT5422U", 0x40010082},
-	{"FT5446_003", 0x40000082},
-    {"FT5446_Q03", 0x40000082},
-    {"FT5446_P03",  0x55060081},
+
     {"FT5526_003", 0x40020082},
     {"FT5426_003", 0x40030082},
     {"FT3427G_003", 0x40040082},
     {"FT3427_003", 0x40050082},
-
+    {"FT5446_003", 0x40000082},
+    {"FT5446_Q03", 0x40000082},
+    {"FT5446_P03", 0x55060081},
+    {"FT5446DQS-W01", 0x40000082},
 
     {"FT5452",  0x55000081},
     {"FT3518",  0x55010081},
     {"FT3558",  0x55020081},
     {"FT3528",  0x55030081},
     {"FT5536",  0x55040081},
+    {"FT3418",  0x55070081},
+    {"FT5536L", 0x55080081},
 
     {"FT5472",  0x8F000083},
     {"FT5446U", 0x8F010083},
@@ -84,6 +86,7 @@ struct ini_ic_type ic_types[] = {
     {"FT7302",  0x64010084},
     {"FT7202",  0x64020084},
     {"FT3308",  0x64030084},
+    {"FT6446",  0x64040084},
 
     {"FT8607",  0x81000009},
     {"FT8716",  0x82000005},
@@ -93,13 +96,13 @@ struct ini_ic_type ic_types[] = {
 
     {"FT8736",  0x83000006},
 
-    {"FT8006M", 0x87000007},
     {"FT8201",  0x87010010},
     {"FT7250",  0x8702001A},
 
     {"FT8006U", 0x8900000B},
     {"FT8006S", 0x8901000B},
     {"FT8006S-AA", 0x9B000019},
+    {"FT8016", 0x9B01001D},
 
     {"FT8719",  0x8E00000D},
     {"FT8615",  0x9100000F},
@@ -107,25 +110,50 @@ struct ini_ic_type ic_types[] = {
     {"FT8739",  0x8D00000E},
 
     {"FT8006P", 0x93000011},
+    {"FT7120",  0x9E00001B},
 
-    {"FT7251", 0x8C000012},
-    {"FT7252", 0x92000013},
+    {"FT7251",  0x8C000012},
+    {"FT7252",  0x92000013},
 
     {"FT8613S", 0x94000014},
 
-    {"FT8756", 0x95000015},
-    {"FT8656", 0x95010018},
+    {"FT8756",  0x95000015},
+    {"FT8656",  0x95010018},
 
-    {"FT8302", 0x97000016},
+    {"FT8302",  0x97000016},
 
-    {"FT8009", 0x98000017},
+    {"FT8009",  0x98000017},
 
-    {"FT3068", 0x65010085},
-    {"FT3168", 0x65020085},
-    {"FT3067", 0x65030085},
-    {"FT3268", 0x65040085},
+    {"FT8720",  0x9C00001C},
+
+    {"FT3068",  0x65010085},
+    {"FT3168",  0x65020085},
+    {"FT3067",  0x65030085},
+    {"FT3268",  0x65040085},
     {"FT6346U", 0x65050085},
-    {"FT6346G", 0x65060085},
+    {"FT6146",  0x65060085},
+    {"FT6346G", 0x65070085},
+
+    {"FT5726_V03", 0x580C0086},
+    {"FT5726_003", 0x580C0086},
+
+    {"FT3618",  0x59010087},
+    {"FT5646",  0x59020087},
+    {"FT3A58",  0x59030087},
+    {"FT3B58",  0x59040087},
+    {"FT3D58",  0x59050087},
+    {"FT5A36",  0x59060087},
+    {"FT5B36",  0x59070087},
+    {"FT5D36",  0x59080087},
+    {"FT5A46",  0x59090087},
+    {"FT5B46",  0x590A0087},
+    {"FT5D46",  0x590B0087},
+    {"FT5936",  0x590C0087},
+    {"FT5946",  0x590D0087},
+
+    {"FT3658U", 0x5A010088},
+
+    {"FT2388",  0x9D00001E},
 };
 
 /*****************************************************************************
@@ -156,7 +184,7 @@ static int fts_strncmp(const char *cs, const char *ct, int count)
     return 0;
 }
 
-static int isspace(int x)
+static int fts_isspace(int x)
 {
     if (x == ' ' || x == '\t' || x == '\n' || x == '\f' || x == '\b' || x == '\r')
         return 1;
@@ -164,7 +192,7 @@ static int isspace(int x)
         return 0;
 }
 
-static int isdigit(int x)
+static int fts_isdigit(int x)
 {
     if (x <= '9' && x >= '0')
         return 1;
@@ -178,14 +206,14 @@ static long fts_atol(char *nptr)
     long total; /* current total */
     int sign; /* if ''-'', then negative, otherwise positive */
     /* skip whitespace */
-    while ( isspace((int)(unsigned char)*nptr) )
+    while ( fts_isspace((int)(unsigned char)*nptr) )
         ++nptr;
     c = (int)(unsigned char) * nptr++;
     sign = c; /* save sign indication */
     if (c == '-' || c == '+')
         c = (int)(unsigned char) * nptr++; /* skip sign */
     total = 0;
-    while (isdigit(c)) {
+    while (fts_isdigit(c)) {
         total = 10 * total + (c - '0'); /* accumulate digit */
         c = (int)(unsigned char) * nptr++; /* get next char */
     }
@@ -309,6 +337,10 @@ static int fts_test_get_ini_via_request_firmware(struct ini_data *ini, char *fwn
     int ret = 0;
     const struct firmware *fw = NULL;
     struct device *dev = &fts_data->input_dev->dev;
+
+#if !FTS_INI_REQUEST_SUPPORT
+    return -EINVAL;
+#endif
 
     ret = request_firmware(&fw, fwname, dev);
     if (0 == ret) {
@@ -732,7 +764,7 @@ static void get_detail_threshold(char *key_name, bool is_prex, int *thr, int nod
                                    key_name, i, thr_pos, node_num);
                     break;
                 }
-                thr[thr_pos] = (short)(fts_atoi(str_tmp));
+                thr[thr_pos] = (int)(fts_atoi(str_tmp));
                 index = 0;
                 memset(str_tmp, 0x00, sizeof(str_tmp));
                 k++;
@@ -886,13 +918,15 @@ static void print_thr_incell(void)
     FTS_TEST_DBG("lcdnoise_frame:%d", thr->basic.lcdnoise_frame);
     FTS_TEST_DBG("lcdnoise_coefficient:%d", thr->basic.lcdnoise_coefficient);
     FTS_TEST_DBG("lcdnoise_coefficient_vkey:%d", thr->basic.lcdnoise_coefficient_vkey);
+    FTS_TEST_DBG("open_diff_min:%d", thr->basic.open_diff_min);
 
     FTS_TEST_DBG("open_nmos:%d", thr->basic.open_nmos);
     FTS_TEST_DBG("keyshort_k1:%d", thr->basic.keyshort_k1);
     FTS_TEST_DBG("keyshort_cb_max:%d", thr->basic.keyshort_cb_max);
     FTS_TEST_DBG("rawdata2_min:%d", thr->basic.rawdata2_min);
     FTS_TEST_DBG("rawdata2_max:%d", thr->basic.rawdata2_max);
-
+    FTS_TEST_DBG("mux_open_cb_min:%d", thr->basic.mux_open_cb_min);
+    FTS_TEST_DBG("open_delta_V:%d", thr->basic.open_delta_V);
 
     print_buffer(thr->rawdata_min, tdata->node.node_num, tdata->node.rx_num);
     print_buffer(thr->rawdata_max, tdata->node.node_num, tdata->node.rx_num);
@@ -984,10 +1018,18 @@ static int get_test_threshold_mc_sc(void)
     fts_init_buffer(thr->scap_cb_off_max, thr->basic.scap_cb_off_max, sc_num, false, 0, 0);
     fts_init_buffer(thr->scap_cb_on_min, thr->basic.scap_cb_on_min, sc_num, false, 0, 0);
     fts_init_buffer(thr->scap_cb_on_max, thr->basic.scap_cb_on_max, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_cb_hi_min, thr->basic.scap_cb_hi_min, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_cb_hi_max, thr->basic.scap_cb_hi_max, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_cb_hov_min, thr->basic.scap_cb_hov_min, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_cb_hov_max, thr->basic.scap_cb_hov_max, sc_num, false, 0, 0);
     fts_init_buffer(thr->scap_rawdata_off_min, thr->basic.scap_rawdata_off_min, sc_num, false, 0, 0);
     fts_init_buffer(thr->scap_rawdata_off_max, thr->basic.scap_rawdata_off_max, sc_num, false, 0, 0);
     fts_init_buffer(thr->scap_rawdata_on_min, thr->basic.scap_rawdata_on_min, sc_num, false, 0, 0);
     fts_init_buffer(thr->scap_rawdata_on_max, thr->basic.scap_rawdata_on_max, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_rawdata_hi_min, thr->basic.scap_rawdata_hi_min, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_rawdata_hi_max, thr->basic.scap_rawdata_hi_max, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_rawdata_hov_min, thr->basic.scap_rawdata_hov_min, sc_num, false, 0, 0);
+    fts_init_buffer(thr->scap_rawdata_hov_max, thr->basic.scap_rawdata_hov_max, sc_num, false, 0, 0);
     fts_init_buffer(thr->panel_differ_min, thr->basic.panel_differ_min, node_num, false, 0, 0);
     fts_init_buffer(thr->panel_differ_max, thr->basic.panel_differ_max, node_num, false, 0, 0);
 
@@ -1004,10 +1046,18 @@ static int get_test_threshold_mc_sc(void)
     get_detail_threshold("ScapCB_OFF_Max_", true, thr->scap_cb_off_max, sc_num);
     get_detail_threshold("ScapCB_ON_Min_", true, thr->scap_cb_on_min, sc_num);
     get_detail_threshold("ScapCB_ON_Max_", true, thr->scap_cb_on_max, sc_num);
+    get_detail_threshold("ScapCB_High_Min_", true, thr->scap_cb_hi_min, sc_num);
+    get_detail_threshold("ScapCB_High_Max_", true, thr->scap_cb_hi_max, sc_num);
+    get_detail_threshold("ScapCB_Hov_Min_", true, thr->scap_cb_hov_min, sc_num);
+    get_detail_threshold("ScapCB_Hov_Max_", true, thr->scap_cb_hov_max, sc_num);
     get_detail_threshold("ScapRawData_OFF_Min_", true, thr->scap_rawdata_off_min, sc_num);
     get_detail_threshold("ScapRawData_OFF_Max_", true, thr->scap_rawdata_off_max, sc_num);
     get_detail_threshold("ScapRawData_ON_Min_", true, thr->scap_rawdata_on_min, sc_num);
     get_detail_threshold("ScapRawData_ON_Max_", true, thr->scap_rawdata_on_max, sc_num);
+    get_detail_threshold("ScapRawData_High_Min_", true, thr->scap_rawdata_hi_min, sc_num);
+    get_detail_threshold("ScapRawData_High_Max_", true, thr->scap_rawdata_hi_max, sc_num);
+    get_detail_threshold("ScapRawData_Hov_Min_", true, thr->scap_rawdata_hov_min, sc_num);
+    get_detail_threshold("ScapRawData_Hov_Max_", true, thr->scap_rawdata_hov_max, sc_num);
     get_detail_threshold("Panel_Differ_Min_Tx", true, thr->panel_differ_min, node_num);
     get_detail_threshold("Panel_Differ_Max_Tx", true, thr->panel_differ_max, node_num);
 
@@ -1056,14 +1106,24 @@ static void print_thr_mc_sc(void)
     print_buffer(thr->rawdata_h_max, tdata->node.node_num, tdata->node.rx_num);
     print_buffer(thr->rawdata_l_min, tdata->node.node_num, tdata->node.rx_num);
     print_buffer(thr->rawdata_l_max, tdata->node.node_num, tdata->node.rx_num);
+    print_buffer(thr->tx_linearity_max, tdata->node.node_num, tdata->node.rx_num);
+    print_buffer(thr->rx_linearity_max, tdata->node.node_num, tdata->node.rx_num);
     print_buffer(thr->scap_cb_off_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_cb_off_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_cb_on_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_cb_on_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_cb_hi_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_cb_hi_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_cb_hov_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_cb_hov_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_rawdata_off_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_rawdata_off_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_rawdata_on_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->scap_rawdata_on_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_rawdata_hi_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_rawdata_hi_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_rawdata_hov_min, tdata->sc_node.node_num, tdata->sc_node.rx_num);
+    print_buffer(thr->scap_rawdata_hov_max, tdata->sc_node.node_num, tdata->sc_node.rx_num);
     print_buffer(thr->panel_differ_min, tdata->node.node_num, tdata->node.rx_num);
     print_buffer(thr->panel_differ_max, tdata->node.node_num, tdata->node.rx_num);
 }

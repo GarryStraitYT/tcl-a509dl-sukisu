@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 
 #ifndef TPD_DEBUG_H
 #define TPD_DEBUG_H

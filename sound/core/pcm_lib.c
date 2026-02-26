@@ -201,11 +201,13 @@ int snd_pcm_update_state(struct snd_pcm_substream *substream,
 	if (runtime->status->state == SNDRV_PCM_STATE_DRAINING) {
 		if (avail >= runtime->buffer_size) {
 			snd_pcm_drain_done(substream);
+			printk("bo_liu, [%s][%d]\n", __func__, __LINE__);
 			return -EPIPE;
 		}
 	} else {
 		if (avail >= runtime->stop_threshold) {
 			__snd_pcm_xrun(substream);
+			printk("bo_liu, [%s][%d]\n", __func__, __LINE__);
 			return -EPIPE;
 		}
 	}
@@ -2485,8 +2487,10 @@ int snd_pcm_add_chmap_ctls(struct snd_pcm *pcm, int stream,
 	}
 	info->kctl->private_free = pcm_chmap_ctl_private_free;
 	err = snd_ctl_add(pcm->card, info->kctl);
-	if (err < 0)
-		return err;
+	if (err < 0) {
+		kfree(info);
+		return -ENOMEM;
+	}
 	pcm->streams[stream].chmap_kctl = info->kctl;
 	if (info_ret)
 		*info_ret = info;

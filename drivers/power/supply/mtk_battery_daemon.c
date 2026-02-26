@@ -11,6 +11,9 @@
 #include <net/sock.h>		/* netlink */
 #include "mtk_battery_daemon.h"
 #include "mtk_battery.h"
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+#include "mtk_charger.h"
+#endif
 
 #if IS_ENABLED(CONFIG_PMIC_LBAT_SERVICE)
 #include <pmic_lbat_service.h>
@@ -1823,7 +1826,7 @@ static ssize_t FG_Battery_CurrentConsumption_show(
 {
 	int ret_value = 8888;
 
-	ret_value = gauge_get_int_property(GAUGE_PROP_BATTERY_CURRENT) * 100;
+	ret_value = gauge_get_int_property(GAUGE_PROP_BATTERY_CURRENT) ;//* 100,modified by dapeng.qiao for task 10672631 porting form prague_bsp on 2021.1.13
 	bm_err("%s[EM] FG_Battery_CurrentConsumption : %d .1mA\n", __func__,
 		ret_value);
 
@@ -2174,9 +2177,211 @@ _out:
 	return ret;
 }
 
+//Begin add by tangshan.bai for LEVIN-4508 on 2022-03-03
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
 
+#define LIMIT_MAX_AND_MIN(value,max,min) \
+do {\
+	if (value > max){\
+		value = max;\
+	}else if(value < min){\
+		value = min; \
+	}\
+} while (0)
 
+static int get_battery_capacity(struct mtk_battery *gm,struct mtk_charger *info)
+{
+	struct fuel_gauge_table_custom_data *fg_table_cust_data =NULL;
+	int qmax;
 
+	fg_table_cust_data = &gm->fg_table_cust_data;
+	switch (info->sw_jeita.sm) {
+	case TEMP_BELOW_T0:
+		qmax = fg_table_cust_data->fg_profile[4].q_max;
+		bm_debug("jeita:%d qmax:%d\n",info->sw_jeita.sm, qmax);
+		break;
+	case TEMP_T0_TO_T1:
+	case TEMP_T1_TO_T2:
+		qmax = fg_table_cust_data->fg_profile[2].q_max;
+		bm_debug("jeita:%d qmax:%d\n",info->sw_jeita.sm, qmax);
+		break;
+	case TEMP_T2_TO_T3:
+		qmax = fg_table_cust_data->fg_profile[1].q_max;
+		bm_debug("jeita:%d qmax:%d\n",info->sw_jeita.sm, qmax);
+		break;
+	case TEMP_T3_TO_T4:
+	case TEMP_ABOVE_T4:
+		qmax = fg_table_cust_data->fg_profile[0].q_max;
+		bm_debug("jeita:%d qmax:%d\n",info->sw_jeita.sm, qmax);
+		break;
+	default:
+		qmax = fg_table_cust_data->fg_profile[1].q_max;
+		bm_debug("bad sw_jeita.sm %d,please check it!\n", info->sw_jeita.sm);
+		break;
+	}
+
+	return qmax;
+}
+
+void uisoc_tracking_to_full_work(void)
+{
+	int battery_capacity,ichg;
+	int update_time =0;
+	struct mtk_battery *gm = get_mtk_battery();
+	struct mtk_charger *info = get_mtk_charger();
+	struct timespec now_time, diff;
+
+	bm_err("uisoc_tracking_work\n");
+	battery_capacity = get_battery_capacity(gm, info);
+	if (info->chr_type == POWER_SUPPLY_TYPE_USB_DCP || info->chr_type == POWER_SUPPLY_TYPE_USB_PD)
+		ichg = info->data.ac_charger_current;
+	else
+		ichg = info->data.usb_charger_current;
+
+	if (ichg < 500000 || battery_capacity<1000){
+		update_time = 120; //2min
+		goto out;
+	}
+
+	update_time = (battery_capacity * 3600) / (ichg/1000)/100;
+
+	LIMIT_MAX_AND_MIN(update_time,6*60,60);
+
+	bm_err("ac:%d  usb:%d  type:%d cdp%d  pd:%d uptime%d\n",
+		 info->data.ac_charger_current,info->data.usb_charger_current, info->chr_type,
+		 POWER_SUPPLY_TYPE_USB_DCP,POWER_SUPPLY_TYPE_USB_PD,update_time);
+out:
+	get_monotonic_boottime(&now_time);
+	diff = timespec_sub(now_time, gm->old_time);
+	if(diff.tv_sec > 8*60){ //too long time without update
+		bm_err("long time no update %d \n",diff.tv_sec);
+		diff.tv_sec = 0;
+		gm->old_time =now_time;
+	}
+
+	if(gm->peak_enforce_full && diff.tv_sec > update_time){ //derectly add uisoc
+		if( gm->display_soc <= (10000-100))
+			gm->display_soc += 100;
+		else
+			gm->display_soc = 10000;
+
+		gm->old_time = now_time;
+		battery_update(gm);
+		bm_err("%s update \n",__func__);
+	}
+	bm_err("%s  difftime:%d cap:%d ,ichg:%d ,time:%d type %d display_soc:%d\n",
+		__func__,diff.tv_sec, battery_capacity, ichg/1000, update_time,info->chr_type, gm->display_soc);
+
+	return;
+}
+
+void uisoc_tracking_to_zero_work(struct work_struct *work)
+{
+	struct mtk_battery *gm = get_mtk_battery();
+
+	if( gm->display_soc >= 100)
+		gm->display_soc -= 100;
+	else
+		gm->display_soc = 0;
+		
+	bm_err("%s update \n",__func__);
+
+	battery_update(gm);
+	schedule_delayed_work(&gm->tracking_to_zero_work,msecs_to_jiffies(10 *1000));
+
+}
+void display_uisoc_calculate(struct mtk_battery *gm, int daemon_ui_soc)
+{
+	static int old_uisoc =-1;
+	static int diff_uisoc=0;
+	static enum peak_state_enum old_state = BAT_NOTCHARGING;
+	struct mtk_charger *info = get_mtk_charger();
+
+	if(gm->display_soc == -1 ){ //first flash image
+        gm->display_soc = daemon_ui_soc;
+        bm_err("first flash image init display%d  old%d\n",gm->display_soc,old_uisoc);
+    }
+	if(gm->daemon_uisoc == -1){ //reboot init down
+        gm->daemon_uisoc = daemon_ui_soc;
+		old_uisoc = gm->daemon_uisoc;
+    }
+
+    if(diff_uisoc == 0){
+		old_uisoc = gm->daemon_uisoc;
+		gm->daemon_uisoc = daemon_ui_soc;
+    }
+
+    if (old_state != gm->bat_state)//state changed,update uisoc base
+		old_uisoc = daemon_ui_soc;
+
+    old_state = gm->bat_state;
+    switch (gm->bat_state){
+    	case BAT_ENFORCE_TO_FULL:
+    		if(gm->display_soc < 10000){
+    			uisoc_tracking_to_full_work();
+    		}
+    		break;
+    	case BAT_DISCHARGING:
+	 	case BAT_NOTCHARGING:
+			if(gm->k_daemon == 0 && gm->k_display == 0){
+				gm->k_daemon = gm->daemon_uisoc;
+				gm->k_display = gm->display_soc;
+			}
+
+			if(gm->k_daemon != 0 && diff_uisoc == 0)
+				diff_uisoc = (gm->k_display * abs(old_uisoc - gm->daemon_uisoc))/gm->k_daemon;
+
+			bm_err("diff_uisoc- %d\n",diff_uisoc);
+			if(diff_uisoc/100){ //diff value more than 1%
+				gm->display_soc -= 100;
+				diff_uisoc -= 100;
+			}
+			else{ //diff value less than 1%
+				gm->display_soc -= diff_uisoc;
+				diff_uisoc = 0;
+			}
+			if(gm->daemon_uisoc < 50 && get_battery_voltage(info) < 3400){ //low battery
+				if (work_busy(&gm->tracking_to_zero_work.work))
+    				break;
+    			schedule_delayed_work(&gm->tracking_to_zero_work,msecs_to_jiffies(0));
+	    		bm_err("enforce_uisoc_to_zero_work- \n");
+			}
+    		break;
+     	case BAT_CHARGING:
+     		diff_uisoc = abs(gm->daemon_uisoc - old_uisoc);
+
+			bm_err("diff_uisoc+ %d\n",diff_uisoc);
+			if(diff_uisoc/100){ //diff value more than 1%
+				gm->display_soc += 100;
+				diff_uisoc -= 100;
+			}
+			else{ //diff value less than 1%
+				gm->display_soc += diff_uisoc;
+				diff_uisoc = 0;
+			}
+
+    		break;
+    	default:
+    		bm_err("peak battery state error !!!!! ");
+    		break;
+    }
+
+	LIMIT_MAX_AND_MIN(gm->display_soc,10000,0);
+
+	bm_err("later state:%d peak:%d  k_daemon:%d  k_display:%d  display_soc:%d  daemon_old_uisoc:%d daemon_ui_soc:%d  diff_uisoc:%d full:%d\n",
+		gm->bat_state,
+		gm->BAT_peak_level,
+		gm->k_daemon,
+		gm->k_display,
+		gm->display_soc,
+		old_uisoc,
+		daemon_ui_soc,
+		diff_uisoc,
+		gm->peak_enforce_full);
+
+}
+#endif
+//End add by tangshan.bai for LEVIN-4508 on 2022-03-03
 
 
 static void mtk_battery_daemon_handler(struct mtk_battery *gm, void *nl_data,
@@ -2259,6 +2464,12 @@ static void mtk_battery_daemon_handler(struct mtk_battery *gm, void *nl_data,
 
 		rac = gauge_get_int_property(
 				GAUGE_PROP_PTIM_RESIST);
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (abs(rac) > 10000) {
+			bm_err("[K] use default value 1080 for FG_DAEMON_CMD_GET_RAC = %d\n", rac);
+			rac = 1080;
+		}
+		#endif
 		ret_msg->fgd_data_len += sizeof(rac);
 		memcpy(ret_msg->fgd_data, &rac, sizeof(rac));
 		bm_debug("[K]FG_DAEMON_CMD_GET_RAC=%d\n", rac);
@@ -2326,12 +2537,13 @@ static void mtk_battery_daemon_handler(struct mtk_battery *gm, void *nl_data,
 	{
 		/* todo */
 		int is_charger_exist = 0;
-
-		if (gm->bs_data.bat_status == POWER_SUPPLY_STATUS_CHARGING)
+//Begin Modified by qiuguangliang & jin.wang for 2064 on 2021-10-26
+		if (gm->bs_data.bat_status == POWER_SUPPLY_STATUS_CHARGING
+			|| POWER_SUPPLY_STATUS_FULL == gm->bs_data.bat_status)
 			is_charger_exist = true;
 		else
 			is_charger_exist = false;
-
+//End Modified by qiuguangliang for 10956228 on 2021-05-21
 		ret_msg->fgd_data_len += sizeof(is_charger_exist);
 		memcpy(ret_msg->fgd_data,
 			&is_charger_exist, sizeof(is_charger_exist));
@@ -3055,6 +3267,11 @@ static void mtk_battery_daemon_handler(struct mtk_battery *gm, void *nl_data,
 				daemon_ui_soc);
 			daemon_ui_soc = 0;
 		}
+//End add by tangshan.bai for LEVIN-4508 on 2022-03-03
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+		display_uisoc_calculate(gm,daemon_ui_soc);
+#endif
+//Begin add by tangshan.bai for LEVIN-4508 on 2022-03-03
 
 		gm->fg_cust_data.ui_old_soc = daemon_ui_soc;
 		old_uisoc = gm->ui_soc;
@@ -3305,9 +3522,13 @@ static void mtk_battery_daemon_handler(struct mtk_battery *gm, void *nl_data,
 		} else {
 			memcpy(&gm->fgd_pid, &msg->fgd_data[0],
 				sizeof(gm->fgd_pid));
-			bm_err("[K]FG_DAEMON_CMD_SET_DAEMON_PID = %d(re-launch)\n",
-				gm->fgd_pid);
-			/* kill daemon dod_init 14 , todo*/
+			bm_err("[K]FG_DAEMON_CMD_SET_DAEMON_PID=%d,kill daemon:%d init_flag:%d (re-launch)\n",
+				gm->fgd_pid,
+				gm->Bat_EC_ctrl.debug_kill_daemontest,
+				gm->init_flag);
+			if (gm->Bat_EC_ctrl.debug_kill_daemontest != 1 &&
+				gm->init_flag == 1)
+				gm->fg_cust_data.dod_init_sel = 14;
 		}
 	}
 	break;

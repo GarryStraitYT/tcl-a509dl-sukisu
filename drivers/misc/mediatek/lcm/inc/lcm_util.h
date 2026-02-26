@@ -25,6 +25,9 @@ enum LCM_STATUS lcm_util_set_write_cmd_v23(
 enum LCM_STATUS lcm_util_set_read_cmd_v2(
 	const struct LCM_UTIL_FUNCS *lcm_util, struct LCM_DATA_T4 *t4,
 	unsigned int *compare);
+enum LCM_STATUS lcm_util_set_write_cmd_v22(
+	const struct LCM_UTIL_FUNCS *lcm_util, void *handle,
+	struct LCM_DATA_T3 *t3, unsigned char force_update);
 #endif
 
 #endif

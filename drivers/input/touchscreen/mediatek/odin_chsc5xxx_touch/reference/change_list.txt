@@ -1,0 +1,67 @@
+2021-01-14
+1, linux driver增加获取short数据的接口，方便短路测试
+2，优化apk host<->driver之间的数据同步，更快的数据传输
+
+2021-01-26
+1, 兼容/sys与/proc下两种节点的创建
+2，增加probe不成功时的资源释放，多家TP的兼容性
+3，ESD兼容INT上报与主动查询两种方式
+4，对proximity状态下ESD的支持
+5, 使用兼容性更好的vfs_read代替file->f_op->read
+
+2021-02-04
+1, 修改部分函数与变量名，避免与其他厂商重复
+2，chsc_tp_info节点打印ctp_run_status与custom_function_en信息
+
+2021-03-05
+1, 增加对timer资源释放的判断，防止某些平台在没有接TP时出现异常
+
+2021-03-18
+1, suspend模式从sleep改为deep sleep
+2, 优化宏定义，在非调试模式下，节省存储资源
+3, 根据config配置，自动适配分辨率
+
+2021-03-30
+1, 添加节点 chsc_orientation, 通知firmware横竖屏的切换
+
+2021-04-09
+1, 展讯平台，借助ADF Notifier进入suspend（部分平台有效）
+2, 手势双击亮屏
+3, 手势模式，采用reset pin唤醒
+
+
+2021-04-20 v2.5
+1, 替换fw_code_bin.h, 兼容不同类flash烧录
+2, 去掉probe之前的reset操作
+
+2021-04-28 v2.6
+1, 调整report代码，兼容MTK平台物理按键上报事件
+
+2021-05-07 v2.7
+1, 调整report代码，按键信息动态获取，兼容SPRD,QUAL平台按键上报
+
+2021-05-15 v2.8
+1, 兼容5816， 调整升级流程
+
+2021-06-10 v2.9
+1, TP Boot Up Check由命令交互改为查询
+
+2021-06-16 v3.0
+1, 放开整机升级64K的限制
+
+2021-08-12 v3.1
+1, 支持DRM架构休眠唤醒
+2，TP Probe成功，则创建semi_touch_debug节点，不再释放，方便后续调试
+3, virtual key no mapping handler
+
+2021-08-13 v3.2
+1, 高通平台VDD POWER 下电同时， RST拉低， 防止漏电
+
+2021-09-13 v3.3
+1, 对升级包boot与config的合法性做自校验检查，防止私自修改造成的升级无触
+
+2021-09-16 v3.4 
+1, 修正 V3.1 - V3.3， 关闭APK宏导致ESD失效的bug
+
+2021-09-16 v3.5
+1, 修正I2C速率过慢， 读flash会出报错的bug

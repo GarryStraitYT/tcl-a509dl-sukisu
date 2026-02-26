@@ -244,13 +244,13 @@ int semi_touch_memory_read(struct apk_complex_data* apk_comlex_addr)
     }
 }
 
-int semi_touch_bulk_read(unsigned char *pdes, unsigned int adr, unsigned int len)
+int semi_touch_bulk_read(unsigned char *pdes, unsigned int adr, unsigned short len)
 {
-    int ret = -EINVAL;
-    unsigned int left = len;
-    unsigned int local_check, retry;
-    struct m_ctp_cmd_std_t cmd_send_tp;
-    struct m_ctp_rsp_std_t ack_from_tp;
+	int ret = -EINVAL;
+	unsigned short left = len;
+	unsigned int local_check, retry;
+	struct m_ctp_cmd_std_t cmd_send_tp;
+	struct m_ctp_rsp_std_t ack_from_tp;
 
 	cmd_send_tp.id = CMD_MEM_RD;
 
@@ -287,11 +287,11 @@ int semi_touch_bulk_read(unsigned char *pdes, unsigned int adr, unsigned int len
 
 int semi_touch_bulk_write(unsigned char *psrc, unsigned int adr, unsigned int len)
 {
-    int ret = -EINVAL;
-    unsigned int left = len;
-    unsigned int retry, combChk;
-    struct m_ctp_cmd_std_t cmd_send_tp;
-    struct m_ctp_rsp_std_t ack_from_tp;
+	int ret = -EINVAL;
+	unsigned short left = len;
+	unsigned int retry, combChk;
+	struct m_ctp_cmd_std_t cmd_send_tp;
+	struct m_ctp_rsp_std_t ack_from_tp;
 
 	cmd_send_tp.id = CMD_MEM_WR;
 
@@ -338,44 +338,7 @@ int semi_get_backup_pid(unsigned int *id)
 	return semi_touch_bulk_read((unsigned char *)id, VID_PID_BACKUP_ADDR, 4);
 }
 
-int semi_touch_burn_erase(void)
-{
-    int ret = SEMI_DRV_ERR_OK;
-
-#if TYPE_OF_IC(SEMI_TOUCH_IC) == TYPE_OF_IC(SEMI_TOUCH_5816)
-    struct m_ctp_cmd_std_t cmd_send_tp;
-    struct m_ctp_rsp_std_t ack_from_tp;
-
-    cmd_send_tp.id = CMD_FLASH_ERASE;
-    cmd_send_tp.d0 = 0x01;
-
-    ret = cmd_send_to_tp(&cmd_send_tp, &ack_from_tp, 30000);
-    check_return_if_fail(ret, NULL);
-#endif
-
-    return ret;
-}
-
-unsigned int config_to_vid_pid(unsigned char *ptcfg, unsigned int len)
-{
-    unsigned int upd_vid_pid;
-#if TYPE_OF_IC(SEMI_TOUCH_IC) == TYPE_OF_IC(SEMI_TOUCH_5816)
-    ushort cfgAddr = (ushort)((ptcfg[0x39] << 8) + ptcfg[0x38]);
-    if(cfgAddr + 4 < len)
-    {
-        ptcfg = ptcfg + cfgAddr;
-    }
-#endif
-
-    upd_vid_pid = ptcfg[4];
-    upd_vid_pid = (upd_vid_pid << 8) | ptcfg[3];
-    upd_vid_pid = (upd_vid_pid << 8) | ptcfg[2];
-    upd_vid_pid = (upd_vid_pid << 8) | ptcfg[1];
-
-    return upd_vid_pid;
-}
-
-static int semi_touch_check_cfg_update(unsigned char *parray, unsigned int cfg_single_len, unsigned int cfg_num, unsigned int force_update)
+static int semi_touch_check_cfg_update(unsigned char *parray, unsigned int cfg_num, unsigned int force_update)
 {
 	int index, ret = SEMI_DRV_ERR_OK;
 	int idx_active;
@@ -389,33 +352,33 @@ static int semi_touch_check_cfg_update(unsigned char *parray, unsigned int cfg_s
 		return SEMI_DRV_ERR_OK;
 	}
 
-    idx_active = -1;
-    for (index = 0; index < cfg_num; index++) {
-        upd_vid_pid = config_to_vid_pid(ptcfg, cfg_single_len);
-       
-        if((st_dev.vid_pid & 0xffffff00) == (upd_vid_pid & 0xffffff00)) {
-            kernel_log_d("tp vid_pid = 0x%08x, udp vid_pid = 0x%08x\r\n", st_dev.vid_pid, upd_vid_pid);
-            if ((st_dev.vid_pid < upd_vid_pid) || force_update) {
-                idx_active = index;
-                break;
-            }
-        }
+	idx_active = -1;
+	for (index = 0; index < cfg_num; index++) {
+		upd_vid_pid = ptcfg[4];
+		upd_vid_pid = (upd_vid_pid << 8) | ptcfg[3];
+		upd_vid_pid = (upd_vid_pid << 8) | ptcfg[2];
+		upd_vid_pid = (upd_vid_pid << 8) | ptcfg[1];
 
-        ptcfg = ptcfg + cfg_single_len;
-    }
+		if((st_dev.vid_pid & 0xffffff00) == (upd_vid_pid & 0xffffff00)) {
+			kernel_log_d("tp vid_pid = 0x%08x, udp vid_pid = 0x%08x\r\n", st_dev.vid_pid, upd_vid_pid);
+			if ((st_dev.vid_pid < upd_vid_pid) || force_update) {
+				idx_active = index;
+				break;
+			}
+		}
 
-    if(idx_active >= 0) {
-        ret = semi_touch_enter_burn_mode();
-        check_return_if_fail(ret, NULL);
+		ptcfg = ptcfg + CFG_MAX_LENGTH;
+	}
 
-        ret = semi_touch_burn_erase();
-        check_return_if_fail(ret, NULL);
+	if(idx_active >= 0) {
+		ret = semi_touch_enter_burn_mode();
+		check_return_if_fail(ret, NULL);
 
-        ret = semi_touch_bulk_write(ptcfg, CFG_ROM_ADDRESS, cfg_single_len);
-        check_return_if_fail(ret, NULL);
+		ret = semi_touch_bulk_write(ptcfg, CFG_ROM_ADDRESS, CFG_MAX_LENGTH);
+		check_return_if_fail(ret, NULL);
 
-        st_dev.vid_pid = upd_vid_pid;
-    }else { //is latest version
+		st_dev.vid_pid = upd_vid_pid;
+	}else { //is latest version
 
 	}
 
@@ -463,13 +426,13 @@ int semi_touch_check_boot_update(unsigned char *pdata, unsigned int len, unsigne
 		-1  : some error
 		0x00: successfull
 */
-int semi_touch_update_updfile(const unsigned char *pdata, unsigned int len, unsigned int force_update)
+int semi_touch_update_updfile(const unsigned char *pdata, unsigned short len, unsigned int force_update)
 {
-    int ret = SEMI_DRV_ERR_OK;
-    unsigned int cfg_num, cfg_single_len;
-    unsigned int offset, cfg_offset;
-    unsigned int *vlist;
-    struct chsc_updfile_header *upd_header;
+	int ret = SEMI_DRV_ERR_OK;
+	unsigned int cfg_num;
+	unsigned int offset, cfg_offset;
+	unsigned int *vlist;
+	struct chsc_updfile_header *upd_header;
 
 	kernel_log_d("check if firmware need update, product pid_vid = 0x%08x, force = %d\r\n", st_dev.vid_pid, force_update);
 
@@ -483,29 +446,28 @@ int semi_touch_update_updfile(const unsigned char *pdata, unsigned int len, unsi
 		return -SEMI_DRV_ERR_NOT_MATCH;
 	}
 
-    if(0 == upd_header->n_cfg){ 
-        return -SEMI_DRV_INVALID_PARAM;
-    }
-
-    cfg_num = upd_header->n_cfg;
-    offset  = (upd_header->n_cfg * 4) + sizeof(struct chsc_updfile_header);
-    cfg_offset = offset;
-    cfg_single_len = upd_header->len_cfg / cfg_num;
+	cfg_num = upd_header->n_cfg;
+	offset  = (upd_header->n_match * 4) + sizeof(struct chsc_updfile_header);
+	cfg_offset = offset;
 
 	if ((offset + upd_header->len_cfg + upd_header->len_boot) != len) {
 		return -SEMI_DRV_INVALID_PARAM;
 	}
 
-    offset = offset + upd_header->len_cfg;
-    vlist  = (unsigned int *) (pdata + sizeof(struct chsc_updfile_header));
+	if ((cfg_num * CFG_MAX_LENGTH) != upd_header->len_cfg) {
+		return -SEMI_DRV_INVALID_PARAM;
+	}
 
-    if(SEMI_DRV_ERR_OK == ret) { //check if config need update
-        ret = semi_touch_check_cfg_update((unsigned char *) (pdata + cfg_offset), cfg_single_len, cfg_num, force_update);
-    }
+	offset = offset + upd_header->len_cfg;
+	vlist  = (unsigned int *) (pdata + sizeof(struct chsc_updfile_header));
 
-    if(SEMI_DRV_ERR_OK == ret){ //check if boot need update
-        ret = semi_touch_check_boot_update((unsigned char*)(pdata + offset), upd_header->len_boot, vlist, upd_header->n_match, force_update);
-    }
+	if(SEMI_DRV_ERR_OK == ret){ //check if boot need update
+		ret = semi_touch_check_boot_update((unsigned char*)(pdata + offset), upd_header->len_boot, vlist, cfg_num, force_update);
+	}
+
+	if(SEMI_DRV_ERR_OK == ret) { //boot update ok, then...
+		ret = semi_touch_check_cfg_update((unsigned char *) (pdata + cfg_offset), cfg_num, force_update);
+	}
 
 	return ret;
 }

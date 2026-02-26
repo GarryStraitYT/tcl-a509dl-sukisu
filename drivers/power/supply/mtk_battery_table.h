@@ -117,19 +117,30 @@
 #define VBAT_OLDOCV_DIFF			1000
 #define SWOCV_OLDOCV_DIFF_EMB		1000	/* 100mV */
 
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 /* Begin modified by bitao.xiong for defect-10458630 on 2020-12-17 */
 #if defined(TARGET_BUILD_MMITEST)
 #define VIR_OLDOCV_DIFF_EMB			1000	/* default:1000mV, unit:0.1mV */
 #define VIR_OLDOCV_DIFF_EMB_LT		1500	/* default:1000mV unit:0.1mV*/
 #else
-#define VIR_OLDOCV_DIFF_EMB			1500	/* default:1000mV, unit:0.1mV */
-#define VIR_OLDOCV_DIFF_EMB_LT		2000	/* default:1000mV unit:0.1mV*/
+#define VIR_OLDOCV_DIFF_EMB			2500	/* default:1000mV, unit:0.1mV */
+#define VIR_OLDOCV_DIFF_EMB_LT		2500	/* default:1000mV unit:0.1mV*/
 #endif
+#else
+#define VIR_OLDOCV_DIFF_EMB			10000	/* 1000mV */
+#define VIR_OLDOCV_DIFF_EMB_LT		10000	/* 1000mV */
 /* End modified by bitao.xiong for defect-10458630 on 2020-12-17 */
+#endif
 #define VIR_OLDOCV_DIFF_EMB_TMP		5
 
 #define TNEW_TOLD_PON_DIFF			5
+// Begin modified by zhangkun for MODEL3-6558 on 2022-12-15
+#ifdef CONFIG_TCT_PROJECT_MODEL_3
+#define TNEW_TOLD_PON_DIFF2			25
+#else
 #define TNEW_TOLD_PON_DIFF2			15
+#endif
+// End modified by zhangkun for MODEL3-6558 on 2022-12-15
 #define PMIC_SHUTDOWN_TIME			30
 #define BAT_PLUG_OUT_TIME			32
 #define EXT_HWOCV_SWOCV				300
@@ -245,9 +256,13 @@
 #define Q_MAX_H_CURRENT		10000
 
 /* multiple battery profile compile options */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 /* Begin modified by bitao.xiong for task-9796564 on 2020-08-20 */
 #define MTK_GET_BATTERY_ID_BY_AUXADC
+#else
+/*#define MTK_GET_BATTERY_ID_BY_AUXADC*/
 /* End modified by bitao.xiong for task-9796564 on 2020-08-20 */
+#endif
 
 
 #define MULTI_BATTERY			0
@@ -290,15 +305,10 @@ int g_Q_MAX_H_CURRENT[MAX_TABLE][TOTAL_BATTERY_NUMBER] = {
 
 int g_Q_MAX_SYS_VOLTAGE[TOTAL_BATTERY_NUMBER] = { 3400, 3400, 3400, 3400};
 
-#ifdef JRD_PROJECT_FULL_TOKYO_LITE_TMO // change begin by TCT-cuiping.shi
-int g_battery_id_voltage[TOTAL_BATTERY_NUMBER] = {
-	621000, 921000, 1500000, -1};
-#else
 /* 0~0.5V for battery 0, 0.5~1V for battery 1*/
 /* 1~1.5V for battery 2, -1 for the last one (battery 3) */
 int g_battery_id_voltage[TOTAL_BATTERY_NUMBER] = {
 	500000, 1000000, 1500000, -1};
-#endif // change end by TCT-cuiping.shi
 
 int g_FG_PSEUDO1[MAX_TABLE][TOTAL_BATTERY_NUMBER] = {
 	/*bat1,   bat2,   bat3,    bat4*/
@@ -395,19 +405,20 @@ int g_QMAX_SYS_VOL[MAX_TABLE][TOTAL_BATTERY_NUMBER] = {
 #define TEMPERATURE_TB0	255
 #define TEMPERATURE_TB1	254
 
+// Begin modified by bin.song.hz for task 10468718 on 2020.12.18
 int g_temperature[MAX_TABLE] = {
 	50,/*TEMPERATURE_T0*/
 	25,/*TEMPERATURE_T1*/
 	10,/*TEMPERATURE_T2*/
 	0,/*TEMPERATURE_T3*/
-	-10,/*TEMPERATURE_T4*/
-	-25,/*TEMPERATURE_T5*/
+	-6,/*TEMPERATURE_T4*/
+	-10,/*TEMPERATURE_T5*/
 	-30,/*TEMPERATURE_T6*/
 	-35,/*TEMPERATURE_T7*/
 	-40,/*TEMPERATURE_T8*/
 	-45/*TEMPERATURE_T9*/
 };
-
+// End modified by bin.song.hz for task 10468718 on 2020.12.18
 
 #define BAT_NTC_10 1
 #define BAT_NTC_47 0
@@ -425,6 +436,33 @@ int g_temperature[MAX_TABLE] = {
 #define BIF_NTC_R 16000
 
 #if (BAT_NTC_10 == 1)
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2022/11/16 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+/*the type of ntc is NTCG103JF103FT*/
+struct fuelgauge_temperature Fg_Temperature_Table[21] = {
+		{-40, 188500},
+		{-35, 144300},
+		{-30, 111300},
+		{-25, 86560},
+		{-20, 67790},
+		{-15, 53460},
+		{-10, 42450},
+		{-5, 33930},
+		{0, 27280},
+		{5, 22070},
+		{10, 17960},
+		{15, 14700},
+		{20, 12090},
+		{25, 10000},
+		{30, 8312},
+		{35, 6942},
+		{40, 5826},
+		{45, 4911},
+		{50, 4158},
+		{55, 3536},
+		{60, 3019}
+};
+#else
 struct fuelgauge_temperature Fg_Temperature_Table[21] = {
 		{-40, 195652},
 		{-35, 148171},
@@ -448,6 +486,8 @@ struct fuelgauge_temperature Fg_Temperature_Table[21] = {
 		{55, 3535},
 		{60, 3014}
 };
+#endif /*CONFIG_TCT_CHARGER*/
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2022/11/16 */
 #endif
 
 #if (BAT_NTC_47 == 1)

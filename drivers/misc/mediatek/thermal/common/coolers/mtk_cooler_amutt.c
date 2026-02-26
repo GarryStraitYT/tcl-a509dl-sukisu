@@ -511,7 +511,13 @@ struct file *filp, const char __user *buf, size_t len, loff_t *data)
 			__func__, desc, up_duration, up_step, low_duration,
 			low_step, low_rst_max, polling_interval, amutt.max_level
 			);
-
+	#ifdef TCL_THERMAL_DEBUG
+		pr_info(
+			"[tcl_thermal_cooler-mutt]%s %s [up]%d %d, [low]%d %d, rst=%d, interval=%d, max_step=%d\n",
+			__func__, desc, up_duration, up_step, low_duration,
+			low_step, low_rst_max, polling_interval, amutt.max_level
+			);
+	#endif
 		return len;
 	} else if (sscanf(desc, "log=%d", &tmp_log) == 1) {
 		if (tmp_log == 1)

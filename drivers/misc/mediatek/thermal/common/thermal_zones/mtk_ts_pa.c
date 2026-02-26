@@ -174,7 +174,7 @@ static void pa_cal_stats(struct timer_list *t)
 
 
 static DEFINE_MUTEX(TSPA_lock);
-static int mtktspa_get_hw_temp(void)
+int mtktspa_get_hw_temp(void)
 {
 	struct md_info *p_info;
 	int size, i;
@@ -205,6 +205,9 @@ static int mtktspa_get_hw_temp(void)
 	}
 
 	mtktspa_dprintk("PA temperature: %d\n", p_info[i].value);
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-pa] %s t_pa=%d\n", __func__, p_info[i].value);
+#endif
 
 	if ((p_info[i].value > 100000) || (p_info[i].value < -30000))
 		pr_debug("[Power/PA_Thermal] PA T=%d\n", p_info[i].value);
@@ -216,9 +219,6 @@ static int mtktspa_get_temp(struct thermal_zone_device *thermal, int *t)
 {
 	*t = mtktspa_get_hw_temp();
 
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 	if ((int)*t >= polling_trip_temp1)
 		thermal->polling_delay = interval * 1000;
 	else if ((int)*t < polling_trip_temp2)

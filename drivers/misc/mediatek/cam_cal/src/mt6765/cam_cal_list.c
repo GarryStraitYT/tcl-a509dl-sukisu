@@ -7,11 +7,45 @@
 
 struct stCAM_CAL_LIST_STRUCT g_camCalList[] = {
 	/*Below is commom sensor */
-        /*Begin ersen.shang for config af otp T10017042 20210106*/
-	{GC8034_SENSOR_ID, 0xA0, gc8034_read_region},
-	{S5K4H7_SENSOR_ID, 0xA0, s5k4h7_read_region},
-        /*End   ersen.shang for config af otp T10017042 20210106*/
-
+// begin modified by tct-hq/yzheng4 in 2022-12-09
+#if defined(CONFIG_MTK_LUNA84GVZW_CAMERA)
+    {LUNA84GVZW_GC05A2_SENSOR_ID, 0xA0, gc05a2_read_region},
+/*Begin jiantaohuang for LUNA84GVZW-3892, otp porting for lunavzw hi846 on 20221215*/
+	{LUNA84GVZW_HI846_SENSOR_ID, 0x20, hi846_new_read_region},
+/*End jiantaohuang for LUNA84GVZW-3892, otp porting for lunavzw hi846 on 20221215*/
+#endif
+// end modified by tct-hq/yzheng4 in 2022-12-09
+#if defined(TCT_CAMERA_PROJECT_CIVIC)
+	{GDIR220061_HI1336_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_gt24p64b},
+        {SWLU7166_GC13A0_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c64f},
+        {LHVM15798_GC05A2_SENSOR_ID, 0xA0, gc05a2_front_read_region},
+#elif defined(TCT_CAMERA_PROJECT_CIVIC_PLUS)
+        {GKQR220088_HI5021Q_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c128e, 0x4000},
+        {GKQR220088_HI5021QMAC_SENSOR_ID, 0xA0, Common_read_region, NULL, 0x3000},
+	{CTXWM18799_GC08A3_SENSOR_ID, 0xA0, ctxwm18799_gc08a3_read_region},
+	{LHMBGH6651_GC08A3_SENSOR_ID, 0xA0, ctxwm18799_gc08a3_read_region},
+#else
+//End modified by chengyixuan for CIVICPL-3060 on 2022-07-16
+	{TSPPHCF1318_HI1336_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c128e},
+	/*Begin yaqin.zhang for sonatatf otp porting 2022/6/29*/
+	{TSPPHCP2120_HI1336_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c128e},
+	{SHNCND42B_S5K3L6_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_gt24p64b},
+	/*End yaqin.zhang for sonatatf otp porting 2022/6/29*/
+	/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+	{SHNBA815M_GC08A3_SENSOR_ID, 0xA0, gc08a3_read_region},
+	{TSPPSNP1082_S5KJN1_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c128e},
+	{TSPPSNP1269_S5KJN1_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c128e},
+	{TSPPHCP1088_HI1336_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_gt24p64b},
+	/*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+	/*Begin zihao.li for [Task][11621559] AustinTF add s5kjn1 otp config & dual camera calibration on 20211027*/
+	{TSPPSNP1269_S5KJN1_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_p24c128e},
+	/*End   zihao.li for [Task][11621559] AustinTF add s5kjn1 otp config & dual camera calibration on 20211027*/
+	/*Begin majinrui for [Task: 11653505][austintf camera otp config] 20211028*/
+	{TSPSCF0002_S5K3L6_SENSOR_ID , 0xA2, Common_read_region},
+	{SHNBMD28B_OV13B10_SENSOR_ID , 0xA2, Common_read_region},
+	/*End   majinrui for [Task: 11653505][austintf camera otp config] 20211028*/
+	{TSPPH8A1408_HI846_SENSOR_ID, 0xA0, hi846_read_region},
+	{TCL0003BA_GC08A3_SENSOR_ID, 0xA0, gc08a3_read_region},
 	{IMX230_SENSOR_ID, 0xA0, Common_read_region},
 	{S5K2T7SP_SENSOR_ID, 0xA4, Common_read_region},
 	{IMX338_SENSOR_ID, 0xA0, Common_read_region},
@@ -55,6 +89,9 @@ struct stCAM_CAL_LIST_STRUCT g_camCalList[] = {
 	{S5K5E8YXREAR2_SENSOR_ID, 0x5a, Common_read_region},
 	/*  ADD before this line */
 	{0, 0, 0}       /*end of list */
+//Begin modified by chengyixuan for CIVICPL-3060 on 2022-07-16
+#endif
+//End modified by chengyixuan for CIVICPL-3060 on 2022-07-16
 };
 
 unsigned int cam_cal_get_sensor_list(

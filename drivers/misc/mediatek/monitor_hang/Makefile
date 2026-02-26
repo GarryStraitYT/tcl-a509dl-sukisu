@@ -17,5 +17,5 @@ subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
 ifeq ($(CONFIG_MTK_ION),y)
 subdir-ccflags-y += -I$(srctree)/drivers/staging/android/mtk_ion/
 endif
-
+subdir-ccflags-y += -I$(srctree)/drivers/gpu/drm/mediatek/
 obj-$(CONFIG_MTK_HANG_DETECT)	+= monitor_hang.o

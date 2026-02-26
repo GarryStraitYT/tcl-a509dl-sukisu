@@ -1,3 +1,11 @@
 source "drivers/power/avs/Kconfig"
 source "drivers/power/reset/Kconfig"
 source "drivers/power/supply/Kconfig"
+
+# Begin added by bin.song.hz for task 9772991 on 2020-08-26
+config TCPC_WUSB3801X
+    bool "IGC WUSB3801X Configuration Channel Controller for USB Type-C"
+	default n
+	help
+	  Enable this to support WUSB3801X CC Controller for USB Type C.
+# End added by bin.song.hz for task 9772991 on 2020-08-26

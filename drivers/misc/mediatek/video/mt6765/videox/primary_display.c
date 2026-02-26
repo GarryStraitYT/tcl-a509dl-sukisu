@@ -89,6 +89,12 @@
 #include <linux/soc/mediatek/mtk-pm-qos.h>
 #endif
 
+#ifdef CONFIG_HELAEYE_BSP_LCD_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+void heraeye_lcd_fail(int lastcode);
+#endif
+
 #define MMSYS_CLK_LOW (0)
 #define MMSYS_CLK_HIGH (1)
 #define TUI_SINGLE_WINDOW_MODE (0)
@@ -103,6 +109,7 @@ static struct disp_internal_buffer_info
 static struct RDMA_CONFIG_STRUCT decouple_rdma_config;
 static struct WDMA_CONFIG_STRUCT decouple_wdma_config;
 static struct disp_mem_output_config mem_config;
+static unsigned int primary_display_set_sess_mode;
 atomic_t hwc_configing = ATOMIC_INIT(0);
 static unsigned int primary_session_id =
 	MAKE_DISP_SESSION(DISP_SESSION_PRIMARY, 0);
@@ -116,6 +123,10 @@ static unsigned int g_skip;
 /*DynFPS for debug*/
 bool g_force_cfg;
 unsigned int g_force_cfg_id;
+
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+int primary_display_setlcm_aod(int enter);
+#endif
 #if 0 //def CONFIG_TRUSTONIC_TRUSTED_UI
 static struct switch_dev disp_switch_data;
 #endif
@@ -211,6 +222,31 @@ static int primary_display_get_round_corner_mva(
 
 /* hold the wakelock to make kernel awake when primary display is on*/
 struct wakeup_source *pri_wk_lock;
+
+//Begin add by bing-zhang for 11683572 on 2021/11/29
+extern int disp_bls_set_backlight(int level_1024);
+
+int tct_bootmode = 0;
+int tct_bootmode_get(char *str)
+{
+	if (!strcmp(str,"0")) {
+		tct_bootmode = 0;
+	}else if (!strcmp(str,"1")) {
+		tct_bootmode = 1;
+	}else if (!strcmp(str,"2")) {
+		tct_bootmode = 2;
+	}else {
+		tct_bootmode = 0;
+	}
+
+	printk("%s[%d] tct_bootmode = %d\n",__func__,__LINE__,tct_bootmode);
+
+	return tct_bootmode;
+}
+
+__setup("tct_bootmode=",tct_bootmode_get);
+
+//End add by bing-zhang for 11683572 on 2021/11/29
 
 static int smart_ovl_try_switch_mode_nolock(void);
 
@@ -424,6 +460,36 @@ static enum DISP_POWER_STATE primary_set_state(enum DISP_POWER_STATE new_state)
 	return old_state;
 }
 
+//Begin add by jingqing.yan for aod mode 2021.11.25
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+int tct_pgc_pm = 0;
+int tct_pgc_lcm_ps = 0;
+//begin add by jingqing.yan for passat aod mode 2021.12.06
+
+extern void (*tct_set_aod_process_en)(unsigned int enable);
+static unsigned int aod_mode_status = 0; // for resume restore
+
+void lcm_aod_process(unsigned int enable)//yjq
+{
+	printk("tcl aod mode process\n");
+	aod_mode_status = enable;
+
+	if (0 == enable) {	
+		printk("tcl fake aod disable");
+		//primary_display_setlcm_aod(0); //aod_disable
+	} else if (1 == enable) {
+		printk("tcl fake aod enable");
+		//primary_display_setlcm_aod(1); //aod_enable
+	} else {
+		DISPINFO("error param %d", enable);
+	}
+	return;
+
+}
+//begin add by jingqing.yan for passat aod mode 2021.12.06
+#endif
+//End add by jingqing.yan for aod mode 2021.11.25
+
 /* AOD power mode API */
 enum mtkfb_power_mode primary_display_set_power_mode_nolock(
 	enum mtkfb_power_mode new_mode)
@@ -432,7 +498,12 @@ enum mtkfb_power_mode primary_display_set_power_mode_nolock(
 
 	prev_mode = pgc->pm;
 	pgc->pm = new_mode;
-
+	//Begin add by jingqing.yan for aod mode 2021.11.25
+	#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+		tct_pgc_pm = pgc->pm;
+		printk("tcl tct_pgc_pm = %d\n",tct_pgc_pm);
+	#endif
+	//End add by jingqing.yan for aod mode 2021.11.25
 	return prev_mode;
 }
 
@@ -481,7 +552,12 @@ enum lcm_power_state primary_display_set_lcm_power_state_nolock(
 
 	prev_state = pgc->lcm_ps;
 	pgc->lcm_ps = new_state;
-
+	//Begin add by jingqing.yan for aod mode 2021.11.25
+	#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	tct_pgc_lcm_ps = pgc->lcm_ps;
+	printk("tcl tct_pgc_lcm_ps = %d\n",tct_pgc_lcm_ps);
+	#endif
+	//End add by jingqing.yan for aod mode 2021.11.25
 	return prev_state;
 }
 
@@ -2245,6 +2321,9 @@ static int _DC_switch_to_DL_fast(int block)
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	int active_cfg = 0;
 #endif
+#ifdef CONFIG_MTK_HIGH_FRAME_RATE
+	unsigned int vfp;
+#endif
 
 	/* 3.destroy ovl->mem path. */
 	data_config_dc = dpmgr_path_get_last_config(pgc->ovl2mem_path_handle);
@@ -2330,6 +2409,15 @@ static int _DC_switch_to_DL_fast(int block)
 	gset_arg.is_decouple_mode = 0;
 	dpmgr_path_ioctl(pgc->dpmgr_handle, pgc->cmdq_handle_config,
 		DDP_OVL_GOLDEN_SETTING, &gset_arg);
+
+#ifdef CONFIG_MTK_HIGH_FRAME_RATE
+	if (primary_display_is_support_DynFPS()) {
+		primary_display_dynfps_get_vfp_info(&vfp, NULL);
+		DISPMSG("%s, apply vfp=%d\n", __func__, vfp);
+		dpmgr_path_ioctl(pgc->dpmgr_handle, pgc->cmdq_handle_config,
+			DDP_DSI_PORCH_CHANGE, &vfp);
+	}
+#endif
 
 	cmdqRecBackupUpdateSlot(pgc->cmdq_handle_config, pgc->rdma_buff_info,
 		0, 0);
@@ -3344,6 +3432,7 @@ static int _ovl_fence_release_callback(unsigned long userdata)
 		/*for SRT*/
 		if (primary_display_is_support_DynFPS()) {
 			/*SRT use average fps not active timing fps*/
+                        config_id = primary_display_get_current_cfg_id();
 			primary_display_get_cfg_fps(config_id, &_vsyncFPS, NULL);
 			out_fps = _vsyncFPS / 100;
 		} else {
@@ -3435,6 +3524,11 @@ static int _ovl_fence_release_callback(unsigned long userdata)
 			!primary_display_is_decouple_mode(), bandwidth);
 #endif
 
+	//Begin add by bing-zhang for SNTBBH-3212 on 2022/10/26
+	if (primary_display_is_video_mode()) {
+		primary_display_wakeup_pf_thread();
+	}
+	//End add by bing-zhang for SNTBBH-3212 on 2022/10/26
 	mmprofile_log_ex(ddp_mmp_get_events()->session_release,
 		MMPROFILE_FLAG_END, 1, userdata);
 	return ret;
@@ -3739,6 +3833,7 @@ static int update_primary_intferface_module(void)
 	return 0;
 }
 
+
 static void replace_fb_addr_to_mva(void)
 {
 #ifdef CONFIG_MTK_M4U
@@ -3824,6 +3919,9 @@ int primary_display_init(char *lcm_name, unsigned int lcm_fps,
 	if (unlikely(pgc->plcm == NULL)) {
 		DISPDBG("disp_lcm_probe returns null\n");
 		ret = DISP_STATUS_ERROR;
+#ifdef CONFIG_HELAEYE_BSP_LCD_ON
+     heraeye_lcd_fail(LCD_DRV_INIT_ERROR);
+#endif
 		goto done;
 	} else {
 		DISPCHECK("disp_lcm_probe SUCCESS\n");
@@ -3833,6 +3931,11 @@ int primary_display_init(char *lcm_name, unsigned int lcm_fps,
 	if (unlikely(lcm_param == NULL)) {
 		DISPERR("get lcm params FAILED\n");
 		ret = DISP_STATUS_ERROR;
+		
+#ifdef CONFIG_HELAEYE_BSP_LCD_ON
+heraeye_lcd_fail(LCD_DRV_PARM_ERROR);
+#endif
+
 		goto done;
 	}
 
@@ -3915,6 +4018,14 @@ int primary_display_init(char *lcm_name, unsigned int lcm_fps,
 			&corner_pattern_width, &corner_pattern_height,
 			&corner_pattern_height_bot);
 #endif
+
+
+/* Begin modify for lcm aod process */
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+//	printk("yjq aod process\n");
+	tct_set_aod_process_en = lcm_aod_process;
+#endif
+/* End modify for lcm aod process */
 
 	primary_display_set_max_layer(PRIMARY_SESSION_INPUT_LAYER_COUNT);
 
@@ -4151,7 +4262,9 @@ int primary_display_init(char *lcm_name, unsigned int lcm_fps,
 	disp_switch_data.state = DISP_ALIVE;
 	ret = switch_dev_register(&disp_switch_data);
 #endif
-
+#ifdef CONFIG_MTK_HIGH_FRAME_RATE
+	primary_display_init_multi_cfg_info();
+#endif
 	DISPCHECK("primary_display_init done\n");
 
 done:
@@ -4574,6 +4687,8 @@ int primary_suspend_release_fence(void)
 			session, i);
 		mtkfb_release_layer_fence(session, i);
 	}
+
+	mtkfb_release_present_fence(primary_session_id, gPresentFenceIndex);
 	return 0;
 }
 
@@ -4736,14 +4851,26 @@ int primary_display_suspend(void)
 		if (primary_display_get_lcm_power_state_nolock() !=
 			LCM_ON_LOW_POWER) {
 			if (pgc->plcm->drv->aod)
+			{
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+				disp_lcm_resume(pgc->plcm);
+#else
 				disp_lcm_aod(pgc->plcm, 1);
-
+#endif
+				
+			}
 			primary_display_set_lcm_power_state_nolock(
 				LCM_ON_LOW_POWER);
 		}
 	} else if (primary_display_get_power_mode_nolock() == FB_SUSPEND) {
 		DISPCHECK("[POWER]lcm suspend[begin]\n");
+		//Begin add by bing-zhang for 11683572 on 2021/11/29
+		if (tct_bootmode!=2) {
+			disp_bls_set_backlight(LCM_OFF);
+			msleep(10);
+		}
 		disp_lcm_suspend(pgc->plcm);
+		//End add by bing-zhang for 11683572 on 2021/11/29
 		DISPCHECK("[POWER]lcm suspend[end]\n");
 		mmprofile_log_ex(ddp_mmp_get_events()->primary_suspend,
 			MMPROFILE_FLAG_PULSE, 0, 6);
@@ -4865,6 +4992,59 @@ static int check_switch_lcm_mode_for_debug(void)
 
 	return 1;
 }
+//Begin add by jingqing.yan for aod mode 2021.12.13
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+int flag_exit_aod_mode = 0;
+#endif
+//End add by jingqing.yan for aod mode 2021.12.13
+int primary_display_lcm_power_on_state(int alive)
+{
+	int skip_update = 0;
+
+	if (primary_display_get_power_mode_nolock() == DOZE) {
+		if (primary_display_get_lcm_power_state_nolock() !=
+			LCM_ON_LOW_POWER) {
+
+			if (pgc->plcm->drv->aod)
+			{
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+				disp_lcm_resume(pgc->plcm);
+#else
+				disp_lcm_aod(pgc->plcm, 1);
+#endif
+			}
+			else if (!alive)
+				disp_lcm_resume(pgc->plcm);
+
+			primary_display_set_lcm_power_state_nolock(
+				LCM_ON_LOW_POWER);
+		} else
+			skip_update = 1;
+	} else if (primary_display_get_power_mode_nolock() == FB_RESUME) {
+		if (primary_display_get_lcm_power_state_nolock() != LCM_ON) {
+			DISPDBG("[POWER]lcm resume[begin]\n");
+
+			if (primary_display_get_lcm_power_state_nolock() !=
+				LCM_ON_LOW_POWER) {
+				disp_lcm_resume(pgc->plcm);
+			} else {
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+				primary_display_setlcm_aod(0);
+				//Begin add by jingqing.yan for aod mode 2021.12.13
+				flag_exit_aod_mode = 1;
+				//End add by jingqing.yan for aod mode 2021.12.13
+#else
+				disp_lcm_aod(pgc->plcm, 0);
+#endif
+				skip_update = 1;
+			}
+			DISPCHECK("[POWER]lcm resume[end]\n");
+			primary_display_set_lcm_power_state_nolock(LCM_ON);
+		}
+	}
+
+	return skip_update;
+}
 
 int primary_display_resume(void)
 {
@@ -4883,6 +5063,9 @@ int primary_display_resume(void)
 
 	_primary_path_lock(__func__);
 	if (pgc->state == DISP_ALIVE) {
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	    primary_display_lcm_power_on_state(1);
+#endif
 		DISPCHECK("primary display path is already resume, skip\n");
 		goto done;
 	}
@@ -5052,7 +5235,9 @@ int primary_display_resume(void)
 	DISPCHECK("[POWER]dpmanager re-init[end]\n");
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_resume,
 		MMPROFILE_FLAG_PULSE, 0, 3);
-
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	skip_update = primary_display_lcm_power_on_state(0);
+#else
 	if (primary_display_get_power_mode_nolock() == DOZE) {
 		if (primary_display_get_lcm_power_state_nolock() !=
 			LCM_ON_LOW_POWER) {
@@ -5077,7 +5262,7 @@ int primary_display_resume(void)
 			primary_display_set_lcm_power_state_nolock(LCM_ON);
 		}
 	}
-
+#endif
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_resume,
 		MMPROFILE_FLAG_PULSE, 0, 4);
 	if (dpmgr_path_is_busy(pgc->dpmgr_handle)) {
@@ -6751,10 +6936,12 @@ static int _config_ovl_input(struct disp_frame_cfg_t *cfg,
 			data_config->read_dum_reg[i] = 0;
 
 			/* full transparent layer */
-			cmdqRecBackupRegisterToSlot(cmdq_handle,
-				pgc->ovl_dummy_info, i,
-				disp_addr_convert
-				(DISP_REG_OVL_DUMMY_REG + ovl_base));
+			if (!primary_is_sec()) {
+				cmdqRecBackupRegisterToSlot(cmdq_handle,
+					pgc->ovl_dummy_info, i,
+					disp_addr_convert
+					(DISP_REG_OVL_DUMMY_REG + ovl_base));
+			}
 		}
 	}
 
@@ -6764,8 +6951,10 @@ static int _config_ovl_input(struct disp_frame_cfg_t *cfg,
 		/* mt6765 last OVL is DISP_MODULE_OVL0_2L */
 		unsigned long ovl_base = ovl_base_addr(DISP_MODULE_OVL0_2L);
 
-		cmdqRecBackupRegisterToSlot(cmdq_handle, pgc->ovl_status_info,
-			0, disp_addr_convert(DISP_REG_OVL_STA + ovl_base));
+		if (!primary_is_sec()) {
+			cmdqRecBackupRegisterToSlot(cmdq_handle, pgc->ovl_status_info,
+				0, disp_addr_convert(DISP_REG_OVL_STA + ovl_base));
+		}
 	}
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	/*DynFPS*/
@@ -7226,6 +7415,13 @@ err:
 int primary_display_switch_mode(int sess_mode, unsigned int session, int force)
 {
 	int ret = 0;
+
+	DISPDBG("%s+\n", __func__);
+	if (sess_mode == primary_display_set_sess_mode) {
+		DISPDBG("%s: sess_mode is same\n", __func__);
+		return ret;
+	}
+	primary_display_set_sess_mode = sess_mode;
 
 	_primary_path_lock(__func__);
 	primary_display_idlemgr_kick(__func__, 0);
@@ -7993,6 +8189,11 @@ int _set_backlight_by_cpu(unsigned int level)
 	return ret;
 }
 
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+int flag_tct_hbm_mode=0;
+
+extern int flag_hbm_enable;
+#endif
 int primary_display_setbacklight(unsigned int level)
 {
 	int ret = 0;
@@ -8006,9 +8207,15 @@ int primary_display_setbacklight(unsigned int level)
 		return 0;
 	}
 
+	#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+	printk("tcl last_level level flag_hbm_enable flag_tct_hbm_mode=%d,%d,%d,%d\n",last_level,level,flag_hbm_enable,flag_tct_hbm_mode);
+	if ((last_level == level)&&(flag_hbm_enable == flag_tct_hbm_mode))
+		return 0;
+	
+	#else
 	if (last_level == level)
 		return 0;
-
+	#endif
 	mmprofile_log_ex(ddp_mmp_get_events()->primary_set_bl,
 		MMPROFILE_FLAG_START, 0, 0);
 
@@ -8048,6 +8255,52 @@ int primary_display_setbacklight(unsigned int level)
 		MMPROFILE_FLAG_END, 0, 0);
 	return ret;
 }
+
+//begin add by jingqing.yan for passat aod mode 2021.12.06
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+static int _primary_display_set_lcm_aod(int enter)
+{
+	int ret = 0;
+	struct cmdqRecStruct *qhandle_aod = NULL;
+
+	ret = cmdqRecCreate(CMDQ_SCENARIO_DISP_ESD_CHECK, &qhandle_aod);
+	if (ret) {
+		DISPMSG("%s:failed to create cmdq handle\n", __func__);
+		return -1;
+	}
+
+	if (!primary_display_is_video_mode()) {
+		cmdqRecReset(qhandle_aod);
+		cmdqRecWait(qhandle_aod, CMDQ_SYNC_TOKEN_CABC_EOF);
+		_cmdq_handle_clear_dirty(qhandle_aod);
+
+		_cmdq_insert_wait_frame_done_token_mira(qhandle_aod);
+
+		disp_lcm_aod(enter, pgc->plcm, qhandle_aod);
+
+		cmdqRecSetEventToken(qhandle_aod, CMDQ_SYNC_TOKEN_CABC_EOF);
+		_cmdq_flush_config_handle_mira(qhandle_aod, 1);
+	}
+
+	cmdqRecDestroy(qhandle_aod);
+	qhandle_aod = NULL;
+
+	return ret;
+}
+
+int primary_display_setlcm_aod(int enter)
+{
+	primary_display_idlemgr_kick(__func__, 0);
+
+	if (primary_display_cmdq_enabled()) {
+		printk("yjq set LCM aod enter:%d\n", enter);
+		_primary_display_set_lcm_aod(enter);
+	}
+
+	return 0;
+}
+#endif
+ //end add by jingqing.yan for passat aod mode 2021.12.06 
 
 int _set_lcm_cmd_by_cmdq(unsigned int *lcm_cmd, unsigned int *lcm_count,
 	unsigned int *lcm_value)

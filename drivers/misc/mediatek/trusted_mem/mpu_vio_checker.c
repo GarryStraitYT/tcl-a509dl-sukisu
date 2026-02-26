@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
+
 
 #include <linux/errno.h>
 #include <linux/fs.h>
@@ -12,12 +13,12 @@
 #include <linux/version.h>
 #include <linux/interrupt.h>
 #include <linux/arm-smccc.h>
-#include <linux/soc/mediatek/mtk_sip_svc.h>
-#if IS_ENABLED(CONFIG_MTK_EMI)
+#include <mt-plat/mtk_secure_api.h>
+#ifdef CONFIG_MEDIATEK_EMI
 #include <memory/mediatek/emi.h>
 #endif
 
-#if IS_ENABLED(CONFIG_MTK_EMI)
+#ifdef CONFIG_MEDIATEK_EMI
 #define SECUER (1)
 #define NON_SECURE (0)
 static unsigned int is_secure(unsigned long long vio_addr)
@@ -26,8 +27,8 @@ static unsigned int is_secure(unsigned long long vio_addr)
 	unsigned int addr_h = (vio_addr >> 32);
 	unsigned int addr_l = (vio_addr & 0xFFFFFFFF);
 
-	arm_smccc_smc(MTK_SIP_KERNEL_TMEM_CONTROL, addr_h, addr_l, 0, 0, 0, 0,
-		      0, &smc_res);
+	arm_smccc_smc(MTK_SIP_TMEM_CONTROL, addr_h, addr_l, 0, 0, 0, 0, 0,
+		      &smc_res);
 
 	pr_debug("%s:%d 0x%X%X, %ld, %ld, %ld, %ld\n", __func__, __LINE__,
 		 addr_h, addr_l, smc_res.a0, smc_res.a1, smc_res.a2,
@@ -99,7 +100,7 @@ int tmem_mpu_vio_init(void)
 {
 	int ret = 0;
 
-#if IS_ENABLED(CONFIG_MTK_EMI)
+#ifdef CONFIG_MEDIATEK_EMI
 	ret = mtk_emimpu_register_callback(tmem_mpu_vio_handler);
 	if (ret) {
 		pr_err("%s:%d failed to register emi tmem handler, ret=%d!\n",
@@ -110,7 +111,7 @@ int tmem_mpu_vio_init(void)
 	pr_info("%s:%d vio checker is not registered!\n", __func__, __LINE__);
 #endif
 
-	return 0;
+	return ret;
 }
 
 void tmem_mpu_vio_exit(void)

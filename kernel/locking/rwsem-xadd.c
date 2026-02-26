@@ -19,10 +19,17 @@
 #include <linux/sched/debug.h>
 #include <linux/osq_lock.h>
 
-#ifdef CONFIG_TCT_UI_TURBO
-#include <linux/tct/uiturbo.h>
-#endif
 #include "rwsem.h"
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+#include <tcl/tcl_uxthread.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
+#ifdef CONFIG_MTK_TASK_TURBO
+#include <mt-plat/turbo_common.h>
+#endif
 
 /*
  * Guide to the rw_semaphore's count field for common values.
@@ -93,25 +100,22 @@ void __init_rwsem(struct rw_semaphore *sem, const char *name,
 	sem->owner = NULL;
 	osq_lock_init(&sem->osq);
 #endif
-#ifdef CONFIG_TCT_UI_TURBO
-	sem->ui_dep_task = NULL;
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	sem->ux_task = NULL;
+//#ifdef CONFIG_TCL_UXISO
+	raw_spin_lock_init(&sem->read_lock);
+	INIT_LIST_HEAD(&sem->owner_read);
+//#endif
+#endif
+// #endif /* VENDOR_EDIT */
+#ifdef CONFIG_MTK_TASK_TURBO
+	sem->turbo_owner = NULL;
 #endif
 }
 
 EXPORT_SYMBOL(__init_rwsem);
-
-#ifndef CONFIG_TCT_UI_TURBO
-enum rwsem_waiter_type {
-	RWSEM_WAITING_FOR_WRITE,
-	RWSEM_WAITING_FOR_READ
-};
-
-struct rwsem_waiter {
-	struct list_head list;
-	struct task_struct *task;
-	enum rwsem_waiter_type type;
-};
-#endif
 
 enum rwsem_wake_type {
 	RWSEM_WAKE_ANY,		/* Wake whatever's at head of wait list */
@@ -232,6 +236,12 @@ static void __rwsem_mark_wake(struct rw_semaphore *sem,
 
 		tsk = waiter->task;
 		get_task_struct(tsk);
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+		uxrwsem_reader_addlist(sem, tsk);
+#endif
+// #endif /* VENDOR_EDIT */
 
 		/*
 		 * Ensure calling get_task_struct() before setting the reader
@@ -266,7 +276,15 @@ __rwsem_down_read_failed_common(struct rw_semaphore *sem, int state)
 	raw_spin_lock_irq(&sem->wait_lock);
 	if (list_empty(&sem->wait_list))
 		adjustment += RWSEM_WAITING_BIAS;
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	ux_rwsem_list_add(waiter.task, &waiter.list, &sem->wait_list, sem);
+#elif defined(CONFIG_MTK_TASK_TURBO)
+	rwsem_list_add(waiter.task, &waiter.list, &sem->wait_list);
+#else
 	list_add_tail(&waiter.list, &sem->wait_list);
+#endif
 
 	/* we're now waiting on the lock, but no longer actively locking */
 	count = atomic_long_add_return(adjustment, &sem->count);
@@ -282,10 +300,16 @@ __rwsem_down_read_failed_common(struct rw_semaphore *sem, int state)
 	     adjustment != -RWSEM_ACTIVE_READ_BIAS))
 		__rwsem_mark_wake(sem, RWSEM_WAKE_ANY, &wake_q);
 
-#ifdef CONFIG_TCT_UI_TURBO
-	task_set_waiter(current, sem, WT_RWSEM);
-	rwsem_dynamic_uiturbo_enqueue(waiter.task, current,
-				      READ_ONCE(sem->owner), sem);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	rwsem_dynamic_ux_enqueue(current, waiter.task, READ_ONCE(sem->owner), sem);
+#endif
+// #endif /* VENDOR_EDIT */
+
+#ifdef CONFIG_MTK_TASK_TURBO
+	if (waiter.task)
+		rwsem_start_turbo_inherit(sem);
 #endif
 	raw_spin_unlock_irq(&sem->wait_lock);
 	wake_up_q(&wake_q);
@@ -305,19 +329,19 @@ __rwsem_down_read_failed_common(struct rw_semaphore *sem, int state)
 		schedule();
 	}
 
-#ifdef CONFIG_TCT_UI_TURBO
-	task_clear_waiter(current);
-#endif
 	__set_current_state(TASK_RUNNING);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	clear_reverse_flag(current);
+#endif
+// #endif /* VENDOR_EDIT */
 	return sem;
 out_nolock:
 	list_del(&waiter.list);
 	if (list_empty(&sem->wait_list))
 		atomic_long_add(-RWSEM_WAITING_BIAS, &sem->count);
 	raw_spin_unlock_irq(&sem->wait_lock);
-#ifdef CONFIG_TCT_UI_TURBO
-	task_clear_waiter(current);
-#endif
 	__set_current_state(TASK_RUNNING);
 	return ERR_PTR(-EINTR);
 }
@@ -541,6 +565,13 @@ __rwsem_down_write_failed_common(struct rw_semaphore *sem, int state)
 	struct rwsem_waiter waiter;
 	struct rw_semaphore *ret = sem;
 	DEFINE_WAKE_Q(wake_q);
+	// #ifdef VENDOR_EDIT
+	// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+	struct task_struct *lock_owner = NULL;
+#endif
+	// #endif /* VENDOR_EDIT */
 
 	/* undo write bias from down_write operation, stop active locking */
 	count = atomic_long_sub_return(RWSEM_ACTIVE_WRITE_BIAS, &sem->count);
@@ -562,7 +593,16 @@ __rwsem_down_write_failed_common(struct rw_semaphore *sem, int state)
 	if (list_empty(&sem->wait_list))
 		waiting = false;
 
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	ux_rwsem_list_add(waiter.task, &waiter.list, &sem->wait_list, sem);
+#elif defined(CONFIG_MTK_TASK_TURBO)
+	rwsem_list_add(waiter.task, &waiter.list, &sem->wait_list);
+#else
 	list_add_tail(&waiter.list, &sem->wait_list);
+#endif
+// #endif /* VENDOR_EDIT */
 
 	/* we're now waiting on the lock, but no longer actively locking */
 	if (waiting) {
@@ -593,11 +633,18 @@ __rwsem_down_write_failed_common(struct rw_semaphore *sem, int state)
 	} else
 		count = atomic_long_add_return(RWSEM_WAITING_BIAS, &sem->count);
 
-#ifdef CONFIG_TCT_UI_TURBO
-	task_set_waiter(current, sem, WT_RWSEM);
-	rwsem_dynamic_uiturbo_enqueue(waiter.task, current,
-				      READ_ONCE(sem->owner), sem);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+//#ifdef CONFIG_TCL_UXISO
+	lock_owner = READ_ONCE(sem->owner);
+	rwsem_dynamic_ux_enqueue(waiter.task, current, lock_owner, sem);
+#elif defined(CONFIG_MTK_TASK_TURBO)
+	/* inherit if current is turbo */
+	rwsem_start_turbo_inherit(sem);
 #endif
+// #endif /* VENDOR_EDIT */
+
 	/* wait until we successfully acquire the lock */
 	set_current_state(state);
 	while (true) {
@@ -616,21 +663,35 @@ __rwsem_down_write_failed_common(struct rw_semaphore *sem, int state)
 
 		raw_spin_lock_irq(&sem->wait_lock);
 	}
-#ifdef CONFIG_TCT_UI_TURBO
-	task_clear_waiter(current);
-#endif
 	__set_current_state(TASK_RUNNING);
+
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	clear_reverse_flag(current);
+//#ifdef CONFIG_TCL_UXISO
+	rwsem_uxreader_clear(sem, current, lock_owner);
+//#endif
+#endif
+// #endif /* VENDOR_EDIT */
+
 	list_del(&waiter.list);
 	raw_spin_unlock_irq(&sem->wait_lock);
 
 	return ret;
 
 out_nolock:
-#ifdef CONFIG_TCT_UI_TURBO
-	task_clear_waiter(current);
-#endif
 	__set_current_state(TASK_RUNNING);
 	raw_spin_lock_irq(&sem->wait_lock);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+//#ifdef CONFIG_TCL_UXISO
+	clear_reverse_flag(current);
+	rwsem_uxreader_clear(sem, current, lock_owner);
+//#endif
+#endif
+// #endif /* VENDOR_EDIT */
 	list_del(&waiter.list);
 	if (list_empty(&sem->wait_list))
 		atomic_long_add(-RWSEM_WAITING_BIAS, &sem->count);
@@ -729,9 +790,13 @@ locked:
 	if (!list_empty(&sem->wait_list))
 		__rwsem_mark_wake(sem, RWSEM_WAKE_ANY, &wake_q);
 
-#ifdef CONFIG_TCT_UI_TURBO
-	rwsem_dynamic_uiturbo_dequeue(sem, current);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	rwsem_dynamic_ux_dequeue(sem, current);
 #endif
+// #endif /* VENDOR_EDIT */
+
 	raw_spin_unlock_irqrestore(&sem->wait_lock, flags);
 	wake_up_q(&wake_q);
 
@@ -761,12 +826,3 @@ struct rw_semaphore *rwsem_downgrade_wake(struct rw_semaphore *sem)
 	return sem;
 }
 EXPORT_SYMBOL(rwsem_downgrade_wake);
-
-#ifdef CONFIG_TCT_UI_TURBO
-struct task_struct *rwsem_lock_owner(void *wo)
-{
-	struct rw_semaphore *sem = wo;
-	struct task_struct *owner = READ_ONCE(sem->owner);
-	return rwsem_owner_is_writer(owner) ? owner : NULL;
-}
-#endif

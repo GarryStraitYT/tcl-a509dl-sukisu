@@ -9,9 +9,15 @@
 #include <linux/scatterlist.h>
 
 #include <trace/events/block.h>
-#include <mt-plat/mtk_blocktag.h> /* MTK PATCH */
 
 #include "blk.h"
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+#include <tcl/tcl_fgio.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 static struct bio *blk_bio_discard_split(struct request_queue *q,
 					 struct bio *bio,
@@ -421,9 +427,6 @@ static int __blk_bios_map_sg(struct request_queue *q, struct bio *bio,
 		bio_for_each_segment(bvec, bio, iter) {
 			__blk_segment_map_sg(q, &bvec, sglist, &bvprv, sg,
 					     &nsegs, &cluster);
-			#ifdef CONFIG_MTK_BLOCK_TAG
-			mtk_btag_pidlog_map_sg(q, bio, &bvec);
-			#endif
 		}
 
 	return nsegs;
@@ -717,6 +720,14 @@ static struct request *attempt_merge(struct request_queue *q,
 	if (req_op(req) != req_op(next))
 		return NULL;
 
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+	if (req_op_fg(req) != req_op_fg(next))
+		return NULL;
+#endif
+// #endif /* VENDOR_EDIT */
+
 	if (rq_data_dir(req) != rq_data_dir(next)
 	    || req->rq_disk != next->rq_disk
 	    || req_no_special_merge(next))
@@ -846,6 +857,14 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
 
 	if (req_op(rq) != bio_op(bio))
 		return false;
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+	if (req_op_fg(rq) != bio_op_fg(bio))
+		return false;
+#endif
+// #endif /* VENDOR_EDIT */
 
 	/* different data direction or already started, don't merge */
 	if (bio_data_dir(bio) != rq_data_dir(rq))

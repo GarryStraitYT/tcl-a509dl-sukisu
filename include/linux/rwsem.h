@@ -39,17 +39,27 @@ struct rw_semaphore {
 	 */
 	struct task_struct *owner;
 #endif
+#ifdef CONFIG_MTK_TASK_TURBO
+	struct task_struct *turbo_owner;
+#endif
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 	struct lockdep_map	dep_map;
 #endif
+
+// #ifdef VENDOR_EDIT
+// #ifdef CONFIG_TCL_UXEXPRESS
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+	struct task_struct *ux_task;
+	raw_spinlock_t read_lock;
+	struct list_head owner_read;
+// #endif
+// #endif /* VENDOR_EDIT */
+
         /* NOTICE: m_count is a vendor variable used for the config
          * CONFIG_RWSEM_PRIO_AWARE. This is included here to maintain ABI
          * compatibility with our vendors */
         /* count for waiters preempt to queue in wait list */
 	long m_count;
-#ifdef CONFIG_TCT_UI_TURBO
-	struct task_struct *ui_dep_task;
-#endif
 };
 
 /*
@@ -85,26 +95,51 @@ static inline int rwsem_is_locked(struct rw_semaphore *sem)
 # define __RWSEM_DEP_MAP_INIT(lockname)
 #endif
 
-#ifdef CONFIG_TCT_UI_TURBO
+// #ifdef VENDOR_EDIT
+// #ifdef CONFIG_TCL_UXEXPRESS
+// jiajiun.xu@arch 2020/11/05 add for ux thread
 #ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-#define __RWSEM_OPT_INIT(lockname) , .osq = OSQ_LOCK_UNLOCKED, .owner = NULL, .ui_dep_task = NULL
+#define __RWSEM_OPT_INIT(lockname) , .osq = OSQ_LOCK_UNLOCKED, .owner = NULL, .ux_task  =NULL
 #else
 #define __RWSEM_OPT_INIT(lockname)
 #endif
+//#else
+//#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
+//#define __RWSEM_OPT_INIT(lockname) , .osq = OSQ_LOCK_UNLOCKED, .owner = NULL, .ux_task  =NULL
+//#else
+//#define __RWSEM_OPT_INIT(lockname)
+//#endif
+//#endif
+
+#ifdef CONFIG_MTK_TASK_TURBO
+#define __RWSEM_TURBO_OWNER_INIT(lock_name)	 .turbo_owner = NULL
 #else
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-#define __RWSEM_OPT_INIT(lockname) , .osq = OSQ_LOCK_UNLOCKED, .owner = NULL
-#else
-#define __RWSEM_OPT_INIT(lockname)
-#endif
+#define __RWSEM_TURBO_OWNER_INIT(lock_name)
 #endif
 
+// #ifdef VENDOR_EDIT
+// #ifdef CONFIG_TCL_UXEXPRESS
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#define __RWSEM_INITIALIZER(name)				\
+	{ __RWSEM_INIT_COUNT(name),				\
+	  .wait_list = LIST_HEAD_INIT((name).wait_list),	\
+	  .owner_read = LIST_HEAD_INIT((name).owner_read),	\
+	  .read_lock = __RAW_SPIN_LOCK_UNLOCKED(name.read_lock),\
+	  .wait_lock = __RAW_SPIN_LOCK_UNLOCKED(name.wait_lock)	\
+	  __RWSEM_OPT_INIT(name)				\
+	  __RWSEM_DEP_MAP_INIT(name),				\
+	  __RWSEM_TURBO_OWNER_INIT(name)}
+//#else
+/*
 #define __RWSEM_INITIALIZER(name)				\
 	{ __RWSEM_INIT_COUNT(name),				\
 	  .wait_list = LIST_HEAD_INIT((name).wait_list),	\
 	  .wait_lock = __RAW_SPIN_LOCK_UNLOCKED(name.wait_lock)	\
 	  __RWSEM_OPT_INIT(name)				\
-	  __RWSEM_DEP_MAP_INIT(name) }
+	  __RWSEM_DEP_MAP_INIT(name),				\
+	  __RWSEM_TURBO_OWNER_INIT(name)}
+//#endif
+*/
 
 #define DECLARE_RWSEM(name) \
 	struct rw_semaphore name = __RWSEM_INITIALIZER(name)

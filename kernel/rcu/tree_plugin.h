@@ -32,7 +32,14 @@
 #include <linux/sched/isolation.h>
 #include <uapi/linux/sched/types.h>
 #include "../time/tick-internal.h"
-
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2021/08/10, add kfault_monitor
+#ifdef CONFIG_HELAEYE_BSP_HUNG_TASK
+#include <tcl/tkperf.h>
+#include <linux/sched/debug.h>
+#include <linux/tcl_kversion.h>
+#endif
+// #endif /* VENDER_EDIT */
 #ifdef CONFIG_RCU_BOOST
 
 #include "../locking/rtmutex_common.h"
@@ -661,6 +668,15 @@ static int rcu_print_task_stall(struct rcu_node *rnp)
 {
 	struct task_struct *t;
 	int ndetected = 0;
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2021/08/10, add kfault_monitor
+#ifdef CONFIG_HELAEYE_BSP_HUNG_TASK
+	char str_backtrace[256];
+	char time_stamp[32];
+	int i;
+	struct task_struct *tsk;
+#endif
+// #endif /* VENDER_EDIT */
 
 	if (!rcu_preempt_blocked_readers_cgp(rnp))
 		return 0;
@@ -669,6 +685,19 @@ static int rcu_print_task_stall(struct rcu_node *rnp)
 		       struct task_struct, rcu_node_entry);
 	list_for_each_entry_continue(t, &rnp->blkd_tasks, rcu_node_entry) {
 		pr_cont(" P%d", t->pid);
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2021/08/10, add kfault_monitor
+#ifdef CONFIG_HELAEYE_BSP_HUNG_TASK
+		get_time_stamp(time_stamp, 32);
+		stack_trace_save_tsk(t, str_backtrace, sizeof(str_backtrace));
+		heraeye_log(GFP_KERNEL, "%s %s %d %d %s %s %s", "hung_task_info",
+			t->comm, t->pid, CONFIG_RCU_CPU_STALL_TIMEOUT,
+			str_backtrace, time_stamp, TCL_KVERSION);
+		pr_err("%s %s %d %d %s %s %s", "hung_task_info",
+                        t->comm, t->pid, CONFIG_RCU_CPU_STALL_TIMEOUT,
+                        str_backtrace, time_stamp, TCL_KVERSION);
+
+#endif
 		ndetected++;
 	}
 	rcu_print_task_stall_end();

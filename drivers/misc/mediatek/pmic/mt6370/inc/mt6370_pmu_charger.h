@@ -137,11 +137,13 @@
 #define MT6370_MASK_CHG_RST	(1 << MT6370_SHIFT_CHG_RST)
 
 /* ========== CHG_CTRL1 0x11 ============ */
-#define MT6370_SHIFT_OPA_MODE	0
-#define MT6370_SHIFT_HZ_EN	2
+#define MT6370_SHIFT_OPA_MODE		0
+#define MT6370_SHIFT_HZ_EN		2
+#define MT6370_SHIFT_FORCE_SLEEP	3
 
-#define MT6370_MASK_OPA_MODE	(1 << MT6370_SHIFT_OPA_MODE)
-#define MT6370_MASK_HZ_EN	(1 << MT6370_SHIFT_HZ_EN)
+#define MT6370_MASK_OPA_MODE		(1 << MT6370_SHIFT_OPA_MODE)
+#define MT6370_MASK_HZ_EN		(1 << MT6370_SHIFT_HZ_EN)
+#define MT6370_MASK_FORCE_SLEEP		(1 << MT6370_SHIFT_FORCE_SLEEP)
 
 /* ========== CHG_CTRL2 0x12 ============ */
 #define MT6370_SHIFT_CHG_EN		0
@@ -277,6 +279,13 @@
 #define MT6370_MASK_VG_LVL_SEL	(1 << MT6370_SHIFT_LVL_SEL)
 #define MT6370_MASK_VG_EN	(1 << MT6370_SHIFT_VG_EN)
 
+//Begin add by tangshan.bai for CIVIC-3144 on 2022-07-20
+#if defined(TARGET_BUILD_MMITEST) || defined(TARGET_BUILD_CERTIFICATION) || defined(TARGET_BUILD_GCF)
+#define MT6370_SHIFT_PP_OFF_RST_DIS 7
+#define MT6370_MASK_PP_OFF_RST_DIS  (1 << MT6370_SHIFT_PP_OFF_RST_DIS)
+#endif
+//End add by tangshan.bai for CIVIC-3144 on 2022-07-20
+
 /* ========== CHG_CTRL17 0x2B ============ */
 #define MT6370_SHIFT_PUMPX_EN		7
 #define MT6370_SHIFT_PUMPX_20_10	6
@@ -317,6 +326,9 @@
 
 #define MT6370_MASK_DC_VBUSOV_EN	(1 << MT6370_SHIFT_DC_VBUSOV_EN)
 #define MT6370_MASK_DC_VBUSOV_LVL	0x7C
+
+/* ========== CHGHIDDENCTRL15 0x3E ============ */
+#define MT6370_MASK_dADC_IBIAS_SEL	(0x0C)
 
 /* ========== CHG_STAT 0x4A ============ */
 #define MT6370_SHIFT_ADC_STAT	0

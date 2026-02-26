@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+
 #ifndef TEE_GP_DEF_H_
 #define TEE_GP_DEF_H_
 

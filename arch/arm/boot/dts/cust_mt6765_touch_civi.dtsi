@@ -1,0 +1,139 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+/* TOUCH start */
+//Begin added by yan.gong for CIVIC-3003 on 2022-07-12
+/* TOUCH start */
+&touch {
+	tpd-resolution = <720 1612>;
+	use-tpd-button = <0>;
+	tpd-key-num = <3>;
+	tpd-key-local= <139 172 158 0>;
+	tpd-key-dim-local = <90 883 100 40 230
+				 883 100 40 370 883 100 40 0 0 0 0>;
+	tpd-max-touch-num = <10>;
+	tpd-filter-enable = <0>;
+	tpd-filter-pixel-density = <146>;
+	tpd-filter-custom-prameters = <0 0 0 0 0 0 0 0 0 0 0 0>;
+	tpd-filter-custom-speed = <0 0 0>;
+	pinctrl-names = "default", "state_eint_as_int", "state_eint_output0",
+		"state_eint_output1", "state_rst_output0", "state_rst_output1";
+	pinctrl-0 = <&ctp_pins_default>;
+	pinctrl-1 = <&ctp_pins_eint_as_int>;
+	pinctrl-2 = <&ctp_pins_eint_output0>;
+	pinctrl-3 = <&ctp_pins_eint_output1>;
+	pinctrl-4 = <&ctp_pins_rst_output0>;
+	pinctrl-5 = <&ctp_pins_rst_output1>;
+	status = "okay";
+};
+
+&pio {
+	ctp_pins_default: ctp_pins_default 
+	{
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO4__FUNC_GPIO4>;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+	ctp_pins_eint_as_int: eint@0 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO4__FUNC_GPIO4>;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+	ctp_pins_eint_output0: eintoutput0 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO4__FUNC_GPIO4>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	ctp_pins_eint_output1: eintoutput1 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO4__FUNC_GPIO4>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	ctp_pins_rst_output0: rstoutput0 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO174__FUNC_GPIO174>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	ctp_pins_rst_output1: rstoutput1 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO174__FUNC_GPIO174>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+};
+
+&spi2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+	mediatek,pad-select = <0>,<1>;
+
+	chipone@0 {
+		compatible = "chipone,cts";
+		pinctrl-names = "state_spi_all";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+
+		/* Charger detect */
+		chipone,touch-charger-detect-enable;
+		chipone,touch-charger-detect-type = "notify"; /* notify, poll */
+		chipone,touch-charger-detect-psy-name = "mt6370_pmu_charger";
+		chipone,touch-charger-detect-psp = "POWER_SUPPLY_PROP_ONLINE";
+		chipone,touch-charger-detect-psp-poll-interval = <1000>;
+
+		/* Earjack detect */
+
+	//Begin added by zhangkun for CIVIC-3090 on 2022-08-08
+		//chipone,touch-earjack-detect-enable;
+		/* MTK:  /sys/bus/platform/drivers/Accdet_Driver/state,
+		   Sprd: /sys/kernel/headset/state
+		   QCOM: None, and disable it */
+		//chipone,touch-earjack-state-filepath = "/sys/bus/platform/drivers/Accdet_Driver/state";
+		//chipone,touch-earjack-state-filepath = "/sys/bus/platform/drivers/pmic-codec-accdet/state";
+		//chipone,touch-earjack-poll-interval = <1000>;
+	//End added by zhangkun for CIVIC-3090 on 2022-08-08
+
+	//Begin added by liangjiaqiang for CIVIC-3090 on 2022-07-29
+        /* For tp selftest */
+		chipone,test-reset-pin;
+		//chipone,test-int-pin;
+		chipone,test-rawdata;
+		chipone,test-rawdata-frames      = <1>;
+		chipone,rawdata-min              = <1104>;	//base2000, ±40%
+		chipone,rawdata-max              = <3024>;
+		chipone,test-noise;
+		chipone,test-noise-frames        = <50>;
+		chipone,noise-max                = <130>;
+		chipone,test-open;
+		chipone,open-min                 = <1300>;
+		chipone,test-short;
+		chipone,short-min                = <1500>;
+		chipone,test-compensate-cap;
+		chipone,compensate-cap-min       = <1>;
+		chipone,compensate-cap-max       = <126>;
+	//End added by liangjiaqiang for CIVIC-3090 on 2022-07-29
+	};
+
+	focaltech@1 {
+		compatible = "focaltech,fts";
+		reg = <1>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+	};
+};
+/* TOUCH end */
+/* TOUCH end */
+/* TOUCH end */
+//End added by yan.gong for CIVIC-3003 on 2022-07-12
+/* TOUCH end */

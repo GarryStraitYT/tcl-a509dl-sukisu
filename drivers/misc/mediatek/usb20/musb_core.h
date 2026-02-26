@@ -13,7 +13,15 @@
 #include <linux/usb/gadget.h>
 #include <linux/usb.h>
 #include <linux/usb/otg.h>
-#include "musb.h"
+#include <linux/usb/role.h>
+#include <musb.h>
+
+/* Begin modified by jin.wang for task 11356632 on 2021-07-22 */
+#if defined(CONFIG_MTK_MUSB_DUAL_ROLE)
+#include <musb_dr.h>
+#endif
+/* End modified by jin.wang for task 11356632 on 2021-07-22 */
+
 #include <linux/pm_wakeup.h>
 #include <linux/version.h>
 #include <linux/clk.h>
@@ -36,7 +44,6 @@ struct musb;
 struct musb_hw_ep;
 struct musb_ep;
 extern int musb_fake_CDP;
-extern int kernel_init_done;
 extern int musb_force_on;
 extern int musb_host_dynamic_fifo;
 extern int musb_host_dynamic_fifo_usage_msk;
@@ -48,7 +55,6 @@ extern long musb_host_db_delay_ns;
 extern long musb_host_db_workaround_cnt;
 extern int mtk_host_audio_free_ep_udelay;
 
-extern struct musb *mtk_musb;
 extern bool mtk_usb_power;
 extern ktime_t ktime_ready;
 extern int ep_config_from_table_for_host(struct musb *musb);
@@ -94,10 +100,6 @@ extern void musb_bug(void);
 #include "musb_gadget.h"
 #include <linux/usb/hcd.h>
 #include "musb_host.h"
-
-#ifdef CONFIG_DUAL_ROLE_USB_INTF
-#include <linux/usb/class-dual-role.h>
-#endif
 
 #define is_peripheral_active(m)		(!(m)->is_host)
 #define is_host_active(m)		((m)->is_host)
@@ -174,8 +176,6 @@ enum musb_g_ep0_state {
 #define OTG_TIME_B_ASE0_BRST	100	/* min 3.125 ms */
 #endif
 
-
-
 /*************************** REGISTER ACCESS ********************************/
 
 #define musb_ep_select(_mbase, _epnum) \
@@ -225,6 +225,7 @@ struct musb_platform_ops {
 	void (*disable_clk)(struct musb *musb);
 	void (*prepare_clk)(struct musb *musb);
 	void (*unprepare_clk)(struct musb *musb);
+	void (*enable_wakeup)(struct musb *musb, bool enable);
 };
 
 struct musb_hw_ep {
@@ -361,7 +362,8 @@ struct musb {
 #endif
 
 	struct usb_phy *xceiv;
-	unsigned int efuse_val;
+	struct phy *phy;
+
 	u8 xceiv_event;
 
 	int nIrq;
@@ -377,7 +379,6 @@ struct musb {
 	u8 nr_endpoints;
 
 	int (*board_set_power)(int state);
-	void (*usb_rev6_setting)(int value);
 
 	u8 min_power;		/* vbus for periph, in mA/2 */
 
@@ -461,11 +462,17 @@ struct musb {
 	enum usb_otg_event otg_event;
 #endif
 	struct workqueue_struct *st_wq;
-#ifdef CONFIG_DUAL_ROLE_USB_INTF
-	struct dual_role_phy_instance *dr_usb;
-#endif /* CONFIG_DUAL_ROLE_USB_INTF */
 	struct power_supply *usb_psy;
 	struct notifier_block psy_nb;
+
+#if defined(CONFIG_USB_ROLE_SWITCH)
+	struct otg_switch_mtk *otg_sx;
+#endif
+	struct mt_usb_glue *glue;
+
+	/* host suspend */
+	bool host_suspend;
+	bool usb_connected;
 };
 
 static inline struct musb *gadget_to_musb(struct usb_gadget *g)
@@ -610,6 +617,18 @@ static inline void musb_platform_unprepare_clk(struct musb *musb)
 		musb->ops->unprepare_clk(musb);
 }
 
+static inline void musb_platform_enable_wakeup(struct musb *musb)
+{
+	if (musb->ops->enable_wakeup)
+		musb->ops->enable_wakeup(musb, true);
+}
+
+static inline void musb_platform_disable_wakeup(struct musb *musb)
+{
+	if (musb->ops->enable_wakeup)
+		musb->ops->enable_wakeup(musb, false);
+}
+
 /* #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0) */
 static inline const char *otg_state_string(enum usb_otg_state state)
 {
@@ -620,10 +639,13 @@ enum {
 	USB_DPIDLE_ALLOWED = 0,
 	USB_DPIDLE_FORBIDDEN,
 	USB_DPIDLE_SRAM,
-	USB_DPIDLE_TIMER
+	USB_DPIDLE_TIMER,
+	USB_DPIDLE_SUSPEND,
+	USB_DPIDLE_RESUME
 };
 extern void usb_hal_dpidle_request(int mode);
 extern void register_usb_hal_dpidle_request(void (*function)(int));
+extern void usb_hal_disconnect_check(void);
 extern void register_usb_hal_disconnect_check(void (*function)(void));
 extern void wake_up_bat(void);
 extern void wait_tx_done(u8 epnum, unsigned int timeout_ns);

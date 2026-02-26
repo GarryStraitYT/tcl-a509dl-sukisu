@@ -75,12 +75,28 @@ int pe2_hal_init_hardware(struct chg_alg_device *alg)
 		return -ENODEV;
 	}
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+		|| (alg->config == DUAL_CHARGERS_IN_SERIES)) {
+		hal->chg2_dev = get_charger_by_name("secondary_chg");
+		if (hal->chg2_dev)
+			pr_notice("%s: Found secondary charger\n", __func__);
+		else {
+			pr_notice("%s: Error : can't find secondary charger\n",
+				__func__);
+			//return -ENODEV;
+		}
+	}
+#else
 	hal->chg2_dev = get_charger_by_name("secondary_chg");
 	if (hal->chg2_dev)
 		pr_notice("%s: Found secondary charger\n", __func__);
 	else
 		pr_notice("%s: Error : can't find secondary charger\n",
 			__func__);
+#endif
+/* End mod by jin.wang */
 
 	return 0;
 }
@@ -101,26 +117,48 @@ int pe2_hal_get_uisoc(struct chg_alg_device *alg)
 {
 	union power_supply_propval prop;
 	struct power_supply *bat_psy = NULL;
-	int ret;
+	int ret = 50;
 	struct mtk_pe20 *pe2;
 
 	if (alg == NULL)
 		return -EINVAL;
 
 	pe2 = dev_get_drvdata(&alg->dev);
-	bat_psy = devm_power_supply_get_by_phandle(&pe2->pdev->dev,
-						       "gauge");
+	bat_psy = pe2->bat_psy;
+
+	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+		pr_notice("%s retry to get pe2->bat_psy\n", __func__);
+		bat_psy = devm_power_supply_get_by_phandle(&pe2->pdev->dev, "gauge");
+		pe2->bat_psy = bat_psy;
+	}
+
 	if (bat_psy == NULL || IS_ERR(bat_psy)) {
 		pr_notice("%s Couldn't get bat_psy\n", __func__);
 		ret = 50;
 	} else {
 		ret = power_supply_get_property(bat_psy,
 			POWER_SUPPLY_PROP_CAPACITY, &prop);
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		if (!ret) {
+			ret = prop.intval;
+		} else {
+			pr_err("%s Couldn't read batt soc\n", __func__);
+			ret = 50;
+		}
+#else
 		ret = prop.intval;
+#endif
+/* End mod by jin.wang */
 	}
 
+/* Begin del by jin.wang task 2064 on 2021.10.25 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	pr_notice("%s:%d\n", __func__,
 		ret);
+#endif
+/* End del by jin.wang */
+
 	return ret;
 }
 
@@ -145,7 +183,12 @@ int pe2_hal_get_charger_type(struct chg_alg_device *alg)
 			ret = info->chr_type;
 	}
 
+/* Begin del by jin.wang task 2064 on 2021.10.25 */
+#if !defined(CONFIG_TCT_CHARGER)
 	pr_notice("%s type:%d\n", __func__, ret);
+#endif
+/* End del by jin.wang */
+
 	return ret;
 }
 
@@ -326,8 +369,14 @@ int pe2_hal_get_vbat(struct chg_alg_device *alg)
 
 	pe2 = dev_get_drvdata(&alg->dev);
 
-	bat_psy = devm_power_supply_get_by_phandle(&pe2->pdev->dev,
-						       "gauge");
+	bat_psy = pe2->bat_psy;
+
+	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+		pr_notice("%s retry to get pe2->bat_psy\n", __func__);
+		bat_psy = devm_power_supply_get_by_phandle(&pe2->pdev->dev, "gauge");
+		pe2->bat_psy = bat_psy;
+	}
+
 	if (bat_psy == NULL || IS_ERR(bat_psy)) {
 		pr_notice("%s Couldn't get bat_psy\n", __func__);
 		ret = 3999;
@@ -353,8 +402,14 @@ int pe2_hal_get_ibat(struct chg_alg_device *alg)
 		return -EINVAL;
 
 	pe2 = dev_get_drvdata(&alg->dev);
-	bat_psy = devm_power_supply_get_by_phandle(&pe2->pdev->dev,
-						       "gauge");
+	bat_psy = pe2->bat_psy;
+
+	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+		pr_notice("%s retry to get pe2->bat_psy\n", __func__);
+		bat_psy = devm_power_supply_get_by_phandle(&pe2->pdev->dev, "gauge");
+		pe2->bat_psy = bat_psy;
+	}
+
 	if (bat_psy == NULL || IS_ERR(bat_psy)) {
 		pr_notice("%s Couldn't get bat_psy\n", __func__);
 		ret = 0;
@@ -503,11 +558,23 @@ int pe2_hal_charger_enable_chip(struct chg_alg_device *alg,
 	if (chgidx == CHG1 && hal->chg1_dev != NULL)
 		ret = charger_dev_enable_chip(hal->chg1_dev, enable);
 	else if (chgidx == CHG2 && hal->chg2_dev != NULL) {
+/* Begin del by jin.wang task 2064 on 2021.10.25 */
+#if !defined(CONFIG_TCT_CHARGER)
 		pr_notice("%s idx:%d %d test\n", __func__, chgidx, enable);
+#endif
+/* End del by jin.wang */
 		ret = charger_dev_enable_chip(hal->chg2_dev, enable);
 	}
+
+/* Begin mod by jin.wang task 2064 on 2021.10.25 */
+#if defined(CONFIG_TCT_CHARGER)
+	pr_notice("%s(): idx:%d,%d\n", __func__, chgidx, enable);
+#else
 	pr_notice("%s idx:%d %d %d\n", __func__, chgidx, enable,
-		hal->chg2_dev != NULL);
+				hal->chg2_dev != NULL);
+#endif
+/* End mod by jin.wang */
+
 	return 0;
 }
 

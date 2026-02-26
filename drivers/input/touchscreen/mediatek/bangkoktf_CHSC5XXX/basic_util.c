@@ -1,5 +1,4 @@
 #include "basic_util.h"
-#include <linux/delay.h>
 unsigned short caculate_checksum_u16(unsigned short * buf, unsigned short length)
 {
     unsigned short sum, len, i;
@@ -33,17 +32,7 @@ unsigned int caculate_checksum_ex(unsigned char * buf, unsigned short length)
         checkex += (unsigned short)(k * buf[k]);
     }
 
-    combchk = (checkex<<16) | check;
+	combchk = (checkex<<16) | check;
 
     return combchk;
-}
-
-void delay_us(int usecs)
-{
-    while(usecs > 1000)
-    {
-        udelay(1000);
-        usecs -= 1000;
-    }
-    udelay(usecs);
 }

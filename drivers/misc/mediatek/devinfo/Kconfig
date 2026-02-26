@@ -1,0 +1,6 @@
+config KERNEL_ENV_TCT
+	bool "kernel readonly environment, app will use it"
+	default n
+	help
+	  This option enables support for kernel environment
+

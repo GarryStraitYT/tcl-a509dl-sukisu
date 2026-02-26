@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _H_MEMORY_LAYOUT_H_
+#define _H_MEMORY_LAYOUT_H_
+
+/* dummy header */
+#define DUMMY_MEMORY_LAYOUT
+
+#endif

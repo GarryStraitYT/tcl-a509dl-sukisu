@@ -1,12 +1,96 @@
 # SPDX-License-Identifier: GPL-2.0
 subdir-ccflags-$(CONFIG_POWER_SUPPLY_DEBUG) := -DDEBUG
+ifeq ($(CONFIG_MACH_MT6768),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6739),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6771),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6781),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6785),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6877),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6833),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6853),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6873),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6885),y)
+obj-y += mediatek/
+else ifeq ($(CONFIG_MACH_MT6893),y)
+obj-y += mediatek/
+else
 subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/usb20
 subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc/inc
 subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/power_throttling
 
+obj-$(CONFIG_CHARGER_CROS_USBPD)	+= cros_usbpd-charger.o
+# Begin added by bin.song.hz for task 9672905 on 2020-07-25
+obj-$(CONFIG_MTK_BQ25890H_SUPPORT) += bq25890h.o
+# End added by bin.song.hz for task 9672905 on 2020-07-25
+
+# Begin add by jin.wang for jira 5195 at 2021-12-27
+obj-$(CONFIG_CHARGER_SGM4154X) += sgm4154x.o
+# End add by jin.wang
+# Begin modified by zhangkun for MODEL3-1888 on 2022-09-19
+obj-$(CONFIG_CHARGER_MODEL3_RT9471) += model3_rt9471.o
+# End modified by zhangkun for MODEL3-1888 on 2022-09-19
+obj-$(CONFIG_CHARGER_BQ25601) += bq25601.o
+
+# Begin added by bitao.xiong for BORATMO-3006 on 2022-06-17
+obj-$(CONFIG_CHARGER_ETA6963) += eta6963.o
+# End added by bitao.xiong for BORATMO-3006 on 2022-06-17
+
+# Begin added by bitao.xiong for alm-11715746 on 2022-03-19
+obj-$(CONFIG_CHARGER_SGM41513) += sgm41513.o
+# End added by bitao.xiong for alm-11715746 on 2022-03-19
+# Begin added by weijun for LUNATMO-1812 on 2022-05-21
+obj-$(CONFIG_CHARGER_SGM41513_MASTER) += sgm41513_master.o
+obj-$(CONFIG_CHARGER_SGM41513_SLAVE) += sgm41513_slave.o
+# End added by weijun for LUNATMO-1812 on 2022-05-21
+
+# Begin added by bitao.xiong for task-11599163 on 2021-10-21
+obj-$(CONFIG_CHARGER_BQ2589X) += bq2589x_charger.o
+obj-$(CONFIG_CHARGER_BQ25601_SLAVE) += bq25601_slave.o
+# End added by bitao.xiong for task-11599163 on 2021-10-21
+obj-$(CONFIG_CHARGER_RT9458) += rt9458.o
+obj-$(CONFIG_CHARGER_RT9465) += rt9465.o
+obj-$(CONFIG_CHARGER_RT9466) += rt9466.o
+obj-$(CONFIG_CHARGER_RT9467) += rt9467.o
+obj-$(CONFIG_CHARGER_RT9471) += rt9471.o
+obj-$(CONFIG_CHARGER_MT6360) += mt6360_charger.o
+obj-$(CONFIG_BATTERY_MT6357) += mt6357_battery.o
+mt6357_battery-objs := mtk_battery_coulomb_service.o mtk_battery.o mtk_battery_algo.o  mt6357-gauge.o mtk_battery_daemon.o
+obj-$(CONFIG_BATTERY_MT6359) += mt6359_battery.o
+mt6359_battery-objs := mtk_battery_coulomb_service.o mtk_battery.o mtk_battery_algo.o mtk_battery_daemon.o mt6359-gauge.o
+obj-$(CONFIG_CHARGER_TYPE_MT6357) += mt6357-charger-type.o
+# Begin mod by jin.wang for jira 2064 at 2021-10-25
+ifeq ($(CONFIG_TCT_CHARGER),y)
+obj-$(CONFIG_MTK_CHARGER) += charger_class.o mtk_basic_charger.o mtk_charger.o mtk_charger_algorithm_class.o mtk_charger_intf.o adapter_class.o mtk_pulse_charger.o
+obj-$(CONFIG_MTK_PD_SUPPORT) += mtk_pd_adapter.o mtk_pd.o mtk_pd_hal.o
+else
+obj-$(CONFIG_MTK_CHARGER) += charger_class.o mtk_basic_charger.o mtk_charger.o mtk_charger_algorithm_class.o mtk_charger_intf.o adapter_class.o mtk_pd_adapter.o mtk_pd.o mtk_pd_hal.o mtk_pulse_charger.o
+endif
+# End mod by jin.wang
+obj-$(CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT) += mtk_pe2.o mtk_pe2_hal.o
+obj-$(CONFIG_MTK_PUMP_EXPRESS_PLUS_SUPPORT) += mtk_pe.o mtk_pe_hal.o
+obj-$(CONFIG_MTK_PUMP_EXPRESS_40_SUPPORT) += mtk_pe4.o mtk_pe4_hal.o
+obj-$(CONFIG_CHARGER_MT6357) += mt6357-pulse-charger.o
+
+# Begin added by bitao.xiong for RACKT-935 on 2022-04-22
+obj-$(CONFIG_CHARGER_BQ24158) += bq24158.o
+obj-$(CONFIG_CHARGER_BQ24158_V1) += bq24158_v1.o
+# End added by bitao.xiong for RACKT-935 on 2022-04-22
+
+endif
+
+
 power_supply-y				:= power_supply_core.o
 power_supply-$(CONFIG_SYSFS)		+= power_supply_sysfs.o
-#power_supply-$(CONFIG_LEDS_TRIGGERS)	+= power_supply_leds.o #modified by cuiping.shi
+power_supply-$(CONFIG_LEDS_TRIGGERS)	+= power_supply_leds.o
 
 obj-$(CONFIG_POWER_SUPPLY)	+= power_supply.o
 obj-$(CONFIG_GENERIC_ADC_BATTERY)	+= generic-adc-battery.o
@@ -82,30 +166,13 @@ obj-$(CONFIG_CHARGER_BQ24190)	+= bq24190_charger.o
 obj-$(CONFIG_CHARGER_BQ24257)	+= bq24257_charger.o
 obj-$(CONFIG_CHARGER_BQ24735)	+= bq24735-charger.o
 obj-$(CONFIG_CHARGER_BQ25890)	+= bq25890_charger.o
+obj-$(CONFIG_CHARGER_SC8551)	+= sc8551.o
 obj-$(CONFIG_CHARGER_SMB347)	+= smb347-charger.o
 obj-$(CONFIG_CHARGER_TPS65090)	+= tps65090-charger.o
 obj-$(CONFIG_CHARGER_TPS65217)	+= tps65217_charger.o
 obj-$(CONFIG_AXP288_FUEL_GAUGE) += axp288_fuel_gauge.o
 obj-$(CONFIG_AXP288_CHARGER)	+= axp288_charger.o
-obj-$(CONFIG_CHARGER_CROS_USBPD)	+= cros_usbpd-charger.o
-obj-$(CONFIG_CHARGER_BQ25601) += bq25601.o
-obj-$(CONFIG_CHARGER_RT9458) += rt9458.o
-obj-$(CONFIG_CHARGER_RT9465) += rt9465.o
-obj-$(CONFIG_CHARGER_RT9466) += rt9466.o
-obj-$(CONFIG_CHARGER_RT9467) += rt9467.o
-obj-$(CONFIG_CHARGER_RT9471) += rt9471.o
-obj-$(CONFIG_CHARGER_MT6360) += mt6360_charger.o
-obj-$(CONFIG_BATTERY_MT6357) += mt6357_battery.o
-mt6357_battery-objs := mtk_battery_coulomb_service.o mtk_battery.o mtk_battery_algo.o  mt6357-gauge.o mtk_battery_daemon.o
-obj-$(CONFIG_BATTERY_MT6359) += mt6359_battery.o
-mt6359_battery-objs := mtk_battery_coulomb_service.o mtk_battery.o mtk_battery_algo.o mtk_battery_daemon.o mt6359-gauge.o
-obj-$(CONFIG_CHARGER_TYPE_MT6357) += mt6357-charger-type.o
-obj-$(CONFIG_MTK_CHARGER) += charger_class.o mtk_basic_charger.o mtk_charger.o mtk_charger_algorithm_class.o mtk_charger_intf.o adapter_class.o mtk_pd_adapter.o mtk_pd.o mtk_pd_hal.o mtk_pulse_charger.o
-obj-$(CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT) += mtk_pe2.o mtk_pe2_hal.o
-obj-$(CONFIG_MTK_PUMP_EXPRESS_PLUS_SUPPORT) += mtk_pe.o mtk_pe_hal.o
-obj-$(CONFIG_MTK_PUMP_EXPRESS_40_SUPPORT) += mtk_pe4.o mtk_pe4_hal.o
-obj-$(CONFIG_CHARGER_MT6357) += mt6357-pulse-charger.o
-obj-$(CONFIG_CHARGER_BQ24158) += bq24158.o
-# Begin added by bitao.xiong for task-7863367 on 2019-06-13
-obj-$(CONFIG_CHARGER_BQ2560X) += bq2560x.o
-# End added by bitao.xiong for task-7863367 on 2019-06-13
+
+ifeq ($(CONFIG_CUSTOM_BATTERY_EXTERNAL_CHANNEL),y)
+	obj-y += k6885v1_64_alpha/
+endif

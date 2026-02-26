@@ -25,15 +25,14 @@
 
 #define SEMI_TOUCH_DMA_TRANSFER                 0
 #define SEMI_TOUCH_IRQ_VAR_QUEUE                0
-#define SEMI_TOUCH_VKEY_MAPPING                 0
 #define SEMI_TOUCH_MAX_POINTS                   5
 #define SEMI_TOUCH_SOLUTION_X                   720//600
 #define SEMI_TOUCH_SOLUTION_Y                   1440//1024
 #define CHSC_DEVICE_NAME                        "semi_touch"
 #define CHSC_AUTO_UPDATE_PACKET_BIN             "/sdcard/chsc_auto_update_packet.bin"
 
-#define TYPE_OF_IC(X)                           ((X) & 0xff00)
-#define SEMI_TOUCH_KEY_EVT                      {KEY_MENU, KEY_HOME, KEY_BACK, KEY_VOLUMEUP, KEY_VOLUMEDOWN}
+#define TYPE_OF_IC(X)                           ((X) & 0x00) 
+
 
 
 /*******************************************************************************************/

@@ -40,8 +40,32 @@
 #include <linux/psi.h>
 #include "internal.h"
 
+// #ifdef VENDOR_EDIT
+// wentaozhang@tcl.com, 2022/07/21 add for iop
+#ifdef CONFIG_TCL_IOPRE
+#include <tcl/tcl_iopre.h>
+#endif
+// #endif /* VENDOR_EDIT */
+#ifdef CONFIG_TCT_MM_MONITOR
+#include "mm_monitor.h"
+#endif
+
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+#include <trace/events/zswapd_tcl.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/filemap.h>
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+#include <linux/protect_lru.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 /*
  * FIXME: remove all knowledge of the buffer layer from the core VM
@@ -49,6 +73,21 @@
 #include <linux/buffer_head.h> /* for try_to_free_buffers */
 
 #include <asm/mman.h>
+
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+#ifdef CONFIG_TCT_IOLIMIT
+#include <linux/iolimit_cgroup.h>
+#endif
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@kernel 2021/09/03 add for iolimit
+#ifdef CONFIG_CGROUP_IOLIMIT
+#include <linux/iolimit_cgroup.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 /*
  * Shared mappings implemented 30.11.1994. It's not fully working yet,
@@ -862,9 +901,31 @@ static int __add_to_page_cache_locked(struct page *page,
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageSwapBacked(page), page);
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	if (!huge) {
+		memcg = get_protect_file_memcg(page, mapping);
+	#ifdef CONFIG_TCL_IPEL
+		if (!memcg && protect_lru_enable &&
+			mapping_exec(mapping) && is_fg(current))
+			memcg = get_ux_protect_memcg(page, current);
+	#endif
+	}
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 	if (!huge) {
 		error = mem_cgroup_try_charge(page, current->mm,
 					      gfp_mask, &memcg, false);
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+		#if defined(CONFIG_MEMCG_PROTECT_LRU)
+		if (error)
+			protect_add_page_cache_rollback(page);
+		#endif
+		// #endif /* VENDOR_EDIT */
+
 		if (error)
 			return error;
 	}
@@ -873,6 +934,12 @@ static int __add_to_page_cache_locked(struct page *page,
 	if (error) {
 		if (!huge)
 			mem_cgroup_cancel_charge(page, memcg, false);
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+		#if defined(CONFIG_MEMCG_PROTECT_LRU)
+		protect_add_page_cache_rollback(page);
+		#endif
+		// #endif /* VENDOR_EDIT */
 		return error;
 	}
 
@@ -895,6 +962,12 @@ static int __add_to_page_cache_locked(struct page *page,
 	trace_mm_filemap_add_to_page_cache(page);
 	return 0;
 err_insert:
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	protect_add_page_cache_rollback(page);
+	#endif
+	// #endif /* VENDOR_EDIT */
 	page->mapping = NULL;
 	/* Leave page->index set: truncation relies upon it */
 	xa_unlock_irq(&mapping->i_pages);
@@ -945,6 +1018,13 @@ int add_to_page_cache_lru(struct page *page, struct address_space *mapping,
 		WARN_ON_ONCE(PageActive(page));
 		if (!(gfp_mask & __GFP_WRITE) && shadow)
 			workingset_refault(page, shadow);
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+		#if defined(CONFIG_MEMCG_PROTECT_LRU)
+		if (PageProtect(page))
+			SetPageActive(page);
+		#endif
+		// #endif /* VENDOR_EDIT */
 		lru_cache_add(page);
 	}
 	return ret;
@@ -1108,6 +1188,12 @@ static inline __sched int wait_on_page_bit_common(wait_queue_head_t *q,
 	    !PageUptodate(page) && PageWorkingset(page)) {
 		if (!PageSwapBacked(page))
 			delayacct_thrashing_start();
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+		TRACE_BEGIN("tpms_wait_on_page_bit_common");
+#endif
+// #endif /* VENDOR_EDIT */
 		psi_memstall_enter(&pflags);
 		thrashing = true;
 	}
@@ -1154,6 +1240,12 @@ static inline __sched int wait_on_page_bit_common(wait_queue_head_t *q,
 		if (!PageSwapBacked(page))
 			delayacct_thrashing_end();
 		psi_memstall_leave(&pflags);
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+		TRACE_END("tpms_wait_on_page_bit_common");
+#endif
+// #endif /* VENDOR_EDIT */
 	}
 
 	/*
@@ -2111,6 +2203,12 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
 	unsigned long offset;      /* offset into pagecache page */
 	unsigned int prev_offset;
 	int error = 0;
+	// #ifdef VENDOR_EDIT
+	// wentaozhang@tcl.com, 2022/07/21 add for iop
+#ifdef CONFIG_TCL_IOPRE
+	int iopre_flag = iopre_trace_enable();
+#endif
+	// #endif /* VENDOR_EDIT */
 
 	if (unlikely(*ppos >= inode->i_sb->s_maxbytes))
 		return 0;
@@ -2129,6 +2227,22 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
 		unsigned long nr, ret;
 
 		cond_resched();
+
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716		
+#ifdef CONFIG_TCT_IOLIMIT
+		io_read_bandwidth_control(PAGE_SIZE);
+#endif
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@kernel 2021/09/03 add for iolimit
+		#ifdef CONFIG_CGROUP_IOLIMIT
+		io_read_bandwidth_control(PAGE_SIZE);
+		#endif
+		// #endif /* VENDOR_EDIT */
+
 find_page:
 		if (fatal_signal_pending(current)) {
 			error = -EINTR;
@@ -2137,6 +2251,9 @@ find_page:
 
 		page = find_get_page(mapping, index);
 		if (!page) {
+#ifdef CONFIG_TCT_MM_MONITOR
+			inc_mm_monitor_event(MM_PAGECACHE_READ_MIS_COUNT);
+#endif
 			if (iocb->ki_flags & IOCB_NOWAIT)
 				goto would_block;
 			page_cache_sync_readahead(mapping,
@@ -2146,6 +2263,10 @@ find_page:
 			if (unlikely(page == NULL))
 				goto no_cached_page;
 		}
+#ifdef CONFIG_TCT_MM_MONITOR
+		else
+			inc_mm_monitor_event(MM_PAGECACHE_READ_HIT_COUNT);
+#endif
 		if (PageReadahead(page)) {
 			page_cache_async_readahead(mapping,
 					ra, filp, page,
@@ -2237,6 +2358,13 @@ page_ok:
 		index += offset >> PAGE_SHIFT;
 		offset &= ~PAGE_MASK;
 		prev_offset = offset;
+// #ifdef VENDOR_EDIT
+// wentaozhang@tcl.com, 2022/07/21 add for iop
+#ifdef CONFIG_TCL_IOPRE
+		if (iopre_flag)
+			trace_iopre_add_to_pagecache(page);
+#endif
+// #endif /* VENDOR_EDIT */
 
 		put_page(page);
 		written += ret;
@@ -2504,6 +2632,9 @@ static struct file *do_sync_mmap_readahead(struct vm_fault *vmf)
 		return fpin;
 
 	if (vmf->vma->vm_flags & VM_SEQ_READ) {
+#ifdef CONFIG_TCT_MM_MONITOR
+		add_mm_monitor_event(MM_READAHEAD_MMAP_SYNC,ra->ra_pages);
+#endif
 		fpin = maybe_unlock_mmap_for_io(vmf, fpin);
 		page_cache_sync_readahead(mapping, ra, file, offset,
 					  ra->ra_pages);
@@ -2547,11 +2678,14 @@ static struct file *do_async_mmap_readahead(struct vm_fault *vmf,
 	pgoff_t offset = vmf->pgoff;
 
 	/* If we don't want any read-ahead, don't bother */
-	if (vmf->vma->vm_flags & VM_RAND_READ)
+	if (vmf->vma->vm_flags & VM_RAND_READ || !ra->ra_pages)
 		return fpin;
 	if (ra->mmap_miss > 0)
 		ra->mmap_miss--;
 	if (PageReadahead(page)) {
+#ifdef CONFIG_TCT_MM_MONITOR
+		add_mm_monitor_event(MM_READAHEAD_MMAP_ASYNC,ra->ra_pages);
+#endif
 		fpin = maybe_unlock_mmap_for_io(vmf, fpin);
 		page_cache_async_readahead(mapping, ra, file,
 					   page, offset, ra->ra_pages);
@@ -2599,6 +2733,19 @@ vm_fault_t filemap_fault(struct vm_fault *vmf)
 	if (unlikely(offset >= max_off))
 		return VM_FAULT_SIGBUS;
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@kernel 2021/09/03 add for iolimit
+	#ifdef CONFIG_CGROUP_IOLIMIT
+	task_set_in_pagefault(current);
+	#endif
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru start
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	if (!(vmf->flags & FAULT_FLAG_WRITE) && (vmf->vma->vm_flags & VM_EXEC))
+		mapping_set_exec(mapping);
+	#endif
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru end
+	// #endif /* VENDOR_EDIT */
+
 	/*
 	 * Do we have something in the page cache already?
 	 */
@@ -2608,8 +2755,14 @@ vm_fault_t filemap_fault(struct vm_fault *vmf)
 		 * We found the page, so try async readahead before
 		 * waiting for the lock.
 		 */
+#ifdef CONFIG_TCT_MM_MONITOR
+		inc_mm_monitor_event(MM_PAGECACHE_MMAP_HIT_COUNT);
+#endif
 		fpin = do_async_mmap_readahead(vmf, page);
 	} else if (!page) {
+#ifdef CONFIG_TCT_MM_MONITOR
+		inc_mm_monitor_event(MM_PAGECACHE_MMAP_MIS_COUNT);
+#endif
 		/* No page in the page cache at all */
 		count_vm_event(PGMAJFAULT);
 		count_memcg_event_mm(vmf->vma->vm_mm, PGMAJFAULT);
@@ -2622,6 +2775,12 @@ retry_find:
 		if (!page) {
 			if (fpin)
 				goto out_retry;
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@kernel 2021/09/03 add for iolimit
+		#if defined(CONFIG_MEMCG_PROTECT_LRU)
+			mapping_clear_exec(mapping);
+		#endif
+		// #endif /* VENDOR_EDIT */
 			return VM_FAULT_OOM;
 		}
 	}
@@ -2654,6 +2813,12 @@ retry_find:
 		goto out_retry;
 	}
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@kernel 2021/09/03 add for iolimit
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	mapping_clear_exec(mapping);
+	#endif
+	// #endif /* VENDOR_EDIT */
 	/*
 	 * Found the page and have a reference on it.
 	 * We must recheck i_size under page lock.
@@ -2666,6 +2831,12 @@ retry_find:
 	}
 
 	vmf->page = page;
+// #ifdef VENDOR_EDIT
+// wentaozhang@tcl.com, 2022/07/21 add for iop
+#ifdef CONFIG_TCL_IOPRE
+	iopre_trace_event(page);
+#endif
+// #endif /* VENDOR_EDIT */
 	return ret | VM_FAULT_LOCKED;
 
 page_not_uptodate:
@@ -2690,6 +2861,12 @@ page_not_uptodate:
 	if (!error || error == AOP_TRUNCATED_PAGE)
 		goto retry_find;
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@kernel 2021/09/03 add for iolimit
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	mapping_clear_exec(mapping);
+	#endif
+	// #endif /* VENDOR_EDIT */
 	/* Things didn't work out. Return zero to tell the mm layer so. */
 	shrink_readahead_size_eio(file, ra);
 	return VM_FAULT_SIGBUS;
@@ -2704,6 +2881,12 @@ out_retry:
 		put_page(page);
 	if (fpin)
 		fput(fpin);
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@kernel 2021/09/03 add for iolimit
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	mapping_clear_exec(mapping);
+	#endif
+	// #endif /* VENDOR_EDIT */
 	return ret | VM_FAULT_RETRY;
 }
 EXPORT_SYMBOL(filemap_fault);
@@ -2775,6 +2958,16 @@ repeat:
 		if (alloc_set_pte(vmf, NULL, page))
 			goto unlock;
 		unlock_page(page);
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@kernel 2021/09/03 add for iolimit
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+		struct vm_area_struct *vma = vmf->vma;
+		bool write = vmf->flags & FAULT_FLAG_WRITE;
+
+		if (!write && (vma->vm_flags & VM_EXEC) && vma->vm_file && vma->vm_ops)
+			protect_lru_set_from_process(page, vma);
+#endif
+// #endif /* VENDOR_EDIT */
 		goto next;
 unlock:
 		unlock_page(page);
@@ -2968,6 +3161,14 @@ filler:
 		unlock_page(page);
 		goto out;
 	}
+
+	/*
+	 * A previous I/O error may have been due to temporary
+	 * failures.
+	 * Clear page error before actual read, PG_error will be
+	 * set again if read page fails.
+	 */
+	ClearPageError(page);
 	goto filler;
 
 out:
@@ -3213,6 +3414,21 @@ ssize_t generic_perform_write(struct file *file,
 		unsigned long bytes;	/* Bytes to write to page */
 		size_t copied;		/* Bytes copied from user */
 		void *fsdata;
+
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+#ifdef CONFIG_TCT_IOLIMIT
+		io_write_bandwidth_control(PAGE_SIZE);
+#endif
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@kernel 2021/09/03 add for iolimit
+		#ifdef CONFIG_CGROUP_IOLIMIT
+		io_write_bandwidth_control(PAGE_SIZE);
+		#endif
+		// #endif /* VENDOR_EDIT */
 
 		offset = (pos & (PAGE_SIZE - 1));
 		bytes = min_t(unsigned long, PAGE_SIZE - offset,

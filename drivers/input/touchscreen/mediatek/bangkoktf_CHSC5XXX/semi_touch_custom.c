@@ -167,6 +167,28 @@ const char* const mapping_ic_from_type(unsigned char ictype)
     return ic_name;
 }
 
+const char* const mapping_vendor_from_id(unsigned char vid)
+{
+    static char *vendor = "un-defined";
+
+    switch (vid)
+    {
+    case 3:
+        vendor = "Yuyetech";
+        break;
+    case 17:
+        vendor = "Holitech";
+        break;
+    case 29:
+        vendor = "Itouchworks";
+        break;
+    default:
+        break;
+    }
+
+    return vendor;
+} 
+
 static ssize_t chsc_version_node_write_declare()
 {
     return -EPERM;
@@ -184,8 +206,8 @@ static ssize_t chsc_version_node_read_declare()
     szCopy += sprintf(szCopy, "Ic type %s\n", mapping_ic_from_type(readBuffer[0]));
 
     szCopy += sprintf(szCopy, "config version is %02X\n", readBuffer[1]);
-    szCopy += sprintf(szCopy, "vender id is %d, ", readBuffer[4]);
-    szCopy += sprintf(szCopy, "product id is %d\n", (readBuffer[3] << 8) + readBuffer[2]);
+    szCopy += sprintf(szCopy, "vender id is %d, vender name is ", readBuffer[4]);
+    szCopy += sprintf(szCopy, "%s\n", mapping_vendor_from_id(readBuffer[4]));
 
     ret = semi_touch_read_bytes(0x20000000 + 0x10, readBuffer, 8);
     check_return_if_fail(ret, NULL);
@@ -287,8 +309,8 @@ static ssize_t chsc_guesture_node_read_declare()
 {
     int ret, count;
     kernel_buffer_prepare(szCopy, szKernel, 128);
-    
-    szCopy += sprintf(szCopy, "guesture switch is %d, status is %d.\n", 
+	
+	szCopy += sprintf(szCopy, "proximity switch is %d, status is %d.\n", 
         is_guesture_function_en(st_dev.stc.custom_function_en), is_guesture_activate(st_dev.stc.ctp_run_status));
     count = szCopy - szKernel;
 
@@ -324,8 +346,8 @@ static ssize_t chsc_glove_node_read_declare()
 {
     int ret, count;
     kernel_buffer_prepare(szCopy, szKernel, 128);
-    
-    szCopy += sprintf(szCopy, "glove switch is %d, status is %d.\n", 
+	
+	szCopy += sprintf(szCopy, "proximity switch is %d, status is %d.\n", 
         is_glove_function_en(st_dev.stc.custom_function_en), is_glove_activate(st_dev.stc.ctp_run_status));
     count = szCopy - szKernel;
 

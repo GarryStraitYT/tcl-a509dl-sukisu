@@ -44,19 +44,34 @@ bool freezing_slow_path(struct task_struct *p)
 	if (p->flags & (PF_NOFREEZE | PF_SUSPEND_TASK))
 		return false;
 
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Add by jingyuan.wei for freezer on 2019/09/05
         if (task_no_freeze(p))
                 return false;
         //[TCT-ROM][PERF]End Add by jingyuan.wei for freezer on 2019/09/05
+        #endif
 
 	if (test_tsk_thread_flag(p, TIF_MEMDIE))
 		return false;
 
+	//[TCL][ARCH]Begin Add by pingbo.wen fix freeze hang on killing process on 2022/11/03
+#ifndef CONFIG_TCL_FREEZE
 	if (pm_nosig_freezing || cgroup_freezing(p))
 		return true;
 
 	if (pm_freezing && !(p->flags & PF_KTHREAD))
 		return true;
+#else
+	if (pm_nosig_freezing)
+		return true;
+
+	if (pm_freezing && !(p->flags & PF_KTHREAD))
+		return true;
+
+	if (!fatal_signal_pending(p) && cgroup_freezing(p))
+		return true;
+#endif
+	//[TCL][ARCH]End Add by pingbo.wen fix freeze hang on killing process on 2022/11/03
 
 	return false;
 }

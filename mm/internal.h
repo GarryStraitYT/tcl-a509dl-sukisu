@@ -109,6 +109,181 @@ extern unsigned long highest_memmap_pfn;
 /*
  * in mm/vmscan.c:
  */
+enum reclaim_invoker {
+	ALL,
+	KSWAPD,
+	ZSWAPD,
+	DIRECT_RECLAIM,
+	NODE_RECLAIM,
+	SOFT_LIMIT,
+	RCC_RECLAIM,
+	FILE_RECLAIM,
+	ANON_RECLAIM
+};
+
+struct scan_control {
+	/* How many pages shrink_list() should reclaim */
+	unsigned long nr_to_reclaim;
+
+	/*
+	 * Nodemask of nodes allowed by the caller. If NULL, all nodes
+	 * are scanned.
+	 */
+	nodemask_t	*nodemask;
+
+#ifdef CONFIG_TCT_DMCC
+	/* 0: not in dmcc module, 1: scan anon; 2: scan file; 3: scan both */
+	int dmcc_mode;
+#endif
+	/*
+	 * The memory cgroup that hit its limit and as a result is the
+	 * primary target of this reclaim invocation.
+	 */
+	struct mem_cgroup *target_mem_cgroup;
+
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+	unsigned long anon_cost;
+	unsigned long file_cost;
+
+	/* Can active pages be deactivated as part of reclaim? */
+#define DEACTIVATE_ANON 1
+#define DEACTIVATE_FILE 2
+	unsigned int may_deactivate:2;
+	unsigned int force_deactivate:1;
+	unsigned int skipped_deactivate:1;
+#endif
+
+	/* Writepage batching in laptop mode; RECLAIM_WRITE */
+	unsigned int may_writepage:1;
+
+	/* Can mapped pages be reclaimed? */
+	unsigned int may_unmap:1;
+
+	/* Can pages be swapped as part of reclaim? */
+	unsigned int may_swap:1;
+
+	/*
+	 * Cgroups are not reclaimed below their configured memory.low,
+	 * unless we threaten to OOM. If any cgroups are skipped due to
+	 * memory.low and nothing was reclaimed, go back for memory.low.
+	 */
+	unsigned int memcg_low_reclaim:1;
+	unsigned int memcg_low_skipped:1;
+
+	unsigned int hibernation_mode:1;
+
+	/* One of the zones is ready for compaction */
+	unsigned int compaction_ready:1;
+
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+	/* There is easily reclaimable cold cache in the current node */
+	unsigned int cache_trim_mode:1;
+
+	/* The file pages on the current node are dangerously low */
+	unsigned int file_is_tiny:1;
+#endif
+
+	/* Allocation order */
+	s8 order;
+
+	/* Scan (total_size >> priority) pages at once */
+	s8 priority;
+
+	/* The highest zone to isolate pages for reclaim from */
+	s8 reclaim_idx;
+
+	/* This context's GFP mask */
+	gfp_t gfp_mask;
+
+	/* Incremented by the number of inactive pages that were scanned */
+	unsigned long nr_scanned;
+
+	/* Number of pages freed so far during a call to shrink_zones() */
+	unsigned long nr_reclaimed;
+
+#ifdef CONFIG_TCL_FINE_MM_CORE_DEBUG
+	unsigned long nr_active_pages;
+#endif
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	enum reclaim_invoker invoker;
+	u32 isolate_count;
+	unsigned long nr_scanned_anon;
+	unsigned long nr_scanned_file;
+	unsigned long nr_reclaimed_anon;
+	unsigned long nr_reclaimed_file;
+#endif
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+	unsigned long nr_age_reclaimed;
+	int zswapd_mode;
+#endif
+
+	/*
+	 * Reclaim pages from a vma. If the page is shared by other tasks
+	 * it is zapped from a vma without reclaim so it ends up remaining
+	 * on memory until last task zap it.
+	 */
+	struct vm_area_struct *target_vma;
+
+	struct {
+		unsigned int dirty;
+		unsigned int unqueued_dirty;
+		unsigned int congested;
+		unsigned int writeback;
+		unsigned int immediate;
+		unsigned int file_taken;
+		unsigned int taken;
+	} nr;
+};
+
+enum scan_balance {
+	SCAN_EQUAL,
+	SCAN_FRACT,
+	SCAN_ANON,
+	SCAN_FILE,
+};
+
+#ifdef CONFIG_TCL_SPEED_DIRECT_RECLAIM
+extern int direct_vm_swappiness;
+#endif
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+#include <linux/rmap.h>
+unsigned long shrink_page_list(struct list_head *page_list,
+				      struct pglist_data *pgdat,
+				      struct scan_control *sc,
+				      enum ttu_flags ttu_flags,
+				      struct reclaim_stat *stat,
+				      bool force_reclaim);
+bool inactive_list_is_low(struct lruvec *lruvec, bool file,
+				 struct scan_control *sc, bool trace);
+unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
+				 struct lruvec *lruvec, struct scan_control *sc);
+unsigned long shrink_slab(gfp_t gfp_mask, int nid,
+				 struct mem_cgroup *memcg,
+				 int priority);
+inline bool should_continue_reclaim(struct pglist_data *pgdat,
+					unsigned long nr_reclaimed,
+					unsigned long nr_scanned,
+					struct scan_control *sc);
+unsigned long isolate_lru_pages(unsigned long nr_to_scan,
+		struct lruvec *lruvec, struct list_head *dst,
+		unsigned long *nr_scanned, struct scan_control *sc,
+		isolate_mode_t mode, enum lru_list lru);
+unsigned move_active_pages_to_lru(struct lruvec *lruvec,
+				     struct list_head *list,
+				     struct list_head *pages_to_free,
+				     enum lru_list lru);
+noinline_for_stack unsigned long
+shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
+		     struct scan_control *sc, enum lru_list lru);
+bool sane_reclaim(struct scan_control *sc);
+void set_memcg_congestion(pg_data_t *pgdat,
+				struct mem_cgroup *memcg,
+				bool congested);
+int current_may_throttle(void);
+bool pgdat_memcg_congested(pg_data_t *pgdat, struct mem_cgroup *memcg);
+#endif
 extern int isolate_lru_page(struct page *page);
 extern void putback_lru_page(struct page *page);
 
@@ -524,6 +699,9 @@ struct tlbflush_unmap_batch;
  * any allocations or locks which might depend on allocations
  */
 extern struct workqueue_struct *mm_percpu_wq;
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+extern struct workqueue_struct *mm_percpu_wq_highpri;
+#endif
 
 #ifdef CONFIG_ARCH_WANT_BATCHED_UNMAP_TLB_FLUSH
 void try_to_unmap_flush(void);
@@ -561,4 +739,38 @@ extern struct page *alloc_new_node_page(struct page *page, unsigned long node);
 ssize_t print_max_page_owner(void);
 #endif
 
+#ifdef CONFIG_RECLAIM_ACCT
+#define DELAY_LV0 5000000 /* 5ms */
+#define DELAY_LV1 10000000 /* 10ms */
+#define DELAY_LV2 50000000 /* 50ms */
+#define DELAY_LV3 100000000 /* 100ms */
+#define DELAY_LV4 2000000000 /* 2000ms */
+#define DELAY_LV5 50000000000 /* 50000ms */
+#define NR_DELAY_LV 6
+
+struct reclaim_acct {
+	u64 start[NR_RA_STUBS];
+	u64 delay[NR_RA_STUBS];
+	u64 count[NR_RA_STUBS];
+	u64 freed[NR_RA_STUBS];
+	unsigned int reclaim_type;
+};
+
+bool reclaimacct_initialize_show_data(void);
+void reclaimacct_reinitialize_show_data(void);
+void reclaimacct_destroy_show_data(void);
+
+void reclaimacct_collect_data(void);
+void reclaimacct_collect_reclaim_efficiency(void);
+#endif
+
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+struct memcg_work {
+	struct mem_cgroup *memcg;
+	struct delayed_work idle_work;
+};
+
+void snapdshot_memcg(struct mem_cgroup* memcg);
+void remove_idle_scan(struct mem_cgroup* memcg);
+#endif
 #endif	/* __MM_INTERNAL_H */

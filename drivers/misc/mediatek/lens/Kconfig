@@ -19,6 +19,26 @@ config MTK_LENS_DUMMYLENS_SUPPORT
 	  lens driver for the camera sensor module
 	  Set as y if the driver is used in this project
 
+#Begin liuhui add for cruze_lite_tf
+config MTK_LENS_AW86014AF_SUPPORT
+	bool "AW86014AF Lens Driver"
+	default y
+	help
+	  AW86014AF Lens Driver
+	  This config is used to enable the corresponding
+	  lens driver for the camera sensor module
+	  Set as y if the driver is used in this project
+#end End liuhui add for cruze_lite_tf
+
+config MTK_LENS_AW8601XAF_SUPPORT
+	bool "AW8601XAF Lens Driver"
+	default y
+	help
+	  AW8601XAF Lens Driver
+	  This config is used to enable the corresponding
+	  lens driver for the camera sensor module
+	  Set as y if the driver is used in this project
+
 config MTK_LENS_BU63165AF_SUPPORT
 	tristate "BU63165AF Lens Driver"
         depends on MTK_LENS
@@ -277,3 +297,15 @@ config MTK_LENS_WV511AAF_SUPPORT
 	  This config is used to enable the corresponding
 	  lens driver for the camera sensor module
 	  Set as y if the driver is used in this project
+
+config TCT_CAMERA_PROJECT_BUFFALOTMO
+	tristate "build project name of Buffalo"
+	default n
+	help
+	  This option enables when build Buffalo.
+
+config TCT_CAMERA_PROJECT_BUFFALOTF
+	tristate "build project name of BuffaloTF"
+	default n
+	help
+	  This option enables when build BuffaloTF.

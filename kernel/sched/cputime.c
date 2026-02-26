@@ -3,7 +3,13 @@
  */
 #include <linux/cpufreq_times.h>
 #include "sched.h"
-
+// #ifdef VENDOR_EDIT
+// zhipeng5_wei@kernel 2020/12/11 add for Top-CPU-utilization-Proces
+#ifdef CONFIG_TCL_PERF_MONITOR
+extern void account_process_totaltime_and_mark(struct task_struct *p,
+										 u64 cputime);
+#endif
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_IRQ_TIME_ACCOUNTING
 
 /*
@@ -121,7 +127,12 @@ void account_user_time(struct task_struct *p, u64 cputime)
 	/* Add user time to process. */
 	p->utime += cputime;
 	account_group_user_time(p, cputime);
-
+// #ifdef VENDOR_EDIT
+// zhipeng5_wei@kernel 2020/12/11 add for Top-CPU-utilization-Proces
+#ifdef CONFIG_TCL_PERF_MONITOR
+       account_process_totaltime_and_mark(p, cputime);
+#endif
+// #endif /* VENDOR_EDIT */
 	index = (task_nice(p) > 0) ? CPUTIME_NICE : CPUTIME_USER;
 
 	/* Add user time to cpustat. */
@@ -170,6 +181,13 @@ void account_system_index_time(struct task_struct *p,
 	/* Add system time to process. */
 	p->stime += cputime;
 	account_group_system_time(p, cputime);
+
+// #ifdef VENDOR_EDIT
+// zhipeng5_wei@kernel 2020/12/11 add for Top-CPU-utilization-Proces
+#ifdef CONFIG_TCL_PERF_MONITOR
+       account_process_totaltime_and_mark(p, cputime);
+#endif
+// #endif /* VENDOR_EDIT */
 
 	/* Add system time to cpustat. */
 	task_group_account_field(p, index, cputime);

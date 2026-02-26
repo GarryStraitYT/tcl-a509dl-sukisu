@@ -71,6 +71,21 @@
 #include "slab.h"
 
 #include <linux/uaccess.h>
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+#include <linux/version.h>
+#include <linux/protect_lru.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+#include <linux/hyperhold_inf.h>
+#endif
+// #endif /* VENDOR_EDIT */
+#include <linux/mm_inline.h>
+#ifdef CONFIG_TCL_FINE_MM_CORE
+#include <linux/zswapd.h>
+#endif
 
 #include <trace/events/vmscan.h>
 
@@ -81,11 +96,20 @@ struct mem_cgroup *root_mem_cgroup __read_mostly;
 
 #define MEM_CGROUP_RECLAIM_RETRIES	5
 
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+/* Socket memory accounting disabled? */
+static bool cgroup_memory_nosocket = true;
+
+/* Kernel memory accounting disabled? */
+static bool cgroup_memory_nokmem = true;
+#else
 /* Socket memory accounting disabled? */
 static bool cgroup_memory_nosocket;
 
 /* Kernel memory accounting disabled? */
 static bool cgroup_memory_nokmem;
+#endif
 
 /* Whether the swap controller is active */
 #ifdef CONFIG_MEMCG_SWAP
@@ -591,7 +615,15 @@ static void mem_cgroup_remove_exceeded(struct mem_cgroup_per_node *mz,
 
 static unsigned long soft_limit_excess(struct mem_cgroup *memcg)
 {
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	struct mem_cgroup_per_node *mz = mem_cgroup_nodeinfo(memcg, 0);
+	struct lruvec *lruvec = &mz->lruvec;
+	unsigned long nr_pages = lruvec_lru_size(lruvec, LRU_ACTIVE_ANON,
+			MAX_NR_ZONES) + lruvec_lru_size(lruvec, LRU_INACTIVE_ANON,
+			MAX_NR_ZONES);
+#else
 	unsigned long nr_pages = page_counter_read(&memcg->memory);
+#endif
 	unsigned long soft_limit = READ_ONCE(memcg->soft_limit);
 	unsigned long excess = 0;
 
@@ -1135,6 +1167,16 @@ struct lruvec *mem_cgroup_page_lruvec(struct page *page, struct pglist_data *pgd
 		goto out;
 	}
 
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for per-app workingset/PERAPPWK-22 on 2022/08/29, add for FILE_LRU
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (is_file_lru(page_lru(page)) && !is_prot_page(page)) {
+		lruvec = &pgdat->lruvec;
+		goto out;
+	}
+#endif
+// #endif /* VENDOR_EDIT */
+
 	memcg = page->mem_cgroup;
 	/*
 	 * Swapcache readahead pages are added to the LRU - and
@@ -1177,6 +1219,10 @@ void mem_cgroup_update_lru_size(struct lruvec *lruvec, enum lru_list lru,
 	if (mem_cgroup_disabled())
 		return;
 
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (is_node_lruvec(lruvec))
+		return;
+#endif
 	mz = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
 	lru_size = &mz->lru_zone_size[zid][lru];
 
@@ -1533,6 +1579,15 @@ static int mem_cgroup_soft_reclaim(struct mem_cgroup *root_memcg,
 
 	while (1) {
 		victim = mem_cgroup_iter(root_memcg, victim, &reclaim);
+		// #ifdef VENDOR_EDIT
+		// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+		#ifdef CONFIG_MEMCG_PROTECT_LRU
+		/* Skip if it is a protect memcg. */
+		if (is_prot_memcg(victim, false))
+			continue;
+		#endif
+		// #endif /* VENDOR_EDIT */
+
 		if (!victim) {
 			loop++;
 			if (loop >= 2) {
@@ -2206,6 +2261,13 @@ static int try_charge(struct mem_cgroup *memcg, gfp_t gfp_mask,
 	if (mem_cgroup_is_root(memcg))
 		return 0;
 retry:
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	shrink_prot_memcg_by_overlimit(memcg);
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 	if (consume_stock(memcg, nr_pages))
 		return 0;
 
@@ -3515,6 +3577,9 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 	{
 		pg_data_t *pgdat;
 		struct mem_cgroup_per_node *mz;
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 		struct zone_reclaim_stat *rstat;
 		unsigned long recent_rotated[2] = {0, 0};
 		unsigned long recent_scanned[2] = {0, 0};
@@ -3532,9 +3597,35 @@ static int memcg_stat_show(struct seq_file *m, void *v)
 		seq_printf(m, "recent_rotated_file %lu\n", recent_rotated[1]);
 		seq_printf(m, "recent_scanned_anon %lu\n", recent_scanned[0]);
 		seq_printf(m, "recent_scanned_file %lu\n", recent_scanned[1]);
+#else
+		unsigned long anon_cost = 0;
+		unsigned long file_cost = 0;
+
+		for_each_online_pgdat(pgdat) {
+			mz = mem_cgroup_nodeinfo(memcg, pgdat->node_id);
+#ifdef CONFIG_TCL_FINE_MM_CORE
+			anon_cost += lruvec_page_state(&mz->lruvec,
+						      WORKINGSET_ANON_COST);
+			file_cost += lruvec_page_state(&mz->lruvec,
+						      WORKINGSET_FILE_COST);
+#else
+			anon_cost += mz->lruvec.anon_cost;
+			file_cost += mz->lruvec.file_cost;
+#endif
+		}
+		seq_printf(m, "anon_cost %lu\n", anon_cost);
+		seq_printf(m, "file_cost %lu\n", file_cost);
+#endif
+// #endif /* VENDOR_EDIT */
 	}
 #endif
 
+#ifdef CONFIG_TCL_FINE_MM_CORE_DEBUG
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	memcg_eswap_info_show(m);
+#endif
+	memcg_zswapd_stat_show(m);
+#endif
 	return 0;
 }
 
@@ -3552,19 +3643,8 @@ static int mem_cgroup_swappiness_write(struct cgroup_subsys_state *css,
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 #ifndef CONFIG_MTK_GMO_RAM_OPTIMIZE
-//[TCTOPTIMIZE] Modified by fan.yang for swappiness @{
-#ifdef CONFIG_ANDROID
-{
-	if (val > 200)
-		return -EINVAL;
-}
-#else //Original Code
-{
 	if (val > 100)
 		return -EINVAL;
-}
-#endif
-//[TCTOPTIMIZE] @}
 #endif
 
 	if (css->parent)
@@ -4429,7 +4509,10 @@ static void mem_cgroup_id_put_many(struct mem_cgroup *memcg, unsigned int n)
 {
 	VM_BUG_ON(atomic_read(&memcg->id.ref) < n);
 	if (atomic_sub_and_test(n, &memcg->id.ref)) {
+		// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+		#ifndef CONFIG_TCL_FINE_MM_ZRAM2DISK
 		mem_cgroup_id_remove(memcg);
+		#endif
 
 		/* Memcg ID pins CSS */
 		css_put(&memcg->css);
@@ -4455,6 +4538,10 @@ static inline void mem_cgroup_id_put(struct mem_cgroup *memcg)
 struct mem_cgroup *mem_cgroup_from_id(unsigned short id)
 {
 	WARN_ON_ONCE(!rcu_read_lock_held());
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (id == -1)
+		return NULL;
+#endif
 	return idr_find(&mem_cgroup_idr, id);
 }
 
@@ -4563,6 +4650,14 @@ static struct mem_cgroup *mem_cgroup_alloc(void)
 #ifdef CONFIG_CGROUP_WRITEBACK
 	INIT_LIST_HEAD(&memcg->cgwb_list);
 #endif
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	INIT_LIST_HEAD(&memcg->score_node);
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	spin_lock_init(&memcg->zram_init_lock);
+#endif
 	idr_replace(&mem_cgroup_idr, memcg, memcg->id.id);
 	return memcg;
 fail:
@@ -4582,6 +4677,13 @@ mem_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
 	if (!memcg)
 		return ERR_PTR(error);
 
+#if defined(CONFIG_TCL_FINE_MM_CORE) || defined(CONFIG_TCL_FINE_MM_ZRAM2DISK)
+	atomic64_set(&memcg->memcg_reclaimed.app_score, -1);
+	atomic64_set(&memcg->memcg_reclaimed.ub_ufs2zram_ratio, 100);
+	atomic_set(&memcg->memcg_reclaimed.ub_zram2ufs_ratio, 60);
+	atomic_set(&memcg->memcg_reclaimed.ub_mem2zram_ratio, 100);
+	atomic_set(&memcg->memcg_reclaimed.refault_threshold, 50);
+#endif
 	memcg->high = PAGE_COUNTER_MAX;
 	memcg->soft_limit = PAGE_COUNTER_MAX;
 	if (parent) {
@@ -4633,6 +4735,14 @@ fail:
 static int mem_cgroup_css_online(struct cgroup_subsys_state *css)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	int ret = protect_memcg_css_online(css, memcg);
+	if (ret)
+		return ret;
+	#endif
+	// #endif /* VENDOR_EDIT */
 
 	/*
 	 * A memcg must be visible for memcg_expand_shrinker_maps()
@@ -4644,6 +4754,11 @@ static int mem_cgroup_css_online(struct cgroup_subsys_state *css)
 		return -ENOMEM;
 	}
 
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	css_get(css);
+	memcg_app_score_update(memcg);
+#endif
+
 	/* Online state pins memcg ID, memcg ID pins CSS */
 	atomic_set(&memcg->id.ref, 1);
 	css_get(css);
@@ -4654,6 +4769,22 @@ static void mem_cgroup_css_offline(struct cgroup_subsys_state *css)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 	struct mem_cgroup_event *event, *tmp;
+
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for per-app workingset/PERAPPWK-22 on 2022/08/29, add for per app memcg
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	memcg_app_score_remove(memcg);
+	css_put(css);
+#endif
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+	remove_idle_scan(memcg);
+#endif
+
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	protect_memcg_css_offline(memcg);
+	#endif
+// #endif /* VENDOR_EDIT */
 
 	/*
 	 * Unregister events and notify userspace.
@@ -4686,6 +4817,12 @@ static void mem_cgroup_css_released(struct cgroup_subsys_state *css)
 static void mem_cgroup_css_free(struct cgroup_subsys_state *css)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+
+	// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+	#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	hyperhold_mem_cgroup_remove(memcg);
+	mem_cgroup_id_remove(memcg);
+	#endif
 
 	if (cgroup_subsys_on_dfl(memory_cgrp_subsys) && !cgroup_memory_nosocket)
 		static_branch_dec(&memcg_sockets_enabled_key);
@@ -4793,7 +4930,7 @@ static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
 	struct page *page = NULL;
 	swp_entry_t ent = pte_to_swp_entry(ptent);
 
-	if (!(mc.flags & MOVE_ANON) || non_swap_entry(ent))
+	if (!(mc.flags & MOVE_ANON))
 		return NULL;
 
 	/*
@@ -4811,6 +4948,9 @@ static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
 			return NULL;
 		return page;
 	}
+
+	if (non_swap_entry(ent))
+		return NULL;
 
 	/*
 	 * Because lookup_swap_cache() updates some statistics counter,
@@ -4900,8 +5040,17 @@ static int mem_cgroup_move_account(struct page *page,
 		goto out;
 
 	ret = -EINVAL;
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	if (page->mem_cgroup && page->mem_cgroup != from) {
+		goto out_unlock;
+	}
+	#else
 	if (page->mem_cgroup != from)
 		goto out_unlock;
+	#endif
+	// #endif /* VENDOR_EDIT */
 
 	anon = PageAnon(page);
 
@@ -4943,12 +5092,27 @@ static int mem_cgroup_move_account(struct page *page,
 
 	ret = 0;
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	local_irq_save(flags);
+	#else
 	local_irq_disable();
+	#endif
+	// #endif /* VENDOR_EDIT */
 	mem_cgroup_charge_statistics(to, page, compound, nr_pages);
 	memcg_check_events(to, page);
 	mem_cgroup_charge_statistics(from, page, compound, -nr_pages);
 	memcg_check_events(from, page);
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	local_irq_restore(flags);
+	#else
 	local_irq_enable();
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 out_unlock:
 	unlock_page(page);
 out:
@@ -4997,6 +5161,17 @@ static enum mc_target_type get_mctgt_type(struct vm_area_struct *vma,
 
 	if (!page && !ent.val)
 		return ret;
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	/* Skip protect pages during cgroup migration. */
+	if (page && PageProtect(page)) {
+		put_page(page);
+		return ret;
+	}
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 	if (page) {
 		/*
 		 * Do only loose check w/o serialization.
@@ -5160,7 +5335,6 @@ static void __mem_cgroup_clear_mc(void)
 		if (!mem_cgroup_is_root(mc.to))
 			page_counter_uncharge(&mc.to->memory, mc.moved_swap);
 
-		mem_cgroup_id_get_many(mc.to, mc.moved_swap);
 		css_put_many(&mc.to->css, mc.moved_swap);
 
 		mc.moved_swap = 0;
@@ -5351,7 +5525,8 @@ put:			/* get_mctgt_type() gets the page */
 			ent = target.ent;
 			if (!mem_cgroup_move_swap_account(ent, mc.from, mc.to)) {
 				mc.precharge--;
-				/* we fixup refcnts and charges later. */
+				mem_cgroup_id_get_many(mc.to, 1);
+				/* we fixup other refcnts and charges later. */
 				mc.moved_swap++;
 			}
 			break;
@@ -5705,10 +5880,28 @@ static int memory_stat_show(struct seq_file *m, void *v)
 	seq_printf(m, "pglazyfree %lu\n", acc.events[PGLAZYFREE]);
 	seq_printf(m, "pglazyfreed %lu\n", acc.events[PGLAZYFREED]);
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 	seq_printf(m, "workingset_refault %lu\n",
 		   acc.stat[WORKINGSET_REFAULT]);
 	seq_printf(m, "workingset_activate %lu\n",
 		   acc.stat[WORKINGSET_ACTIVATE]);
+#else
+	seq_printf(m, "workingset_refault_anon %lu\n",
+		   acc.stat[WORKINGSET_REFAULT_ANON]);
+	seq_printf(m, "workingset_refault_file %lu\n",
+		   acc.stat[WORKINGSET_REFAULT_FILE]);
+	seq_printf(m, "workingset_activate_anon %lu\n",
+		   acc.stat[WORKINGSET_ACTIVATE_ANON]);
+	seq_printf(m, "workingset_activate_file %lu\n",
+		   acc.stat[WORKINGSET_ACTIVATE_FILE]);
+	seq_printf(m, "workingset_restore_anon %lu\n",
+		   acc.stat[WORKINGSET_RESTORE_ANON]);
+	seq_printf(m, "workingset_restore_file %lu\n",
+		   acc.stat[WORKINGSET_RESTORE_FILE]);
+#endif
+// #endif /* VENDOR_EDIT */
 	seq_printf(m, "workingset_nodereclaim %lu\n",
 		   acc.stat[WORKINGSET_NODERECLAIM]);
 
@@ -6005,6 +6198,14 @@ int mem_cgroup_try_charge(struct page *page, struct mm_struct *mm,
 			rcu_read_unlock();
 		}
 	}
+
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	if (PageProtect(page))
+		memcg = get_protect_memcg(page, memcgp);
+	#endif
+	// #endif /* VENDOR_EDIT */
 
 	if (!memcg)
 		memcg = get_mem_cgroup_from_mm(mm);
@@ -6623,6 +6824,9 @@ void mem_cgroup_uncharge_swap(swp_entry_t entry, unsigned int nr_pages)
 				page_counter_uncharge(&memcg->memsw, nr_pages);
 		}
 		mod_memcg_state(memcg, MEMCG_SWAP, -nr_pages);
+#ifdef CONFIG_TCL_FINE_MM_CORE_DEBUG
+		atomic64_add(nr_pages, &memcg->zswapd_swapin);
+#endif
 		mem_cgroup_id_put_many(memcg, nr_pages);
 	}
 	rcu_read_unlock();
@@ -6792,3 +6996,66 @@ static int __init mem_cgroup_swap_init(void)
 subsys_initcall(mem_cgroup_swap_init);
 
 #endif /* CONFIG_MEMCG_SWAP */
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+void protect_memcg_drain_all_stock(struct mem_cgroup *root_memcg)
+{
+	if (is_prot_memcg(root_memcg, false))
+		drain_all_stock(root_memcg);
+}
+
+void protect_memcg_cancel_charge(struct mem_cgroup *memcg, unsigned int nr_pages)
+{
+	if (is_prot_memcg(memcg, false))
+		cancel_charge(memcg, nr_pages);
+}
+
+int protect_memcg_move_account(struct page *page, bool compound,
+		struct mem_cgroup *from, struct mem_cgroup *to)
+{
+	if (is_prot_memcg(from, false) || is_prot_memcg(to, false))
+		return mem_cgroup_move_account(page, compound, from, to);
+	else
+		return -EINVAL;
+}
+
+int protect_memcg_resize_limit(struct mem_cgroup *memcg, unsigned long limit)
+{
+	if (is_prot_memcg(memcg, false))
+		#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,19,0)
+		return mem_cgroup_resize_max(memcg, limit, false);
+		#else
+		return mem_cgroup_resize_limit(memcg, limit);
+		#endif
+	else
+		return -EINVAL;
+}
+
+unsigned long protect_memcg_usage(struct mem_cgroup *memcg, bool swap)
+{
+	if (is_prot_memcg(memcg, false))
+		return mem_cgroup_usage(memcg, swap);
+	else
+		return 0;
+}
+#endif
+#if defined(CONFIG_TCL_FINE_MM_WORKINGSET) && defined(CONFIG_TCL_FINE_MM_DEV_DEBUG)
+void snapdshot_memcg(struct mem_cgroup* memcg)
+{
+	struct accumulated_stats acc;
+
+	memset(&acc, 0, sizeof(acc));
+	acc.stats_size = ARRAY_SIZE(memcg1_stats);
+	acc.stats_array = memcg1_stats;
+	acc.events_size = ARRAY_SIZE(memcg1_events);
+	acc.events_array = memcg1_events;
+	accumulate_memcg_tree(memcg, &acc);
+
+	pr_debug("%s, %s:%lu %s:%lu\n", __func__,
+		 memcg1_event_names[PSWPIN], acc.events[PSWPIN],
+		 memcg1_stat_names[MEMCG_RSS-MEMCG_CACHE], acc.stat[MEMCG_RSS]);
+}
+#endif
+// #endif /* VENDOR_EDIT */

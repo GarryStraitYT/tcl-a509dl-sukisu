@@ -153,6 +153,17 @@ u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy)
 }
 EXPORT_SYMBOL_GPL(get_cpu_idle_time);
 
+// #ifdef VENDOR_EDIT
+// guoli.kuang@ARCH, 2020/10/27, add for ipel
+#ifdef CONFIG_TCL_IPEL
+struct list_head *get_cpufreq_policy_list(void)
+{
+	return &cpufreq_policy_list;
+}
+EXPORT_SYMBOL(get_cpufreq_policy_list);
+#endif
+// #endif /* VENDOR_EDIT */
+
 __weak void arch_set_freq_scale(struct cpumask *cpus, unsigned long cur_freq,
 		unsigned long max_freq)
 {

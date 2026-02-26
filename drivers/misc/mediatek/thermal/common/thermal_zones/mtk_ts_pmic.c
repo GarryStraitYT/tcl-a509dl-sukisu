@@ -22,6 +22,12 @@
 #include <linux/mfd/mt6397/core.h>/* PMIC MFD core header */
 #include <linux/regmap.h>
 
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-6 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_THERMAL_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+#endif
+
 static kuid_t uid = KUIDT_INIT(0);
 static kgid_t gid = KGIDT_INIT(1000);
 static DEFINE_SEMAPHORE(sem_mutex);
@@ -61,13 +67,81 @@ static long int mtktspmic_start_temp;
 static long int mtktspmic_end_temp;
 /*=============================================================*/
 
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-6 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_THERMAL_ON
+
+int mtktspa_get_hw_temp(void);
+int tscpu_get_curr_temp(void);
+long int mtktspa_cur_temp;
+long int mtktscpu_cur_temp;
+int thermal_init_err_times=0;
+int thermal_driver_lasterrcode=THERMAL_DRV_NORMAL;
+char *bootprof_get_ap_platform(void);
+
+void heraeye_thermal_fail(int thermal_type,int thermal_value){
+	char heraeye_cur_chipinfo[32] = {0};
+  char heraeye_cur_time[32] = {0};
+  char kernel_version[16]={0};
+  char heraeye_info[8]={0};
+  const char *strval = UTS_RELEASE;
+  strncpy(kernel_version,strval,8);
+  if ( thermal_init_err_times < 60 )
+  {
+  	thermal_init_err_times++; // If the high temperature alarm exceeds 60 times (60 seconds), it will not be ++
+  	mtktspmic_info("PMIC_CPU_PA_Thermal: helaeye trig thermal_type=%d thermal_value=%d thermal_init_err_times=%d ",thermal_type,thermal_value,thermal_init_err_times);
+  	return ;
+  }//after 60 seconds ,hela will trig
+  switch (thermal_type) {
+  	case THERMAL_DRV_PMIC_TYPE:
+  		strcpy(heraeye_info,TKPERF_THERMAL_PMIC_EVENTINFO);
+  		break;
+  	case THERMAL_DRV_CPU_TYPE:
+  		strcpy(heraeye_info,TKPERF_THERMAL_CPU_EVENTINFO);
+  		break;
+  	case THERMAL_DRV_RFPA_TYPE:
+  		strcpy(heraeye_info,TKPERF_THERMAL_RFPA_EVENTINFO);
+  		break;
+  	default:
+  		WARN(1, "thermal_type error %d \n",thermal_type);
+  }
+
+  heraeye_curtime_to_str(heraeye_cur_time);
+  sprintf(heraeye_cur_chipinfo, "%s_%s_%s",bootprof_get_ap_platform(),heraeye_get_project_str(),kernel_version);
+  heraeye_driver_log(TKPERF_DRIVER_THERMAL,"%s %s %s %d %d %s %d 0x%x",
+            TKPERF_PERF_THERMAL_INFO,
+            heraeye_cur_time,
+            heraeye_cur_chipinfo,
+            thermal_type,
+            thermal_value,
+            heraeye_info,
+            thermal_init_err_times,
+            TKPERF_THERMAL_EVENTID);
+  thermal_init_err_times=0;
+}
+#endif
+
 static int mtktspmic_get_temp(struct thermal_zone_device *thermal, int *t)
 {
 	*t = mtktspmic_get_hw_temp();
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 	mtktspmic_cur_temp = *t;
+
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-6 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_THERMAL_ON
+	mtktspa_cur_temp=mtktspa_get_hw_temp();
+	mtktscpu_cur_temp=tscpu_get_curr_temp();
+
+  if ( mtktspmic_cur_temp > THERMAL_DRV_PMIC_OVHEAT )
+      heraeye_thermal_fail(THERMAL_DRV_PMIC_TYPE,mtktspmic_cur_temp);
+
+  if ( mtktspa_cur_temp > THERMAL_DRV_RFPA_OVHEAT )
+     heraeye_thermal_fail(THERMAL_DRV_RFPA_TYPE,mtktspa_cur_temp);
+
+  if ( mtktscpu_cur_temp > THERMAL_DRV_CPU_OVHEAT )
+      heraeye_thermal_fail(THERMAL_DRV_CPU_TYPE,mtktscpu_cur_temp);
+
+  mtktspmic_info("helaeye_thermal mtktspmic_cur_temp=%d mtktscpu_cur_temp=%d mtktspa_cur_temp=%d ",mtktspmic_cur_temp,mtktscpu_cur_temp,mtktspa_cur_temp);
+
+#endif
 
 	if ((int)*t >= polling_trip_temp1)
 		thermal->polling_delay = interval * 1000;
@@ -75,7 +149,9 @@ static int mtktspmic_get_temp(struct thermal_zone_device *thermal, int *t)
 		thermal->polling_delay = interval * polling_factor2;
 	else
 		thermal->polling_delay = interval * polling_factor1;
-
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-pmic] %s T_PMIC=%d\n", __func__, *t);
+#endif
 	return 0;
 }
 
@@ -681,11 +757,23 @@ static int mtk_ts_pmic_probe(struct platform_device *pdev)
 	 *	mtktspmic_info("[mtktspmic_init]: Warrning !!!"
 	 *				"Need to checking this !!!!!\n");
 	 */
+#if (defined(CONFIG_MACH_MT6739)  \
+	|| defined(CONFIG_MACH_MT6877) \
+	|| defined(CONFIG_MACH_MT6853)    \
+	|| defined(CONFIG_MACH_MT6873)    \
+	|| defined(CONFIG_MACH_MT6893))
+	mtktspmic_cali_prepare();
+#else
 	mtktspmic_cali_prepare(chip->regmap);
-
+#endif
 	mtktspmic_cali_prepare2();
 #if defined(THERMAL_USE_IIO_CHANNEL)
+#if defined(CONFIG_MACH_MT6785)
+	if(!mtktspmic_get_from_dts(pdev))
+		return -EPROBE_DEFER;
+#else
 	mtktspmic_get_from_dts(pdev);
+#endif
 #endif
 
 	err = mtktspmic_register_cooler();
@@ -743,7 +831,7 @@ static struct platform_driver mtk_ts_pmic_driver = {
 
 static int __init mtktspmic_init(void)
 {
-	mtktspmic_info("[%s]\n", __func__);
+	mtktspmic_info("[%s:%d]\n", __func__, __LINE__);
 	return platform_driver_register(&mtk_ts_pmic_driver);
 }
 

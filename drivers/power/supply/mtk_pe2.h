@@ -64,6 +64,11 @@ enum pe2_state_enum {
 	PE2_HW_UNINIT = 0,
 	PE2_HW_FAIL,
 	PE2_HW_READY,
+/* Begin add by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	PE2_TA_CHECKING,
+#endif
+/* End add by jin.wang */
 	PE2_TA_NOT_SUPPORT,
 	PE2_RUN,
 	PE2_TUNING,
@@ -84,6 +89,7 @@ struct mtk_pe20 {
 	struct mutex cable_out_lock;
 	struct mutex data_lock;
 	bool is_cable_out_occur; /* Plug out happened while detect PE+20 */
+	struct power_supply *bat_psy;
 
 	int ta_vchr_org;
 	int idx;
@@ -127,6 +133,11 @@ struct mtk_pe20 {
 	int input_current2;
 	int charging_current2;
 
+/* Begin add by jin.wang task 2064 on 2021.10.26 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int main_pct;
+#endif
+/* End add by jin.wang */
 
 	enum pe2_state_enum state;
 

@@ -157,7 +157,7 @@ static int mt6370_pmu_core_reset(struct mt6370_pmu_core_data *core_data)
 		dev_err(core_data->dev, "set passcode2 fail\n");
 	/* reset chg/fled/ldo/rgb/bl/dsv logic and all pmu register */
 	ret = mt6370_pmu_reg_write(core_data->chip,
-				   MT6370_PMU_REG_CORECTRL2, 0x7F);
+				   MT6370_PMU_REG_CORECTRL2, 0x7C);
 	if (ret < 0)
 		dev_err(core_data->dev, "reset all reg/logic fail\n");
 	mdelay(1);
@@ -170,8 +170,7 @@ static int mt6370_pmu_core_reset(struct mt6370_pmu_core_data *core_data)
 	if (ret < 0)
 		dev_err(core_data->dev, "excute reset pascode fail\n");
 	/* add dsvp discharge bit */
-	return mt6370_pmu_reg_write(core_data->chip,
-				    MT6370_PMU_REG_DBCTRL2, 0x32);
+	return mt6370_pmu_reg_update_bits(core_data->chip,MT6370_PMU_REG_DBCTRL2, MT6370_DB_VPOS_DISCMASK,MT6370_DB_VPOS_DISCMASK);
 }
 
 static int mt6370_pmu_core_probe(struct platform_device *pdev)

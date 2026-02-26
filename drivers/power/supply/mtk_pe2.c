@@ -37,7 +37,30 @@
 
 #include "mtk_pe2.h"
 #include "mtk_charger_algorithm_class.h"
+/* [BSP]Begin added by bitao.xiong for SOCAOSP13-9015 on 2022/11/02 */
+#include "charger_class.h"
+/* [BSP]End added by bitao.xiong for SOCAOSP13-9015 on 2022/11/02 */
 
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+void heraeye_bat_check_temp(int errtype, int charger_driver_value);
+
+#endif
+
+
+/* Begin add by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static int main_pct = -1;
+module_param(main_pct, int, 0644);
+
+static int force_ibus = -1;
+module_param(force_ibus, int, 0644);
+
+static int force_ibat = -1;
+module_param(force_ibat, int, 0644);
+#endif
+/* End add by jin.wang */
 
 static int pe2_dbg_level = PE2_DEBUG_LEVEL;
 
@@ -51,13 +74,28 @@ static int pe2_plugout_reset(struct chg_alg_device *alg)
 	int ret = 0, cnt = 0;
 	struct mtk_pe20 *pe2;
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !defined(CONFIG_TCT_CHARGER)
 	pe2_dbg("%s\n", __func__);
+#endif
+/* End del by jin.wang */
+
 	pe2 = dev_get_drvdata(&alg->dev);
+
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if defined(CONFIG_TCT_CHARGER)
+	pe2_dbg("%s: state=%d\n", __func__, pe2->state);
+#endif
+/* End add by jin.wang */
 
 	switch (pe2->state) {
 	case PE2_HW_UNINIT:
 	case PE2_HW_FAIL:
+/*start to del by weijun for pe20 adapter fast pluin/out when detect*/
+#if !defined(CONFIG_TCT_CHARGER)
 	case PE2_HW_READY:
+#endif
+/*end to del by weijun for pe20 adapter fast pluin/out when detect*/
 		break;
 	case PE2_TA_NOT_SUPPORT:
 		pe2->state = PE2_HW_READY;
@@ -65,6 +103,11 @@ static int pe2_plugout_reset(struct chg_alg_device *alg)
 	case PE2_RUN:
 	case PE2_TUNING:
 	case PE2_POSTCC:
+/*start to add by weijun for pe20 adapter fast pluin/out when detect*/
+#if defined(CONFIG_TCT_CHARGER)
+	case PE2_HW_READY:
+#endif
+/*end to add by weijun for pe20 adapter fast pluin/out when detect*/
 		/* set flag to end PE2 thread asap */
 		mutex_lock(&pe2->cable_out_lock);
 		pe2->is_cable_out_occur = true;
@@ -98,11 +141,20 @@ static int pe2_plugout_reset(struct chg_alg_device *alg)
 			pe2_err("%s:set mivr fail, ret:%d\n",
 				__func__, ret);
 
+/* Begin mod by jin.wang task 2064 on 2022.4.1 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+			|| (alg->config == DUAL_CHARGERS_IN_SERIES)) {
+			pe2_hal_enable_charger(alg, CHG2, false);
+			pe2_hal_charger_enable_chip(alg, CHG2, false);
+		}
+#else
 		if (alg->config == DUAL_CHARGERS_IN_SERIES) {
 			pe2_hal_enable_charger(alg, CHG2, false);
 			pe2_hal_charger_enable_chip(alg, CHG2, false);
 		}
-
+#endif
+/* End mod by jin.wang */
 		pe2_dbg("%s: OK\n", __func__);
 		pe2->state = PE2_HW_READY;
 		mutex_unlock(&pe2->access_lock);
@@ -133,12 +185,28 @@ int pe2_reset_ta_vchr(struct chg_alg_device *alg)
 	/* Reset TA's charging voltage */
 	do {
 		chg_cnt = pe2_hal_get_charger_cnt(alg);
+/* Begin mod by jin.wang task 2064 on 2022.4.1 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (chg_cnt > 1 && ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+			|| (alg->config == DUAL_CHARGERS_IN_SERIES))) {
+#else
 		if (chg_cnt > 1 && alg->config == DUAL_CHARGERS_IN_SERIES) {
+#endif
+/* End mod by jin.wang */
 			for (i = CHG2; i < CHG_MAX; i++) {
 				is_chip_enabled =
 						pe2_hal_is_chip_enable(alg, i);
+			/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2022/10/29 */
+			#if IS_ENABLED(CONFIG_TCT_CHARGER)
+				if (is_chip_enabled) {
+					pe2_hal_enable_charger(alg, i, false);
+					msleep(250);
+				}
+			#else
 				if (is_chip_enabled)
 					pe2_hal_enable_charger(alg, i, false);
+			#endif
+			/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2022/10/29 */
 			}
 		}
 
@@ -176,6 +244,8 @@ int pe2_reset_ta_vchr(struct chg_alg_device *alg)
 	return ret;
 }
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 static void pe2_check_cable_impedance(struct chg_alg_device *alg)
 {
 	int ret = 0;
@@ -274,6 +344,8 @@ end:
 		__func__, pe2->aicr_cable_imp / 1000,
 		pe2->vbat_orig / 1000, mivr_state);
 }
+#endif
+/* End del by jin.wang */
 
 static int _pe20_set_ta_vchr(struct chg_alg_device *alg, u32 chr_volt)
 {
@@ -292,13 +364,20 @@ static int _pe20_set_ta_vchr(struct chg_alg_device *alg, u32 chr_volt)
 	}
 
 	chg_cnt = pe2_hal_get_charger_cnt(alg);
+/* Begin mod by jin.wang task 2064 on 2022.4.1 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (chg_cnt > 1 && ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+		|| (alg->config == DUAL_CHARGERS_IN_SERIES))) {
+#else
 	if (chg_cnt > 1 && alg->config == DUAL_CHARGERS_IN_SERIES) {
+#endif
+/* End mod by jin.wang */
 		for (i = CHG2; i < CHG_MAX; i++) {
 			is_chip_enabled = pe2_hal_is_chip_enable(alg, i);
 			if (is_chip_enabled) {
 				ret = pe2_hal_enable_charger(alg, i, false);
 				if (ret < 0) {
-					pe2_err("%s:enable chip fail,idx:%d ret:%d\n",
+					pe2_err("%s:disable chip fail,idx:%d ret:%d\n",
 					__func__, i, ret);
 					ret_value = -EHAL;
 				}
@@ -318,8 +397,17 @@ static int pe20_set_ta_vchr(struct chg_alg_device *alg, u32 chr_volt)
 {
 	int ret = 0, ret_value = 0;
 	int vchr_before, vchr_after, vchr_delta;
+
+/* Begin mod by jin.wang task 5195 on 2022.1.6 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	const u32 sw_retry_cnt_max = 0;
+	const u32 retry_cnt_max = 5;
+#else
 	const u32 sw_retry_cnt_max = 3;
 	const u32 retry_cnt_max = 5;
+#endif
+/* End mod by jin.wang */
+
 	u32 sw_retry_cnt = 0, retry_cnt = 0;
 	struct mtk_pe20 *pe2;
 
@@ -340,7 +428,14 @@ static int pe20_set_ta_vchr(struct chg_alg_device *alg, u32 chr_volt)
 		 pe2_err("ret:%d delta:%d %d %d\n",
 		 ret, vchr_delta,
 		 vchr_after, chr_volt);
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		if (vchr_delta < 1000000 && ret == 0) {
+#else
 		if (vchr_delta < 500000 && ret == 0) {
+#endif
+/* End mod by jin.wang */
 			pe2_dbg("%s: OK, vchr = (%d, %d), vchr_target = %dmV\n",
 				__func__, vchr_before / 1000, vchr_after / 1000,
 				chr_volt / 1000);
@@ -366,10 +461,19 @@ static int pe20_set_ta_vchr(struct chg_alg_device *alg, u32 chr_volt)
 			retry_cnt,
 			retry_cnt_max);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	} while (!pe2->is_cable_out_occur &&
+		 (pe2_hal_get_charger_type(alg) ==
+		 POWER_SUPPLY_TYPE_USB_DCP) &&
+		 (retry_cnt < retry_cnt_max));
+#else
 	} while (!pe2->is_cable_out_occur &&
 		 (pe2_hal_get_charger_type(alg) !=
 		 POWER_SUPPLY_TYPE_USB_DCP) &&
 		 (retry_cnt < retry_cnt_max));
+#endif
+/* End mod by jin.wang */
 
 	if (pe2->is_cable_out_occur)
 		ret_value = -ECABLEOUT;
@@ -412,16 +516,58 @@ err:
 	return ret;
 }
 
+/* Begin added by hailong.chen for task 9209018 on 2020-04-14 */
+#if (defined (CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT ) && defined (CONFIG_CHARGER_TYPE_MT6357))
+extern unsigned int disable_vsrc_for_pe2(void);
+#endif
+/* End added by hailong.chen for task 9209018 on 2020-04-14 */
+
 static int __pe2_check_charger(struct chg_alg_device *alg)
 {
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int ret = 0;
+#else
 	int ret = 0, ret_value = 0;
+#endif
+/* End mod by jin.wang */
+
 	struct mtk_pe20 *pe2;
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	int uisoc;
+#endif
+/* End del by jin.wang */
+
+    /* Begin added by hailong.chen for task 9209018 on 2020-04-14 */
+#if (IS_ENABLED (CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT ) \
+	&& IS_ENABLED (CONFIG_CHARGER_TYPE_MT6357))
+    unsigned int vsrc_value = 0;
+#endif
+    /* End added by hailong.chen for task 9209018 on 2020-04-14 */
 
 	pe2 = dev_get_drvdata(&alg->dev);
-	uisoc = pe2_hal_get_uisoc(alg);
 
-	pe2_dbg("%s uisoc:%d s:%d end:%d type:%d", __func__,
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	uisoc = pe2_hal_get_uisoc(alg);
+#endif
+/* End del by jin.wang */
+
+    /* Begin added by hailong.chen for task 9209018 on 2020-04-14 */
+#if (IS_ENABLED (CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT ) \
+	&& IS_ENABLED (CONFIG_CHARGER_TYPE_MT6357))
+    vsrc_value = disable_vsrc_for_pe2();
+    if(vsrc_value)
+        pe2_err("%s: disable_vsrc OK\n", __func__);
+    else
+        pe2_err("%s: disable_vsrc Err\n", __func__);
+#endif
+    /* End added by hailong.chen for task 9209018 on 2020-04-14 */
+
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	pe2_err("%s uisoc:%d s:%d end:%d type:%d", __func__,
 		uisoc,
 		pe2->ta_start_battery_soc,
 		pe2->ta_stop_battery_soc,
@@ -432,15 +578,21 @@ static int __pe2_check_charger(struct chg_alg_device *alg)
 		ret_value = ALG_TA_NOT_SUPPORT;
 		goto out;
 	}
+#endif
+/* End del by jin.wang */
 
 	if (pe2->is_cable_out_occur)
 		goto out;
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	if (uisoc < pe2->ta_start_battery_soc ||
 		uisoc >= pe2->ta_stop_battery_soc) {
 		ret_value = ALG_TA_CHECKING;
 		goto out;
 	}
+#endif
+/* End del by jin.wang */
 
 	ret = pe2_reset_ta_vchr(alg);
 	if (ret != 0)
@@ -449,10 +601,14 @@ static int __pe2_check_charger(struct chg_alg_device *alg)
 	if (pe2->is_cable_out_occur)
 		goto out;
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	pe2_check_cable_impedance(alg);
 
 	if (pe2->is_cable_out_occur)
 		goto out;
+#endif
+/* End del by jin.wang */
 
 	ret = pe20_detect_ta(alg);
 	if (ret < 0)
@@ -461,11 +617,23 @@ static int __pe2_check_charger(struct chg_alg_device *alg)
 	pe2_dbg("%s: OK, state = %d\n",
 		__func__, pe2->state);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	return 0;
+#else
 	return ret;
+#endif
+/* End mod by jin.wang */
+
 out:
 
+/* Begin del by jin.wang task 2064 on 2021.10.25 */
+#if !defined(CONFIG_TCT_CHARGER)
 	if (ret_value == 0)
 		ret_value = ALG_TA_NOT_SUPPORT;
+#endif
+/* End del by jin.wang */
+
 	pe2_dbg("%s:SOC:(%d,%d,%d),state:%d,chr_type:%d,ret:%d,plugout:%d\n",
 		__func__,
 		pe2_hal_get_uisoc(alg),
@@ -475,7 +643,14 @@ out:
 		pe2_hal_get_charger_type(alg),
 		ret,
 		pe2->is_cable_out_occur);
+
+/* Begin mod by jin.wang task 2064 on 2021.10.25 */
+#if defined(CONFIG_TCT_CHARGER)
+	return ALG_TA_NOT_SUPPORT;
+#else
 	return ret_value;
+#endif
+/* End mod by jin.wang */
 }
 
 static int pe2_leave(struct chg_alg_device *alg)
@@ -524,6 +699,16 @@ static int _pe2_init_algo(struct chg_alg_device *alg)
 	if (ret != 0)
 		pe2_err("%s: use default table, %d\n", __func__, ret);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+		|| (alg->config == DUAL_CHARGERS_IN_SERIES)) {
+		cnt = pe2_hal_get_charger_cnt(alg);
+		if (cnt != 2)
+			alg->config = SINGLE_CHARGER;
+	} else
+		alg->config = SINGLE_CHARGER;
+#else
 	if (alg->config == DUAL_CHARGERS_IN_PARALLEL) {
 		pe2_err("%s does not support DUAL_CHARGERS_IN_PARALLEL\n",
 			__func__);
@@ -536,6 +721,9 @@ static int _pe2_init_algo(struct chg_alg_device *alg)
 			alg->config = SINGLE_CHARGER;
 	} else
 		alg->config = SINGLE_CHARGER;
+#endif
+/* End mod by jin.wang */
+
 	mutex_unlock(&pe2->access_lock);
 	pe2_dbg("%s config:%d\n", __func__, alg->config);
 	return 0;
@@ -550,6 +738,12 @@ static char *pe2_state_to_str(int state)
 		return "PE2_HW_FAIL";
 	case PE2_HW_READY:
 		return "PE2_HW_READY";
+/* Begin add by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	case PE2_TA_CHECKING:
+		return "PE2_TA_CHECKING";
+#endif
+/* End add by jin.wang */
 	case PE2_TA_NOT_SUPPORT:
 		return "PE2_TA_NOT_SUPPORT";
 	case PE2_RUN:
@@ -566,10 +760,41 @@ static char *pe2_state_to_str(int state)
 	return "PE2_UNKNOWN";
 }
 
+/* Begin add by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static int __pe2_is_algo_ready(struct chg_alg_device *alg, struct mtk_pe20 *pe2)
+{
+	int uisoc;
+
+	uisoc = pe2_hal_get_uisoc(alg);
+	if (uisoc < 0) {
+		pe2_err("%s unknown uisoc %d\n", __func__, uisoc);
+		return ALG_TA_CHECKING;
+	}
+
+	if (pe2_hal_get_charger_type(alg) !=
+		POWER_SUPPLY_TYPE_USB_DCP) {
+		return ALG_TA_NOT_SUPPORT;
+	} else if (uisoc >= pe2->ta_stop_battery_soc) {
+		return ALG_TA_NOT_SUPPORT;
+	}
+
+	return ALG_READY;
+}
+#endif
+/* End add by jin.wang */
+
 static int _pe2_is_algo_ready(struct chg_alg_device *alg)
 {
 	struct mtk_pe20 *pe2;
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int ret_value;
+#else
 	int ret_value, uisoc;
+#endif
+/* End mod by jin.wang */
 
 	pe2 = dev_get_drvdata(&alg->dev);
 
@@ -584,6 +809,10 @@ static int _pe2_is_algo_ready(struct chg_alg_device *alg)
 		ret_value = ALG_INIT_FAIL;
 		break;
 	case PE2_HW_READY:
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		ret_value = __pe2_is_algo_ready(alg, pe2);
+#else
 		uisoc = pe2_hal_get_uisoc(alg);
 		if (pe2_hal_get_charger_type(alg) !=
 			POWER_SUPPLY_TYPE_USB_DCP) {
@@ -596,14 +825,31 @@ static int _pe2_is_algo_ready(struct chg_alg_device *alg)
 		} else {
 			ret_value = ALG_READY;
 		}
+#endif
+/* End mod by jin.wang */
 		break;
+/* Begin add by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	case PE2_TA_CHECKING:
+		ret_value = __pe2_is_algo_ready(alg, pe2);
+		break;
+#endif
+/* End add by jin.wang */
 	case PE2_TA_NOT_SUPPORT:
 		ret_value = ALG_TA_NOT_SUPPORT;
 		break;
 	case PE2_RUN:
 	case PE2_TUNING:
 	case PE2_POSTCC:
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		ret_value = __pe2_is_algo_ready(alg, pe2);
+		if (ret_value == ALG_READY)
+			ret_value = ALG_RUNNING;
+#else
 		ret_value = ALG_RUNNING;
+#endif
+/* End mod by jin.wang */
 		break;
 	default:
 		ret_value = ALG_INIT_FAIL;
@@ -629,10 +875,9 @@ static int pe2_sc_set_charger(struct chg_alg_device *alg)
 		return -1;
 	}
 
-
 	mutex_lock(&pe2->data_lock);
 	if (pe2->charging_current_limit1 != -1) {
-		if (pe2->charging_current_limit1 <
+		if (pe2->charging_current_limit1 <=
 			pe2->sc_charger_current)
 			pe2->charging_current1 =
 				pe2->charging_current_limit1;
@@ -640,21 +885,23 @@ static int pe2_sc_set_charger(struct chg_alg_device *alg)
 		if (ret != -ENOTSUPP &&
 			pe2->charging_current_limit1 < ichg1_min)
 			pe2->charging_current1 = 0;
-	} else
+	} else {
 		pe2->charging_current1 = pe2->sc_charger_current;
+	}
 
 	if (pe2->input_current_limit1 != -1 &&
-		pe2->input_current_limit1 <
+		pe2->input_current_limit1 <=
 		pe2->sc_input_current) {
 		pe2->input_current1 = pe2->input_current_limit1;
 		ret = pe2_hal_get_min_input_current(alg, CHG1, &aicr1_min);
 		if (ret != -ENOTSUPP &&
 			pe2->input_current_limit1 < aicr1_min)
 			pe2->input_current1 = 0;
-	} else
+	} else {
 		pe2->input_current1 = pe2->sc_input_current;
-	mutex_unlock(&pe2->data_lock);
+	}
 
+	mutex_unlock(&pe2->data_lock);
 
 	if (pe2->input_current1 == 0 ||
 		pe2->charging_current1 == 0) {
@@ -664,10 +911,21 @@ static int pe2_sc_set_charger(struct chg_alg_device *alg)
 		return -1;
 	}
 
+/* Begin mod by jin.wang task 2064 on 2021.11.19 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	pe2_hal_set_charging_current(alg, CHG1,
+		((force_ibat == -1) ?
+			pe2->charging_current1 : force_ibat));
+	pe2_hal_set_input_current(alg, CHG1,
+		((force_ibus == -1) ?
+			pe2->input_current1 : force_ibus));
+#else
 	pe2_hal_set_charging_current(alg,
 		CHG1, pe2->charging_current1);
 	pe2_hal_set_input_current(alg,
 		CHG1, pe2->input_current1);
+#endif
+/* End mod by jin.wang */
 	pe2_hal_set_cv(alg,
 		CHG1, pe2->cv);
 
@@ -691,18 +949,108 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 	bool chg2_chip_enabled = false;
 	int ret;
 	int ichg1_min = -1, ichg2_min = -1;
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int aicr1_min = -1, aicr2_min = -1;
+	int total_ibat = 0;
+#else
 	int aicr1_min = -1;
-
+#endif
+/* End mod by jin.wang */
 	pe2 = dev_get_drvdata(&alg->dev);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (pe2->input_current_limit1 == 0 ||
+		pe2->input_current_limit2 == 0 ||
+		pe2->charging_current_limit1 == 0 ||
+		pe2->charging_current_limit2 == 0) {
+		pr_notice("input/charging current is 0, end PE2\n");
+		return -1;
+	}
+#else
 	if (pe2->input_current_limit1 == 0 ||
 		pe2->charging_current_limit1 == 0 ||
 		pe2->charging_current_limit2 == 0) {
 		pr_notice("input/charging current is 0, end PE2\n");
 		return -1;
 	}
+#endif
+/* End mod by jin.wang */
 
 	mutex_lock(&pe2->data_lock);
+
+/* Begin mod by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (likely(force_ibat == -1)) {
+		total_ibat = pe2->dcs_chg1_charger_current
+				+ pe2->dcs_chg2_charger_current;
+	} else {
+		total_ibat = force_ibat;
+	}
+
+	pe2->dcs_chg1_charger_current =
+		(total_ibat * pe2->main_pct / 100);
+	pe2->dcs_chg2_charger_current =
+		total_ibat - pe2->dcs_chg1_charger_current;
+
+	if (force_ibus != -1)
+		pe2->dcs_input_current = force_ibus;
+
+	if (pe2->input_current_limit1 != -1 &&
+		pe2->input_current_limit1 <
+				(pe2->dcs_input_current * pe2->main_pct / 100)) {
+			pe2->input_current1 = pe2->input_current_limit1;
+	} else {
+		pe2->input_current1 =
+			(pe2->dcs_input_current * pe2->main_pct / 100);
+	}
+	ret = pe2_hal_get_min_input_current(alg, CHG1, &aicr1_min);
+	if (ret != -ENOTSUPP &&
+		pe2->input_current1 < aicr1_min) {
+		pe2->input_current1 = 0;
+	}
+
+	if (pe2->charging_current_limit1 != -1 &&
+		pe2->charging_current_limit1 <
+		pe2->dcs_chg1_charger_current) {
+		pe2->charging_current1 = pe2->charging_current_limit1;
+	} else {
+		pe2->charging_current1 = pe2->dcs_chg1_charger_current;
+	}
+	ret = pe2_hal_get_min_charging_current(alg, CHG1, &ichg1_min);
+	if (ret != -ENOTSUPP &&
+		pe2->charging_current1 < ichg1_min) {
+		pe2->charging_current1 = 0;
+	}
+
+	if (pe2->input_current_limit2 != -1 &&
+		pe2->input_current_limit2 <
+			(pe2->dcs_input_current * (100 - pe2->main_pct) / 100)) {
+		pe2->input_current2 = pe2->input_current_limit2;
+	} else {
+		pe2->input_current2 =
+			(pe2->dcs_input_current * (100 - pe2->main_pct) / 100);
+	}
+	ret = pe2_hal_get_min_input_current(alg, CHG2, &aicr2_min);
+	if (ret != -ENOTSUPP &&
+		pe2->input_current2 < aicr2_min) {
+		pe2->input_current2 = 0;
+	}
+
+	if (pe2->charging_current_limit2 != -1 &&
+		pe2->charging_current_limit2 <
+		pe2->dcs_chg2_charger_current) {
+		pe2->charging_current2 = pe2->charging_current_limit2;
+	} else {
+		pe2->charging_current2 = pe2->dcs_chg2_charger_current;
+	}
+	ret = pe2_hal_get_min_charging_current(alg, CHG2, &ichg2_min);
+	if (ret != -ENOTSUPP &&
+		pe2->charging_current2 < ichg2_min) {
+		pe2->charging_current2 = 0;
+	}
+#else
 	if (pe2->input_current_limit1 != -1 &&
 		pe2->input_current_limit1 <
 		pe2->dcs_input_current) {
@@ -724,7 +1072,11 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 			pe2->charging_current1 = 0;
 	} else
 		pe2->charging_current1 = pe2->dcs_chg1_charger_current;
+#endif
+/* End mod by jin.wang */
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	if (pe2->state == PE2_RUN)
 		pe2->charging_current2 = pe2->dcs_chg2_charger_current;
 
@@ -737,8 +1089,27 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 			pe2->charging_current_limit2 < ichg1_min)
 			pe2->charging_current2 = 0;
 	}
+#endif
+/* End del by jin.wang */
+
 	mutex_unlock(&pe2->data_lock);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (pe2->input_current1 == 0 ||
+		pe2->input_current2 == 0 ||
+		pe2->charging_current1 == 0 ||
+		pe2->charging_current2 == 0) {
+		pe2_err("current is zero %d %d %d %d\n",
+			pe2->input_current1,
+			pe2->input_current2,
+			pe2->charging_current1,
+			pe2->charging_current2);
+		pe2_hal_enable_charger(alg, CHG2, false);
+		pe2_hal_charger_enable_chip(alg, CHG2, false);
+		return -1;
+	}
+#else
 	if (pe2->input_current1 == 0 ||
 		pe2->charging_current1 == 0 ||
 		pe2->charging_current2 == 0) {
@@ -750,6 +1121,8 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 		pe2_hal_charger_enable_chip(alg, CHG2, false);
 		return -1;
 	}
+#endif
+/* End mod by jin.wang */
 
 	chg2_chip_enabled = pe2_hal_is_chip_enable(alg, CHG2);
 	pe2_err("chg2_en:%d %d %d\n",
@@ -757,16 +1130,51 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 	if (pe2->state == PE2_RUN) {
 		if (!chg2_chip_enabled)
 			pe2_hal_charger_enable_chip(alg, CHG2, true);
+
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		pe2_hal_set_cv(alg, CHG2, pe2->cv);
+#endif
+/* End add by jin.wang */
+
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 		pe2_hal_enable_charger(alg, CHG2, true);
+#endif
+/* End del by jin.wang */
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		pe2_hal_set_input_current(alg,
+			CHG2, pe2->input_current2);
+#else
 		pe2_hal_set_input_current(alg,
 			CHG2, pe2->charging_current2);
+#endif
+/* End mod by jin.wang */
+
 		pe2_hal_set_charging_current(alg,
 			CHG2, pe2->charging_current2);
 
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		pe2_hal_enable_charger(alg, CHG2, true);
+#endif
+/* End add by jin.wang */
+
+/* Begin add by weijun for eoc on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+               pe2_hal_set_eoc_current(alg, CHG1,
+                       pe2->dual_polling_ieoc);
+               pe2_hal_enable_termination(alg, CHG1, true);
+               pe2_hal_safety_check(alg, pe2->dual_polling_ieoc);
+#else
 		pe2_hal_set_eoc_current(alg, CHG1,
 			pe2->dual_polling_ieoc);
 		pe2_hal_enable_termination(alg, CHG1, false);
 		pe2_hal_safety_check(alg, pe2->dual_polling_ieoc);
+#endif
+/* End add by weijun */
 	} else if (pe2->state == PE2_TUNING) {
 		if (!chg2_chip_enabled)
 			pe2_hal_charger_enable_chip(alg, CHG2, true);
@@ -789,6 +1197,23 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 	pe2_hal_set_cv(alg,
 		CHG1, pe2->cv);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	pe2_dbg("%s m:%d s:%d cv:%d chg1:%d,%d chg2:%d,%d chg2en:%d min:%d,%d,%d,%d\n",
+		__func__,
+		alg->config,
+		pe2->state,
+		pe2->cv,
+		pe2->input_current1,
+		pe2->charging_current1,
+		pe2->input_current2,
+		pe2->charging_current2,
+		chg2_enable,
+		ichg1_min,
+		ichg2_min,
+		aicr1_min,
+		aicr2_min);
+#else
 	pe2_dbg("%s m:%d s:%d cv:%d chg1:%d,%d chg2:%d,%d chg2en:%d min:%d,%d,%d\n",
 		__func__,
 		alg->config,
@@ -802,9 +1227,28 @@ static int pe2_dcs_set_charger(struct chg_alg_device *alg)
 		ichg1_min,
 		ichg2_min,
 		aicr1_min);
-
+#endif
+/* End mod by jin.wang */
 	return 0;
 }
+
+/* [BSP]Begin added by bitao.xiong for SOCAOSP13-9015 on 2022/11/02 */
+static bool primary_chg_is_sy6970qcc(void)
+{
+	static struct charger_device *primary_chg = NULL;
+
+	if (IS_ERR_OR_NULL(primary_chg)) {
+		primary_chg = get_charger_by_name("primary_chg");
+		if (IS_ERR_OR_NULL(primary_chg))
+			pe2_err("Error: can't find primary chg\n");
+	}
+
+	if (!IS_ERR_OR_NULL(primary_chg) && strlen(primary_chg->props.alias_name) != 0)
+		return !strncmp(primary_chg->props.alias_name, "sy6970qcc", strlen("sy6970qcc"));
+	else
+		return false;
+}
+/* [BSP]End added by bitao.xiong for SOCAOSP13-9015 on 2022/11/02 */
 
 static int __pe2_run(struct chg_alg_device *alg)
 {
@@ -814,7 +1258,19 @@ static int __pe2_run(struct chg_alg_device *alg)
 	int pre_vbus, pre_idx;
 	int tune = 0, pes = 0; /* For log, to know the state of PE+20 */
 	u32 size;
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int ret = 0, ret_value = 0, vchr;
+	/* [BSP]Begin added by bitao.xiong for SNTTF-635 on 2022/10/29 */
+	#if IS_ENABLED(CONFIG_TCT_PROJECT_SONATA)
+	int uisoc;
+	#endif
+	/* [BSP]End added by bitao.xiong for SNTTF-635 on 2022/10/29 */
+#else
 	int ret = 0, ret_value = 0, vchr, uisoc;
+#endif
+/* End mod by jin.wang */
 
 	pe2 = dev_get_drvdata(&alg->dev);
 
@@ -839,10 +1295,25 @@ static int __pe2_run(struct chg_alg_device *alg)
 			pe2->ta_vchr_org);
 		ret = pe2_leave(alg);
 		pe2->ta_vchr_org = vchr;
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		ret_value = ALG_TA_NOT_SUPPORT;
+#else
 		ret_value = ALG_TA_CHECKING;
+#endif
+/* End mod by jin.wang */
+
+#ifdef CONFIG_HELAEYE_BSP_CHARGER_ON
+  heraeye_bat_check_temp(CHARGER_DRV_PE_ERROR,(vchr<<16)|(pe2->ta_vchr_org));
+#endif
+
 		goto out;
 	}
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+/* [BSP]Begin modified by bitao.xiong for SNTTF-635 on 2022/10/29 */
+#if IS_ENABLED(CONFIG_TCT_PROJECT_SONATA) || !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	ichg = pe2_hal_get_ibat(alg);
 	/* Check SOC & Ichg */
 	uisoc = pe2_hal_get_uisoc(alg);
@@ -854,6 +1325,19 @@ static int __pe2_run(struct chg_alg_device *alg)
 		ret_value = ALG_DONE;
 		goto out;
 	}
+#endif
+/* [BSP]End modified by bitao.xiong for SNTTF-635 on 2022/10/29 */
+/* End del by jin.wang */
+
+	/* [BSP]Begin added by bitao.xiong for SOCAOSP13-9015 on 2022/11/02 */
+	if (primary_chg_is_sy6970qcc() && vbat > pe2->cv * 102 / 100 && pe2->cv <= 4100000) {
+		pe2_err("%s: sy6970qcc, vbat = %d,cv=%d, stop PE+20\n", __func__,
+			vbat, pe2->cv);
+		ret = pe2_leave(alg);
+		ret_value = ALG_DONE;
+		goto out;
+	}
+	/* [BSP]End added by bitao.xiong for SOCAOSP13-9015 on 2022/11/02 */
 
 	size = ARRAY_SIZE(pe2->profile);
 	for (i = 0; i < size; i++) {
@@ -885,6 +1369,11 @@ static int __pe2_run(struct chg_alg_device *alg)
 			else {
 				pe2_leave(alg);
 				ret_value = ALG_TA_NOT_SUPPORT;
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+				goto out;
+#endif
+/* End add by jin.wang */
 			}
 		} else
 			pe2_hal_set_mivr(alg, CHG1, pe2->vbus - 500000);
@@ -892,19 +1381,44 @@ static int __pe2_run(struct chg_alg_device *alg)
 	}
 	pes = 2;
 
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+		|| (alg->config == DUAL_CHARGERS_IN_SERIES)) {
+#else
 	if (alg->config == DUAL_CHARGERS_IN_SERIES) {
+#endif
+/* End mod by jin.wang */
 		if (pe2_dcs_set_charger(alg) != 0) {
 			ret = pe2_leave(alg);
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+			ret_value = ALG_TA_NOT_SUPPORT;
+#else
 			ret_value = ALG_DONE;
+#endif
+/* End mod by jin.wang */
 			goto out;
 		}
 	} else {
 		if (pe2_sc_set_charger(alg) != 0) {
 			ret = pe2_leave(alg);
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+			ret_value = ALG_TA_NOT_SUPPORT;
+#else
 			ret_value = ALG_DONE;
+#endif
+/* End mod by jin.wang */
 			goto out;
 		}
 	}
+
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	ret_value = ALG_DONE;
+#endif
+/* End add by jin.wang */
 
 	pe2_dbg("%s cv:%d chg1:%d,%d chg2:%d,%d\n", __func__,
 		pe2->cv,
@@ -957,9 +1471,13 @@ static int _pe2_start_algo(struct chg_alg_device *alg)
 				again = true;
 			} else if (ret == ALG_TA_CHECKING)
 				ret_value = ALG_TA_CHECKING;
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 			else if (pe2->charging_current_limit1 != -1 ||
 				pe2->charging_current_limit2 != -1)
 				ret_value = ALG_NOT_READY;
+#endif
+/* End del by jin.wang */
 			else {
 				pe2->state = PE2_TA_NOT_SUPPORT;
 				ret_value = ALG_TA_NOT_SUPPORT;
@@ -972,6 +1490,17 @@ static int _pe2_start_algo(struct chg_alg_device *alg)
 		case PE2_TUNING:
 		case PE2_POSTCC:
 			ret = __pe2_run(alg);
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+			if (ret == ALG_DONE) {
+				pe2->state = PE2_RUN;
+				ret_value = ALG_RUNNING;
+			} else {
+				pe2->state = PE2_TA_NOT_SUPPORT;
+				ret_value = ALG_TA_NOT_SUPPORT;
+			}
+#else
 			if (ret == ALG_TA_NOT_SUPPORT)
 				pe2->state = PE2_TA_NOT_SUPPORT;
 			else if (ret == ALG_TA_CHECKING) {
@@ -980,6 +1509,8 @@ static int _pe2_start_algo(struct chg_alg_device *alg)
 			} else if (ret == ALG_DONE)
 				pe2->state = PE2_HW_READY;
 			ret_value = ret;
+#endif
+/* End mod by jin.wang */
 			break;
 		default:
 			pe2_err("PE2 unknown state:%d\n", pe2->state);
@@ -1021,10 +1552,17 @@ static int _pe2_stop_algo(struct chg_alg_device *alg)
 		pe2->state == PE2_POSTCC) {
 		pe2_reset_ta_vchr(alg);
 		pe2->state = PE2_HW_READY;
+
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		if ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+			|| (alg->config == DUAL_CHARGERS_IN_SERIES)) {
+#else
 		if (alg->config == DUAL_CHARGERS_IN_SERIES) {
+#endif
+/* End mod by jin.wang */
 			pe2_hal_enable_charger(alg, CHG2, false);
-			pe2_hal_charger_enable_chip(alg,
-			CHG2, false);
+			pe2_hal_charger_enable_chip(alg, CHG2, false);
 		}
 	}
 
@@ -1034,9 +1572,14 @@ static int _pe2_stop_algo(struct chg_alg_device *alg)
 static int pe2_full_event(struct chg_alg_device *alg)
 {
 	struct mtk_pe20 *pe2;
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	int ret;
 	bool chg_en, chg2_enabled = false;
 	int ichg2, ichg2_min;
+#endif
+/* End del by jin.wang */
+
 	int ret_value = 0;
 
 	pe2 = dev_get_drvdata(&alg->dev);
@@ -1049,6 +1592,17 @@ static int pe2_full_event(struct chg_alg_device *alg)
 	case PE2_RUN:
 	case PE2_TUNING:
 	case PE2_POSTCC:
+/* Begin mod by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		pe2_err("%s evt full, force\n",  __func__);
+		if ((alg->config == DUAL_CHARGERS_IN_PARALLEL)
+			|| (alg->config == DUAL_CHARGERS_IN_SERIES)) {
+			pe2_hal_enable_charger(alg, CHG2, false);
+			pe2_hal_charger_enable_chip(alg, CHG2, false);
+		}
+		pe2_leave(alg);
+		pe2->state = PE2_TA_NOT_SUPPORT;
+#else
 		if (alg->config == DUAL_CHARGERS_IN_SERIES) {
 			pe2_hal_is_charger_enable(alg, CHG2, &chg_en);
 			chg2_enabled = pe2_hal_is_chip_enable(alg, CHG2);
@@ -1098,6 +1652,8 @@ static int pe2_full_event(struct chg_alg_device *alg)
 				pe2->state = PE2_HW_READY;
 			}
 		}
+#endif
+/* End add by jin.wang */
 		break;
 	default:
 		pe2_dbg("%s: error state:%d\n", __func__,
@@ -1125,6 +1681,14 @@ static int _pe2_notifier_call(struct chg_alg_device *alg,
 	case EVT_FULL:
 		ret_value = pe2_full_event(alg);
 		break;
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	case EVT_RECHARGE:
+		pe2_err("%s evt recharge, retry\n", __func__);
+		pe2->state = PE2_HW_READY;
+		break;
+#endif
+/* End add by jin.wang */
 	default:
 		ret_value = -EINVAL;
 	}
@@ -1244,7 +1808,16 @@ static void mtk_pe2_parse_dt(struct mtk_pe20 *pe2,
 		pe2->dual_polling_ieoc = 750000;
 	}
 
-
+/* Begin add by jin.wang task 2064 on 2021.10.26 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (of_property_read_u32(np, "main_pct", &val) >= 0)
+		pe2->main_pct = val;
+	if (pe2->main_pct < 30 || pe2->main_pct > 100) {
+		pr_notice("PE2 use default main_pct:50\n");
+		pe2->main_pct = 50;
+	}
+#endif
+/* End add by jin.wang */
 }
 
 int _pe2_get_prop(struct chg_alg_device *alg,
@@ -1271,6 +1844,8 @@ int _pe2_set_setting(struct chg_alg_device *alg_dev,
 {
 	struct mtk_pe20 *pe2;
 
+/* Begin del by jin.wang task 2064 on 2021.11.2 */
+#if !IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
 	pe2_dbg("%s cv:%d icl:%d,%d cc:%d,%d\n",
 		__func__,
 		setting->cv,
@@ -1278,15 +1853,68 @@ int _pe2_set_setting(struct chg_alg_device *alg_dev,
 		setting->input_current_limit2,
 		setting->charging_current_limit1,
 		setting->charging_current_limit2);
+#endif
+/* End del by jin.wang */
+
 	pe2 = dev_get_drvdata(&alg_dev->dev);
 
 	mutex_lock(&pe2->access_lock);
 	__pm_stay_awake(pe2->suspend_lock);
 	pe2->cv = setting->cv;
+
+/* Begin mod by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (main_pct >= 20 && main_pct <= 100) {
+		pe2->main_pct = main_pct;
+	}
+
+	if (alg_dev->config == DUAL_CHARGERS_IN_PARALLEL) {
+		if (setting->total_ibus_limit != -1) {
+			pe2->input_current_limit1 =
+				setting->total_ibus_limit * pe2->main_pct / 100;
+			pe2->input_current_limit2 =
+				setting->total_ibus_limit - pe2->input_current_limit1;
+		} else {
+			pe2->input_current_limit1 = -1;
+			pe2->input_current_limit2 = -1;
+		}
+
+		if (setting->total_ibatt_limit != -1) {
+			pe2->charging_current_limit1 =
+				setting->total_ibatt_limit * pe2->main_pct / 100;
+			pe2->charging_current_limit2 =
+				setting->total_ibatt_limit - pe2->charging_current_limit1;
+		} else {
+			pe2->charging_current_limit1 = -1;
+			pe2->charging_current_limit2 = -1;
+		}
+	} else {
+		pe2->input_current_limit1 = setting->total_ibus_limit;
+		pe2->charging_current_limit1 = setting->total_ibatt_limit;
+		pe2->input_current_limit2 = -1;
+		pe2->charging_current_limit2 = -1;
+	}
+#else
 	pe2->input_current_limit1 = setting->input_current_limit1;
 	pe2->charging_current_limit1 = setting->charging_current_limit1;
 	pe2->input_current_limit2 = setting->input_current_limit2;
 	pe2->charging_current_limit2 = setting->charging_current_limit2;
+#endif
+/* End mod by jin.wang */
+
+/* Begin add by jin.wang task 2064 on 2021.11.2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	pe2_dbg("%s(): cv:%d,ibus:%d(%d,%d),ibatt:%d(%d,%d)\n",
+		__func__, setting->cv,
+		setting->total_ibus_limit,
+		pe2->input_current_limit1,
+		pe2->input_current_limit2,
+		setting->total_ibatt_limit,
+		pe2->charging_current_limit1,
+		pe2->charging_current_limit2);
+#endif
+/* End add by jin.wang */
+
 	__pm_relax(pe2->suspend_lock);
 	mutex_unlock(&pe2->access_lock);
 
@@ -1328,7 +1956,21 @@ static int mtk_pe2_probe(struct platform_device *pdev)
 	pe2->idx = -1;
 	pe2->vbus = 5000000;
 	pe2->state = PE2_HW_UNINIT;
+
+/* Begin add by jin.wang task 2064 on 2021.10.26 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	pe2->input_current_limit1 = -1;
+	pe2->input_current_limit2 = -1;
+	pe2->charging_current_limit1 = -1;
+	pe2->charging_current_limit2 = -1;
+#endif
+/* End add by jin.wang */
+
 	mtk_pe2_parse_dt(pe2, &pdev->dev);
+	pe2->bat_psy = devm_power_supply_get_by_phandle(&pdev->dev, "gauge");
+
+	if (IS_ERR_OR_NULL(pe2->bat_psy))
+		pe2_err("%s: devm power fail to get bat_psy\n", __func__);
 
 	pe2->profile[0].vbat = 3400000;
 	pe2->profile[1].vbat = 3500000;
@@ -1341,7 +1983,20 @@ static int mtk_pe2_probe(struct platform_device *pdev)
 	pe2->profile[8].vbat = 4200000;
 	pe2->profile[9].vbat = 4300000;
 
-	/*
+/* Begin mod by jin.wang to enlarge ibatt on 2022.4.1 */
+/* change begin by bitao.xiong for PARALLEL charge */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	pe2->profile[0].vchr = 9000000;
+	pe2->profile[1].vchr = 9000000;
+	pe2->profile[2].vchr = 9000000;
+	pe2->profile[3].vchr = 9000000;
+	pe2->profile[4].vchr = 9000000;
+	pe2->profile[5].vchr = 9000000;
+	pe2->profile[6].vchr = 9000000;
+	pe2->profile[7].vchr = 9000000;
+	pe2->profile[8].vchr = 9000000;
+	pe2->profile[9].vchr = 9000000;
+#else
 	pe2->profile[0].vchr = 8000000;
 	pe2->profile[1].vchr = 8500000;
 	pe2->profile[2].vchr = 8500000;
@@ -1352,17 +2007,9 @@ static int mtk_pe2_probe(struct platform_device *pdev)
 	pe2->profile[7].vchr = 9500000;
 	pe2->profile[8].vchr = 10000000;
 	pe2->profile[9].vchr = 10000000;
-	*/
-	pe2->profile[0].vchr = 8000000;
-	pe2->profile[1].vchr = 8000000;
-	pe2->profile[2].vchr = 8000000;
-	pe2->profile[3].vchr = 8500000;
-	pe2->profile[4].vchr = 8500000;
-	pe2->profile[5].vchr = 8500000;
-	pe2->profile[6].vchr = 9000000;
-	pe2->profile[7].vchr = 9000000;
-	pe2->profile[8].vchr = 9500000;
-	pe2->profile[9].vchr = 9500000;
+#endif
+/* change end by bitao.xiong for PARALLEL charge */
+/* End mod by jin.wang */
 
 	pe2->alg = chg_alg_device_register("pe2", &pdev->dev,
 					pe2, &pe2_alg_ops, NULL);

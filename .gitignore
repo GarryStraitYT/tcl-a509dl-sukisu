@@ -12,7 +12,7 @@
 .*
 *.a
 *.asn1.[ch]
-*.bin
+#*.bin
 *.bz2
 *.c.[012]*.*
 *.dtb
@@ -131,3 +131,38 @@ all.config
 
 # Kdevelop4
 *.kdev4
+
+# tcl kernel directories
+tcl/
+
+#tcl_kernel
+tcl/*
+
+# ifdef VENDOR_EDIT
+# cheng.chang@ARCH, 2020-11-5 add for kernel decoupling
+
+#
+# tcl vendor files
+#
+
+/.tcl_compile.log
+/.tcl_compile.lock
+/.tcl_filelist
+/.tcl_filelist_bak
+/.tcl_tmp/
+/tcl/*Kconfig.tcl
+
+#
+# kernel output files
+#
+
+vmlinux*
+*.o
+*.a
+*.tmp
+*.cmd
+*.order
+*.builtin
+*.o.d
+/scripts/
+# endif /*VENDOR_EDIT*/

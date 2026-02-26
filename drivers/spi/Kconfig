@@ -805,6 +805,14 @@ endif # SPI_MASTER
 # SLAVE side ... listening to other SPI masters
 #
 
+#Begin added by yan.gong for CIVICPL-2202 on 2022-08-09
+config TOUCH_FEATURE_MUTI_SPI
+	bool "mutiple SPI devices"
+	help
+	 Enabled when multiple compatible devices are mounted on
+	 the same SPI
+#End added by yan.gong for CIVICPL-2202 on 2022-08-09
+
 config SPI_SLAVE
 	bool "SPI slave protocol handlers"
 	help
@@ -826,5 +834,8 @@ config SPI_SLAVE_SYSTEM_CONTROL
 	  off, halt, and suspend.
 
 endif # SPI_SLAVE
+
+config SPI_DYNAMIC
+	def_bool ACPI || OF_DYNAMIC || SPI_SLAVE
 
 endif # SPI

@@ -19,7 +19,13 @@
 #include <linux/utsname.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/debug.h>
-
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2021/08/10, add kfault_monitor
+#ifdef CONFIG_HELAEYE_BSP_HUNG_TASK
+#include <tcl/tkperf.h>
+#include <linux/tcl_kversion.h>
+#endif
+// #endif /* VENDER_EDIT */
 #include <trace/events/sched.h>
 
 /*
@@ -86,6 +92,17 @@ static struct notifier_block panic_block = {
 static void check_hung_task(struct task_struct *t, unsigned long timeout)
 {
 	unsigned long switch_count = t->nvcsw + t->nivcsw;
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2021/08/10, add kfault_monitor
+#ifdef CONFIG_HELAEYE_BSP_HUNG_TASK
+	unsigned int backtrace_cnt;
+	unsigned long backtrace[6];
+	char str_backtrace[256];
+	char time_stamp[32];
+	int i;
+	int cnt = 0;
+#endif
+// #endif /* VENDER_EDIT */
 
 	/*
 	 * Ensure the task is not frozen.
@@ -134,6 +151,23 @@ static void check_hung_task(struct task_struct *t, unsigned long timeout)
 		pr_err("\"echo 0 > /proc/sys/kernel/hung_task_timeout_secs\""
 			" disables this message.\n");
 		sched_show_task(t);
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2021/08/10, add kfault_monitor
+#ifdef CONFIG_HELAEYE_BSP_HUNG_TASK
+		memset(str_backtrace, 0, sizeof(str_backtrace));
+		memset(time_stamp, 0, sizeof(time_stamp));
+		get_time_stamp(time_stamp, 32);
+		backtrace_cnt = stack_trace_save_tsk(upload_task, backtrace, 6, 1);
+		for (i = 0; i < backtrace_cnt; i++) {
+			if (i == 0)
+				cnt += scnprintf(str_backtrace + cnt, sizeof(str_backtrace) - cnt, "%lx", backtrace[i]);
+			else
+				cnt += scnprintf(str_backtrace + cnt, sizeof(str_backtrace) - cnt, "-%lx", backtrace[i]);
+		}
+		heraeye_log(GFP_KERNEL, "%s %s %d %d %s %s %s", "hung_task_info", t->comm, t->pid, timeout, str_backtrace, time_stamp, TCL_KVERSION);
+out:
+#endif
+// #endif /* VENDER_EDIT */
 		hung_task_show_lock = true;
 	}
 

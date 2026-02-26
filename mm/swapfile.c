@@ -43,6 +43,9 @@
 #include <asm/tlbflush.h>
 #include <linux/swapops.h>
 #include <linux/swap_cgroup.h>
+#ifdef CONFIG_TCL_FINE_MM_CORE
+#include <linux/zswapd.h>
+#endif
 
 static bool swap_count_continued(struct swap_info_struct *, pgoff_t,
 				 unsigned char);
@@ -663,6 +666,12 @@ static void add_to_avail_list(struct swap_info_struct *p)
 static void swap_range_free(struct swap_info_struct *si, unsigned long offset,
 			    unsigned int nr_entries)
 {
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+	unsigned long begin = offset;
+#endif
+// #endif /* VENDOR_EDIT */
 	unsigned long end = offset + nr_entries - 1;
 	void (*swap_slot_free_notify)(struct block_device *, unsigned long);
 
@@ -688,6 +697,12 @@ static void swap_range_free(struct swap_info_struct *si, unsigned long offset,
 			swap_slot_free_notify(si->bdev, offset);
 		offset++;
 	}
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+	clear_shadow_from_swap_cache(si->type, begin, end);
+#endif
+// #endif /* VENDOR_EDIT */
 }
 
 static int scan_swap_map_slots(struct swap_info_struct *si,
@@ -998,7 +1013,7 @@ start_over:
 			goto nextsi;
 		}
 		if (size == SWAPFILE_CLUSTER) {
-			if (!(si->flags & SWP_FILE))
+			if (si->flags & SWP_BLKDEV)
 				n_ret = swap_alloc_cluster(si, swp_entries);
 		} else
 			n_ret = scan_swap_map_slots(si, SWAP_HAS_CACHE,
@@ -1198,8 +1213,14 @@ static void swap_entry_free(struct swap_info_struct *p, swp_entry_t entry)
 	dec_cluster_info_page(p, p->cluster_info, offset);
 	unlock_cluster(ci);
 
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	swap_range_free(p, offset, 1);
+	mem_cgroup_uncharge_swap(entry, 1);
+#else
 	mem_cgroup_uncharge_swap(entry, 1);
 	swap_range_free(p, offset, 1);
+#endif
 }
 
 /*
@@ -2305,7 +2326,7 @@ sector_t map_swap_page(struct page *page, struct block_device **bdev)
 {
 	swp_entry_t entry;
 	entry.val = page_private(page);
-	return map_swap_entry(entry, bdev);
+	return map_swap_entry(entry, bdev) << (PAGE_SHIFT - 9);
 }
 
 /*
@@ -2739,10 +2760,10 @@ static void *swap_next(struct seq_file *swap, void *v, loff_t *pos)
 	else
 		type = si->type + 1;
 
+	++(*pos);
 	for (; (si = swap_type_to_swap_info(type)); type++) {
 		if (!(si->flags & SWP_USED) || !si->swap_map)
 			continue;
-		++*pos;
 		return si;
 	}
 
@@ -2826,6 +2847,7 @@ late_initcall(max_swapfiles_check);
 static struct swap_info_struct *alloc_swap_info(void)
 {
 	struct swap_info_struct *p;
+	struct swap_info_struct *defer = NULL;
 	unsigned int type;
 	int i;
 	int size = sizeof(*p) + nr_node_ids * sizeof(struct plist_node);
@@ -2855,7 +2877,7 @@ static struct swap_info_struct *alloc_swap_info(void)
 		smp_wmb();
 		WRITE_ONCE(nr_swapfiles, nr_swapfiles + 1);
 	} else {
-		kvfree(p);
+		defer = p;
 		p = swap_info[type];
 		/*
 		 * Do not memset this entry: a racing procfs swap_next()
@@ -2868,6 +2890,7 @@ static struct swap_info_struct *alloc_swap_info(void)
 		plist_node_init(&p->avail_lists[i], 0);
 	p->flags = SWP_USED;
 	spin_unlock(&swap_lock);
+	kvfree(defer);
 	spin_lock_init(&p->lock);
 	spin_lock_init(&p->cont_lock);
 
@@ -3232,6 +3255,11 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 	if (error)
 		goto bad_swap_unlock_inode;
 
+#if defined(CONFIG_ZS_MALLOC_EXT) && defined(CONFIG_TCL_ZRAM)
+	if (!strncmp(name->name, "/dev/block/zram", 15))
+		zs_pool_ext_enable(p->bdev->bd_disk);
+#endif
+
 	nr_extents = setup_swap_map_and_extents(p, swap_header, swap_map,
 		cluster_info, maxpages, &span);
 	if (unlikely(nr_extents < 0)) {
@@ -3364,6 +3392,28 @@ void si_swapinfo(struct sysinfo *val)
 	val->totalswap = total_swap_pages + nr_to_be_unused;
 	spin_unlock(&swap_lock);
 }
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+bool free_swap_is_low(void)
+{
+	unsigned int type;
+	unsigned long long freeswap = 0;
+	unsigned long nr_to_be_unused = 0;
+
+	spin_lock(&swap_lock);
+	for (type = 0; type < nr_swapfiles; type++) {
+		struct swap_info_struct *si = swap_info[type];
+
+		if ((si->flags & SWP_USED) && !(si->flags & SWP_WRITEOK))
+			nr_to_be_unused += si->inuse_pages;
+	}
+	freeswap = atomic_long_read(&nr_swap_pages) + nr_to_be_unused;
+	spin_unlock(&swap_lock);
+
+	return (freeswap < get_free_swap_threshold());
+}
+EXPORT_SYMBOL(free_swap_is_low);
+#endif
 
 /*
  * Verify that a swap entry is valid and increment its swap map count.

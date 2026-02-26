@@ -118,8 +118,7 @@ enum IMGSENSOR_RETURN imgsensor_i2c_init(
 	enum   IMGSENSOR_I2C_DEV  device)
 {
 	if (!pi2c_cfg ||
-	    device >= IMGSENSOR_I2C_DEV_MAX_NUM ||
-	    device < IMGSENSOR_I2C_DEV_0)
+	    device >= IMGSENSOR_I2C_DEV_MAX_NUM)
 		return IMGSENSOR_RETURN_ERROR;
 
 	pi2c_cfg->pinst       = &gi2c.inst[device];
@@ -139,6 +138,11 @@ enum IMGSENSOR_RETURN imgsensor_i2c_buffer_mode(int enable)
 	enum   IMGSENSOR_RETURN    ret   = IMGSENSOR_RETURN_SUCCESS;
 
 	pr_debug("i2c_buf_mode_en %d\n", enable);
+
+    if (pinst->pi2c_client == NULL) {
+		pr_err("[%s] pi2c_client is NULL!\n", __func__);
+		return IMGSENSOR_RETURN_ERROR;
+	}
 
 	ret = (enable) ?
 		hw_trig_i2c_enable(pinst->pi2c_client->adapter) :
@@ -166,6 +170,10 @@ enum IMGSENSOR_RETURN imgsensor_i2c_read(
 	struct IMGSENSOR_I2C_INST *pinst = pi2c_cfg->pinst;
 	enum   IMGSENSOR_RETURN    ret   = IMGSENSOR_RETURN_SUCCESS;
 
+	if (pinst->pi2c_client == NULL) {
+		pr_err("[%s] pi2c_client is NULL!\n", __func__);
+		return IMGSENSOR_RETURN_ERROR;
+	}
 	mutex_lock(&pi2c_cfg->i2c_mutex);
 
 	pinst->msg[0].addr  = id >> 1;
@@ -219,6 +227,11 @@ enum IMGSENSOR_RETURN imgsensor_i2c_write(
 	u8                 *pend  = pwrite_data + write_length;
 	int i   = 0;
 
+    if (pinst->pi2c_client == NULL) {
+		pr_err("[%s] pi2c_client is NULL!\n", __func__);
+		return IMGSENSOR_RETURN_ERROR;
+	}
+
 	mutex_lock(&pi2c_cfg->i2c_mutex);
 
 	while (pdata < pend && i < IMGSENSOR_I2C_CMD_LENGTH_MAX) {
@@ -257,6 +270,53 @@ enum IMGSENSOR_RETURN imgsensor_i2c_write(
 
 	return ret;
 }
+//zhongzhu add for tctcamera development start,2022/06/08
+enum IMGSENSOR_RETURN eeprom_i2c_write(
+		struct IMGSENSOR_I2C_CFG *pi2c_cfg,
+		u8 *pwrite_data,
+		u16 write_length,
+		u16 id,
+		int speed)
+{
+	struct IMGSENSOR_I2C_INST *pinst = pi2c_cfg->pinst;
+	enum   IMGSENSOR_RETURN    ret   = IMGSENSOR_RETURN_SUCCESS;
+	struct i2c_msg     *pmsg  = pinst->msg;
+
+	if (pinst->pi2c_client == NULL) {
+		pr_err("pi2c_client is NULL!\n");
+		return IMGSENSOR_RETURN_ERROR;
+	}
+
+	mutex_lock(&pi2c_cfg->i2c_mutex);
+
+	pmsg->addr  = id >> 1;
+	pmsg->flags = pmsg->flags & I2C_M_TEN;
+	pmsg->len   = write_length;
+	pmsg->buf   = pwrite_data;
+
+	if (mtk_i2c_transfer(
+			pinst->pi2c_client->adapter,
+			pinst->msg,
+			1,
+			(pi2c_cfg->pinst->status.filter_msg)
+				? I2C_A_FILTER_MSG : 0,
+			((speed > 0) && (speed <= 1000))
+				? speed * 1000 : IMGSENSOR_I2C_SPEED * 1000)
+			!= 1) {
+		static DEFINE_RATELIMIT_STATE(ratelimit, 1 * HZ, 30);
+
+		if (__ratelimit(&ratelimit))
+			pr_err(
+				"I2C write failed (0x%x)! speed(0=%d) (0x%x)\n",
+				ret, speed, *pwrite_data);
+		ret = IMGSENSOR_RETURN_ERROR;
+	}
+
+	mutex_unlock(&pi2c_cfg->i2c_mutex);
+
+	return ret;
+}
+//zhongzhu add for tctcamera development end,2022/06/08
 
 void imgsensor_i2c_filter_msg(struct IMGSENSOR_I2C_CFG *pi2c_cfg, bool en)
 {

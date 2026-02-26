@@ -1,0 +1,25 @@
+/***start, yliu7@tcl.com for passat-T NFC***/
+&odm {
+	nfc:nfc {
+		compatible = "mediatek,nfc-gpio-v2";
+		gpio-rst = <167>;
+		gpio-rst-std = <&pio 167 0x0>;
+		gpio-irq = <9>;
+		gpio-irq-std = <&pio 9 0x0>;
+	};
+	irq_nfc:irq_nfc {
+		compatible = "mediatek,irq_nfc-eint";
+		interrupt-parent = <&pio>;
+		interrupts = <9 IRQ_TYPE_LEVEL_HIGH>;
+		status = "okay";
+	};
+};
+&i2c3 {
+	nfc_mtk:nfc@08 {
+		compatible = "mediatek,nfc";
+		reg = <0x08>;
+		status = "okay";
+	};
+};
+
+/*end, fps, fingerprint config*/

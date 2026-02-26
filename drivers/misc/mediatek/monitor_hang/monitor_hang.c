@@ -15,6 +15,7 @@
 #include <linux/sched.h>
 #include <linux/sched/clock.h>
 #include <linux/sched/debug.h>
+#include <linux/sched/mm.h>
 #include <linux/sched/rt.h>
 #include <linux/sched/task.h>
 #include <uapi/linux/sched/types.h>
@@ -48,6 +49,254 @@
 #include "mrdump/mrdump_mini.h"
 #include "aed/aed.h"
 #include <mrdump.h>
+// Add by jinggao.zhou for ENCOREVZW-7282, add BOOT DETECT timeout 5 mins 2022/11/01
+#ifdef CONFIG_TCL_BOOT_DETECT
+#include <linux/uaccess.h>
+#include <mtk_drm_assert_ext.h>
+enum mtkfb_power_mode {
+  	FB_SUSPEND = 0,
+  	FB_RESUME,
+  	DOZE_SUSPEND,
+  	DOZE,
+  	MTKFB_POWER_MODE_UNKNOWN,
+};
+enum disp_pwm_id_t {
+  	DISP_PWM0 = 0x1,
+  	DISP_PWM1 = 0x2,
+  	DISP_PWM_ALL = (DISP_PWM0 | DISP_PWM1)
+};
+enum mtkfb_power_mode primary_display_set_power_mode(enum mtkfb_power_mode new_mode);
+void mtkfb_late_resume(void);
+int disp_pwm_set_backlight(enum disp_pwm_id_t id, int level_1024);
+
+#define LOG_BLOCK_SIZE (1024)
+
+int kmsg_numbers=0;
+int ui_print_line=0;
+int watchdog_print_line=0;
+int runtime_print_line=0;
+int System_print_line=0;
+int Zygote_print_line=0;
+int keystore_print_line=0;
+int logcat_sum_lines=0;
+int device_mapper_print_line=0;
+int hidl_print_line=0;
+int hidlservice_print_line=0;
+int boot_detect_kerenl_display_status=0;
+int ui_print_cursor_initflag=0;
+int kernel_printk_tofb_ctrl=0;
+int current_version=0;// 0: daily 1: user 2: mp 3: mini 4: cer 5: fut
+
+char logcat_msg[1024];
+
+void log_store_to_emmc(void);
+void klog_check_to_ui(void);
+char kdisplay_bootprof_msg[256]={0};
+char kdisplay_bootprof_msg1[256]={0};
+char kdisplay_bootprof_msg2[256]={0};
+char kdisplay_bootprof_msg3[256]={0};
+char kdisplay_bootprof_msg4[256]={0};
+char kdisplay_bootprof_msg5[256]={0};
+char kdisplay_bootprof_msg6[256]={0};
+char kdisplay_bootprof_msg7[256]={0};
+char kdisplay_bootprof_msg8[256]={0};
+unsigned int get_boot_mode(void);
+
+extern int logcat_to_kernel(void);
+extern void mtk_drm_fb_late_resume(void);
+void print_ver_info(void);
+void botodetect_curtime_to_str(char *cur_time);
+#ifdef CONFIG_DRM_MEDIATEK
+void hold_lcd_backlight(void)
+{
+    //pr_info("hang_detect hold_lcd_backlight mtk_drm_fb_late_resume \n");
+    mtk_drm_fb_late_resume();
+    return;
+}
+#else
+extern int mtkfb_set_backlight_level(unsigned int level);
+void hold_lcd_backlight(void)
+{
+    pr_info("hang_detect hold_lcd_backlight primary_display_set_power_mode\n");
+    primary_display_set_power_mode(1);
+    mtkfb_late_resume();
+    disp_pwm_set_backlight(1,1023);
+    return;
+}
+#endif
+
+static int tct_kernel_printk_tofb_ctrl_get(char *str)
+{
+
+//The blue screen function is in the USERDEBUG version, 
+//which can be forced to turn on by default, turned on by UARTFLAG=O, and turned off by UARTFLAG=X
+// current_version 0: daily 1: user 2: mp 3: mini 4: cer 5: fut
+#ifdef CONFIG_TCT_MP2_BLUESCREEN  // ship version will read oem_uart=0x1F
+    kstrtoint(str, 0, &kernel_printk_tofb_ctrl);
+    current_version=2;
+    pr_info("%s:hang_detect Board androidboot.oem_uart=0x%x TARGET_BUILD_SHIP current_version=%d\n",
+    __func__,kernel_printk_tofb_ctrl,current_version);
+    return 0;
+#else
+//  if get androidboot.oem_uart= 0x38  will Disable Kernel Display, TELEWEB write UART X to disable
+//  enabel 0x30+0x1F =0x4F(O)  disable 0x30+0x28 =0x58(X)
+    kstrtoint(str, 0, &kernel_printk_tofb_ctrl);
+    current_version=0; //default daily version
+    pr_info("%s:hang_detect get androidboot.oem_uart=0x%x [0x1F=ON,0x28=OFF] not ship|mp=2 version current_version=%d\n",
+    __func__,kernel_printk_tofb_ctrl,current_version);
+    if (kernel_printk_tofb_ctrl==0x28)// userdebug disable function
+    {
+		kernel_printk_tofb_ctrl=0x28;
+		pr_info("%s:hang_detect Board androidboot.oem_uart=%x [0x28] will Disable bluescreen display tofb_ctrl=0x28\n",
+		__func__,kernel_printk_tofb_ctrl);
+		return 0;
+    }
+
+#if defined(TARGET_BUILD_MMITEST)
+    kstrtoint(str, 0, &kernel_printk_tofb_ctrl);
+    current_version=2;
+    pr_info("%s:hang_detect Board androidboot.oem_uart=%x TARGET_BUILD_MMITEST current_version=%d\n",
+    __func__,kernel_printk_tofb_ctrl,current_version);
+#endif
+
+#if defined(TARGET_BUILD_CERTIFICATION)
+    kstrtoint(str, 0, &kernel_printk_tofb_ctrl);
+    current_version=4;
+    pr_info("%s:hang_detect Board androidboot.oem_uart=%x TARGET_BUILD_CERTIFICATION current_version=%d\n",
+    __func__,kernel_printk_tofb_ctrl,current_version);
+#endif
+
+#if defined(TARGET_BUILD_USER)
+    // for first test
+    kstrtoint(str, 0, &kernel_printk_tofb_ctrl);
+    current_version=1;
+    pr_info("%s:hang_detect Board androidboot.oem_uart=%x TARGET_BUILD_USER current_version=%d\n",
+    __func__,kernel_printk_tofb_ctrl,current_version);
+#endif
+
+
+//#ifdef CONFIG_TCL_FORCE_DAILY_KEY_DETECT
+    //daily will default open Bluescreen
+//		if (current_version==0){
+//			kernel_printk_tofb_ctrl=0x10; // all version force trigger boot failed!
+//			pr_info("%s:hang_detect Board androidboot.oem_uart=%x Daily UERDEBUG Open Bluescreen display! current_version=%d\n",
+//			__func__,kernel_printk_tofb_ctrl,current_version);
+//		}
+//#endif
+
+#ifdef CONFIG_TCL_FORCE_BOOT_DETECT
+		kernel_printk_tofb_ctrl=0x10; // all version force trigger boot failed!
+		pr_info("%s:hang_detect Board androidboot.oem_uart=%x TCL_FORCE_BOOT_DETECT ENABLE Bluescreen display! current_version=%d\n",
+		__func__,kernel_printk_tofb_ctrl,current_version);
+#else
+		pr_info("%s:hang_detect Board androidboot.oem_uart=%x TCL_FORCE_BOOT_DETECT DISABLE!\n",
+		__func__,kernel_printk_tofb_ctrl);
+#endif
+
+#endif
+        return 0;
+}
+__setup("androidboot.oem_uart=",tct_kernel_printk_tofb_ctrl_get);
+
+void klog_bootprof_to_ui(void)
+{
+	DAL_Printf("\n");	
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg8);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg7);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg6);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg5);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg4);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg3);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg2);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg1);
+	DAL_Printf("boot_detect:  BOOTPROF: %s \n", kdisplay_bootprof_msg);
+	DAL_Printf("\n");
+}
+void klog_check_to_ui(void)
+{
+	char buff[LOG_BLOCK_SIZE];
+	struct kmsg_dumper dumper = { .active = true };
+	size_t len = 0;
+	kmsg_dump_rewind_nolock(&dumper);
+	memset(buff, 0, LOG_BLOCK_SIZE);
+
+	DAL_Printf("--Kernel LOG analysis start---------------------------------------\n");
+	while (kmsg_dump_get_line_nolock(&dumper, true, buff,
+					 LOG_BLOCK_SIZE, &len)) {
+	kmsg_numbers++;
+	if (  strstr(buff, "Exec service failed")   || strstr(buff, "reboot_target:")
+			  ||strstr(buff, "HandlePowerctlMessage") || strstr(buff, "EX_SERVICE_SPECIFIC")
+			  ||strstr(buff, "Received sys.powerctl") || strstr(buff, "Received sys.powerctl") )
+	{
+		DAL_Printf("[%d] %s \n",kmsg_numbers, buff);
+	}
+	if ( strstr(buff, "device-mapper: verity") ){
+				if ( !strstr(buff, "device-mapper: verity: sha256 using") ){
+					if ( device_mapper_print_line <10 )
+							DAL_Printf("device-mapper %d %s",device_mapper_print_line,buff);
+					device_mapper_print_line++;
+				}
+	}
+	if ( strstr(buff, "hwservicemanager") ){
+		if ( !strstr(buff, "getFrameworkHalManifest") &&
+			   !strstr(buff, "getDeviceHalManifest") &&
+			   !strstr(buff, "hwservicemanager.rc") &&
+			   !strstr(buff, "start_waiting_for_property") &&
+			   !strstr(buff, "starting service") &&
+			   !strstr(buff, "hwservicemanager.ready") &&
+			   !strstr(buff, "running") &&
+			   !strstr(buff, "is ready now") ){
+			if ( hidlservice_print_line <5 )
+					DAL_Printf("hwservicemanager %d %s",hidlservice_print_line,buff);
+			hidlservice_print_line++;
+	  }
+	}
+
+	memset(buff, 0, LOG_BLOCK_SIZE);
+	}
+	DAL_Printf("--Kernel LOG analysis End----------------------------------------\n");
+
+}
+void boot_detect_tringger()
+{
+	  char boot_cur_time[128] = {0};
+    pr_info("hang_detect primary_display_set_power_mode -->\n");
+    hold_lcd_backlight();
+    boot_detect_kerenl_display_status=1;  
+    DAL_SetColor(0xFFFFFF,0x0000FF);
+    DAL_SetScreenColor(0x0000FF);
+    DAL_Printf("\n");
+    DAL_Printf("\n");
+    DAL_Printf("\n");
+    pr_info("hang_detect logcat_to_kernel -->\n");
+  	DAL_Printf("logcat_to_kernel start =%d ui_print_cursor_initflag=%d END\n",logcat_to_kernel(),ui_print_cursor_initflag);
+    DAL_Printf("--Android LOG analysis End------------------------------------\n");
+    pr_info("hang_detect logcat_to_kernel <--\n");
+    mdelay(10 * 1000);
+    klog_bootprof_to_ui();
+    mdelay(1 * 1000);
+    klog_check_to_ui();
+    mdelay(5 * 1000);
+    pr_info("hang_detect ,Save log to expdb :Kernel log and Android log\n");
+    log_store_to_emmc();
+    DAL_Printf("K&A log has saved expdb successfully \n");
+    DAL_Printf("boot_cur_time:%s\n",boot_cur_time);
+    DAL_Printf("After 120S, SYSTEM REBOOT! Please take a picture [%d] \n",logcat_sum_lines);
+    DAL_Printf("\n BOOT Diagnostic System. TOOL BUG send to zhoujinggao@tcl.com \n");
+    DAL_Printf("\n Please send Picture to System or Framework Team \n");
+}
+
+char *strrpl(char *s, const char *s1, const char *s2)
+{
+	char *ptr;
+	while ( (ptr = strstr(s, s1))!=NULL )
+	{
+	memmove(ptr + strlen(s2) , ptr + strlen(s1), strlen(ptr) - strlen(s1) + 1);
+	memcpy(ptr, &s2[0], strlen(s2));
+	}
+	return s;
+}
+#endif
 
 #ifndef TASK_STATE_TO_CHAR_STR
 #define TASK_STATE_TO_CHAR_STR "RSDTtZXxKWPNn"
@@ -65,6 +314,7 @@ static bool system_server_exist;
 
 static bool Hang_Detect_first;
 static bool hd_detect_enabled;
+static bool hd_zygote_stopped;
 static int hd_timeout = 0x7fffffff;
 static int hang_detect_counter = 0x7fffffff;
 static int dump_bt_done;
@@ -142,10 +392,6 @@ static void MonitorHangKick(int lParam);
 static void reset_hang_info(void)
 {
 	Hang_Detect_first = false;
-#ifdef CONFIG_MTK_HANG_DETECT_DB
-	memset(Hang_Info, 0, MaxHangInfoSize);
-	Hang_Info_Size = 0;
-#endif
 }
 
 int add_white_list(char *name)
@@ -240,9 +486,11 @@ static int monitor_hang_show(struct seq_file *m, void *v)
 {
 	struct name_list *pList = NULL;
 #ifdef CONFIG_MTK_HANG_DETECT_DB
-	SEQ_printf(m, "[Hang_Detect] show Hang_info size %d\n ",
-			(int)strlen(Hang_Info));
-	SEQ_printf(m, "%s", Hang_Info);
+	SEQ_printf(m, "[Hang_Detect] show hang_detect_raw\n");
+	if (Hang_Info)
+		SEQ_printf(m, "%s", Hang_Info);
+	else
+		SEQ_printf(m, "hang_detect_raw buffer is not ready\n");
 #endif
 	raw_spin_lock(&white_list_lock);
 	pList = white_list;
@@ -334,12 +582,184 @@ static ssize_t monitor_hang_read(struct file *filp, char __user *buf,
 
 	return 0;
 }
+#ifdef CONFIG_TCL_BOOT_DETECT
+static void logcatmsg_screen_wirte(char * logcat_msg)
+{
+			if ( ui_print_cursor_initflag==0 ){
+		      hold_lcd_backlight();
+		      mdelay(10);
+		      boot_detect_kerenl_display_status=1;
+		      DAL_SetColor(0xFFFFFF,0x0000FF);
+		      DAL_SetScreenColor(0x0000FF);
+		      DAL_Printf("\n");
+		      DAL_Printf("\n");
+		      DAL_Printf_SetCursor(0,8);
+		      DAL_Printf("--Android LOG analysis-1212-1---------------------------------------\n");
+		      ui_print_cursor_initflag=1;
+			}
+			if ( strstr(logcat_msg, "W Watchdog:") ){
+		      if ( watchdog_print_line <10 )
+		      {
+				DAL_Printf("Watchdog %d %d %d %s",watchdog_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+		      }
+		      watchdog_print_line++;
+			}
+			if ( strstr(logcat_msg, "E AndroidRuntime:") ){
+		      if ( runtime_print_line <10 )
+		      {
+				DAL_Printf("%d %d %d %s",watchdog_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+		      }
+		      runtime_print_line++;
+			}
+			if ( strstr(logcat_msg, "E System  :") ){
+		      if ( System_print_line <10 )
+		      {
+				DAL_Printf("%d %d %d %s",watchdog_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+		      }
+		      System_print_line++;
+			}
+			if ( strstr(logcat_msg, "E Zygote  :") ){
+		      if ( Zygote_print_line <10 )
+		      {
+				DAL_Printf("AndroidRuntime %d %d %d %s",Zygote_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+		      }
+		      Zygote_print_line++;
+			}
+			if ( strstr(logcat_msg, "E keystore2") ){
+		      if ( keystore_print_line <10 )
+		      {
+				DAL_Printf("keystore2 %d %d %d %s",keystore_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+		      }
+				keystore_print_line++;
+			}
+			
+			if ( strstr(logcat_msg, "HidlServiceManagement: Waited one second for") ){
+		      if ( hidl_print_line <5 )
+		      {
+						DAL_Printf("HidlServiceManagement %d %d %d %s",hidl_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+		      }
+				hidl_print_line++;
+			}
+			if (   strstr(logcat_msg, "E vold")
+			  	|| strstr(logcat_msg, "F DEBUG   : Build fingerprint:")
+			  	|| strstr(logcat_msg, "F DEBUG   : Cmdline:")
+			  	|| strstr(logcat_msg, "F DEBUG   : Abort message:")
+			  ){
+			  	 DAL_SetColor(0xFFFFFF,0x0000FF);
+			  	 DAL_SetScreenColor(0x0000FF);
+			  	 if ( ui_print_line <30 )
+			  	 {
+				   	DAL_Printf("%d %d %d %s",ui_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+			  	 }
+			  	 ui_print_line++;
+			}
+			if ( strstr(logcat_msg, "D RecoverySystemService:")){
+			  	 DAL_Printf("RecoverySystemService %d %d %d %s",ui_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+			}
+			if ( strstr(logcat_msg, "I ShutdownThread: Rebooting, reason:"))
+		  {
+			  	 DAL_Printf("ShutdownThread %d %d %d %s",ui_print_line,logcat_sum_lines,ui_print_cursor_initflag,logcat_msg+20);
+			}
+			logcat_sum_lines++;
+
+}
+#endif
 
 static ssize_t monitor_hang_write(struct file *filp, const char __user *buf,
 		size_t count, loff_t *f_pos)
 {
+	char msg[8] = {0};
+#ifndef CONFIG_TCL_BOOT_DETECT
+	if (count >= 2) {
+		pr_info("hang_detect: invalid input 677\n");
+		return -EINVAL;
+	}
+#else // enable boot detect
+	if ( (kernel_printk_tofb_ctrl & 0x10) == 0x10){
+			if (count >= 2) {
+			if (!buf) {
+					pr_info("hang_detect: invalid user buf\n");
+					return -EINVAL;
+			}
+			if ( count >= 1024 )
+			{
+			  	printk("hang_detect: log data(%d) is biggest!!  \n",count);
+			  	return count;
+			}
+			memset(logcat_msg, 0x00, 1024);
+			if (copy_from_user(logcat_msg, buf, count)) {
+		      pr_info("hang_detect: copy from user buff\n");
+		      return -EFAULT;
+			}
+			printk("%d %s",logcat_sum_lines,logcat_msg);
+			logcatmsg_screen_wirte(logcat_msg);
+			return count;
+		}
+	}
+	else{//boot detect function not oem_uart flag enable
 
-	return 0;
+#ifdef CONFIG_TCL_FORCE_DAILY_KEY_DETECT
+			if ( get_boot_mode() == 0 && current_version == 0 && kernel_printk_tofb_ctrl != 0x28)
+			{
+				if (count >= 2) {
+				if (!buf) {
+						pr_info("hang_detect: invalid user buf\n");
+						return -EINVAL;
+				}
+				if ( count >= 1024 )
+				{
+				  	printk("hang_detect: log data(%d) is biggest!!  \n",count);
+				  	return count;
+				}
+				memset(logcat_msg, 0x00, 1024);
+				if (copy_from_user(logcat_msg, buf, count)) {
+			      pr_info("hang_detect: copy from user buff\n");
+			      return -EFAULT;
+				}
+				printk("%d_K %s",logcat_sum_lines,logcat_msg);
+				logcatmsg_screen_wirte(logcat_msg);
+				return count;
+				}
+			}
+#endif
+	}
+	if (count >= 2) {
+		pr_info("hang_detect: invalid input 727\n");
+		return -EINVAL;
+	}
+#endif
+
+
+		
+	if (!buf) {
+		pr_info("hang_detect: invalid user buf\n");
+		return -EINVAL;
+	}
+
+	if (copy_from_user(msg, buf, count)) {
+		pr_info("hang_detect: failed to copy from user\n");
+		return -EFAULT;
+	}
+
+	if (strncmp(current->comm, "init", 4))
+		return  -EINVAL;
+
+	if (msg[0] == '0') {
+		hd_detect_enabled = false;
+		hd_zygote_stopped = true;
+		pr_info("hang_detect: disable by stop cmd\n");
+	} else if (msg[0] == '1') {
+		if (hd_zygote_stopped) {
+			hd_detect_enabled = true;
+			hd_zygote_stopped = false;
+			pr_info("hang_detect: enable by start cmd\n");
+		} else {
+			pr_info("hang_detect: zygote running\n");
+		}
+	} else {
+		pr_info("hang_detect: invalid control msg\n");
+	}
+	return count;
 }
 
 static long monitor_hang_ioctl(struct file *file, unsigned int cmd,
@@ -348,8 +768,11 @@ static long monitor_hang_ioctl(struct file *file, unsigned int cmd,
 	int ret = 0;
 	static long long monitor_status;
 	void __user *argp = (void __user *)arg;
-	char name[TASK_COMM_LEN];
-
+	char name[TASK_COMM_LEN] = {0};
+#ifdef CONFIG_TCL_BOOT_DETECT
+	char reboot_tast_name[64] = {0};
+	int i;
+#endif
 	if (cmd == HANG_KICK) {
 		pr_info("hang_detect HANG_KICK ( %d)\n", (int)arg);
 		MonitorHangKick((int)arg);
@@ -368,23 +791,92 @@ static long monitor_hang_ioctl(struct file *file, unsigned int cmd,
 		return ret;
 	}
 
+
 #ifdef CONFIG_MTK_HANG_DETECT_DB
+#ifdef CONFIG_TCL_BOOT_DETECT
 	if (cmd == HANG_SET_REBOOT) {
-		reboot_flag = true;
-#ifdef CONFIG_MTK_ENG_BUILD
-		hang_detect_counter = 3;
-#else
-		hang_detect_counter = 1;
-#endif
-		hd_timeout = 3;
-		hd_detect_enabled = true;
-		pr_info("hang_detect: %s set reboot command.\n", current->comm);
-		return ret;
+			reboot_flag = true;
+			hang_detect_counter = 5;
+			hd_timeout = 5;
+			hd_detect_enabled = true;
+			pr_info("hang_detect: %s set reboot command.\n", current->comm);
+			if((kernel_printk_tofb_ctrl & 0x10) == 0x10)
+			{
+				if (copy_from_user(reboot_tast_name, argp, 64))
+					ret = -EFAULT;
+
+				pr_info("hang_detect:reason: [%s] tofb=[%d]\n", reboot_tast_name,kernel_printk_tofb_ctrl);
+				if ( reboot_tast_name == NULL || get_boot_mode() != 0)
+				{
+					pr_info("hang_detect:reason: [%s]=NULL not trigger! get_boot_mode()=%d \n", reboot_tast_name,get_boot_mode());
+					return ret;
+				}
+				if (
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,watchdog_fork") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,shutdown_aborted") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,init_user0") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,enablefilecrypto") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,enablefilecrypto") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,watchdog_triggered") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,userspace_failed,*") ||
+							!strcmp(reboot_tast_name, "reboot,userspace_failed,watchdog_triggered,failed_to_start") ||
+							!strcmp(reboot_tast_name, "reboot,userspace_failed,watchdog_triggered,failed_to_boot") ||
+							!strcmp(reboot_tast_name, "reboot,mount_userdata_failed") ||
+							!strcmp(reboot_tast_name, "reboot,mount_userdata_failed,mount_userdata_failed") ||
+							!strcmp(reboot_tast_name, "reboot,recovery,init_user0_failed") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,recovery,enablefilecrypto_failed") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,recovery,set_policy_failed") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,recovery,RescueParty") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,recovery,rescueparty") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,vold-failed") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,apexd-failed") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,boringssl-self-check-failed") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,powerloss") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,rescueparty") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,RescueParty") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,undervoltage") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,wdt") ||
+		    	  	!strcmp(reboot_tast_name, "shutdown,thermal") ||
+		    	  	!strcmp(reboot_tast_name, "shutdown,thermal,battery") ||
+		    	  	!strcmp(reboot_tast_name, "reboot,dm-verity_device_corrupted"))
+		    	   {
+
+		    	  	DAL_SetColor(0xFFFFFF,0x0000FF);
+		    	  	DAL_SetScreenColor(0x0000FF);
+		    	  	DAL_Printf("\n");
+		    	  	DAL_Printf("\n");
+		    	  	DAL_Printf("\n");
+		    	  	//DAL_Printf("NORMAL=0,META=1,RECOVERY=2,SW=3,FACTORY=4,ADVMETA=5,ATE_FACTORY=6");
+		    	  	//DAL_Printf("ALARM=7,KERNEL_POWER_OFF_CHARGING=8,LOW_POWER_OFF_CHARGING=9,DONGLE=10\n");
+		    	  	pr_info("hang_detect:reason: [%s] kernel display trigger !\n", reboot_tast_name);
+							print_ver_info();
+		    	  	DAL_Printf("ERROR: reason [%s] current->comm=[%s] bmode&tofb=[%d,0x%x,%d] \n",
+		    	  	reboot_tast_name,current->comm,get_boot_mode(),kernel_printk_tofb_ctrl,current_version);
+		    	  	boot_detect_tringger();
+		    	  	DAL_Printf("ERROR: reason [%s] current->comm=[%s] bmode&tofb=[%d,0x%x,%d] \n",
+		    	  	reboot_tast_name,current->comm,get_boot_mode(),kernel_printk_tofb_ctrl,current_version);
+		    	  	pr_info("hang_detect reason [%s] current->comm=[%s] bmode&tofb=[%d,%d] \n",reboot_tast_name,current->comm,get_boot_mode(),kernel_printk_tofb_ctrl);
+		    	  	DAL_Printf("\nSYSTEM REBOOT, BYE BYE ! bmode: NORMAL=0,META=1,RECOVERY=2,SW=3,FACTORY=4 \n");
+					    for(i=0;i<120;i++)
+					    {
+							DAL_Printf("-");
+							mdelay(1* 1000);
+							hold_lcd_backlight();
+							}
+						}
+		    else{
+		    	pr_info("hang_detect:reason: [%s] reboot not display !\n", reboot_tast_name);
+		    	  	//DAL_Printf(" NO DISPLAY REASON ERROR :reason [%s] current->comm=%s \n",reboot_tast_name,current->comm);
+		    }
+			}
+			else// kernel_printk_tofb_ctrl not control
+				pr_info("hang_detect:reason: kernel display not trigger tofb[%d] !\n",kernel_printk_tofb_ctrl);
+			return ret;
 	}
 #endif
-
+#endif
 	if (cmd == HANG_ADD_WHITE_LIST) {
-		if (copy_from_user(name, argp, TASK_COMM_LEN))
+		if (copy_from_user(name, argp, TASK_COMM_LEN - 1))
 			ret = -EFAULT;
 		ret = add_white_list(name);
 		pr_info("hang_detect: add white list %s status %d.\n",
@@ -393,7 +885,7 @@ static long monitor_hang_ioctl(struct file *file, unsigned int cmd,
 	}
 
 	if (cmd == HANG_DEL_WHITE_LIST) {
-		if (copy_from_user(name, argp, TASK_COMM_LEN))
+		if (copy_from_user(name, argp, TASK_COMM_LEN - 1))
 			ret = -EFAULT;
 		ret = del_white_list(name);
 		pr_info("hang_detect: del white list %s status %d.\n",
@@ -676,6 +1168,9 @@ static int save_trace(struct stackframe *frame, void *d)
 	addr = data->last_pc;
 	if (!in_exception_text(addr))
 		return 0;
+#else
+	if (!in_entry_text(frame->pc))
+		return 0;
 #endif
 
 	regs = (struct pt_regs *)frame->sp;
@@ -841,7 +1336,7 @@ static int DumpThreadNativeMaps_log(pid_t pid, struct task_struct *current_task)
 		return -1;
 	}
 
-	if (!current_task->mm) {
+	if (!get_task_mm(current_task)) {
 		pr_info(" %s,%d:%s: current_task->mm == NULL",
 			__func__, pid, current_task->comm);
 		return -1;
@@ -900,6 +1395,7 @@ static int DumpThreadNativeMaps_log(pid_t pid, struct task_struct *current_task)
 		mapcount++;
 	}
 	up_read(&current_task->mm->mmap_sem);
+	mmput(current_task->mm);
 
 	return 0;
 }
@@ -1259,6 +1755,7 @@ static int DumpThreadNativeMaps(pid_t pid, struct task_struct *current_task)
 	char tpath[512];
 	char *path_p = NULL;
 	struct path base_path;
+	unsigned long long pgoff = 0;
 
 	if (!current_task)
 		return -ESRCH;
@@ -1283,6 +1780,7 @@ static int DumpThreadNativeMaps(pid_t pid, struct task_struct *current_task)
 	while (vma && (mapcount < current_task->mm->map_count)) {
 		file = vma->vm_file;
 		flags = vma->vm_flags;
+		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
 		if (file) {	/* !!!!!!!!only dump 1st mmaps!!!!!!!!!!!! */
 			if (flags & VM_EXEC) {
 				/* we only catch code section for reduce
@@ -1290,20 +1788,20 @@ static int DumpThreadNativeMaps(pid_t pid, struct task_struct *current_task)
 				 */
 				base_path = file->f_path;
 				path_p = d_path(&base_path, tpath, 512);
-				Log2HangInfo("%08lx-%08lx %c%c%c%c    %s\n",
+				Log2HangInfo("%08lx-%08lx %c%c%c%c %08llx %s\n",
 					vma->vm_start, vma->vm_end,
 					flags & VM_READ ? 'r' : '-',
 					flags & VM_WRITE ? 'w' : '-',
 					flags & VM_EXEC ? 'x' : '-',
 					flags & VM_MAYSHARE ? 's' : 'p',
-					path_p);
-				hang_log("%08lx-%08lx %c%c%c%c    %s\n",
+					pgoff, path_p);
+				hang_log("%08lx-%08lx %c%c%c%c %08llx %s\n",
 					vma->vm_start, vma->vm_end,
 					flags & VM_READ ? 'r' : '-',
 					flags & VM_WRITE ? 'w' : '-',
 					flags & VM_EXEC ? 'x' : '-',
 					flags & VM_MAYSHARE ? 's' : 'p',
-					path_p);
+					pgoff, path_p);
 			}
 		} else {
 #ifdef MODULE
@@ -1329,18 +1827,18 @@ static int DumpThreadNativeMaps(pid_t pid, struct task_struct *current_task)
 			}
 
 			if (flags & VM_EXEC) {
-				Log2HangInfo("%08lx-%08lx %c%c%c%c %s\n",
+				Log2HangInfo("%08lx-%08lx %c%c%c%c %08llx %s\n",
 					vma->vm_start, vma->vm_end,
 					flags & VM_READ ? 'r' : '-',
 					flags & VM_WRITE ? 'w' : '-',
 					flags & VM_EXEC ? 'x' : '-',
-					flags & VM_MAYSHARE ? 's' : 'p', name);
-				hang_log("%08lx-%08lx %c%c%c%c %s\n",
+					flags & VM_MAYSHARE ? 's' : 'p', pgoff, name);
+				hang_log("%08lx-%08lx %c%c%c%c %08llx %s\n",
 					vma->vm_start, vma->vm_end,
 					flags & VM_READ ? 'r' : '-',
 					flags & VM_WRITE ? 'w' : '-',
 					flags & VM_EXEC ? 'x' : '-',
-					flags & VM_MAYSHARE ? 's' : 'p', name);
+					flags & VM_MAYSHARE ? 's' : 'p', pgoff,  name);
 			}
 		}
 		vma = vma->vm_next;
@@ -1351,8 +1849,6 @@ static int DumpThreadNativeMaps(pid_t pid, struct task_struct *current_task)
 	return 0;
 }
 
-
-
 static int DumpThreadNativeInfo_By_tid(pid_t tid,
 	struct task_struct *current_task)
 {
@@ -1362,7 +1858,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 	unsigned long userstack_end = 0, length = 0;
 	int ret = -1;
 
-	if (!current_task)
+	if (current_task == NULL)
 		return -ESRCH;
 	user_ret = task_pt_regs(current_task);
 
@@ -1372,34 +1868,22 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 		return ret;
 	}
 
-	if (!current_task->mm) {
+	if (current_task->mm == NULL) {
 		pr_info(" %s,%d:%s, current_task->mm == NULL", __func__, tid,
 				current_task->comm);
 		return ret;
 	}
 #ifndef __aarch64__		/* 32bit */
-	Log2HangInfo(" pc/lr/sp 0x%08lx/0x%08lx/0x%08lx\n", user_ret->ARM_pc,
+	Log2HangInfo(" pc/lr/sp 0x%08x/0x%08x/0x%08x\n", user_ret->ARM_pc,
 			user_ret->ARM_lr, user_ret->ARM_sp);
-	hang_log(" pc/lr/sp 0x%08lx/0x%08lx/0x%08lx\n", user_ret->ARM_pc,
-				user_ret->ARM_lr, user_ret->ARM_sp);
-	Log2HangInfo("r12-r0 0x%lx/0x%lx/0x%lx/0x%lx\n",
+	Log2HangInfo("r12-r0 0x%08x/0x%08x/0x%08x/0x%08x\n",
 		(long)(user_ret->ARM_ip), (long)(user_ret->ARM_fp),
 		(long)(user_ret->ARM_r10), (long)(user_ret->ARM_r9));
-	hang_log("r12-r0 0x%lx/0x%lx/0x%lx/0x%lx\n",
-		(long)(user_ret->ARM_ip), (long)(user_ret->ARM_fp),
-		(long)(user_ret->ARM_r10), (long)(user_ret->ARM_r9));
-	Log2HangInfo("0x%lx/0x%lx/0x%lx/0x%lx/0x%lx\n",
+	Log2HangInfo("0x%08x/0x%08x/0x%08x/0x%08x/0x%08x\n",
 		(long)(user_ret->ARM_r8), (long)(user_ret->ARM_r7),
 		(long)(user_ret->ARM_r6), (long)(user_ret->ARM_r5),
 		(long)(user_ret->ARM_r4));
-	hang_log("0x%lx/0x%lx/0x%lx/0x%lx/0x%lx\n",
-		(long)(user_ret->ARM_r8), (long)(user_ret->ARM_r7),
-		(long)(user_ret->ARM_r6), (long)(user_ret->ARM_r5),
-		(long)(user_ret->ARM_r4));
-	Log2HangInfo("0x%lx/0x%lx/0x%lx/0x%lx\n",
-		(long)(user_ret->ARM_r3), (long)(user_ret->ARM_r2),
-		(long)(user_ret->ARM_r1), (long)(user_ret->ARM_r0));
-	hang_log("0x%lx/0x%lx/0x%lx/0x%lx\n",
+	Log2HangInfo("0x%08x/0x%08x/0x%08x/0x%08x\n",
 		(long)(user_ret->ARM_r3), (long)(user_ret->ARM_r2),
 		(long)(user_ret->ARM_r1), (long)(user_ret->ARM_r0));
 
@@ -1407,7 +1891,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 
 	down_read(&current_task->mm->mmap_sem);
 	vma = current_task->mm->mmap;
-	while (vma) {
+	while (vma != NULL) {
 		if (vma->vm_start <= userstack_start &&
 			vma->vm_end >= userstack_start) {
 			userstack_end = vma->vm_end;
@@ -1419,7 +1903,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 	}
 	up_read(&current_task->mm->mmap_sem);
 
-	if (!userstack_end) {
+	if (userstack_end == 0) {
 		pr_info(" %s,%d:%s,userstack_end == 0", __func__,
 				tid, current_task->comm);
 		return ret;
@@ -1434,9 +1918,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 
 		SPStart = userstack_start;
 		SPEnd = SPStart + length;
-		Log2HangInfo("UserSP_start:%lx,Length:%lx,End:%lx\n",
-				SPStart, length, SPEnd);
-		hang_log("UserSP_start:%lx,Length:%lx,End:%lx\n",
+		Log2HangInfo("UserSP_start:%08x,Length:%x,End:%08x\n",
 				SPStart, length, SPEnd);
 		while (SPStart < SPEnd) {
 			copied =
@@ -1444,20 +1926,16 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 					&tempSpContent, sizeof(tempSpContent),
 					0);
 			if (copied != sizeof(tempSpContent)) {
-				pr_info("access_process_vm  SPStart error,sizeof(tempSpContent)=%x\n",
-				  (unsigned int)sizeof(tempSpContent));
+				pr_info(
+				  "access_process_vm  SPStart error,sizeof(tempSpContent)=%x\n"
+				  , (unsigned int)sizeof(tempSpContent));
 				/* return -EIO; */
 			}
 			if (tempSpContent[0] != 0 ||
 				tempSpContent[1] != 0 ||
 				tempSpContent[2] != 0 ||
 				tempSpContent[3] != 0) {
-				Log2HangInfo("%08x:%lx %x %x %x\n", SPStart,
-						tempSpContent[0],
-						tempSpContent[1],
-						tempSpContent[2],
-						tempSpContent[3]);
-				hang_log("%08x:%lx %x %x %x\n", SPStart,
+				Log2HangInfo("%08x:%08x %08x %08x %08x\n", SPStart,
 						tempSpContent[0],
 						tempSpContent[1],
 						tempSpContent[2],
@@ -1473,16 +1951,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 			(long)(user_ret->user_regs.pc),
 			(long)(user_ret->user_regs.regs[14]),
 			(long)(user_ret->user_regs.regs[13]));
-		hang_log("K64+ U32 pc/lr/sp 0x%16lx/0x%16lx/0x%16lx\n",
-			(long)(user_ret->user_regs.pc),
-			(long)(user_ret->user_regs.regs[14]),
-			(long)(user_ret->user_regs.regs[13]));
 		Log2HangInfo("r12-r0 0x%lx/0x%lx/0x%lx/0x%lx\n",
-			(long)(user_ret->user_regs.regs[12]),
-			(long)(user_ret->user_regs.regs[11]),
-			(long)(user_ret->user_regs.regs[10]),
-			(long)(user_ret->user_regs.regs[9]));
-		hang_log("r12-r0 0x%lx/0x%lx/0x%lx/0x%lx\n",
 			(long)(user_ret->user_regs.regs[12]),
 			(long)(user_ret->user_regs.regs[11]),
 			(long)(user_ret->user_regs.regs[10]),
@@ -1493,18 +1962,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 			(long)(user_ret->user_regs.regs[6]),
 			(long)(user_ret->user_regs.regs[5]),
 			(long)(user_ret->user_regs.regs[4]));
-		hang_log("0x%lx/0x%lx/0x%lx/0x%lx/0x%lx\n",
-			(long)(user_ret->user_regs.regs[8]),
-			(long)(user_ret->user_regs.regs[7]),
-			(long)(user_ret->user_regs.regs[6]),
-			(long)(user_ret->user_regs.regs[5]),
-			(long)(user_ret->user_regs.regs[4]));
 		Log2HangInfo("0x%lx/0x%lx/0x%lx/0x%lx\n",
-			(long)(user_ret->user_regs.regs[3]),
-			(long)(user_ret->user_regs.regs[2]),
-			(long)(user_ret->user_regs.regs[1]),
-			(long)(user_ret->user_regs.regs[0]));
-		hang_log("0x%lx/0x%lx/0x%lx/0x%lx\n",
 			(long)(user_ret->user_regs.regs[3]),
 			(long)(user_ret->user_regs.regs[2]),
 			(long)(user_ret->user_regs.regs[1]),
@@ -1512,7 +1970,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 		userstack_start = (unsigned long)user_ret->user_regs.regs[13];
 		down_read(&current_task->mm->mmap_sem);
 		vma = current_task->mm->mmap;
-		while (vma) {
+		while (vma != NULL) {
 			if (vma->vm_start <= userstack_start &&
 				vma->vm_end >= userstack_start) {
 				userstack_end = vma->vm_end;
@@ -1524,7 +1982,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 		}
 		up_read(&current_task->mm->mmap_sem);
 
-		if (!userstack_end) {
+		if (userstack_end == 0) {
 			pr_info("Dump native stack failed:\n");
 			return ret;
 		}
@@ -1538,9 +1996,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 
 			SPStart = userstack_start;
 			SPEnd = SPStart + length;
-			Log2HangInfo("UserSP_start:%lx,Length:%lx,End:%lx\n",
-				SPStart, length, SPEnd);
-			hang_log("UserSP_start:%lx,Length:%lx,End:%lx\n",
+			Log2HangInfo("UserSP_start:%x,Length:%x,End:%x\n",
 				SPStart, length, SPEnd);
 			while (SPStart < SPEnd) {
 				copied = access_process_vm(current_task,
@@ -1556,13 +2012,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 					tempSpContent[1] != 0 ||
 					tempSpContent[2] != 0 ||
 					tempSpContent[3] != 0) {
-					Log2HangInfo("%08lx:%x %x %x %x\n",
-							SPStart,
-							tempSpContent[0],
-							tempSpContent[1],
-							tempSpContent[2],
-							tempSpContent[3]);
-					hang_log("%08lx:%x %x %x %x\n",
+					Log2HangInfo("%08x:%x %x %x %x\n",
 							SPStart,
 							tempSpContent[0],
 							tempSpContent[1],
@@ -1577,7 +2027,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 
 		down_read(&current_task->mm->mmap_sem);
 		vma = current_task->mm->mmap;
-		while (vma) {
+		while (vma != NULL) {
 			if (vma->vm_start <= userstack_start &&
 					vma->vm_end >= userstack_start) {
 				userstack_end = vma->vm_end;
@@ -1588,7 +2038,7 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 				break;
 		}
 		up_read(&current_task->mm->mmap_sem);
-		if (!userstack_end) {
+		if (userstack_end == 0) {
 			pr_info("Dump native stack failed:\n");
 			return ret;
 		}
@@ -1631,8 +2081,6 @@ static int DumpThreadNativeInfo_By_tid(pid_t tid,
 				 *  /system/lib64/ libc.so (__epoll_pwait+8)
 				 */
 				Log2HangInfo("#%d pc %lx\n", copied,
-						native_bt[copied]);
-				hang_log("#%d pc %lx\n", copied,
 						native_bt[copied]);
 			}
 		}
@@ -1733,10 +2181,32 @@ static void show_bt_by_pid(int task_pid)
 	put_pid(pid);
 }
 
+static int show_white_list_bt(struct task_struct *p)
+{
+	struct name_list *pList = NULL;
+
+	if (!white_list)
+		return -1;
+	raw_spin_lock(&white_list_lock);
+	pList = white_list;
+	while (pList) {
+		if (!strcmp(p->comm, pList->name)) {
+			raw_spin_unlock(&white_list_lock);
+			show_bt_by_pid(p->pid);
+			return 0;
+		}
+		pList = pList->next;
+	}
+	raw_spin_unlock(&white_list_lock);
+	return -1;
+}
+
+
 static void hang_dump_backtrace(void)
 {
 	struct task_struct *p, *t, *system_server_task = NULL;
 	struct task_struct *monkey_task = NULL;
+	struct task_struct *aee_aed_task = NULL;
 
 #ifdef CONFIG_MTK_HANG_DETECT_DB
 	watchdog_thread_exist = false;
@@ -1744,11 +2214,7 @@ static void hang_dump_backtrace(void)
 #endif
 	Log2HangInfo("dump backtrace start: %llu\n", local_clock());
 
-#ifdef MODULE
-	read_lock(Ptasklist_lock);
-#else
-	read_lock(&tasklist_lock);
-#endif
+	rcu_read_lock();
 	for_each_process(p) {
 		get_task_struct(p);
 		if (Hang_Detect_first == false) {
@@ -1756,6 +2222,8 @@ static void hang_dump_backtrace(void)
 				system_server_task = p;
 			if (strstr(p->comm, "monkey"))
 				monkey_task = p;
+			if (!strcmp(p->comm, "aee_aed"))
+				aee_aed_task = p;
 		}
 		/* specify process, need dump maps file and native backtrace */
 		if (!strcmp(p->comm, "surfaceflinger") ||
@@ -1764,19 +2232,15 @@ static void hang_dump_backtrace(void)
 			!strcmp(p->comm, "mmcqd/0")  ||
 			!strcmp(p->comm, "debuggerd64") ||
 			!strcmp(p->comm, "mmcqd/1") ||
+			!strcmp(p->comm, "vold") ||
 			!strcmp(p->comm, "vdc") ||
 			!strcmp(p->comm, "debuggerd")) {
-#ifdef MODULE
-			read_unlock(Ptasklist_lock);
-#else
-			read_unlock(&tasklist_lock);
-#endif
 			show_bt_by_pid(p->pid);
-#ifdef MODULE
-			read_lock(Ptasklist_lock);
-#else
-			read_lock(&tasklist_lock);
-#endif
+			put_task_struct(p);
+			continue;
+		}
+		//test if there's any process need dump
+		if (!show_white_list_bt(p)) {
 			put_task_struct(p);
 			continue;
 		}
@@ -1794,14 +2258,13 @@ static void hang_dump_backtrace(void)
 		}
 		put_task_struct(p);
 	}
-#ifdef MODULE
-	read_unlock(Ptasklist_lock);
-#else
-	read_unlock(&tasklist_lock);
-#endif
+	rcu_read_unlock();
 	Log2HangInfo("dump backtrace end.\n");
 
 	if (Hang_Detect_first == false) {
+		if (aee_aed_task)
+			send_sig_info(SIGUSR1, SEND_SIG_PRIV,
+				aee_aed_task);
 		if (system_server_task)
 #ifdef MODULE
 			Pdo_send_sig_info(SIGSTOP, SEND_SIG_FORCED,
@@ -1955,6 +2418,12 @@ static int hang_detect_thread(void *arg)
 				Log2HangInfo(
 					"[Hang_detect]Dump the %d time process bt.\n",
 					Hang_Detect_first ? 2 : 1);
+#ifdef CONFIG_MTK_HANG_DETECT_DB
+				if (!Hang_Detect_first) {
+					memset(Hang_Info, 0, MaxHangInfoSize);
+					Hang_Info_Size = 0;
+				}
+#endif
 				if (Hang_Detect_first == true
 					&& dump_bt_done != 1) {
 		/* some time dump thread will block in dumping native bt */
@@ -2049,6 +2518,9 @@ static int __init monitor_hang_init(void)
 {
 	int err = 0;
 
+	if (!aee_is_enable())
+		return err;
+
 #ifdef MODULE
 	if (module_fun_init() == 1)
 		return 1;
@@ -2077,6 +2549,9 @@ static int __init monitor_hang_init(void)
 
 static void __exit monitor_hang_exit(void)
 {
+	if (!aee_is_enable())
+		return;
+
 	misc_deregister(&Hang_Monitor_dev);
 #ifdef CONFIG_MTK_HANG_DETECT_DB
 	/* kfree(NULL) is safe */

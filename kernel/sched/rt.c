@@ -7,6 +7,25 @@
 
 #include "pelt.h"
 
+#ifdef CONFIG_TCL_IPEL
+#include "sched_tcl.h"
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+#include <tcl/tcl_healthinfo.h>
+#endif
+
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+#include <tcl/tcl_uxthread.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
+
 int sched_rr_timeslice = RR_TIMESLICE;
 int sysctl_sched_rr_timeslice = (MSEC_PER_SEC / HZ) * RR_TIMESLICE;
 
@@ -1020,7 +1039,13 @@ static void update_curr_rt(struct rq *rq)
 
 	curr->se.sum_exec_runtime += delta_exec;
 	account_group_exec_runtime(curr, delta_exec);
-
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	rt_total_monitor(delta_exec, cpu_of(rq));
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	curr->se.exec_start = now;
 	cgroup_account_cputime(curr, delta_exec);
 
@@ -1036,6 +1061,14 @@ static void update_curr_rt(struct rq *rq)
 			if (sched_rt_runtime_exceeded(rt_rq))
 				resched_curr(rq);
 			raw_spin_unlock(&rt_rq->rt_runtime_lock);
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+			if (rt_rq != NULL)
+				rt_info_monitor(rt_rq->rt_time, cpu_of(rq_of_rt_rq(rt_rq)));
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 		}
 	}
 }
@@ -1396,6 +1429,13 @@ static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int flags)
 	schedtune_dequeue_task(p, cpu_of(rq));
 
 	update_curr_rt(rq);
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	p->rtend_time = rq_clock_task(rq);
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	dequeue_rt_entity(rt_se, flags);
 
 	dequeue_pushable_task(rq, p);
@@ -1482,6 +1522,26 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 	 * requirement of the task - which is only important on heterogeneous
 	 * systems like big.LITTLE.
 	 */
+
+	// #ifdef VENDOR_EDIT
+	// bin4.zhong@ARCH, 2020/06/19, add for shced-opt CONFIG_TCL_IPEL
+#ifdef CONFIG_TCL_UXEXPRESS
+	test = curr &&
+	       unlikely(rt_task(curr)) &&
+	       (curr->nr_cpus_allowed < 2 || curr->prio <= p->prio);
+
+	if (!curr) {
+		rcu_read_unlock();
+		goto out;
+	}
+
+	if (verify_dynamic_ux(curr) ||
+			(test || !rt_task_fits_capacity(p, cpu) || cpu_isolated(cpu))) {
+		int target = find_lowest_rq(p);
+#endif
+		// #endif /* VENDOR_EDIT */
+
+#ifndef CONFIG_TCL_UXEXPRESS
 #ifdef CONFIG_MTK_SCHED_INTEROP
 	/*
 	 * If the task is allowed to put more than one CPU.
@@ -1497,6 +1557,7 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 	if (test || !rt_task_fits_capacity(p, cpu) || cpu_isolated(cpu)) {
 #endif
 		int target = find_lowest_rq(p);
+#endif /* CONFIG_TCL_IPEL */
 
 		/*
 		 * Bail out if we were forcing a migration to find a better
@@ -1518,9 +1579,18 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 out_unlock:
 	rcu_read_unlock();
 
+// #ifdef VENDOR_EDIT
+// bin4.zhong@ARCH, 2020/06/19, add for shced-opt CONFIG_TCL_IPEL
+#ifdef CONFIG_TCL_IPEL
+	trace_rt_select_task_rq(curr, cpu, is_vip_thread(curr->pid), cpu);
+#endif
+// #endif /* VENDOR_EDIT */
+
 out:
+#ifndef CONFIG_TCL_UXEXPRESS
 #ifdef CONFIG_MTK_SCHED_CPU_PREFER
 	cpu = select_task_prefer_cpu(p, cpu);
+#endif
 #endif
 	return cpu;
 }
@@ -1613,7 +1683,13 @@ static struct task_struct *_pick_next_task_rt(struct rq *rq)
 
 	p = rt_task_of(rt_se);
 	p->se.exec_start = rq_clock_task(rq);
-
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	p->rtstart_time = rq_clock_task(rq);
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	return p;
 }
 
@@ -1730,6 +1806,13 @@ static int find_lowest_rq(struct task_struct *task)
 	int this_cpu = smp_processor_id();
 	int cpu      = task_cpu(task);
 	int ret;
+	// #ifdef VENDOR_EDIT
+	// bin4.zhong@ARCH, 2020/06/19, add for shced-opt CONFIG_TCL_IPEL
+#ifdef CONFIG_TCL_UXEXPRESS
+	struct task_struct *curr = READ_ONCE(cpu_rq(cpu)->curr);
+#endif
+	// #endif /* VENDOR_EDIT */
+
 #ifdef CONFIG_MTK_SCHED_INTEROP
 	struct perf_order_domain *domain;
 	struct perf_order_domain *tmp_domain[5] = {0, 0, 0, 0, 0};
@@ -1761,6 +1844,14 @@ static int find_lowest_rq(struct task_struct *task)
 	if (!ret)
 		return -1; /* No targets found */
 
+	// #ifdef VENDOR_EDIT
+	// bin4.zhong@ARCH, 2020/06/19, add for shced-opt CONFIG_TCL_IPEL
+#ifdef CONFIG_TCL_UXEXPRESS
+	if (verify_dynamic_ux(curr))
+		cpumask_clear_cpu(cpu, lowest_mask);
+#endif
+	// #endif /* VENDOR_EDIT */
+
 #ifdef CONFIG_MTK_SCHED_INTEROP
 	/* Choose task_cpu if it is idle and it fits lowest_mask */
 	if (cpumask_test_cpu(cpu, lowest_mask) && idle_cpu(cpu) &&
@@ -1770,18 +1861,21 @@ static int find_lowest_rq(struct task_struct *task)
 		!cpu_isolated(cpu))
 		return cpu;
 
-	for_each_perf_domain_ascending(domain) {
-		tmp_domain[domain_cnt] = domain;
-		domain_cnt++;
-	}
-	for (i = 0; i < domain_cnt; i++) {
-		for_each_cpu(iter_cpu, &tmp_domain[i]->possible_cpus) {
-			if (cpumask_test_cpu(iter_cpu, lowest_mask) &&
-				idle_cpu(iter_cpu) && !cpu_isolated(iter_cpu))
-				return iter_cpu;
+	if (pod_is_ready()) {
+		for_each_perf_domain_ascending(domain) {
+			tmp_domain[domain_cnt] = domain;
+			domain_cnt++;
+		}
+		for (i = 0; i < domain_cnt; i++) {
+			for_each_cpu(iter_cpu, &tmp_domain[i]->possible_cpus) {
+				if (cpumask_test_cpu(iter_cpu, lowest_mask) &&
+					idle_cpu(iter_cpu) && !cpu_isolated(iter_cpu))
+					return iter_cpu;
+			}
 		}
 	}
 #endif
+
 
 	/*
 	 * At this point we have built a mask of CPUs representing the
@@ -1798,7 +1892,13 @@ static int find_lowest_rq(struct task_struct *task)
 	 * Otherwise, we consult the sched_domains span maps to figure
 	 * out which CPU is logically closest to our hot cache data.
 	 */
+	// #ifdef VENDOR_EDIT
+	// bin4.zhong@ARCH, 2020/06/19, add for shced-opt CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_TCL_UXEXPRESS
+	if (verify_dynamic_ux(READ_ONCE(cpu_rq(this_cpu)->curr)) || !cpumask_test_cpu(this_cpu, lowest_mask))
+#else
 	if (!cpumask_test_cpu(this_cpu, lowest_mask))
+#endif
 		this_cpu = -1; /* Skip this_cpu opt if not among lowest */
 
 	rcu_read_lock();
@@ -1819,10 +1919,22 @@ static int find_lowest_rq(struct task_struct *task)
 
 			best_cpu = cpumask_first_and(lowest_mask,
 						     sched_domain_span(sd));
+
+// #ifdef VENDOR_EDIT
+// bin4.zhong@ARCH, 2020/06/19, add for shced-opt CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_TCL_UXEXPRESS
+			if (best_cpu < nr_cpu_ids && !cpu_isolated(best_cpu)
+					&& !verify_dynamic_ux(READ_ONCE(cpu_rq(best_cpu)->curr))) {
+							rcu_read_unlock();
+							return best_cpu;
+						}
+#else
 			if (best_cpu < nr_cpu_ids && !cpu_isolated(best_cpu)) {
 				rcu_read_unlock();
 				return best_cpu;
 			}
+#endif
+// #endif /* VENDOR_EDIT */
 		}
 	}
 	rcu_read_unlock();

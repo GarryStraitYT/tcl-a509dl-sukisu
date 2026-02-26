@@ -102,6 +102,12 @@ void mt_print_much_log(void)
 }
 #endif
 
+/* Begin modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+extern bool bms_sw_support;
+#endif
+/* End modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+
 static ssize_t mt_printk_ctrl_write(struct file *filp,
 	const char *ubuf, size_t cnt, loff_t *data)
 {
@@ -121,6 +127,17 @@ static ssize_t mt_printk_ctrl_write(struct file *filp,
 
 	if (ret < 0)
 		return ret;
+
+    /* Begin modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+    #ifdef CONFIG_PRINTK_MTK_UART_CONSOLE
+    #ifdef TCT_BMS_SW_SUPPORT
+    if (bms_sw_support){
+        val = 1;
+        pr_info("bms_sw_support enable uartlog continue, mt_printk_ctrl_write.\n");
+    }
+    #endif
+    #endif
+    /* End modified by dapeng.qiao for task 11038299 on 2021-05-1 */
 
 	switch (val) {
 #ifdef CONFIG_PRINTK_MTK_UART_CONSOLE

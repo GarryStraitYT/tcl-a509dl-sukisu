@@ -12,12 +12,15 @@
 
 static unsigned long long last_alloc_ts;
 
-static long nr_total_pages;
+//static long nr_total_pages;
+//mtkpatch REQ30023332565 mlei 20230306
+static struct list_head all_pool_list = LIST_HEAD_INIT(all_pool_list);
 
 static void *ion_page_pool_alloc_pages(struct ion_page_pool *pool)
 {
 	unsigned long long start, end;
 	struct page *page;
+	unsigned int i;
 
 	start = sched_clock();
 	page = alloc_pages(pool->gfp_mask, pool->order);
@@ -37,6 +40,8 @@ static void *ion_page_pool_alloc_pages(struct ion_page_pool *pool)
 				  page, PAGE_SIZE << pool->order,
 				  DMA_BIDIRECTIONAL);
 	atomic64_add_return((1 << pool->order), &page_sz_cnt);
+	for (i = 0; i < (1 << pool->order); i++)
+		SetPageIommu(&page[i]);
 	return page;
 }
 
@@ -55,6 +60,13 @@ static void ion_page_pool_free_pages(struct ion_page_pool *pool,
 static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page)
 {
 	mutex_lock(&pool->mutex);
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	zone_page_state_add(1L << pool->order, page_zone(page), NR_IONCACHE_PAGES);
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	if (PageHighMem(page)) {
 		list_add_tail(&page->lru, &pool->high_items);
 		pool->high_count++;
@@ -63,7 +75,10 @@ static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page)
 		pool->low_count++;
 	}
 
-	nr_total_pages += 1 << pool->order;
+	//nr_total_pages += 1 << pool->order; //mtkpatch REQ30023332565 mlei 20230306
+	mod_node_page_state(page_pgdat(page),
+			    NR_KERNEL_MISC_RECLAIMABLE,
+			    1 << pool->order);
 	mutex_unlock(&pool->mutex);
 	return 0;
 }
@@ -81,9 +96,18 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high)
 		page = list_first_entry(&pool->low_items, struct page, lru);
 		pool->low_count--;
 	}
-
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	zone_page_state_add(-(1L << pool->order), page_zone(page), NR_IONCACHE_PAGES);
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	list_del(&page->lru);
-	nr_total_pages -= 1 << pool->order;
+	//nr_total_pages -= 1 << pool->order; //mtkpatch REQ30023332565 mlei 20230306
+	mod_node_page_state(page_pgdat(page),
+			    NR_KERNEL_MISC_RECLAIMABLE,
+			    -(1 << pool->order));
 	return page;
 }
 
@@ -133,9 +157,18 @@ static int ion_page_pool_total(struct ion_page_pool *pool, bool high)
 
 long ion_page_pool_nr_pages(void)
 {
+    //mtkpatch REQ30023332565 mlei 20230306 begin
 	/* Correct possible overflow caused by racing writes */
-	if (nr_total_pages < 0)
-		nr_total_pages = 0;
+	//if (nr_total_pages < 0)
+	//	nr_total_pages = 0;
+    
+	long nr_total_pages = 0;
+	struct ion_page_pool *pool, *pool_tmp;
+
+	list_for_each_entry_safe(pool, pool_tmp, &all_pool_list, pool_list)
+		nr_total_pages += ion_page_pool_total(pool, true);
+
+    //mtkpatch REQ30023332565 mlei 20230306 end
 	return nr_total_pages;
 }
 
@@ -186,6 +219,7 @@ struct ion_page_pool *ion_page_pool_create(gfp_t gfp_mask, unsigned int order,
 	pool->low_count = 0;
 	INIT_LIST_HEAD(&pool->low_items);
 	INIT_LIST_HEAD(&pool->high_items);
+    INIT_LIST_HEAD(&pool->pool_list); //mtkpatch REQ30023332565 mlei 20230306
 	pool->gfp_mask = gfp_mask | __GFP_COMP;
 	pool->order = order;
 	mutex_init(&pool->mutex);
@@ -193,11 +227,13 @@ struct ion_page_pool *ion_page_pool_create(gfp_t gfp_mask, unsigned int order,
 	if (cached)
 		pool->cached = true;
 
+    list_add_tail(&pool->pool_list, &all_pool_list); //mtkpatch REQ30023332565 mlei 20230306
 	return pool;
 }
 
 void ion_page_pool_destroy(struct ion_page_pool *pool)
 {
+    list_del(&pool->pool_list); //mtkpatch REQ30023332565 mlei 20230306
 	kfree(pool);
 }
 

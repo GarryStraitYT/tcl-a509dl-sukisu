@@ -157,7 +157,7 @@ int pd_hal_get_adapter_cap(struct chg_alg_device *alg, struct pd_power_cap *cap)
 
 static int get_pmic_vbus(int *vchr)
 {
-	union power_supply_propval prop;
+	union power_supply_propval prop = {0};
 	static struct power_supply *chg_psy;
 	int ret;
 
@@ -581,7 +581,7 @@ int pd_hal_charger_enable_chip(struct chg_alg_device *alg,
 
 int pd_hal_get_uisoc(struct chg_alg_device *alg)
 {
-	union power_supply_propval prop;
+	union power_supply_propval prop = {0};
 	struct power_supply *bat_psy = NULL;
 	int ret;
 	struct mtk_pd *pd;
@@ -590,8 +590,14 @@ int pd_hal_get_uisoc(struct chg_alg_device *alg)
 		return -EINVAL;
 
 	pd = dev_get_drvdata(&alg->dev);
-	bat_psy = devm_power_supply_get_by_phandle(&pd->pdev->dev,
-						       "gauge");
+	bat_psy = pd->bat_psy;
+
+	if (IS_ERR_OR_NULL(bat_psy)) {
+		pr_notice("%s retry to get bat_psy\n", __func__);
+		bat_psy = devm_power_supply_get_by_phandle(&pd->pdev->dev, "gauge");
+		pd->bat_psy = bat_psy;
+	}
+
 	if (IS_ERR_OR_NULL(bat_psy)) {
 		pr_notice("%s Couldn't get bat_psy\n", __func__);
 		ret = 50;
@@ -606,4 +612,91 @@ int pd_hal_get_uisoc(struct chg_alg_device *alg)
 	return ret;
 }
 
+/* [BSP]Begin added by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+int pd_hal_get_ibat(struct chg_alg_device *alg,
+	enum chg_idx chgidx, u32 *ibat)
+{
+	struct pd_hal *hal;
+	int ret = 0;
+
+	if (alg == NULL)
+		return -EINVAL;
+
+	hal = chg_alg_dev_get_drv_hal_data(alg);
+	if (chgidx == CHG1 && hal->chg1_dev != NULL)
+		ret = charger_dev_get_ibat(hal->chg1_dev, ibat);
+	else if (chgidx == CHG2 && hal->chg2_dev != NULL)
+		ret = charger_dev_get_ibat(hal->chg2_dev, ibat);
+
+	return ret;
+}
+
+int pd_hal_get_bat_current(struct chg_alg_device *alg)
+{
+	union power_supply_propval prop = {0};
+	struct power_supply *bat_psy = NULL;
+	int ret;
+	struct mtk_pd *pd;
+
+	if (alg == NULL)
+		return -EINVAL;
+
+	pd = dev_get_drvdata(&alg->dev);
+	bat_psy = pd->bat_psy;
+
+	if (IS_ERR_OR_NULL(bat_psy)) {
+		pr_notice("%s retry to get bat_psy\n", __func__);
+		bat_psy = devm_power_supply_get_by_phandle(&pd->pdev->dev, "gauge");
+		pd->bat_psy = bat_psy;
+	}
+
+	if (IS_ERR_OR_NULL(bat_psy)) {
+		pr_notice("%s Couldn't get bat_psy\n", __func__);
+		return -ENODEV;
+	} else {
+		ret = power_supply_get_property(bat_psy,
+			POWER_SUPPLY_PROP_CURRENT_NOW, &prop);
+		ret = prop.intval;
+	}
+
+	pr_notice("%s: current_now=%dmA\n", __func__,
+		ret);
+	return ret;
+}
+
+int pd_hal_get_bat_voltage(struct chg_alg_device *alg)
+{
+	union power_supply_propval prop = {0};
+	struct power_supply *bat_psy = NULL;
+	int ret;
+	struct mtk_pd *pd;
+
+	if (alg == NULL)
+		return -EINVAL;
+
+	pd = dev_get_drvdata(&alg->dev);
+	bat_psy = pd->bat_psy;
+
+	if (IS_ERR_OR_NULL(bat_psy)) {
+		pr_notice("%s retry to get bat_psy\n", __func__);
+		bat_psy = devm_power_supply_get_by_phandle(&pd->pdev->dev, "gauge");
+		pd->bat_psy = bat_psy;
+	}
+
+	if (IS_ERR_OR_NULL(bat_psy)) {
+		pr_notice("%s Couldn't get bat_psy\n", __func__);
+		return -ENODEV;
+	} else {
+		ret = power_supply_get_property(bat_psy,
+			POWER_SUPPLY_PROP_VOLTAGE_NOW, &prop);
+		ret = prop.intval / 1000;
+	}
+
+	pr_notice("%s: voltage_now=%duV\n", __func__,
+		ret);
+	return ret;
+}
+#endif
+/* [BSP]End added by bitao.xiong for SNTTF-635 on 2023/02/08 */
 

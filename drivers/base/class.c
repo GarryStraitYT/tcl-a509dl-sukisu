@@ -578,7 +578,7 @@ EXPORT_SYMBOL_GPL(class_destroy);
 
 EXPORT_SYMBOL_GPL(class_interface_register);
 EXPORT_SYMBOL_GPL(class_interface_unregister);
-
+#ifndef CONFIG_TCT_DEVICEINFO
 struct class *deviceinfo_class = NULL;
 //Added for device info 
 //static DEFINE_SPINLOCK(devicelock);
@@ -611,5 +611,5 @@ struct device* get_deviceinfo_dev(void)
 
 }
 EXPORT_SYMBOL_GPL(get_deviceinfo_dev);
-
+#endif
 

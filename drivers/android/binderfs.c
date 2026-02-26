@@ -448,6 +448,7 @@ static int binderfs_binder_ctl_create(struct super_block *sb)
 	inode->i_uid = info->root_uid;
 	inode->i_gid = info->root_gid;
 
+	refcount_set(&device->ref, 1);
 	device->binderfs_inode = inode;
 	device->miscdev.minor = minor;
 
@@ -640,6 +641,7 @@ static int init_binder_logs(struct super_block *sb)
 		goto out;
 	}
 
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Add by jingyuan.wei for freezer on 2020/09/14
         dentry = binderfs_create_file(binder_logs_root_dir, "freeze",
 				      &binder_freeze_fops, NULL);
@@ -648,6 +650,7 @@ static int init_binder_logs(struct super_block *sb)
 		goto out;
 	}
         //[TCT-ROM][PERF]End Add by jingyuan.wei for freezer on 2020/09/14
+        #endif
 
 	proc_log_dir = binderfs_create_dir(binder_logs_root_dir, "proc");
 	if (IS_ERR(proc_log_dir)) {
@@ -666,7 +669,7 @@ static int binderfs_fill_super(struct super_block *sb, void *data, int silent)
 	int ret;
 	struct binderfs_info *info;
 	struct inode *inode = NULL;
-	struct binderfs_device device_info = { { 0 } };
+	struct binderfs_device device_info = { 0 };
 	const char *name;
 	size_t len;
 

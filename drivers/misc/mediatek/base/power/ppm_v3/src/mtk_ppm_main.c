@@ -20,6 +20,13 @@
 /* #include <trace/events/mtk_events.h> */
 #include <linux/of.h>
 
+// #ifdef VENDOR_EDIT
+// shu5.zhang@ARCH, 2021/04/12, add for GT
+#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_GRAPHICS_GT)
+#include <tcl/ktc.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 /*==============================================================*/
 /* Local Macros                                                 */
 /*==============================================================*/
@@ -82,6 +89,13 @@ struct ppm_data ppm_main_info = {
 	.lock = __MUTEX_INITIALIZER(ppm_main_info.lock),
 	.policy_list = LIST_HEAD_INIT(ppm_main_info.policy_list),
 };
+
+// #ifdef VENDOR_EDIT
+// shu.zhang@tcl.com 2021/08/23 add for GT
+#ifdef CONFIG_GRAPHICS_GT
+struct themal_cpufreq_limit themal_limit[2];
+#endif
+// #endif /* VENDOR_EDIT */
 
 int ppm_main_freq_to_idx(unsigned int cluster_id,
 			unsigned int freq, unsigned int relation)
@@ -647,6 +661,20 @@ int mt_ppm_main(void)
 			pos->is_limit_updated = true;
 
 			for (idx = 0; idx < pos->req.cluster_num; idx++) {
+
+// #ifdef VENDOR_EDIT
+// shu.zhang@tcl.com 2021/08/23 add for GT
+#ifdef CONFIG_GRAPHICS_GT
+				if (pos->policy == PPM_POLICY_THERMAL)
+				{
+					themal_limit[idx].min_cpufreq_idx =
+						pos->req.limit[idx].min_cpufreq_idx;
+					themal_limit[idx].max_cpufreq_idx =
+						pos->req.limit[idx].max_cpufreq_idx;
+				}
+#endif
+// #endif /* VENDOR_EDIT */
+
 				trace_ppm_user_setting(
 					pos->policy,
 					idx,

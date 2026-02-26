@@ -455,7 +455,8 @@ int _ioctl_prepare_buffer(unsigned long arg, enum PREPARE_FENCE_TYPE type)
 	int ret = 0;
 	void __user *argp = (void __user *)arg;
 	struct disp_buffer_info disp_buf;
-	struct mtkfb_fence_buf_info *fence_buf, *fence_buf2;
+	struct mtkfb_fence_buf_info *fence_buf = NULL;
+	struct mtkfb_fence_buf_info *fence_buf2 = NULL;
 
 	if (copy_from_user(&disp_buf, (void __user *)arg, sizeof(disp_buf))) {
 		pr_err("[FB Driver] copy_from_user failed! line:%d\n",
@@ -683,8 +684,14 @@ int disp_validate_ioctl_params(struct disp_frame_cfg_t *cfg)
 static int disp_input_get_dirty_roi(struct disp_frame_cfg_t *frm_cfg)
 {
 	int i;
+	int input_layer_num = frm_cfg->input_layer_num;
 
-	for (i = 0; i < frm_cfg->input_layer_num; i++) {
+	if (input_layer_num <= 0 || input_layer_num > 12) {
+		DISP_PR_INFO("%s, err layer num:%d\n", __func__, input_layer_num);
+		return 0;
+	}
+
+	for (i = 0; i < input_layer_num; i++) {
 		void *addr;
 		unsigned long size;
 		struct disp_input_config *cfg = &frm_cfg->input_cfg[i];
@@ -1107,6 +1114,9 @@ static int _ioctl_wait_all_jobs_done(unsigned long arg)
 	unsigned int session_id = (unsigned int)arg;
 	struct frame_queue_head_t *head;
 	int ret = 0;
+
+	if (session_id > MAX_SESSION_COUNT - 1)
+		return -EINVAL;
 
 	head = get_frame_queue_head(session_id);
 	if (!head) {

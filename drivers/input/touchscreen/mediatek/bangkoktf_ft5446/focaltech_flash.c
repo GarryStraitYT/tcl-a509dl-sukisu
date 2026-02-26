@@ -2,7 +2,7 @@
  *
  * FocalTech fts TouchScreen driver.
  *
- * Copyright (c) 2012-2019, Focaltech Ltd. All rights reserved.
+ * Copyright (c) 2012-2020, Focaltech Ltd. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -46,15 +46,15 @@
 * Global variable or extern global variabls/functions
 *****************************************************************************/
 u8 fw_file[] = {
-// #include FTS_UPGRADE_FW_FILE
+#include FTS_UPGRADE_FW_FILE
 };
 
 u8 fw_file2[] = {
-//#include FTS_UPGRADE_FW2_FILE
+#include FTS_UPGRADE_FW2_FILE
 };
 
 u8 fw_file3[] = {
-//#include FTS_UPGRADE_FW3_FILE
+#include FTS_UPGRADE_FW3_FILE
 };
 
 struct upgrade_module module_list[] = {
@@ -64,9 +64,7 @@ struct upgrade_module module_list[] = {
 };
 
 struct upgrade_func *upgrade_func_list[] = {
-    &upgrade_func_ft5422,
-	&upgrade_func_ft5422u,
-	&upgrade_func_ft5452,
+    &upgrade_func_ft5472,
 };
 
 struct fts_upgrade *fwupgrade;
@@ -105,16 +103,21 @@ static int fts_fwupg_get_boot_state(
 
     cmd[0] = FTS_CMD_START1;
     cmd[1] = FTS_CMD_START2;
-    ret = fts_write(cmd, 2);
+    if (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)
+        cmd_len = 1;
+    else
+        cmd_len = 2;
+    ret = fts_write(cmd, cmd_len);
     if (ret < 0) {
-        FTS_ERROR("write 55 aa cmd fail");
+        FTS_ERROR("write 55 cmd fail");
         return ret;
     }
 
     msleep(FTS_CMD_START_DELAY);
     cmd[0] = FTS_CMD_READ_ID;
     cmd[1] = cmd[2] = cmd[3] = 0x00;
-    if (fts_data->ic_info.is_incell)
+    if (fts_data->ic_info.is_incell ||
+        (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0))
         cmd_len = FTS_CMD_READ_ID_LEN_INCELL;
     else
         cmd_len = FTS_CMD_READ_ID_LEN;
@@ -202,11 +205,11 @@ static int fts_fwupg_reset_to_romboot(struct fts_upgrade *upg)
     return 0;
 }
 
-static u16 fts_crc16_calc_host(u8 *pbuf, u16 length)
+static u16 fts_crc16_calc_host(u8 *pbuf, u32 length)
 {
     u16 ecc = 0;
-    u16 i = 0;
-    u16 j = 0;
+    u32 i = 0;
+    u32 j = 0;
 
     for ( i = 0; i < length; i += 2 ) {
         ecc ^= ((pbuf[i] << 8) | (pbuf[i + 1]));
@@ -221,7 +224,7 @@ static u16 fts_crc16_calc_host(u8 *pbuf, u16 length)
     return ecc;
 }
 
-static u16 fts_pram_ecc_calc_host(u8 *pbuf, u16 length)
+static u16 fts_pram_ecc_calc_host(u8 *pbuf, u32 length)
 {
     return fts_crc16_calc_host(pbuf, length);
 }
@@ -265,7 +268,8 @@ static int fts_pram_ecc_cal_algo(
             FTS_ERROR("ecc_finish read cmd fail");
             return ret;
         }
-        if (upg->func->new_return_value_from_ic) {
+        if (upg->func->new_return_value_from_ic ||
+            (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
             tmp = FTS_ROMBOOT_CMD_ECC_FINISH_OK_A5;
         } else {
             tmp = FTS_ROMBOOT_CMD_ECC_FINISH_OK_00;
@@ -273,7 +277,7 @@ static int fts_pram_ecc_cal_algo(
         if (tmp == val[0])
             break;
     }
-    if (i >= 100) {
+    if (i >= FTS_ECC_FINISH_TIMEOUT) {
         FTS_ERROR("wait ecc finish fail");
         return -EIO;
     }
@@ -312,7 +316,8 @@ static int fts_pram_ecc_cal(struct fts_upgrade *upg, u32 saddr, u32 len)
         return -EINVAL;
     }
 
-    if (ECC_CHECK_MODE_CRC16 == upg->func->pram_ecc_check_mode) {
+    if ((ECC_CHECK_MODE_CRC16 == upg->func->pram_ecc_check_mode) ||
+        (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
         return fts_pram_ecc_cal_algo(upg, saddr, len);
     } else {
         return fts_pram_ecc_cal_xor();
@@ -331,6 +336,7 @@ static int fts_pram_write_buf(struct fts_upgrade *upg, u8 *buf, u32 len)
     u8 packet_buf[FTS_FLASH_PACKET_LENGTH + FTS_CMD_WRITE_LEN] = { 0 };
     u8 ecc_tmp = 0;
     int ecc_in_host = 0;
+    u32 cmdlen = 0;
 
     FTS_INFO("write pramboot to pram");
     if ((!upg) || (!upg->func) || !buf) {
@@ -350,35 +356,53 @@ static int fts_pram_write_buf(struct fts_upgrade *upg, u8 *buf, u32 len)
         packet_number++;
     packet_len = FTS_FLASH_PACKET_LENGTH;
 
-    packet_buf[0] = FTS_ROMBOOT_CMD_WRITE;
     for (i = 0; i < packet_number; i++) {
         offset = i * FTS_FLASH_PACKET_LENGTH;
-        packet_buf[1] = BYTE_OFF_16(offset);
-        packet_buf[2] = BYTE_OFF_8(offset);
-        packet_buf[3] = BYTE_OFF_0(offset);
-
         /* last packet */
         if ((i == (packet_number - 1)) && remainder)
             packet_len = remainder;
 
-        packet_buf[4] = BYTE_OFF_8(packet_len);
-        packet_buf[5] = BYTE_OFF_0(packet_len);
+        if (upg->ts_data->bus_type == BUS_TYPE_SPI_V2) {
+            packet_buf[0] = FTS_ROMBOOT_CMD_SET_PRAM_ADDR;
+            packet_buf[1] = BYTE_OFF_16(offset);
+            packet_buf[2] = BYTE_OFF_8(offset);
+            packet_buf[3] = BYTE_OFF_0(offset);
+
+            ret = fts_write(packet_buf, FTS_ROMBOOT_CMD_SET_PRAM_ADDR_LEN);
+            if (ret < 0) {
+                FTS_ERROR("pramboot set write address(%d) fail", i);
+                return ret;
+            }
+
+            packet_buf[0] = FTS_ROMBOOT_CMD_WRITE;
+            cmdlen = 1;
+        } else {
+            packet_buf[0] = FTS_ROMBOOT_CMD_WRITE;
+            packet_buf[1] = BYTE_OFF_16(offset);
+            packet_buf[2] = BYTE_OFF_8(offset);
+            packet_buf[3] = BYTE_OFF_0(offset);
+
+            packet_buf[4] = BYTE_OFF_8(packet_len);
+            packet_buf[5] = BYTE_OFF_0(packet_len);
+            cmdlen = 6;
+        }
 
         for (j = 0; j < packet_len; j++) {
-            packet_buf[FTS_CMD_WRITE_LEN + j] = buf[offset + j];
+            packet_buf[cmdlen + j] = buf[offset + j];
             if (ECC_CHECK_MODE_XOR == upg->func->pram_ecc_check_mode) {
-                ecc_tmp ^= packet_buf[FTS_CMD_WRITE_LEN + j];
+                ecc_tmp ^= packet_buf[cmdlen + j];
             }
         }
 
-        ret = fts_write(packet_buf, packet_len + FTS_CMD_WRITE_LEN);
+        ret = fts_write(packet_buf, packet_len + cmdlen);
         if (ret < 0) {
             FTS_ERROR("pramboot write data(%d) fail", i);
             return ret;
         }
     }
 
-    if (ECC_CHECK_MODE_CRC16 == upg->func->pram_ecc_check_mode) {
+    if ((ECC_CHECK_MODE_CRC16 == upg->func->pram_ecc_check_mode) ||
+        (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
         ecc_in_host = (int)fts_pram_ecc_calc_host(buf, len);
     } else {
         ecc_in_host = (int)ecc_tmp;
@@ -647,7 +671,10 @@ int fts_fwupg_enter_into_boot(void)
     if (upg->func->pramboot_supported) {
         FTS_INFO("pram supported, write pramboot and init");
         /* pramboot */
-        ret = fts_pram_write_init(upg);
+        if (upg->func->write_pramboot_private)
+            ret = upg->func->write_pramboot_private();
+        else
+            ret = fts_pram_write_init(upg);
         if (ret < 0) {
             FTS_ERROR("pram write_init fail");
             return ret;
@@ -748,6 +775,7 @@ int fts_fwupg_ecc_cal(u32 saddr, u32 len)
 {
     int ret = 0;
     u32 i = 0;
+    u32 cmdlen = FTS_CMD_ECC_CAL_LEN;
     u8 wbuf[FTS_CMD_ECC_CAL_LEN] = { 0 };
     u8 val[FTS_CMD_FLASH_STATUS_LEN] = { 0 };
     int ecc = 0;
@@ -757,6 +785,7 @@ int fts_fwupg_ecc_cal(u32 saddr, u32 len)
     u32 remainder = 0;
     u32 addr = 0;
     u32 offset = 0;
+    bool bflag = false;
     struct fts_upgrade *upg = fwupgrade;
 
     FTS_INFO( "**********read out checksum**********");
@@ -773,11 +802,17 @@ int fts_fwupg_ecc_cal(u32 saddr, u32 len)
         return ret;
     }
 
-    packet_num = len / FTS_MAX_LEN_ECC_CALC;
-    remainder = len % FTS_MAX_LEN_ECC_CALC;
-    if (remainder)
-        packet_num++;
-    packet_len = FTS_MAX_LEN_ECC_CALC;
+    if (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0) {
+        packet_num = 1;
+        remainder = 0;
+        packet_len = len;
+    } else {
+        packet_num = len / FTS_MAX_LEN_ECC_CALC;
+        remainder = len % FTS_MAX_LEN_ECC_CALC;
+        if (remainder)
+            packet_num++;
+        packet_len = FTS_MAX_LEN_ECC_CALC;
+    }
     FTS_INFO("ecc calc num:%d, remainder:%d", packet_num, remainder);
 
     /* send commond to start checksum */
@@ -789,13 +824,21 @@ int fts_fwupg_ecc_cal(u32 saddr, u32 len)
         wbuf[2] = BYTE_OFF_8(addr);
         wbuf[3] = BYTE_OFF_0(addr);
 
-        if ((i == (packet_num - 1)) && remainder)
-            packet_len = remainder;
-        wbuf[4] = BYTE_OFF_8(packet_len);
-        wbuf[5] = BYTE_OFF_0(packet_len);
+        if ((upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
+            wbuf[4] = BYTE_OFF_16(packet_len);
+            wbuf[5] = BYTE_OFF_8(packet_len);
+            wbuf[6] = BYTE_OFF_0(packet_len);
+            cmdlen = FTS_CMD_ECC_CAL_LEN;
+        } else {
+            if ((i == (packet_num - 1)) && remainder)
+                packet_len = remainder;
+            wbuf[4] = BYTE_OFF_8(packet_len);
+            wbuf[5] = BYTE_OFF_0(packet_len);
+            cmdlen = FTS_CMD_ECC_CAL_LEN - 1;
+        }
 
         FTS_DEBUG("ecc calc startaddr:0x%04x, len:%d", addr, packet_len);
-        ret = fts_write(wbuf, FTS_CMD_ECC_CAL_LEN);
+        ret = fts_write(wbuf, cmdlen);
         if (ret < 0) {
             FTS_ERROR("ecc calc cmd write fail");
             return ret;
@@ -804,17 +847,18 @@ int fts_fwupg_ecc_cal(u32 saddr, u32 len)
         msleep(packet_len / 256);
 
         /* read status if check sum is finished */
-        ret = fts_fwupg_check_flash_status(FTS_CMD_FLASH_STATUS_ECC_OK,
-                                           FTS_RETRIES_ECC_CAL,
-                                           FTS_RETRIES_DELAY_ECC_CAL);
-        if (ret < 0) {
+        bflag = fts_fwupg_check_flash_status(FTS_CMD_FLASH_STATUS_ECC_OK,
+                                             FTS_RETRIES_ECC_CAL,
+                                             FTS_RETRIES_DELAY_ECC_CAL);
+        if (!bflag) {
             FTS_ERROR("ecc flash status read fail");
-            return ret;
+            return -EIO;
         }
     }
 
     ecc_len = 1;
-    if (ECC_CHECK_MODE_CRC16 == upg->func->fw_ecc_check_mode) {
+    if ((ECC_CHECK_MODE_CRC16 == upg->func->fw_ecc_check_mode) ||
+        (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
         ecc_len = 2;
     }
 
@@ -826,7 +870,8 @@ int fts_fwupg_ecc_cal(u32 saddr, u32 len)
         return ret;
     }
 
-    if (ECC_CHECK_MODE_CRC16 == upg->func->fw_ecc_check_mode) {
+    if ((ECC_CHECK_MODE_CRC16 == upg->func->fw_ecc_check_mode) ||
+        (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
         ecc = (int)((u16)(val[0] << 8) + val[1]);
     } else {
         ecc = (int)val[0];
@@ -859,6 +904,7 @@ int fts_flash_write_buf(
     u32 addr = 0;
     u32 offset = 0;
     u32 remainder = 0;
+    u32 cmdlen = 0;
     u8 packet_buf[FTS_FLASH_PACKET_LENGTH + FTS_CMD_WRITE_LEN] = { 0 };
     u8 ecc_tmp = 0;
     int ecc_in_host = 0;
@@ -882,27 +928,43 @@ int fts_flash_write_buf(
     packet_len = FTS_FLASH_PACKET_LENGTH;
     FTS_INFO("write data, num:%d remainder:%d", packet_number, remainder);
 
-    packet_buf[0] = FTS_CMD_WRITE;
     for (i = 0; i < packet_number; i++) {
         offset = i * FTS_FLASH_PACKET_LENGTH;
         addr = saddr + offset;
-        packet_buf[1] = BYTE_OFF_16(addr);
-        packet_buf[2] = BYTE_OFF_8(addr);
-        packet_buf[3] = BYTE_OFF_0(addr);
 
         /* last packet */
         if ((i == (packet_number - 1)) && remainder)
             packet_len = remainder;
 
-        packet_buf[4] = BYTE_OFF_8(packet_len);
-        packet_buf[5] = BYTE_OFF_0(packet_len);
+        if (upg->ts_data->bus_type == BUS_TYPE_SPI_V2) {
+            packet_buf[0] = FTS_CMD_SET_WFLASH_ADDR;
+            packet_buf[1] = BYTE_OFF_16(addr);
+            packet_buf[2] = BYTE_OFF_8(addr);
+            packet_buf[3] = BYTE_OFF_0(addr);
+            ret = fts_write(packet_buf, FTS_LEN_SET_ADDR);
+            if (ret < 0) {
+                FTS_ERROR("set flash address fail");
+                return ret;
+            }
 
-        for (j = 0; j < packet_len; j++) {
-            packet_buf[FTS_CMD_WRITE_LEN + j] = buf[offset + j];
-            ecc_tmp ^= packet_buf[FTS_CMD_WRITE_LEN + j];
+            packet_buf[0] = FTS_CMD_WRITE;
+            cmdlen = 1;
+        } else {
+            packet_buf[0] = FTS_CMD_WRITE;
+            packet_buf[1] = BYTE_OFF_16(addr);
+            packet_buf[2] = BYTE_OFF_8(addr);
+            packet_buf[3] = BYTE_OFF_0(addr);
+            packet_buf[4] = BYTE_OFF_8(packet_len);
+            packet_buf[5] = BYTE_OFF_0(packet_len);
+            cmdlen = 6;
         }
 
-        ret = fts_write(packet_buf, packet_len + FTS_CMD_WRITE_LEN);
+        for (j = 0; j < packet_len; j++) {
+            packet_buf[cmdlen + j] = buf[offset + j];
+            ecc_tmp ^= packet_buf[cmdlen + j];
+        }
+
+        ret = fts_write(packet_buf, packet_len + cmdlen);
         if (ret < 0) {
             FTS_ERROR("app write fail");
             return ret;
@@ -924,7 +986,8 @@ int fts_flash_write_buf(
     }
 
     ecc_in_host = (int)ecc_tmp;
-    if (ECC_CHECK_MODE_CRC16 == upg->func->fw_ecc_check_mode) {
+    if ((ECC_CHECK_MODE_CRC16 == upg->func->fw_ecc_check_mode) ||
+        (upg->func->upgspec_version >= UPGRADE_SPEC_V_1_0)) {
         ecc_in_host = (int)fts_crc16_calc_host(buf, len);
     }
 
@@ -942,7 +1005,7 @@ int fts_flash_write_buf(
  *
  * Warning: can't call this function directly, need call in boot environment
  ***********************************************************************/
-static int fts_flash_read_buf(u32 saddr, u8 *buf, u32 len)
+int fts_flash_read_buf(u32 saddr, u8 *buf, u32 len)
 {
     int ret = 0;
     u32 i = 0;
@@ -951,10 +1014,11 @@ static int fts_flash_read_buf(u32 saddr, u8 *buf, u32 len)
     u32 addr = 0;
     u32 offset = 0;
     u32 remainder = 0;
-    u8 wbuf[FTS_CMD_READ_LEN] = { 0 };
+    u8 wbuf[FTS_CMD_READ_LEN_SPI] = { 0 };
+    struct fts_upgrade *upg = fwupgrade;
 
-    if ((NULL == buf) || (0 == len)) {
-        FTS_ERROR("buf is NULL or len is 0");
+    if (!upg || !buf || !len) {
+        FTS_ERROR("upgrade/buf is NULL or len is 0");
         return -EINVAL;
     }
 
@@ -966,29 +1030,62 @@ static int fts_flash_read_buf(u32 saddr, u8 *buf, u32 len)
     packet_len = FTS_FLASH_PACKET_LENGTH;
     FTS_INFO("read packet_number:%d, remainder:%d", packet_number, remainder);
 
-    wbuf[0] = FTS_CMD_READ;
+
     for (i = 0; i < packet_number; i++) {
         offset = i * FTS_FLASH_PACKET_LENGTH;
         addr = saddr + offset;
-        wbuf[1] = BYTE_OFF_16(addr);
-        wbuf[2] = BYTE_OFF_8(addr);
-        wbuf[3] = BYTE_OFF_0(addr);
-
         /* last packet */
         if ((i == (packet_number - 1)) && remainder)
             packet_len = remainder;
 
-        ret = fts_write(wbuf, FTS_CMD_READ_LEN);
-        if (ret < 0) {
-            FTS_ERROR("pram/bootloader write 03 command fail");
-            return ret;
-        }
+        if (upg->ts_data->bus_type == BUS_TYPE_I2C) {
+            wbuf[0] = FTS_CMD_READ;
+            wbuf[1] = BYTE_OFF_16(addr);
+            wbuf[2] = BYTE_OFF_8(addr);
+            wbuf[3] = BYTE_OFF_0(addr);
+            ret = fts_write(wbuf, FTS_CMD_READ_LEN);
+            if (ret < 0) {
+                FTS_ERROR("pram/bootloader write 03 command fail");
+                return ret;
+            }
 
-        msleep(FTS_CMD_READ_DELAY); /* must wait, otherwise read wrong data */
-        ret = fts_read(NULL, 0, buf + offset, packet_len);
-        if (ret < 0) {
-            FTS_ERROR("pram/bootloader read 03 command fail");
-            return ret;
+            msleep(FTS_CMD_READ_DELAY); /* must wait, otherwise read wrong data */
+            ret = fts_read(NULL, 0, buf + offset, packet_len);
+            if (ret < 0) {
+                FTS_ERROR("pram/bootloader read 03 command fail");
+                return ret;
+            }
+        } else if (upg->ts_data->bus_type == BUS_TYPE_SPI_V2) {
+            wbuf[0] = FTS_CMD_SET_RFLASH_ADDR;
+            wbuf[1] = BYTE_OFF_16(addr);
+            wbuf[2] = BYTE_OFF_8(addr);
+            wbuf[3] = BYTE_OFF_0(addr);
+            ret = fts_write(wbuf, FTS_LEN_SET_ADDR);
+            if (ret < 0) {
+                FTS_ERROR("set flash address fail");
+                return ret;
+            }
+
+            msleep(FTS_CMD_READ_DELAY);
+            wbuf[0] = FTS_CMD_READ;
+            ret = fts_read(wbuf, 1, buf + offset, packet_len);
+            if (ret < 0) {
+                FTS_ERROR("pram/bootloader read 03(SPI_V2) command fail");
+                return ret;
+            }
+        } else if (upg->ts_data->bus_type == BUS_TYPE_SPI) {
+            wbuf[0] = FTS_CMD_READ;
+            wbuf[1] = BYTE_OFF_16(addr);
+            wbuf[2] = BYTE_OFF_8(addr);
+            wbuf[3] = BYTE_OFF_0(addr);
+            wbuf[4] = BYTE_OFF_8(packet_len);
+            wbuf[5] = BYTE_OFF_0(packet_len);
+            ret = fts_read(wbuf, FTS_CMD_READ_LEN_SPI, \
+                           buf + offset, packet_len);
+            if (ret < 0) {
+                FTS_ERROR("pram/bootloader read 03(SPI) command fail");
+                return ret;
+            }
         }
     }
 
@@ -1103,8 +1200,8 @@ int fts_upgrade_bin(char *fw_name, bool force)
 #endif
 
     ret = fts_read_file(fw_name, &fw_file_buf);
-    if ((ret < 0) || (ret < FTS_MIN_LEN) || (ret > FTS_MAX_LEN_FILE)) {
-        FTS_ERROR("read fw bin file(sdcard) fail, len:%d", fw_file_len);
+    if ((ret < 0) || (ret < FTS_MIN_LEN)) {
+        FTS_ERROR("read fw bin file(%s) fail, len:%d", fw_name, ret);
         goto err_bin;
     }
 
@@ -1515,8 +1612,6 @@ static int fts_param_need_upgrade(struct fts_upgrade *upg)
     return 0;
 }
 
-extern int tp_firmware_version;
-
 static int fts_fwupg_get_ver_in_tp(u8 *ver)
 {
     int ret = 0;
@@ -1531,8 +1626,6 @@ static int fts_fwupg_get_ver_in_tp(u8 *ver)
         FTS_ERROR("read fw ver from tp fail");
         return ret;
     }
-
-    tp_firmware_version = *ver;
 
     return 0;
 }
@@ -1724,7 +1817,10 @@ static int fts_fwupg_get_vendorid(struct fts_upgrade *upg, int *vid)
     } else {
         fwcfg_addr =  upg->func->fwcfgoff;
         ret = fts_flash_read(fwcfg_addr, cfgbuf, FTS_HEADER_LEN);
-        vendor_id = cfgbuf[FTS_CONIFG_VENDORID_OFF];
+
+        if ((cfgbuf[FTS_CONIFG_VENDORID_OFF] +
+             cfgbuf[FTS_CONIFG_VENDORID_OFF + 1]) == 0xFF)
+            vendor_id = cfgbuf[FTS_CONIFG_VENDORID_OFF];
         if (upg->ts_data->ic_info.is_incell) {
             if ((cfgbuf[FTS_CONIFG_MODULEID_OFF] +
                  cfgbuf[FTS_CONIFG_MODULEID_OFF + 1]) == 0xFF)
@@ -1878,8 +1974,7 @@ static int fts_fwupg_get_fw_file(struct fts_upgrade *upg)
     upg->lic_length = upg->fw_length;
 
     FTS_INFO("upgrade fw file len:%d", upg->fw_length);
-    if ((upg->fw_length < FTS_MIN_LEN)
-        || (upg->fw_length > FTS_MAX_LEN_FILE)) {
+    if (upg->fw_length < FTS_MIN_LEN) {
         FTS_ERROR("fw file len(%d) fail", upg->fw_length);
         return -ENODATA;
     }
@@ -1947,7 +2042,7 @@ int fts_fwupg_init(struct fts_ts_data *ts_data)
 {
     int i = 0;
     int j = 0;
-    int ic_stype = 0;
+    u16 ic_stype = 0;
     struct upgrade_func *func = upgrade_func_list[0];
     int func_count = sizeof(upgrade_func_list) / sizeof(upgrade_func_list[0]);
 
@@ -1975,7 +2070,7 @@ int fts_fwupg_init(struct fts_ts_data *ts_data)
     } else {
         for (i = 0; i < func_count; i++) {
             func = upgrade_func_list[i];
-            for (j = 0; j < FTX_MAX_COMPATIBLE_TYPE; j++) {
+            for (j = 0; j < FTS_MAX_COMPATIBLE_TYPE; j++) {
                 if (0 == func->ctype[j])
                     break;
                 else if (func->ctype[j] == ic_stype) {

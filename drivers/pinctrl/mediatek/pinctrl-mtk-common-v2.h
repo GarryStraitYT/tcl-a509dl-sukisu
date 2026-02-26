@@ -114,6 +114,11 @@ struct mtk_eint_desc {
 	u16 eint_n;
 };
 
+struct mtk_eh_pin_pinmux {
+	u16 pin;
+	u16 pinmux;
+};
+
 struct mtk_pin_desc {
 	unsigned int number;
 	const char *name;
@@ -145,8 +150,10 @@ struct mtk_pin_soc {
 	/* Specific parameters per SoC */
 	u8				gpio_m;
 	bool				ies_present;
-	const char * const		*base_names;
-	unsigned int			nbase_names;
+	bool                            race_free_access;
+	const char * const              *base_names;
+	unsigned int                    nbase_names;
+	const struct mtk_eh_pin_pinmux  *eh_pin_pinmux;
 
 	/* Specific pinconfig operations */
 	int (*bias_disable_set)(struct mtk_pinctrl *hw,
@@ -201,6 +208,9 @@ int mtk_hw_set_value(struct mtk_pinctrl *hw, const struct mtk_pin_desc *desc,
 		     int field, int value);
 int mtk_hw_get_value(struct mtk_pinctrl *hw, const struct mtk_pin_desc *desc,
 		     int field, int *value);
+
+void mtk_eh_ctrl(struct mtk_pinctrl *hw, const struct mtk_pin_desc *desc,
+		 u16 mode);
 
 int mtk_build_eint(struct mtk_pinctrl *hw, struct platform_device *pdev);
 

@@ -528,6 +528,71 @@ config UID_SYS_STATS_DEBUG
 	help
 	  Per TASK based io statistics exported to /proc/uid_io
 
+#Begin modified by donghai.wu for  SOCAOSP13-6708  on 2022/05/23
+config TCT_FEATURE_BT_PARAM_SEPARATION
+	tristate "feature of bt parameter separation"
+	default n
+	help
+	   This option enables bt parameter.
+#End modified by donghai.wu for  SOCAOSP13-6708 on 2022/05/23
+
+#Begin added by liangjiaqiang for MODEL3-1880 on 2022-09-08
+config TCT_PROJECT_MODEL_3
+	tristate "build project name of MODEL_3"
+	default n
+	help
+	   This option enables when build MODEL_3.
+#Begin added by liangjiaqiang for MODEL3-1880 on 2022-09-08
+
+# Begin added by jingqing.yan for task PASSAT-2526 on 2021-10-03
+config TCT_PROJECT_PASSAT
+	tristate "build project name of PASSAT"
+	default n
+	help
+	   This option enables when build PASSAT.
+# End added by jingqing.yan for task PASSAT-2526 on 2021-10-03
+
+config TCT_PROJECT_JETTA
+	tristate "build project name of JETTA"
+	default n
+	help
+	   This option enables when build JETTA.
+config TCT_PROJECT_AUSTINTF
+	tristate "build project name of AUSTINTF"
+	default n
+	help
+	   This option enables when build AUSTINTF.
+config TCT_PROJECT_CRUZELITETF_61
+	tristate "build project name of CRUZELITETF_61"
+	default n
+	help
+	   This option enables when build CRUZELITETF_61.
+config TCT_PROJECT_RAPID
+	tristate "build project name of RAPID"
+	default n
+	help
+	   This option enables when build RAPID.
+
+config TCT_PROJECT_CRUZE_PRO
+	tristate "build project name of CRUZE_PRO"
+	default n
+	help
+	This option enables when build CRUZE_PRO.
+
+config TCT_PROJECT_CRUZE
+	tristate "build project name of CRUZE"
+	default n
+	help
+	This option enables when build CRUZE.
+
+# Added for IQI Feature Apr 1 2022 Begin
+config TCT_TARGET_IQI
+	bool "TCL ATT IQI Feature"
+	default n
+	help
+	   Set Y to enable IQI feature.
+# Added for IQI Feature Apr 1 2022 End
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
@@ -543,4 +608,5 @@ source "drivers/misc/cxl/Kconfig"
 source "drivers/misc/ocxl/Kconfig"
 source "drivers/misc/cardreader/Kconfig"
 source "drivers/misc/mediatek/Kconfig"
+
 endmenu

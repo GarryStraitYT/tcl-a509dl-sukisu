@@ -16,6 +16,7 @@ enum vdec_src_chg_type {
 	VDEC_NEED_SEQ_HEADER        = (1 << 3),
 	VDEC_NEED_MORE_OUTPUT_BUF   = (1 << 4),
 	VDEC_CROP_CHANGED           = (1 << 5),
+	VDEC_OUTPUT_NOT_GENERATED     = (1 << 6),
 };
 
 enum vdec_ipi_msg_status {
@@ -84,7 +85,8 @@ enum vdec_set_param_type {
 	SET_PARAM_WAIT_KEY_FRAME,
 	SET_PARAM_NAL_SIZE_LENGTH,
 	SET_PARAM_OPERATING_RATE,
-	SET_PARAM_TOTAL_FRAME_BUFQ_COUNT
+	SET_PARAM_TOTAL_FRAME_BUFQ_COUNT,
+	SET_PARAM_DEC_LOG,
 };
 
 struct vdec_ap_ipi_cmd {

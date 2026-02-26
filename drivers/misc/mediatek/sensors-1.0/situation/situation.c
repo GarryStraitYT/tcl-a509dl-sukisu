@@ -330,7 +330,7 @@ static ssize_t situbatch_store(struct device *dev,
 	if (cxt->ctl_context[index].delay_ns >= 0) {
 		if (cxt->ctl_context[index].situation_ctl.batch == NULL) {
 			pr_err("batch() is NULL, %d\n", index);
-//			goto err_out;
+			goto err_out;
 		}
 		if (cxt->ctl_context[index].situation_ctl.is_support_batch)
 			err = cxt->ctl_context[index].situation_ctl.batch(0,
@@ -341,7 +341,7 @@ static ssize_t situbatch_store(struct device *dev,
 				cxt->ctl_context[index].delay_ns, 0);
 		if (err) {
 			pr_err("situation set batch(ODR) err %d\n", err);
-//			goto err_out;
+			goto err_out;
 		}
 	} else
 		pr_info("batch state no need change\n");
@@ -349,7 +349,9 @@ static ssize_t situbatch_store(struct device *dev,
 	err = situation_enable_and_batch(index);
 #endif
 	pr_debug("%s done\n", __func__);
-//err_out:
+#ifdef CONFIG_NANOHUB
+err_out:
+#endif
 	mutex_unlock(&situation_context_obj->situation_op_mutex);
 	if (err)
 		return err;

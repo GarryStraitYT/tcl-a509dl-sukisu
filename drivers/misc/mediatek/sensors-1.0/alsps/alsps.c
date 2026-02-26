@@ -8,6 +8,14 @@ struct alsps_context *alsps_context_obj /* = NULL*/;
 struct platform_device *pltfm_dev;
 int last_als_report_data = -1;
 
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+#include <tcl/tkperf.h>
+extern int sensor_driver_lasterrcode;
+extern int sensor_driver_lasterrcode_id;
+extern int sensor_driver_lasterrcode_cmd_or_errcode;
+void heraeye_sensor_fail(int errtype, int sensorid, int cmd_or_errcode);
+#endif
+
 /* AAL default delay timer(nano seconds)*/
 #define AAL_DELAY 200000000
 
@@ -110,22 +118,23 @@ int rgbw_flush_report(void)
 	return err;
 }
 
-int ps_data_report_t(int value, int status, int64_t time_stamp)
+int ps_data_report_t(int* value, int status, int64_t time_stamp)
 {
 	int err = 0;
 	struct sensor_event event;
 
 	memset(&event, 0, sizeof(struct sensor_event));
 
-	pr_notice("[ALS/PS]%s! %d, %d\n", __func__, value, status);
 	event.flush_action = DATA_ACTION;
 	event.time_stamp = time_stamp;
-	event.word[0] = value + 1;
+	event.word[0] = value[0] + 1;
+    event.word[1] = value[1];
 	event.status = status;
+	pr_info("[ALS/PS]%s: %d, %d\n", __func__, event.word[0], event.word[1]);
 	err = sensor_input_event(alsps_context_obj->ps_mdev.minor, &event);
 	return err;
 }
-int ps_data_report(int value, int status)
+int ps_data_report(int* value, int status)
 {
 	return ps_data_report_t(value, status, 0);
 }
@@ -205,7 +214,8 @@ static void ps_work_func(struct work_struct *work)
 {
 
 	struct alsps_context *cxt = NULL;
-	int value, status;
+	int  status;
+    int value[2];
 	int64_t nt;
 	struct timespec time;
 	int err = 0;
@@ -221,12 +231,14 @@ static void ps_work_func(struct work_struct *work)
 	nt = time.tv_sec * 1000000000LL + time.tv_nsec;
 
 	/* add wake lock to make sure data can be read before system suspend */
-	err = cxt->ps_data.get_data(&value, &status);
+	err = cxt->ps_data.get_data(value, &status);
 	if (err) {
 		pr_err("get alsps data fails!!\n");
 		goto ps_loop;
 	} else {
-		cxt->drv_data.ps_data.values[0] = value;
+		cxt->drv_data.ps_data.values[0] = value[0];
+        cxt->drv_data.ps_data.values[1] = value[1];
+		pr_debug("qiuyang  ps_work_func %d,%d\n",cxt->drv_data.ps_data.values[0],cxt->drv_data.ps_data.values[1]);
 		cxt->drv_data.ps_data.status = status;
 		cxt->drv_data.ps_data.time = nt;
 	}
@@ -244,8 +256,9 @@ static void ps_work_func(struct work_struct *work)
 		if (cxt->drv_data.ps_data.values[0] != ALSPS_INVALID_VALUE)
 			cxt->is_get_valid_ps_data_after_enable = true;
 	}
-
-	ps_data_report(cxt->drv_data.ps_data.values[0],
+	cxt->drv_data.ps_data.values[1] = value[1];
+	pr_debug("qiuyang  cxt->drv_data.ps_data.values[1]= %d\n",cxt->drv_data.ps_data.values[1]);
+	ps_data_report(cxt->drv_data.ps_data.values,
 		       cxt->drv_data.ps_data.status);
 
 ps_loop:
@@ -514,6 +527,7 @@ static ssize_t alsbatch_store(struct device *dev,
 		return -1;
 	}
 
+
 	mutex_lock(&alsps_context_obj->alsps_op_mutex);
 	if (handle == ID_LIGHT) {
 #if defined(CONFIG_NANOHUB) && defined(CONFIG_MTK_ALSPSHUB)
@@ -522,6 +536,13 @@ static ssize_t alsbatch_store(struct device *dev,
 				cxt->als_latency_ns);
 		else
 			err = cxt->als_ctl.batch(0, cxt->als_delay_ns, 0);
+
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+		if (err) {
+			heraeye_sensor_fail(SENSOR_POWER_UP,handle,flag);
+		}
+#endif
+
 #else
 		err = als_enable_and_batch();
 #endif
@@ -922,14 +943,14 @@ struct platform_device *get_alsps_platformdev(void)
 	return pltfm_dev;
 }
 
-int ps_report_interrupt_data(int value)
+int ps_report_interrupt_data(int *value)
 {
 	struct alsps_context *cxt = NULL;
 	/* int err =0; */
 	cxt = alsps_context_obj;
-	pr_notice("[ALS/PS] [%s]:value=%d\n", __func__, value);
+	pr_notice("qiuyang ps_report_interrupt_data [ALS/PS] [%s]:value=%d,raw=%d\n", __func__, value[0],value[1]);
 	if (cxt->is_get_valid_ps_data_after_enable == false) {
-		if (value != ALSPS_INVALID_VALUE) {
+		if (value[0] != ALSPS_INVALID_VALUE) {
 			cxt->is_get_valid_ps_data_after_enable = true;
 			smp_mb(); /*for memory barriier*/
 			del_timer_sync(&cxt->timer_ps);

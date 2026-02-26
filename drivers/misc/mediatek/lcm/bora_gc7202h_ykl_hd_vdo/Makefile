@@ -1,0 +1,12 @@
+#
+# Makefile for misc devices that really don't fit anywhere else.
+#
+
+obj-y += bora_gc7202h_ykl_hd_vdo.o
+
+
+ccflags-$(CONFIG_MTK_LCM) += -I$(srctree)/drivers/misc/mediatek/lcm/inc
+
+
+
+

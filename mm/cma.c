@@ -38,8 +38,23 @@
 #include <linux/kmemleak.h>
 #include <trace/events/cma.h>
 
+#include <linux/sched/clock.h>
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for Healthinfo
+#ifdef CONFIG_TCL_CMA
+#include <tcl/tcl_cma.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 #include "cma.h"
 
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+#include <tcl/tcl_healthinfo.h>
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 struct cma cma_areas[MAX_CMA_AREAS];
 unsigned cma_area_count;
 static DEFINE_MUTEX(cma_mutex);
@@ -433,7 +448,13 @@ struct page *cma_alloc(struct cma *cma, size_t count, unsigned int align,
 	size_t i;
 	struct page *page = NULL;
 	int ret = -ENOMEM;
-
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+	#ifdef CONFIG_TCL_HEALTHINFO
+	unsigned long alloc_start = jiffies;
+	#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	if (!cma || !cma->count)
 		return NULL;
 
@@ -442,6 +463,13 @@ struct page *cma_alloc(struct cma *cma, size_t count, unsigned int align,
 
 	if (!count)
 		return NULL;
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for ion
+#ifdef CONFIG_TCL_CMA
+	unsigned long long in_tick = sched_clock();
+	unsigned long long timeout = 2ULL * 1000000 * (1 + ((count * PAGE_SIZE) >> 20));
+#endif
+// #endif /* VENDOR_EDIT */
 
 	mask = cma_bitmap_aligned_mask(cma, align);
 	offset = cma_bitmap_aligned_offset(cma, align);
@@ -470,8 +498,16 @@ struct page *cma_alloc(struct cma *cma, size_t count, unsigned int align,
 
 		pfn = cma->base_pfn + (bitmap_no << cma->order_per_bit);
 		mutex_lock(&cma_mutex);
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for ion
+#ifdef CONFIG_TCL_CMA
+		ret = tcl_alloc_contig_range(pfn, pfn + count, MIGRATE_CMA,
+					 GFP_KERNEL | (no_warn ? __GFP_NOWARN : 0));
+#else
 		ret = alloc_contig_range(pfn, pfn + count, MIGRATE_CMA,
 				     GFP_KERNEL | (no_warn ? __GFP_NOWARN : 0));
+#endif
+// #endif /* VENDOR_EDIT */
 		mutex_unlock(&cma_mutex);
 		if (ret == 0) {
 			page = pfn_to_page(pfn);
@@ -487,7 +523,13 @@ struct page *cma_alloc(struct cma *cma, size_t count, unsigned int align,
 		/* try again with a bit different memory target */
 		start = bitmap_no + mask + 1;
 	}
-
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	cma_alloc_monitor(count, jiffies_to_msecs(jiffies - alloc_start));
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	trace_cma_alloc(pfn, page, count, align);
 
 	/*

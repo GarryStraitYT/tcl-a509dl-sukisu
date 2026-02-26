@@ -42,6 +42,13 @@ static inline void count_compact_events(enum vm_event_item item, long delta)
 
 #if defined CONFIG_COMPACTION || defined CONFIG_CMA
 
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+#include <trace/events/zswapd_tcl.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/compaction.h>
 
@@ -1315,9 +1322,9 @@ static enum compact_result __compact_finished(struct zone *zone,
 {
 	unsigned int order;
 	const int migratetype = cc->migratetype;
-#ifdef CONFIG_TCT_MEMORY_DEFRAG
+    #ifdef CONFIG_TCT_MEMORY_DEFRAG
 	int i;
-#endif
+    #endif
 
 	if (cc->contended || fatal_signal_pending(current))
 		return COMPACT_CONTENDED;
@@ -1355,13 +1362,12 @@ static enum compact_result __compact_finished(struct zone *zone,
 		else
 			return COMPACT_CONTINUE;
 	}
-
-	/* Direct compactor: Is a suitable page free? */
 #ifdef CONFIG_TCT_MEMORY_DEFRAG
 	foreach_area_order(i, order, cc->order) {
 		int id = free_area_id(i, cc->order);
 		struct free_area *area = &zone->free_area[id][order];
 #else
+	/* Direct compactor: Is a suitable page free? */
 	for (order = cc->order; order < MAX_ORDER; order++) {
 		struct free_area *area = &zone->free_area[order];
 #endif
@@ -2075,9 +2081,21 @@ static int kcompactd(void *p)
 		wait_event_freezable(pgdat->kcompactd_wait,
 				kcompactd_work_requested(pgdat));
 
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+		TRACE_BEGIN("tpms_kcompactd");
+#endif
+// #endif /* VENDOR_EDIT */
 		psi_memstall_enter(&pflags);
 		kcompactd_do_work(pgdat);
 		psi_memstall_leave(&pflags);
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+		TRACE_END("tpms_kcompactd");
+#endif
+// #endif /* VENDOR_EDIT */
 	}
 
 	return 0;

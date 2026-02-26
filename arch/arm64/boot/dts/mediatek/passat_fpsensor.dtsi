@@ -1,0 +1,105 @@
+/* Copyright (c) 2014, The Linux Foundation. All rights reserved.
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License version 2 and
+* only version 2 as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*/
+
+
+/*begin, fps, fingerprint config*/
+&spi1{
+	fingerprint@0 {
+		compatible = "mediatek,fingerprint-spi-dev";
+		reg = <0>;
+		spi-max-frequency = <12000000>;
+		netlink-event = <31>;
+		status = "okay";
+	};
+};
+&odm {
+    fingerprint_pinctrl: fingerprint_pinctrl {
+        compatible = "mediatek,fingerprint-pinctrl";
+    };
+
+    fingerprint_power: fingerprint_power {
+        compatible = "mediatek,fingerprint-power";
+        finger_vio28-supply = <&mt_pmic_vcn28_ldo_reg>;
+	pinctrl_power = <1>;
+	focaltech_info = "FT9391:FOCAL:Sunwin:AYB0000227C1";
+	chipone_info = "ICNF7312:ICNF:A-KERR:AYB0000226C1";
+    };
+    fps_fpsensor_eint: fps_fpsensor_eint {
+        compatible = "mediatek,fpsensor-eint";
+        interrupt-parent = <&pio>;
+        interrupts = <5 IRQ_TYPE_NONE 5 0>;
+        debounce = <5 0>;
+        status = "okay";
+    };
+    fps_focaltech_eint: fps_focaltech_eint {
+        compatible = "mediatek,focaltech-eint";
+        interrupt-parent = <&pio>;
+        interrupts = <5 IRQ_TYPE_EDGE_RISING 5 0>;
+        debounce = <5 0>;
+        status = "okay";
+    };
+};
+
+/*对应Pinctrl的所有GPIO口操作*/
+&fingerprint_pinctrl{
+    pinctrl-names = 
+	"fpsensor_power_low", "fpsensor_power_high",
+        "fpsensor_rst_low", "fpsensor_rst_high",
+	"fpsensor_eint_low";
+    pinctrl-0 = <&fpsensor_power_low>;
+    pinctrl-1 = <&fpsensor_power_high>;
+    pinctrl-2 = <&fpsensor_rst_low>;
+    pinctrl-3 = <&fpsensor_rst_high>;
+    pinctrl-4 = <&fpsensor_eint_low>;
+    status = "okay";
+};
+
+&pio {
+    fpsensor_power_low: fpsensor_power_low {
+        pins_cmd_dat {
+            pinmux = <PINMUX_GPIO150__FUNC_GPIO150>;
+            slew-rate = <1>;
+            output-low;
+        };
+    };
+    fpsensor_power_high: fpsensor_power_high {
+        pins_cmd_dat {
+            pinmux = <PINMUX_GPIO150__FUNC_GPIO150>;
+            slew-rate = <1>;
+            output-high;
+        };
+    };
+    fpsensor_rst_low: fpsensor_rst_low {
+        pins_cmd_dat {
+            pinmux = <PINMUX_GPIO14__FUNC_GPIO14>;
+            slew-rate = <1>;
+            output-low;
+        };
+    };
+    fpsensor_rst_high: fpsensor_rst_high {
+        pins_cmd_dat {
+            pinmux = <PINMUX_GPIO14__FUNC_GPIO14>;
+            slew-rate = <1>;
+            output-high;
+        };
+    };
+    fpsensor_eint_low: fpsensor_eint_low {
+        pins_cmd_dat {
+            pinmux = <PINMUX_GPIO5__FUNC_GPIO5>;
+            slew-rate = <0>;
+            //bias-disable;
+            bias-pull-down = <00>;
+        };
+    };
+};
+
+/*end, fps, fingerprint config*/

@@ -35,7 +35,7 @@ static u32 last_boot_phase;
 #define EXPDB_PATH "/dev/block/by-name/expdb"
 
 #define LOG_BLOCK_SIZE (512)
-#define EXPDB_LOG_SIZE (2*1024*1024)
+#define EXPDB_LOG_SIZE (4*1024*1024)// update by jinggao.zhou for LUNA84GVZW-3583
 
 #ifdef CONFIG_MTK_PMIC_COMMON
 u32 set_pmic_boot_phase(u32 boot_phase)

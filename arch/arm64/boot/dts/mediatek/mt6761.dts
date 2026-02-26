@@ -10,6 +10,7 @@
 #include <dt-bindings/gce/mt6765-gce.h>
 #include <dt-bindings/reset/mt6761-resets.h>
 #include <dt-bindings/soc/mediatek,boot-mode.h>
+#include <dt-bindings/phy/phy.h>
 #include <generated/autoconf.h>
 / {
 	model = "MT6761";
@@ -304,22 +305,6 @@ firmware_class.path=/vendor/firmware";
 			alloc-range = <0 0xc0000000 0 0x10000000>;
 		};
 
-#ifdef CONFIG_MICROTRUST_TEE_SUPPORT
-		soter-shared-mem {
-			compatible = "microtrust,shared_mem";
-			no-map;
-#if defined(CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT) || \
-	defined(CONFIG_MTK_CAM_SECURITY_SUPPORT)
-			size = <0 0x800000>;
-			alignment = <0 0x1000000>;
-#else
-			size = <0 0x200000>;
-			alignment = <0 0x200000>;
-#endif
-			alloc-ranges = <0 0x40000000 0 0x50000000>;
-		};
-#endif
-
 	};
 
 	/* Microtrust SW IRQ number 188(220) ~ 193(225) */
@@ -381,15 +366,16 @@ firmware_class.path=/vendor/firmware";
 
 	infracfg_ao: infracfg_ao@10001000 {
 		compatible = "mediatek,common-infracfg_ao",
+			     "mediatek,infracfg_ao",
 			     "mediatek,mt6761-infracfg", "syscon";
 		reg = <0 0x10001000 0 0x1000>;
 		interrupts = <GIC_SPI 91 IRQ_TYPE_EDGE_RISING>;
 		#clock-cells = <1>;
 	};
 
-	mcdi@0010fc00 {
+	mcdi@00110100 {
 		compatible = "mediatek,mt6761-mcdi";
-		reg = <0 0x0010fc00 0 0x800>;
+		reg = <0 0x00110100 0 0x800>;
 	};
 
 	scpsys: scpsys@10001000 {
@@ -570,6 +556,7 @@ firmware_class.path=/vendor/firmware";
 			compatible = "syscon-reboot-mode";
 			offset = <0x24>;
 			mask = <0xF>;
+			mediatek,pwrap-regmap = <&pwrap>;
 			mode-charger = <BOOT_CHARGER>;
 			mode-recovery = <BOOT_RECOVERY>;
 			mode-bootloader = <BOOT_BOOTLOADER>;
@@ -645,7 +632,7 @@ firmware_class.path=/vendor/firmware";
 
 	regulator_vibrator {
 		compatible = "regulator-vibrator";
-		min-volt = <2300000>;
+		min-volt = <3000000>;
 		max-volt = <3200000>;
 		min-limit = <15>;
 		max-limit = <15000>;
@@ -732,6 +719,7 @@ firmware_class.path=/vendor/firmware";
 		interrupts = <GIC_SPI 136 IRQ_TYPE_LEVEL_HIGH>;
 		core_1 = "enable";
 		scp_sramSize = <0x00040000>;
+		scp_mpuRegionId = <27>;
 		scp_feature_tbl = <0 47>,   /* vow */
 				  <1 356>,  /* dsp */
 				  <2 62>,   /* sensor */
@@ -804,22 +792,18 @@ firmware_class.path=/vendor/firmware";
 
 	mrdump_ext_rst: mrdump_ext_rst {
 		compatible = "mediatek, mrdump_ext_rst-eint";
-		force_mode = "EINT";
 		mode = "IRQ";
 		status = "okay";
 	};
 
 	touch: touch {
-		compatible = "goodix,touch";
+		compatible = "mediatek,touch";
 	};
 
 	accdet: accdet {
 		compatible = "mediatek,pmic-accdet";
 	};
 
-	goodix_fp: fingerprint {
-		compatible = "mediatek,goodix-fp";
-	};
 
 	topmisc@10011000 {
 		compatible = "mediatek,topmisc";
@@ -860,9 +844,9 @@ firmware_class.path=/vendor/firmware";
 			compatible = "mediatek,mt6761-dvfsrc-met";
 		};
 
-		qos@00110780 {
+		qos@00110b80 {
 			compatible = "mediatek,mt6761-qos";
-			reg = <0 0x00110780 0 0x80>;
+			reg = <0 0x00110b80 0 0x80>;
 		};
 	};
 
@@ -1044,7 +1028,7 @@ firmware_class.path=/vendor/firmware";
 		compatible = "mediatek,iommu_v0";
 		reg = <0 0x10205000 0 0x1000>;
 		mediatek,larbs = <&smi_larb0 &smi_larb1 &smi_larb2>;
-		interrupts = <GIC_SPI 158 IRQ_TYPE_LEVEL_LOW>;
+		interrupts = <GIC_SPI 102 IRQ_TYPE_LEVEL_LOW>;
 		#iommu-cells = <1>;
 	};
 
@@ -1307,10 +1291,10 @@ firmware_class.path=/vendor/firmware";
 		reg = <0 0x10227000 0 0x1000>;
 	};
 
-	dvfsp@00110800 {
+	dvfsp@00110c00 {
 		compatible = "mediatek,mt6761-dvfsp";
-		reg = <0 0x00110800 0 0x1400>,
-		      <0 0x00110800 0 0x1400>;
+		reg = <0 0x00110c00 0 0x1400>,
+		      <0 0x00110c00 0 0x1400>;
 		nvmem-cells = <&efuse_segment>;
 		nvmem-cell-names = "efuse_segment_cell";
 	};
@@ -2167,7 +2151,7 @@ firmware_class.path=/vendor/firmware";
 		memory-region = <&consys_mem>;
 	};
 
-	wifi@18000000 {
+	wifi: wifi@18000000 {
 		compatible = "mediatek,wifi";
 		reg = <0 0x18000000 0 0x100000>;
 		interrupts = <GIC_SPI 212 IRQ_TYPE_LEVEL_LOW>;
@@ -2263,16 +2247,32 @@ firmware_class.path=/vendor/firmware";
 		clock-names = "usb0",
 			"usb0_clk_top_sel",
 			"usb0_clk_univpll3_d4";
-		charger = <&mt6370_chg>;
-		/*-effuse access-*/
-		nvmem-cells = <&efuse_analog7>;
-		nvmem-cell-names = "efuse_idx107";
+		pericfg= <&pericfg>;
+		interrupt-names = "mc";
+		phys = <&u2port0 PHY_TYPE_USB2>;
+		dr_mode = "otg";
+		usb-role-switch;
 	};
 
-	usb_sif@11210000 {
-		compatible = "mediatek,usb_sif";
-		reg = <0 0x11210000 0 0x1000>;
+	u2phy0: usb-phy@11210000 {
+		compatible = "mediatek,generic-tphy-v1";
+		reg = <0 0x11cc0000 0 0x0800>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		status = "okay";
+		u2port0: usb-phy@11210000 {
+			reg = <0 0x11cc0800 0 0x800>;  // older:0x100, mod by jin.wang on 2022-3-23
+			clocks = <&clk26m>;
+			clock-names = "ref";
+			#phy-cells = <1>;
+			nvmem-cells = <&u2_phy_data>;
+			nvmem-cell-names = "intr_cal";
+			nvmem-cell-masks = <0x1f>;
+			status = "okay";
+		};
 	};
+
 	msdc0:msdc@11230000 {
 		compatible = "mediatek,msdc";
 		reg = <0 0x11230000 0 0x10000>;
@@ -2448,6 +2448,9 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 			reg = <0x190 0xc>;
 		};
 		efuse_analog7: efuse_analog7@1ac {
+			reg = <0x1ac 0x4>;
+		};
+		u2_phy_data: u2_phy_data@1ac {
 			reg = <0x1ac 0x4>;
 		};
 	};
@@ -2966,6 +2969,27 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 		};
 	};
 
+/*begin 20210721 ljt add for jettatf*/
+ 	flashlights_aw36518: flashlights_aw36518 {
+		compatible = "mediatek,flashlights_aw36518";
+		/*decouple = <0>;
+		channel@1 {
+			type = <0>;
+			ct = <0>;
+			part = <0>;
+		};
+		channel@2 {
+			type = <0>;
+			ct = <1>;
+			part = <0>;
+		};*/
+	};	
+/*end 20210721 ljt add for jettatf*/
+ //Begin modified by liujunyi for rapitf flashlight porting 
+ 	flashlights_aw3641e: flashlights_aw3641e {
+ 		compatible = "mediatek,flashlights_aw3641e";
+ 	};
+ //End modified by liujunyi for rapitf flashlight porting 
 	vcodecsys: vcodecsys@17000000 {
 		compatible =  "mediatek,mt6761-vcodecsys", "syscon";
 		reg = <0 0x17000000 0 0x10000>;
@@ -3033,6 +3057,12 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 		compatible = "mediatek,usb_iddig_bi_eint";
 	};
 
+        irtx_pwm:irtx_pwm {
+                compatible = "mediatek,irtx-pwm";
+                pwm_ch = <0>;
+                pwm_data_invert = <0>;
+        };
+
 	odm: odm{
 		compatible = "simple-bus";
 		/* reserved for overlay by odm */
@@ -3043,7 +3073,7 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 #if defined(CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT) || \
 	defined(CONFIG_TRUSTONIC_TEE_SUPPORT) || \
 	defined(CONFIG_MICROTRUST_TEE_SUPPORT)
-		svp-size = <0 0x10000000>;
+		svp-region-based-size = <0 0x10000000>;
 #endif
 #ifdef CONFIG_MTK_CAM_SECURITY_SUPPORT
 		2d_fr-size = <0 0x8000000>;
@@ -3056,7 +3086,7 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 		wfd-size = <0 0x4000000>;
 #endif
 #ifdef CONFIG_MTK_PROT_MEM_SUPPORT
-		prot-sharedmem-size = <0 0x8000000>;
+		prot-region-based-size = <0 0x8000000>;
 #endif
 #ifdef CONFIG_MTK_HAPP_MEM_SUPPORT
 		ta-elf-size = <0 0x1000000>;
@@ -3211,6 +3241,8 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 		compatible = "mediatek,mt_soc_pcm_voice_usb_echoref";
 	};
 
+/* Begin modified by bitao.xiong for can't use delete-property */
+#if !defined(CONFIG_TCT_CHARGER)
 	lk_charger: lk_charger {
 		compatible = "mediatek,lk_charger";
 		enable_anime;
@@ -3234,6 +3266,12 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 		temp_t3_threshold = <45>;
 		temp_t1_threshold = <0>;
 	};
+#else
+	lk_charger: lk_charger {
+		compatible = "mediatek,lk_charger";
+	};
+#endif
+/* End modified by bitao.xiong for can't use delete-property */
 
 	pe: pe {
 		compatible = "mediatek,charger,pe";
@@ -3397,6 +3435,16 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 		adapter_name = "pd_adapter";
 	};
 
+	extcon_usb: extcon_usb {
+		compatible = "mediatek,extcon-usb";
+		charger = <&mt6370_chg>;
+		vbus-supply = <&otg_vbus>;
+		vbus-voltage = <5000000>;
+		vbus-current = <1800000>;
+		dev-conn = <&usb>;
+		mediatek,bypss-typec-sink = <1>;
+	};
+
 	rt9465_slave_chr: rt9465_slave_chr {
 		compatible = "richtek,rt9465";
 		status = "disabled";
@@ -3410,6 +3458,15 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 	rt-pd-manager {
 		compatible = "mediatek,rt-pd-manager";
 	};
+
+/* Begin added by hailong.chen for task 9209018 on 2020-04-14 */
+	wusb3801x_eint: wusb3801x_eint {
+		compatible = "mediatek, EINT_TYPEC-eint";
+	};
+
+	chr_stat: chr_stat{
+	};
+/* End added by hailong.chen for task 9209018 on 2020-04-14 */	
 
 	subpmic_pmu_eint: mt6370_pmu_eint {
 	};
@@ -3439,6 +3496,11 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 	bat_gm30: battery {
 		compatible = "mediatek,bat_gm30";
 	};
+
+	iommu_test {
+		compatible = "mediatek,ktf-iommu-test";
+		iommus = <&iommu M4U_PORT_DISP_RDMA0>;
+		};
 
 	pseudo_m4u {
 		compatible = "mediatek,mt-pseudo_m4u";
@@ -3515,7 +3577,11 @@ mipi_rx_ana_csi0b: mipi_rx_ana_csi0b@11c11000 {
 
 #include "mediatek/cust_mt6761_msdc.dtsi"
 #include "mediatek/mt6357.dtsi"
+/* Begin modified by bitao.xiong for task-11493056 at 2021-10-08 */
+#if !defined(CONFIG_TCT_CHARGER)
 #include "mediatek/bat_setting/mt6761_battery_prop.dtsi"
+#endif
+/* End modified by bitao.xiong for task-11493056 at 2021-10-08 */
 #include "mediatek/mt6370.dtsi"
 #include "mediatek/mt6370_pd.dtsi"
 

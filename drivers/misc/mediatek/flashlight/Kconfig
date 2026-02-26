@@ -11,6 +11,15 @@ config MTK_FLASHLIGHT
 	  If you have any questions about this, say Y here,
 	  only say N if you know exactly what you are doing.
 
+
+config MTK_V4L2_FLASHLIGHT
+	tristate "Mediatek V4L2 flashlight driver"
+	help
+	  Say Y to enable V4L2 flashlight device
+	  This Framework is good for
+	  controling flashlight Leds.
+	  Say N to disable V4L2 flashlight.
+
 config MTK_FLASHLIGHT_AW3644
 	tristate "Mediatek flashlight with driver IC (AW3644)"
 	depends on MTK_FLASHLIGHT
@@ -44,7 +53,20 @@ config MTK_FLASHLIGHT_LM3642
 
 	  Say M here if you want to compile this driver as a module.
 
-#begin 20200814 liujunting modify for bangkok-tf
+#Begin  majinrui [Task:11650481] for austintf flashlight bring up 20211022
+config MTK_FLASHLIGHT_AW36515
+	tristate "Mediatek flashlight with driver IC (AW36515)"
+	depends on MTK_FLASHLIGHT
+	help
+	  This is for the flashlight driver IC (AW36515).
+
+	  Say Y here if you want a flashlight driver IC AW36515.
+	  Select this only if your board has this IC.
+
+	  Say M here if you want to compile this driver as a module.
+#End  majinrui [Task:11650481] for austintf flashlight bring up 20211022
+
+#begin 20210719 ljt add for jettatf camera
 config MTK_FLASHLIGHT_AW36518
 	tristate "Mediatek flashlight with driver IC (AW36518)"
 	depends on MTK_FLASHLIGHT
@@ -56,7 +78,33 @@ config MTK_FLASHLIGHT_AW36518
 	  Select this only if your board has this IC.
 
 	  Say M here if you want to compile this driver as a module.
-#end 20200814 liujunting modify for bangkok-tf
+#end 20210719 ljt add for jettatf camera
+
+#begin  ljy add for rapidtf camera
+config MTK_FLASHLIGHT_AW3641E
+	tristate "Mediatek flashlight with driver IC (AW3641E)"
+	depends on MTK_FLASHLIGHT
+	default n
+	help
+	  This is for the flashlight driver IC (AW36518).
+
+	  Say Y here if you want a flashlight driver IC AW36518.
+	  Select this only if your board has this IC.
+
+	  Say M here if you want to compile this driver as a module.
+
+config MTK_FLASHLIGHT_AW3641E_PWM
+	tristate "Mediatek flashlight with driver IC (AW3641E)"
+	depends on MTK_FLASHLIGHT
+	default n
+	help
+	  This is for the flashlight driver IC (AW3641E).
+
+	  Say Y here if you want a flashlight driver IC AW3641E.
+	  Select this only if your board has this IC.
+
+	  Say M here if you want to compile this driver as a module.
+#end  ljy add for rapidtf camera
 
 config MTK_FLASHLIGHT_LM3643
 	tristate "Mediatek flashlight with driver IC (TI LM3643)"

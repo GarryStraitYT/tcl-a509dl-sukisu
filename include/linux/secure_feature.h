@@ -13,7 +13,10 @@
 #define	JRD_SEC_AVB			0
 #define	JRD_SEC_SIMLOCK_HW                      0
 
+#ifndef TCL_SECURE_BOOT_FAILURE
 #define TCL_SECURE_BOOT_FAILURE                      0
+#else
+#endif
 /***** feature define end *****/
 
 #endif

@@ -1,0 +1,678 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/pinctrl/mt6765-pinfunc.h>
+#include <dt-bindings/clock/mt6765-clk.h>
+
+/dts-v1/;
+/plugin/;
+
+/* chosen */
+&chosen {
+
+	/* fpga may has no lk, we need to specify display info here */
+	/* fb buffer is reserved using this dts by memory node above */
+	atag,videolfb-fb_base_h = <0x0>;
+	atag,videolfb-fb_base_l = <0x5e605000>;
+	atag,videolfb-islcmfound = <1>;
+	/* because no lk, so lcm is not inited */
+	atag,videolfb-islcm_inited = <0>;
+	atag,videolfb-fps= <6000>;
+	atag,videolfb-vramSize= <0x017bb000>;
+    //Begin modified by liangjiaqiang for MODEL3-1880 on 2022-09-08
+	atag,videolfb-lcmname= "icnl9916_hdplus1600_dsi_vdo_hx_xe671";
+    //End modified by liangjiaqiang for MODEL3-1880 on 2022-09-08
+};
+
+&odm {
+	led0:led@0 {
+		compatible = "mediatek,red";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led1:led@1 {
+		compatible = "mediatek,green";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led2:led@2 {
+		compatible = "mediatek,blue";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led3:led@3 {
+		compatible = "mediatek,jogball-backlight";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led4:led@4 {
+		compatible = "mediatek,keyboard-backlight";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+	led5:led@5 {
+		compatible = "mediatek,button-backlight";
+		led_mode = <0>;
+		data = <1>;
+		pwm_config = <0 0 0 0 0>;
+	};
+//Begin modified by liangjiaqiang for MODEL3-1880 on 2022-09-08
+	led6:led@6 {
+		compatible = "mediatek,lcd-backlight";
+		led_mode = <5>;
+		data = <1>;
+		pwm_config = <0 3 0 0 0>;
+	};
+//End modified by liangjiaqiang for MODEL3-1880 on 2022-09-08
+//Begin modified by liangjiaqiang for MODEL3-1501 on 2022-09-27
+	vibrator0:vibrator@0 {
+		compatible = "mediatek,vibrator";
+		vib_timer = <25>;
+		vib_limit = <9>;
+		vib_vol= <11>;
+	};
+//End modified by liangjiaqiang for MODEL3-1501 on 2022-09-27
+};
+
+&i2c3 {
+	ext_buck_lp4@57 {
+		regulator-name ="ext_buck_vdd2";
+		regulator-min-microvolt = <300000>;
+		regulator-max-microvolt = <1300000>;
+		vsel_pin = <0>;
+	};
+
+	ext_buck_lp4x@50 {
+		regulator-name ="ext_buck_vddq";
+		regulator-min-microvolt = <300000>;
+		regulator-max-microvolt = <1300000>;
+		vsel_pin = <1>;
+	};
+};
+
+&i2c6 {
+	ext_buck_vgpu@55 {
+		regulator-name ="ext_buck_vgpu";
+		regulator-min-microvolt = <300000>;
+		regulator-max-microvolt = <1300000>;
+		vsel_pin = <2>;
+	};
+};
+//Begin modified by liangjiaqiang for MODEL3-1907 on 2022-09-16
+/* CONSYS GPIO standardization */
+&pio {
+	consys_pins_default: consys_default {
+	};
+	gpslna_pins_init: gpslna@0 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO91__FUNC_GPIO91>;
+			slew-rate = <0>;
+			bias-disable;
+			output-low;
+		};
+	};
+	gpslna_pins_oh: gpslna@1 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO91__FUNC_GPIO91>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	gpslna_pins_ol: gpslna@2 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO91__FUNC_GPIO91>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+};
+&consys {
+	pinctrl-names = "default", "gps_lna_state_init",
+		"gps_lna_state_oh", "gps_lna_state_ol";
+	pinctrl-0 = <&consys_pins_default>;
+	pinctrl-1 = <&gpslna_pins_init>;
+	pinctrl-2 = <&gpslna_pins_oh>;
+	pinctrl-3 = <&gpslna_pins_ol>;
+	status = "okay";
+};
+/* CONSYS end */
+//End modified by liangjiaqiang for MODEL3-1907 on 2022-09-16
+
+&keypad {
+	pinctrl-names = "default";
+	pinctrl-0 = <&kpd_pins_default>;
+};
+
+&pio {
+	kpd_pins_default: kpdgpiodefault {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO93__FUNC_KPCOL0>;
+			bias-pull-up = <MTK_PUPD_SET_R1R0_10>;
+			output-low;
+			input-schmitt-enable;
+		};
+	};
+};
+/*BEGIN Add by peisong.cao for KEYCODE_VOLUME_DOWN 114*/
+&mt6357keys {
+#if defined(TARGET_BUILD_MMITEST) || defined(TARGET_BUILD_CERTIFICATION) || defined(TARGET_BUILD_GCF)
+     mediatek,long-press-mode = <2>;
+#else
+     mediatek,long-press-mode = <1>;
+#endif
+		home {
+			linux,keycodes = <114>;
+		};
+};
+/*END Add by peisong.cao for KEYCODE_VOLUME_DOWN 114*/
+
+/* accdet start */
+&accdet {
+	accdet-mic-vol = <6>;
+	headset-mode-setting = <0x500 0x500 1 0x1f0 0x800 0x800 0x20 0x44>;
+	accdet-plugout-debounce = <1>;
+	accdet-mic-mode = <1>;
+	headset-eint-level-pol = <8>;
+	headset-three-key-threshold = <0 80 220 400>;
+	headset-three-key-threshold-CDD = <0 121 192 600>;
+	headset-four-key-threshold = <0 58 121 192 400>;
+	pinctrl-names = "default", "state_eint_as_int";
+	pinctrl-0 = <&accdet_pins_default>;
+	pinctrl-1 = <&accdet_pins_eint_as_int>;
+	status = "okay";
+};
+&pio {
+	accdet_pins_default: accdetdefault {
+	};
+	accdet_pins_eint_as_int: accdeteint@0 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO9__FUNC_GPIO9>;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+};
+/* accdet end */
+
+
+/* IRTX GPIO end */
+&irtx_pwm {
+	pinctrl-names = "irtx_gpio_led_default", "irtx_gpio_led_set";
+	pinctrl-0 = <&irtx_gpio_led_default>;
+	pinctrl-1 = <&irtx_gpio_led_set>;
+	status = "okay";
+};
+&pio {
+	irtx_gpio_led_default:irtx_gpio_led_def@gpio90 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO90__FUNC_GPIO90>;
+			slew-rate = <1>;
+			bias-disable;
+			output-low;
+			input-schmitt-enable = <0>;
+		};
+	};
+
+	irtx_gpio_led_set:irtx_gpio_led_set@gpio90 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO90__FUNC_PWM0>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+};
+/* IRTX GPIO Settings -End */
+
+/* AUDIO GPIO standardization */
+&audgpio {
+	pinctrl-names = "aud_clk_mosi_off",
+			"aud_clk_mosi_on",
+			"aud_clk_miso_off",
+			"aud_clk_miso_on",
+			"aud_dat_mosi_off",
+			"aud_dat_mosi_on",
+			"aud_dat_miso_off",
+			"aud_dat_miso_on",
+			"hac_pa_off",
+			"hac_pa_on";
+	pinctrl-0 = <&aud_clk_mosi_off>;
+	pinctrl-1 = <&aud_clk_mosi_on>;
+	pinctrl-2 = <&aud_clk_miso_off>;
+	pinctrl-3 = <&aud_clk_miso_on>;
+	pinctrl-4 = <&aud_dat_mosi_off>;
+	pinctrl-5 = <&aud_dat_mosi_on>;
+	pinctrl-6 = <&aud_dat_miso_off>;
+	pinctrl-7 = <&aud_dat_miso_on>;
+	pinctrl-8 = <&aud_pins_hac_pa_off>;
+	pinctrl-9 = <&aud_pins_hac_pa_on>;
+	status = "okay";
+};
+
+&pio {
+	aud_clk_mosi_off: aud_clk_mosi_off {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO136__FUNC_GPIO136>;
+		};
+	};
+
+	aud_clk_mosi_on: aud_clk_mosi_on {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO136__FUNC_AUD_CLK_MOSI>;
+		};
+	};
+
+	aud_clk_miso_off: aud_clk_miso_off {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO140__FUNC_GPIO140>;
+		};
+	};
+
+	aud_clk_miso_on: aud_clk_miso_on {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO140__FUNC_AUD_CLK_MISO>;
+		};
+	};
+
+	aud_dat_mosi_off: aud_dat_mosi_off {
+		pins_cmd1_dat {
+			pinmux = <PINMUX_GPIO138__FUNC_GPIO138>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+		pins_cmd2_dat {
+			pinmux = <PINMUX_GPIO139__FUNC_GPIO139>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+
+	aud_dat_mosi_on: aud_dat_mosi_on {
+		pins_cmd1_dat {
+			pinmux = <PINMUX_GPIO138__FUNC_AUD_DAT_MOSI0>;
+		};
+		pins_cmd2_dat {
+			pinmux = <PINMUX_GPIO139__FUNC_AUD_DAT_MOSI1>;
+		};
+	};
+
+	aud_dat_miso_off: aud_dat_miso_off {
+		pins_cmd1_dat {
+			pinmux = <PINMUX_GPIO142__FUNC_GPIO142>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+		pins_cmd2_dat {
+			pinmux = <PINMUX_GPIO143__FUNC_GPIO143>;
+			input-enable;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};
+
+	aud_dat_miso_on: aud_dat_miso_on {
+		pins_cmd1_dat {
+			pinmux = <PINMUX_GPIO142__FUNC_AUD_DAT_MISO0>;
+		};
+		pins_cmd2_dat {
+			pinmux = <PINMUX_GPIO143__FUNC_AUD_DAT_MISO1>;
+		};
+	};
+
+	aud_pins_hac_pa_off: aud_pins_hac_pa_off {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO154__FUNC_GPIO154>;
+			slew-rate = <1>;
+			bias-disable;
+			output-low;
+
+		};
+	};
+
+	aud_pins_hac_pa_on: aud_pins_hac_pa_on {
+		pins_cmd0_dat {
+			pinmux = <PINMUX_GPIO154__FUNC_GPIO154>;
+			slew-rate = <1>;
+			output-high;
+		};
+
+	};
+};
+/* AUDIO end */
+
+
+//Begin modified by liangjiaqiang for MODEL3-1906 on 2022-09-16
+&msdc1 {
+	cd_level = /bits/ 8 <1>;
+	cd-gpios = <&pio 0 0>;
+};
+//End modified by liangjiaqiang for MODEL3-1906 on 2022-09-16
+// Begin modified by zhangkun for MODEL3-1888 on 2022-09-19
+&mt6370_pmu {
+	mt6370,intr_gpio_num = <5>; /* direct defined GPIO num */
+	mt6370,intr_gpio = <&pio 5 0x0>;
+// End modified by zhangkun for MODEL3-1888 on 2022-09-19
+// Begin modified by gonglinmin for MODEL3-5 on 2022-10-11
+	bled {
+			mt,chan_en  = <0xC>;
+		/* we have 11 bit resolution, quantize in driver */
+		mt,max_bled_brightness = <1700>; /* maximum 2047 */
+	};
+// Begin modified by gonglining for MODEL3-5 on 2022-10-11
+//Begin modified by liangjiaqiang for MODEL3-1880 on 2022-09-08
+	dsv {
+		db_delay = <0>;	/* 0 = no constraint */
+				/* 1 = 0ms */
+				/* 2 = 1ms */
+				/* 3 = 4ms */
+
+		db_vbst  = <6200>;      /* mV */
+
+		mt6370_dsvp {
+			regulator-min-microvolt = <5980000>;
+		};
+
+		mt6370_dsvn {
+			regulator-min-microvolt = <5980000>;
+		};
+	};
+
+//End modified by liangjiaqiang for MODEL3-1880 on 2022-09-08
+
+};
+
+&mt6370_typec {
+	mt6370pd,intr_gpio_num = <41>; /* direct defined GPIO num */
+	mt6370pd,intr_gpio = <&pio 41 0x0>;
+};
+
+// Begin added by bin.song.hz for task 9672905 on 2020-07-25
+// Begin modified by zhangkun for MODEL3-1888 on 2022-09-19
+
+&mt6370_chg {
+	bc12_sel = <1>;
+//Begin modified by liangjiaqiang for MODEL3-2891 on 2022-10-20
+	ieoc = <200000>;
+//End modified by liangjiaqiang for MODEL3-2891 on 2022-10-20
+};
+// End modified by zhangkun for MODEL3-1888 on 2022-09-19
+
+&u2port0 {
+	mediatek,eye-vrt = <7>; /* 0~7 */
+	mediatek,eye-term = <7>; /* 0~7 */
+	mediatek,eye-rev6 = <2>; /* 0~3 */
+
+	mediatek,host-eye-vrt = <4>; /* 0~7 */
+	mediatek,host-eye-term = <4>; /* 0~7 */
+	mediatek,host-eye-rev6 = <2>; /* 0~3 */
+};
+/* End add by jin.wang */
+
+/* Begin mod by jin.wang for androidT at 2022-4-18 */
+
+&lk_charger {
+	/* charging current */
+//Begin modified by zhangkun for MODEL3-2336 on 2022-10-10
+	power_path_support;
+//Begin modified by zhangkun for MODEL3-2336 on 2022-10-10
+	usb_charger_current = <500000>;
+	ac_charger_current = <500000>;
+	ac_charger_input_current = <500000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <500000>;
+	ta_ac_charger_current = <500000>;
+	pd_charger_current = <500000>;
+	max_charger_voltage = <10500000>;
+
+	/* battery temperature protection */
+	temp_t4_threshold = <54>;
+	temp_t3_threshold = <45>;
+	temp_t1_threshold = <6>;
+	temp_t0_threshold = <1>;
+};
+
+&pe {
+	status = "okay";
+        min_charger_voltage = <4400000>;//added by zhangkun for MODEL3-4342 on 2022-11-23
+	ta_9v_support;
+	pe_ichg_level_threshold = <1000000>; /* uA */
+	ta_ac_12v_input_current = <1300000>;
+	ta_ac_9v_input_current = <1600000>;
+	ta_ac_7v_input_current = <2100000>;
+	pe_charger_current = <3000000>;  // max 15W as PE ta support
+	main_pct = <100>;
+	ta_stop_battery_soc = <80>;
+};
+// Begin modified by zhangkun for MODEL3-1888 on 2022-09-19
+&pe2 {
+	status = "okay";
+        min_charger_voltage = <4400000>;//added by zhangkun for MODEL3-4342 on 2022-11-23
+	sc_input_current = <1600000>;
+	sc_charger_current = <3000000>;
+	/* dual charger in series */
+	dcs_input_current = <2200000>;
+	dcs_chg1_charger_current = <2000000>;
+	dcs_chg2_charger_current = <2000000>;
+	main_pct = <50>;
+	ta_stop_battery_soc = <80>;
+//Begin modified by liangjiaqiang for MODEL3-2891 on 2022-10-20
+	dual_polling_ieoc = <200000>;
+//End modified by liangjiaqiang for MODEL3-2891 on 2022-10-20
+};
+
+&pdc {
+	status = "okay";
+        min_charger_voltage = <4400000>;//added by zhangkun for MODEL3-4342 on 2022-11-23
+	pd_vbus_upper_bound = <10000000>;
+	dcs_chg1_charger_current = <2000000>;
+	dcs_chg2_charger_current = <2000000>;
+//Begin modified by liangjiaqiang for MODEL3-2891 on 2022-10-20
+	dual_polling_ieoc = <200000>;
+//End modified by liangjiaqiang for MODEL3-2891 on 2022-10-20
+};
+// End modified by zhangkun for MODEL3-1888 on 2022-09-19
+&pe4 {
+	status = "disabled";
+	dcs_chg1_charger_current = <2000000>;
+	dcs_chg2_charger_current = <2000000>;
+};
+
+&mtk_charger_type {
+	bc12_active = <1>;
+};
+
+&usb{
+	charger = <&mtk_charger_type>;
+};
+
+&charger {
+	charger = <&mtk_charger_type>;
+	charger_configuration= <2>;
+	/* common */
+	power_path_support;
+	enable_dynamic_mivr;
+
+	battery_cv = <4450000>;
+
+	enable_hv_charging;
+	max_charger_voltage = <10500000>;
+	min_charger_voltage = <4400000>;//added by zhangkun for MODEL3-3187 on 2022-10-25
+	/* charging current */
+	usb_charger_current_suspend = <0>;
+	usb_charger_current_unconfigured = <70000>;
+	usb_charger_current_configured = <500000>;
+	usb_charger_current = <500000>;
+	ac_charger_current = <2000000>;
+	ac_charger_input_current = <2100000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <1300000>;
+
+	/* sw jeita */
+	enable_sw_jeita;
+	jeita_temp_above_t4_cv = <4200000>;
+	jeita_temp_t3_to_t4_cv = <4200000>;
+	jeita_temp_t2_to_t3_cv = <4450000>;
+	jeita_temp_t1_to_t2_cv = <4450000>;
+	jeita_temp_t0_to_t1_cv = <4450000>;
+	jeita_temp_below_t0_cv = <4450000>;
+	temp_t4_thres = <55>;
+	temp_t4_thres_minus_x_degree = <51>;
+	temp_t3_thres = <42>;
+	temp_t3_thres_minus_x_degree = <41>;
+	temp_t2_thres = <11>;
+	temp_t2_thres_plus_x_degree = <12>;
+	temp_t1_thres = <6>;
+	temp_t1_thres_plus_x_degree = <7>;
+	temp_t0_thres = <0>;
+	temp_t0_thres_plus_x_degree = <1>;
+	temp_neg_10_thres = <2>;
+
+	jeita_temp_above_t4_current = <0>;
+	jeita_temp_t3_to_t4_current = <1500000>;
+	jeita_temp_t2_to_t3_current = <4000000>;
+	jeita_temp_t1_to_t2_current = <950000>;
+	jeita_temp_t0_to_t1_current = <950000>;
+	jeita_temp_below_t0_current = <0>;
+
+	/* battery temperature protection */
+	enable_min_charge_temp;
+	min_charge_temp = <1>;
+	min_charge_temp_plus_x_degree = <2>;
+	max_charge_temp = <53>;
+	max_charge_temp_minus_x_degree = <51>;
+
+	enable_step_chg;
+	step_chg_vbat = <4350000>;
+	step_chg_vbat_hysteresis = <100000>;
+	setp_chg_current = <3500000>;
+
+	vbat_cable_imp_threshold = <3300000>; /* uV */
+	car_tune_value_sy6970qcc = <1020>;
+};
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+/* Begin added by hailong.chen for task 9773038 on 2020-08-13 */
+#include <dt-bindings/iio/mt635x-auxadc.h>
+// Begin modified by zhangkun for MODEL3-1888 on 2022-09-19
+&mtk_gauge {
+	charger = <&mtk_charger_type>;
+	io-channels = <&pmic_auxadc AUXADC_BAT_TEMP>,
+			<&pmic_auxadc AUXADC_ISENSE>,
+			<&pmic_auxadc AUXADC_VBIF>,
+			<&pmic_auxadc AUXADC_IMP>,
+                        <&pmic_auxadc AUXADC_IMIX_R>,
+			<&auxadc 3>;
+	io-channel-names = "pmic_battery_temp",
+			"pmic_battery_voltage",
+			"pmic_bif_voltage",
+			"pmic_ptim_voltage",
+                        "pmic_ptim_r",
+			"battery_id";
+};
+#include "mediatek/model3_rt9471.dtsi"
+// End modified by zhangkun for MODEL3-1888 on 2022-09-19
+/* End added by hailong.chen for task 9773038 on 2020-08-13 */
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+// End added by bin.song.hz for task 9672905 on 2020-07-25
+
+/* Begin added by jin.wang for task 11356632 on 2021-07-22 */
+#include "mediatek/bat_setting/model_3/model_3_mt6765_battery_prop_ext.dtsi"
+/* End added by jin.wang for task 11356632 on 2021-07-22 */
+/* End mod by jin.wang */
+//Begin modified by liangjiaqiang for MODEL3-1896 on 2022-09-15
+&i2c0 {
+	/* AWINIC AW87359 Smart K PA */
+	aw87xxx_pa_58@58 {
+		compatible = "awinic,aw87xxx_pa";
+		reg = <0x58>;
+		dev_index = < 0 >;
+		monitor-flag = <0>; //1=enable
+		monitor-timer-val = <3000>; //time interval, ms
+		monitor-timer-count-max = <5>; //counts for average
+		status = "okay";
+	};
+
+	aw87xxx_pa_59@59 {
+		compatible = "awinic,aw87xxx_pa";
+		reg = <0x59>;
+		dev_index = < 1 >;
+		monitor-flag = <0>; //1=enable
+		monitor-timer-val = <3000>; //time interval, ms
+		monitor-timer-count-max = <5>; //counts for average
+		status = "okay";
+	};
+	/* AWINIC AW87359 Smart K PA End */
+};
+//End modified by liangjiaqiang for MODEL3-1896 on 2022-09-15
+#include "model_3/cust.dtsi"
+
+/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+/*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+
+//#include "mediatek/cust_mt6765_touch_1080x1920.dtsi"
+
+&mtkfb {
+	pinctrl-names = "default","lcm_rst_out0_gpio","lcm_rst_out1_gpio";
+	pinctrl-0 = <&mtkfb_pins_default>;
+	pinctrl-1 = <&mtkfb_pins_lcd_rst0>;
+	pinctrl-2 = <&mtkfb_pins_lcd_rst1>;
+	status = "okay";
+};
+&pio {
+	mtkfb_pins_default: mtkfbdefault {
+	};
+
+	mtkfb_pins_lcd_rst0: lcm_rst_out0_gpio {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO45__FUNC_GPIO45>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+
+	mtkfb_pins_lcd_rst1: lcm_rst_out1_gpio {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO45__FUNC_GPIO45>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+};
+
+//Begin modified by liangjiaqiang for MODEL3-1881 on 2022-09-09
+//#include "mediatek/model_3_tp_ft3519.dtsi"
+#include "mediatek/model_3_touchscreen.dtsi"
+//Begin modified by liangjiaqiang for MODEL3-1881 on 2022-09-09
+
+#include "mediatek/model_3_fpsensor.dtsi"
+
+//Begin modified by liangjiaqiang for MODEL3-2208 on 2022-10-20
+#include "mediatek/model_3_nfc.dtsi"
+&nfc {
+	gpio-rst = <172>;
+	gpio-rst-std = <&pio 172 0x0>;
+	gpio-irq = <10>;
+	gpio-irq-std = <&pio 10 0x0>;
+};
+//End modified by liangjiaqiang for MODEL3-2208 on 2022-10-20
+
+/*End of this file, DO NOT ADD ANYTHING HERE*/
+
+
+
+
+
+
+
+
+
+#include "mediatek/cust_mt6765_camera.dtsi"

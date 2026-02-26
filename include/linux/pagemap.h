@@ -29,6 +29,12 @@ enum mapping_flags {
 	AS_EXITING	= 4, 	/* final truncate in progress */
 	/* writeback related tags are not used */
 	AS_NO_WRITEBACK_TAGS = 5,
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+	AS_EXEC = 6,
+#endif
+// #endif /* VENDOR_EDIT */
 };
 
 /**
@@ -59,6 +65,28 @@ static inline void mapping_set_error(struct address_space *mapping, int error)
 	else
 		set_bit(AS_EIO, &mapping->flags);
 }
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+static inline void mapping_set_exec(struct address_space *mapping)
+{
+	set_bit(AS_EXEC, &mapping->flags);
+}
+
+static inline void mapping_clear_exec(struct address_space *mapping)
+{
+	clear_bit(AS_EXEC, &mapping->flags);
+}
+
+static inline int mapping_exec(struct address_space *mapping)
+{
+	if (mapping)
+		return test_bit(AS_EXEC, &mapping->flags);
+	return !!mapping;
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 static inline void mapping_set_unevictable(struct address_space *mapping)
 {

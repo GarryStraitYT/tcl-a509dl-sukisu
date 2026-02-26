@@ -41,6 +41,12 @@ struct cqhci_slot {
 #define CQHCI_HOST_OTHER	BIT(4)
 };
 
+#ifdef CONFIG_HELAEYE_BSP_EMMC_UFS_SD_ON
+#include <tcl/tkperf.h>
+extern char hela_emmc_errinfo[128];
+extern int emmc_ufs_sd_lasterrcode;
+#endif
+
 static inline u8 *get_desc(struct cqhci_host *cq_host, u8 tag)
 {
 	return cq_host->desc_base + (tag * cq_host->slot_sz);
@@ -304,6 +310,7 @@ static void __cqhci_enable(struct cqhci_host *cq_host)
 	cqhci_writel(cq_host, upper_32_bits(cq_host->desc_dma_base),
 		     CQHCI_TDLBAU);
 
+	cqhci_writel(cq_host, 0x40, CQHCI_SSC1);
 	cqhci_writel(cq_host, cq_host->rca, CQHCI_SSC2);
 
 	cqhci_set_irqs(cq_host, 0);
@@ -311,6 +318,9 @@ static void __cqhci_enable(struct cqhci_host *cq_host)
 	cqcfg |= CQHCI_ENABLE;
 
 	cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
+
+	if (cqhci_readl(cq_host, CQHCI_CTL) & CQHCI_HALT)
+		cqhci_writel(cq_host, 0, CQHCI_CTL);
 
 	mmc->cqe_on = true;
 
@@ -884,6 +894,7 @@ static int cqhci_wait_for_idle(struct mmc_host *mmc)
 	return ret;
 }
 
+
 static bool cqhci_timeout(struct mmc_host *mmc, struct mmc_request *mrq,
 			  bool *recovery_needed)
 {
@@ -907,6 +918,9 @@ static bool cqhci_timeout(struct mmc_host *mmc, struct mmc_request *mrq,
 		       mmc_hostname(mmc), tag);
 		cqhci_dump_desc_by_tag(cq_host, tag);
 		cqhci_dumpregs(cq_host);
+#ifdef CONFIG_HELAEYE_BSP_EMMC_UFS_SD_ON	
+emmc_ufs_sd_lasterrcode=EMMC_CQHCI_ERROR;
+#endif	
 	}
 
 	return timed_out;
@@ -997,7 +1011,6 @@ static void cqhci_recovery_start(struct mmc_host *mmc)
 	if (cq_host->ops->disable)
 		cq_host->ops->disable(mmc, true);
 
-	mmc->cqe_on = false;
 }
 
 static int cqhci_error_from_flags(unsigned int flags)
@@ -1100,7 +1113,6 @@ static void cqhci_recovery_finish(struct mmc_host *mmc)
 	spin_lock_irqsave(&cq_host->lock, flags);
 	cq_host->qcnt = 0;
 	cq_host->recovery_halt = false;
-	mmc->cqe_on = false;
 	spin_unlock_irqrestore(&cq_host->lock, flags);
 
 	/* Ensure all writes are done before interrupts are re-enabled */

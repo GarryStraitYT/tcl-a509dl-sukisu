@@ -26,7 +26,11 @@
 #endif
 #include <linux/mfd/mt6357/registers.h>
 
+#if defined(CONFIG_TCT_CHARGER)
+int mtktspmic_debug_log = 0;
+#else
 int mtktspmic_debug_log = 1;
+#endif
 /* Cali */
 static __s32 g_o_vts;
 static __s32 g_o_vts_2;

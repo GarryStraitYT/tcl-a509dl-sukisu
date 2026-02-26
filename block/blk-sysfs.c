@@ -327,30 +327,6 @@ static ssize_t queue_nomerges_store(struct request_queue *q, const char *page,
 	return ret;
 }
 
-#ifdef CONFIG_TCT_UI_TURBO
-static ssize_t queue_qos_show(struct request_queue *q, char *page)
-{
-	return queue_var_show(blk_queue_qos_on(q), page);
-}
-
-static ssize_t queue_qos_store(struct request_queue *q, const char *page,
-			       size_t count)
-{
-	unsigned long qos_on;
-	ssize_t ret = queue_var_store(&qos_on, page, count);
-	if (ret < 0)
-		return ret;
-	spin_lock_irq(q->queue_lock);
-	if (qos_on == 0)
-		queue_flag_clear(QUEUE_FLAG_QOS, q);
-	else
-		queue_flag_set(QUEUE_FLAG_QOS, q);
-	spin_unlock_irq(q->queue_lock);
-
-	return ret;
-}
-#endif
-
 static ssize_t queue_rq_affinity_show(struct request_queue *q, char *page)
 {
 	bool set = test_bit(QUEUE_FLAG_SAME_COMP, &q->queue_flags);
@@ -667,14 +643,6 @@ static struct queue_sysfs_entry queue_nomerges_entry = {
 	.store = queue_nomerges_store,
 };
 
-#ifdef CONFIG_TCT_UI_TURBO
-static struct queue_sysfs_entry queue_qos_entry = {
-	.attr = {.name = "qos_on", .mode = S_IRUGO | S_IWUSR },
-	.show = queue_qos_show,
-	.store = queue_qos_store,
-};
-#endif
-
 static struct queue_sysfs_entry queue_rq_affinity_entry = {
 	.attr = {.name = "rq_affinity", .mode = 0644 },
 	.show = queue_rq_affinity_show,
@@ -760,9 +728,6 @@ static struct attribute *default_attrs[] = {
 	&queue_nonrot_entry.attr,
 	&queue_zoned_entry.attr,
 	&queue_nomerges_entry.attr,
-#ifdef CONFIG_TCT_UI_TURBO
-	&queue_qos_entry.attr,
-#endif
 	&queue_rq_affinity_entry.attr,
 	&queue_iostats_entry.attr,
 	&queue_random_entry.attr,
@@ -931,7 +896,7 @@ int blk_register_queue(struct gendisk *disk)
 	if (WARN_ON(!q))
 		return -ENXIO;
 
-	WARN_ONCE(test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags),
+	WARN_ONCE(blk_queue_registered(q),
 		  "%s is registering an already registered queue\n",
 		  kobject_name(&dev->kobj));
 	queue_flag_set_unlocked(QUEUE_FLAG_REGISTERED, q);
@@ -1008,7 +973,7 @@ void blk_unregister_queue(struct gendisk *disk)
 		return;
 
 	/* Return early if disk->queue was never registered. */
-	if (!test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags))
+	if (!blk_queue_registered(q))
 		return;
 
 	/*

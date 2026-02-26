@@ -131,6 +131,10 @@ void __attribute__((weak)) scp_register_feature(enum feature_id id)
 {
 }
 
+void __attribute__((weak)) scp_A_unregister_notify(struct notifier_block *nb)
+{
+}
+
 /* arch counter is 13M, mult is 161319385, shift is 21 */
 static inline uint64_t arch_counter_to_ns(uint64_t cyc)
 {
@@ -510,9 +514,12 @@ static void SCP_sensorHub_sync_time_func(struct timer_list *t)
 
 static int SCP_sensorHub_direct_push_work(void *data)
 {
+	int ret = 0;
 	for (;;) {
-		wait_event(chre_kthread_wait,
+		ret = wait_event_interruptible(chre_kthread_wait,
 			READ_ONCE(chre_kthread_wait_condition));
+		if (ret)
+			continue;
 		WRITE_ONCE(chre_kthread_wait_condition, false);
 		mark_timestamp(0, WORK_START, ktime_get_boot_ns(), 0);
 		SCP_sensorHub_read_wp_queue();
@@ -908,6 +915,17 @@ static void init_sensor_config_cmd(struct ConfigCmd *cmd,
 		cmd->latency = mSensorState[sensor_type].latency;
 	}
 }
+//[SYSD SYS] add tp hela by jinggao.zhou@tcl.com for Online Quality OLQ-14
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+
+char *bootprof_get_ap_platform(void);
+extern int sensor_driver_lasterrcode;
+extern int sensor_driver_lasterrcode_id;
+extern int sensor_driver_lasterrcode_cmd_or_errcode;
+void heraeye_sensor_fail(int errtype, int sensorid, int cmd_or_errcode);
+#endif
 
 static int SCP_sensorHub_batch(int handle, int flag,
 	long long samplingPeriodNs, long long maxBatchReportLatencyNs)
@@ -933,6 +951,11 @@ static int SCP_sensorHub_batch(int handle, int flag,
 		if (ret < 0) {
 			pr_err("fail enbatch h:%d, r: %d,l: %lld, cmd:%d\n",
 				handle, cmd.rate, cmd.latency, cmd.cmd);
+
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON				
+				heraeye_sensor_fail(SENSOR_POWER_UP,sensor_type,cmd.cmd);	
+#endif
+
 			return -1;
 		}
 	} else {
@@ -1310,10 +1333,15 @@ int sensor_enable_to_hub(uint8_t handle, int enabledisable)
 		if (atomic_read(&power_status) == SENSOR_POWER_UP) {
 			ret = nanohub_external_write((const uint8_t *)&cmd,
 				sizeof(struct ConfigCmd));
-			if (ret < 0)
+			if (ret < 0){
 				pr_err
 				    ("fail registerlistener handle:%d,cmd:%d\n",
 				     handle, cmd.cmd);
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+				heraeye_sensor_fail(SENSOR_POWER_UP,sensor_type,cmd.cmd);
+#endif
+			}
+
 		}
 		if (!enabledisable)
 			sensor_disable_report_flush(handle);
@@ -1472,7 +1500,10 @@ int sensor_get_data_from_hub(uint8_t sensorType,
 		pr_err("req Type: %d, rsp Type:%d action:%d, errcode:%d\n",
 			sensorType, req.get_data_rsp.sensorType,
 			req.get_data_rsp.action, req.get_data_rsp.errCode);
-
+			
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON				
+				heraeye_sensor_fail(SENSOR_HUB_GET_DATA,sensorType,req.get_data_rsp.errCode);	
+#endif
 		return req.get_data_rsp.errCode;
 	}
 
@@ -1510,6 +1541,7 @@ int sensor_get_data_from_hub(uint8_t sensorType,
 		data->time_stamp = data_t->time_stamp;
 		data->proximity_t.steps = data_t->proximity_t.steps;
 		data->proximity_t.oneshot = data_t->proximity_t.oneshot;
+        pr_err("stk3 qiuyang data->proximity_t.steps = %d,data->proximity_t.oneshot = \n",data->proximity_t.steps,data->proximity_t.oneshot);
 		break;
 	case ID_PRESSURE:
 		data->time_stamp = data_t->time_stamp;
@@ -1918,6 +1950,13 @@ int sensor_set_cmd_to_hub(uint8_t sensorType,
 			len = offsetof(struct SCP_SENSOR_HUB_SET_CUST_REQ,
 				custData) + sizeof(req.set_cust_req.setTrace);
 			break;
+		case CUST_ACTION_SET_CALI:
+			req.set_cust_req.setCali.action = CUST_ACTION_SET_CALI;
+			req.set_cust_req.setCali.int32_data[0]=	*((int32_t *) data);
+			pr_err("qiuyangreq.set_cust_req.setCali.int32_data[0]=%d\n",req.set_cust_req.setCali.int32_data[0]);
+			len = offsetof(struct SCP_SENSOR_HUB_SET_CUST_REQ,
+				custData) + sizeof(req.set_cust_req.setCali);
+			break;
 		case CUST_ACTION_SHOW_REG:
 			req.set_cust_req.showReg.action = CUST_ACTION_SHOW_REG;
 			len = offsetof(struct SCP_SENSOR_HUB_SET_CUST_REQ,
@@ -2141,12 +2180,14 @@ static void restoring_enable_sensorHub_sensor(int handle)
 
 void sensorHub_power_up_loop(void *data)
 {
-	int handle = 0;
+	int ret = 0, handle = 0;
 	struct SCP_sensorHub_data *obj = obj_data;
 	unsigned long flags = 0;
 
-	wait_event(power_reset_wait,
+	ret = wait_event_interruptible(power_reset_wait,
 		READ_ONCE(scp_system_ready) && READ_ONCE(scp_chre_ready));
+	if (ret)
+		return;
 	spin_lock_irqsave(&scp_state_lock, flags);
 	WRITE_ONCE(scp_chre_ready, false);
 	WRITE_ONCE(scp_system_ready, false);
@@ -2316,7 +2357,6 @@ static int sensorHub_probe(struct platform_device *pdev)
 	BUG_ON(sizeof(struct data_unit_t) != SENSOR_DATA_SIZE
 		|| sizeof(union SCP_SENSOR_HUB_DATA) != SENSOR_IPI_SIZE);
 	return 0;
-
 exit_kthread_power_up:
 	scp_A_unregister_notify(&sensorHub_ready_notifier);
 	wakeup_source_unregister(obj->ws);
@@ -2329,6 +2369,11 @@ exit_wp_queue:
 	kfree(obj);
 exit:
 	pr_err("%s: err = %d\n", __func__, err);
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+  sensor_driver_lasterrcode=SENSOR_DRV_INIT_ERROR;
+  sensor_driver_lasterrcode_id=0xffff;
+  sensor_driver_lasterrcode_cmd_or_errcode=err;
+#endif  
 	SCP_sensorHub_init_flag = -1;
 	return err;
 }

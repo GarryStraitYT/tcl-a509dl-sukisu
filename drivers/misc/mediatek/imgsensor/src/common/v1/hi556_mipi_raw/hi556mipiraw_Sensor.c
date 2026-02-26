@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-/*****************************modify/add history******************************/
-/*begin 20200910 liujunting add/modify for OTP check*/
-
-
 #include <linux/videodev2.h>
 #include <linux/i2c.h>
 #include <linux/platform_device.h>
@@ -18,15 +14,9 @@
 
 #define PFX "hi556_camera_sensor"
 #define LOG_INF(format, args...)    \
-	pr_err(PFX "[%s] " format, __func__, ##args)
+	pr_debug(PFX "[%s] " format, __func__, ##args)
 
 #define MULTI_WRITE 1
-#define HI556_OTP
-#ifdef HI556_OTP
-static int hi556_otp_flag=0;
-static int RGr=0,BGb=0,GbGr=0;
-static int gRGr=0,gBGb=0,gGbGr=0;
-#endif
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
 
 #define per_frame 1
@@ -45,7 +35,6 @@ static struct imgsensor_info_struct imgsensor_info = {
 
 		.mipi_data_lp2hs_settle_dc = 14,
 		/*	 following for GetDefaultFramerateByScenario()	*/
-		.mipi_pixel_rate = 176000000,
 		.max_framerate = 300,
 	},
 	.cap = {
@@ -57,7 +46,6 @@ static struct imgsensor_info_struct imgsensor_info = {
 		.grabwindow_width = 2592,
 		.grabwindow_height = 1944,
 		.mipi_data_lp2hs_settle_dc = 14,
-		.mipi_pixel_rate = 176000000,
 		.max_framerate = 300,
 	},
 	.cap1 = {
@@ -69,7 +57,6 @@ static struct imgsensor_info_struct imgsensor_info = {
 		.grabwindow_width = 2592,
 		.grabwindow_height = 1944,
 		.mipi_data_lp2hs_settle_dc = 14,
-		.mipi_pixel_rate = 176000000,
 		.max_framerate = 150,
 	},
 	.normal_video = {
@@ -83,7 +70,6 @@ static struct imgsensor_info_struct imgsensor_info = {
 /* MIPIDataLowPwr2HighSpeedSettleDelayCount by different scenario */
 		.mipi_data_lp2hs_settle_dc = 14,
 		/*	 following for GetDefaultFramerateByScenario()	*/
-		.mipi_pixel_rate = 176000000,
 		.max_framerate = 300,
 	},
 	.hs_video = {
@@ -95,7 +81,6 @@ static struct imgsensor_info_struct imgsensor_info = {
 		.grabwindow_width = 640,
 		.grabwindow_height = 480,
 		.mipi_data_lp2hs_settle_dc = 14,//unit , ns
-		.mipi_pixel_rate = 176000000,
 		.max_framerate = 1200,
 	},
 	.slim_video = {
@@ -107,7 +92,6 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.grabwindow_width = 1280,
 	.grabwindow_height = 720,
 	.mipi_data_lp2hs_settle_dc = 14,//unit , ns
-	.mipi_pixel_rate = 176000000,
 	.max_framerate = 300,
 	},
 
@@ -129,11 +113,11 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.ihdr_le_firstline = 0,  //1,le first ; 0, se first
 	.sensor_mode_num = 5,	  //support sensor mode num
 
-	.cap_delay_frame = 1,
-	.pre_delay_frame = 1,
-	.video_delay_frame = 1,
-	.hs_video_delay_frame = 2,
-	.slim_video_delay_frame = 2,
+	.cap_delay_frame = 3,
+	.pre_delay_frame = 3,
+	.video_delay_frame = 3,
+	.hs_video_delay_frame = 3,
+	.slim_video_delay_frame = 3,
 
 	//.cap_delay_frame = 2,
 	//.pre_delay_frame = 2,
@@ -1431,194 +1415,7 @@ static void slim_video_setting(void)
 	write_cmos_sensor(0x091e, 0x0300);
 #endif
 }
-#ifdef HI556_OTP
-static void read_hi556_otp(void)
-{
-	int otp_flag = 0, start_addr = 0, module_id = 0, af_ff_flag = 0;
-	int year = 0, month = 0, day = 0;
-	int lens_id = 0, vcm_id = 0, vcm_ic_id = 0, orientation = 0;
-	int check_sum = 0, check_sum_cal = 0;
-	int data[16] = {0};
-	int data_awb[9] = {0};
-	int i = 0;
-	int awb_flag = 0, awb_start_addr = 0;
-	int uint_R, unit_Gr, uint_Gb, uint_B, golden_R, golden_Gr, golden_Gb, golden_B;
-	int check_sum_awb = 0, check_sum_awb_cal = 0;
-	write_cmos_sensor_8(0x0a02, 0x01);
-	write_cmos_sensor_8(0x0a00, 0x00);
-	mdelay(10);
-	write_cmos_sensor_8(0x0f02, 0x00);
-	write_cmos_sensor_8(0x011a, 0x01);
-	write_cmos_sensor_8(0x011b, 0x09);
-	write_cmos_sensor_8(0x0d04, 0x01);
-	write_cmos_sensor_8(0x0d00, 0x07);
-	write_cmos_sensor_8(0x003e, 0x10);
-	write_cmos_sensor_8(0x0a00, 0x01);
-/*****************************modify/add history******************************/
-/*begin 20200910 liujunting modify for OTP check*/
-	mdelay(10);
-	write_cmos_sensor_8(0x010a, ((0x0400) >> 8) & 0xff);
-	write_cmos_sensor_8(0x010b, (0x0400) & 0xff);
-	write_cmos_sensor_8(0x0102, 0x01);
-	otp_flag = read_cmos_sensor(0x0108);
-	LOG_INF("otp_flag=0x%x\n", otp_flag);
-	if ((otp_flag & 0x3) == 0x01)
-		start_addr = 0x0401;
-	else if ((otp_flag & 0xC) == 0x4)
-		start_addr = 0x0411;
-	else if ((otp_flag & 0x30) == 0x10)
-		start_addr = 0x0421;
-	else
-		LOG_INF("no OTP data");
-	if (start_addr != 0)
-	{
-		write_cmos_sensor_8(0x010a, ((start_addr) >> 8) & 0xff);
-		write_cmos_sensor_8(0x010b, (start_addr)&0xff);
-		write_cmos_sensor_8(0x0102, 0x01);
-		for (i = 0; i < 16; i++)
-		{
-			data[i] = read_cmos_sensor(0x0108);
-			//LOG_INF("data[%d]=0x%x\n",i,data[i]);
-		}
-		for (i = 0; i < 15; i++)
-		{
-			check_sum_cal += data[i];
-		}
-		check_sum_cal = (check_sum_cal % 255) + 1;
-		module_id = data[0];
-		af_ff_flag = data[1];
-		year = data[2];
-		month = data[3];
-		day = data[4];
-		lens_id = data[5];
-		vcm_id = data[6];
-		vcm_ic_id = data[7];
-		orientation = data[8];
-		check_sum = data[15];
-	}
-	LOG_INF("otp_flag=0x%x,module_id=0x%x,af_ff_flag=0x%x\n", otp_flag, module_id, af_ff_flag);
-	LOG_INF("date is %d-%d-%d\n", year, month, day);
-	LOG_INF("lens_id=0x%x,vcm_id=0x%x,vcm_ic_id=0x%x\n", lens_id, vcm_id, vcm_ic_id);
-	LOG_INF("orientation=0x%x,check_sum=0x%x,check_sum_cal=0x%x\n", orientation, check_sum, check_sum_cal);
 
-	write_cmos_sensor_8(0x010a, ((0x0431) >> 8) & 0xff);
-	write_cmos_sensor_8(0x010b, (0x0431) & 0xff);
-	write_cmos_sensor_8(0x0102, 0x01);
-	awb_flag = read_cmos_sensor(0x0108);
-	if ((awb_flag & 0x3) == 0x01)
-		awb_start_addr = 0x0432;
-	else if ((awb_flag & 0xC) == 0x4)
-		awb_start_addr = 0x043b;
-	else if ((awb_flag & 0x30) == 0x10)
-		awb_start_addr = 0x0444;
-	else
-		LOG_INF("no AWB OTP data");
-
-	if (awb_flag != 0)
-	{
-		write_cmos_sensor_8(0x010a, ((awb_start_addr) >> 8) & 0xff);
-		write_cmos_sensor_8(0x010b, (awb_start_addr)&0xff);
-		write_cmos_sensor_8(0x0102, 0x01);
-		for (i = 0; i < 9; i++)
-		{
-			data_awb[i] = read_cmos_sensor(0x0108);
-			//LOG_INF("data_awb[%d]=0x%x\n",i,data_awb[i]);
-		}
-		for (i = 0; i < 8; i++)
-		{
-			check_sum_awb_cal += data_awb[i];
-		}
-		
-		uint_R = data_awb[0];
-		unit_Gr = data_awb[1];
-		uint_Gb = data_awb[2];
-		uint_B = data_awb[3];
-		golden_R = data_awb[4];
-		golden_Gr = data_awb[5];
-		golden_Gb = data_awb[6];
-		golden_B = data_awb[7];
-
-		RGr = uint_R * 1024 / unit_Gr;
-		BGb = uint_B * 1024 / uint_Gb;;
-		GbGr = uint_Gb * 1024 / unit_Gr;;
-		gRGr = golden_R * 1024 / golden_Gr;;
-		gBGb = golden_B * 1024 / golden_Gb;;
-		gGbGr = golden_Gb * 1024 / golden_Gr;;
-		
-		check_sum_awb = data_awb[8];
-		check_sum_awb_cal = (check_sum_awb_cal % 255) + 1;
-	}
-	LOG_INF("awb_flag=0x%x\n", awb_flag);
-	LOG_INF("RGr=0x%x,BGb=0x%x,GrGb=0x%x\n", RGr, BGb, GbGr);
-	LOG_INF("gRGr=0x%x,gBGb=0x%x,gGrGb=0x%x\n", gRGr, gBGb, gGbGr);
-	LOG_INF("check_sum_awb=0x%x,check_sum_awb_cal=0x%x\n", check_sum_awb, check_sum_awb_cal);
-	if ((otp_flag != 0) && (awb_flag != 0) && (module_id == 0x44) && (lens_id == 0xb6) && (check_sum == check_sum_cal) && (check_sum_awb == check_sum_awb_cal))
-	{
-		hi556_otp_flag = 1;
-	}
-	else
-	{
-		hi556_otp_flag = 0;
-	}
-	LOG_INF("hi556_otp_flag=0x%x\n", hi556_otp_flag);
-#ifdef OTP_INFO_CONTROL
-	snprintf(mtk_sub_otp_info, sizeof(mtk_sub_otp_info), "Front ewelly_ih556:\nyear:%d, month:%d, day:%d\nmodule_id:%d, les_id:%d,sensor_id_otp:%d\nr/g:%d, b/g:%d, gGbGr:%d\ngolden_r/g:0x125, golden_b/g:0x138", year, month, day, module_id, lens_id, sensor_id_otp, RGr, BGb, gGbGr);
-#endif
-	write_cmos_sensor_8(0x0a00, 0x00);
-	mdelay(10);
-	write_cmos_sensor_8(0x003e, 0x00);
-	write_cmos_sensor_8(0x0a00, 0x01);
-}
-static void apply_hi556_otp(void)
-{
-	int R_gain = 1024, G_gain = 1024, B_gain = 1024;
-	int data_gain[8] = {0};
-	int i = 0;
-	pr_err("RGr=0x%x,BGb=0x%x,GrGb=0x%x\n", RGr, BGb, GbGr);
-	pr_err("gRGr=0x%x,gBGb=0x%x,gGrGb=0x%x\n", gRGr, gBGb, gGbGr);
-	R_gain = gRGr * 1024 / RGr;
-	B_gain = gBGb * 1024 / BGb;
-	if (R_gain < B_gain)
-	{
-		if (R_gain < 1024)
-		{
-			B_gain = B_gain * 1024 / R_gain;
-			G_gain = G_gain * 1024 / R_gain;
-			R_gain = 1024;
-		}
-	}
-	else
-	{
-		if (B_gain < 1024)
-		{
-			R_gain = R_gain * 1024 / B_gain;
-			G_gain = G_gain * 1024 / B_gain;
-			B_gain = 1024;
-		}
-	}
-	LOG_INF("R_gain=%d,B_gain=%d,G_gain=%d\n", R_gain, B_gain, G_gain);
-	data_gain[0] = ((G_gain) >> 8);
-	data_gain[1] = ((G_gain)&0xff);
-	data_gain[2] = ((G_gain) >> 8);
-	data_gain[3] = ((G_gain)&0xff);
-	data_gain[4] = ((R_gain) >> 8);
-	data_gain[5] = ((R_gain)&0xff);
-	data_gain[6] = ((B_gain) >> 8);
-	data_gain[7] = ((B_gain)&0xff);
-	for (i = 0; i <= 7; i++)
-	{
-		LOG_INF("data_gain[%d]=0x%x\n", i, data_gain[i]);
-	}
-	write_cmos_sensor_8(0x0078, data_gain[0]); //gr_gain
-	write_cmos_sensor_8(0x0079, data_gain[1]); //gr_gain
-	write_cmos_sensor_8(0x007A, data_gain[2]); //gb_gain
-	write_cmos_sensor_8(0x007B, data_gain[3]); //gb_gain
-	write_cmos_sensor_8(0x007C, data_gain[4]); //r_gain
-	write_cmos_sensor_8(0x007D, data_gain[5]); //r_gain
-	write_cmos_sensor_8(0x007E, data_gain[6]); //b_gain
-	write_cmos_sensor_8(0x007F, data_gain[7]); //b_gain
-}
-#endif
 static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 {
 	kal_uint8 i = 0;
@@ -1634,16 +1431,6 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 				LOG_INF(
 					"i2c write id : 0x%x, sensor id: 0x%x\n",
 					imgsensor.i2c_write_id, *sensor_id);
-#ifdef HI556_OTP
-  			sensor_init();
-            printk("Hi556 check otp Begin!!\n");
-			read_hi556_otp();
-			if(hi556_otp_flag==1)
-			{
-                printk("Hi556 check otp ok!!\n");
-				*sensor_id |= 0x01000000;
-			}				
-#endif
 				return ERROR_NONE;
 			}
 
@@ -1695,11 +1482,6 @@ static kal_uint32 open(void)
 	/* initail sequence write in  */
 	sensor_init();
 
-/*begin 20200910 liujunting add for OTP check*/
-	#ifdef HI556_OTP
-	apply_hi556_otp();
-	#endif
-/*end 20200910 liujunting add for OTP check*/
 	spin_lock(&imgsensor_drv_lock);
 	imgsensor.autoflicker_en = KAL_FALSE;
 	imgsensor.sensor_mode = IMGSENSOR_MODE_INIT;
@@ -2247,71 +2029,6 @@ static kal_uint32 feature_control(
 	case SENSOR_FEATURE_GET_PIXEL_CLOCK_FREQ:
 	    *feature_return_para_32 = imgsensor.pclk;
 	    *feature_para_len = 4;
-	break;
-	case SENSOR_FEATURE_GET_PIXEL_RATE:
-
-		switch (*feature_data) {
-		case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
-			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) =
-				(imgsensor_info.cap.pclk /
-				 (imgsensor_info.cap.linelength - 80)) *
-				imgsensor_info.cap.grabwindow_width;
-
-			break;
-		case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
-			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) =
-				(imgsensor_info.normal_video.pclk /
-				 (imgsensor_info.normal_video.linelength - 80)) *
-				imgsensor_info.normal_video.grabwindow_width;
-
-			break;
-		case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
-			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) =
-				(imgsensor_info.hs_video.pclk /
-				 (imgsensor_info.hs_video.linelength - 80)) *
-				imgsensor_info.hs_video.grabwindow_width;
-
-			break;
-		case MSDK_SCENARIO_ID_SLIM_VIDEO:
-			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) =
-				(imgsensor_info.slim_video.pclk /
-				 (imgsensor_info.slim_video.linelength - 80)) *
-				imgsensor_info.slim_video.grabwindow_width;
-
-			break;
-		case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
-		default:
-			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) =
-				(imgsensor_info.pre.pclk /
-				 (imgsensor_info.pre.linelength - 80)) *
-				imgsensor_info.pre.grabwindow_width;
-			break;
-		}
-		break;
-	case SENSOR_FEATURE_GET_MIPI_PIXEL_RATE:
-		{
-			kal_uint32 rate;
-
-			switch (*feature_data) {
-			case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
-				rate = imgsensor_info.cap.mipi_pixel_rate;
-				break;
-			case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
-				rate = imgsensor_info.normal_video.mipi_pixel_rate;
-				break;
-			case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
-				rate = imgsensor_info.hs_video.mipi_pixel_rate;
-				break;
-			case MSDK_SCENARIO_ID_SLIM_VIDEO:
-				rate = imgsensor_info.slim_video.mipi_pixel_rate;
-				break;
-			case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
-			default:
-				rate = imgsensor_info.pre.mipi_pixel_rate;
-				break;
-			}
-			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = rate;
-		}
 	break;
 	case SENSOR_FEATURE_SET_ESHUTTER:
 	    set_shutter(*feature_data);

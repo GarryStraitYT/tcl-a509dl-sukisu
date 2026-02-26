@@ -3,6 +3,10 @@
 #ifndef __LINUX_USB_MUSB_H
 #define __LINUX_USB_MUSB_H
 
+#include <linux/extcon.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/role.h>
+
 enum musb_mode {
 	MUSB_UNDEFINED = 0,
 	MUSB_HOST,		/* A or Mini-A connector */
@@ -10,18 +14,16 @@ enum musb_mode {
 	MUSB_OTG		/* Mini-AB connector */
 };
 
-
 enum musb_fifo_style {
-	MUSB_FIFO_RXTX,
-	MUSB_FIFO_TX,
-	MUSB_FIFO_RX
-} __packed;
-
+	FIFO_RXTX,
+	FIFO_TX,
+	FIFO_RX
+} __attribute__ ((packed));
 
 enum musb_buf_mode {
-	MUSB_BUF_SINGLE,
-	MUSB_BUF_DOUBLE
-} __packed;
+	BUF_SINGLE,
+	BUF_DOUBLE
+} __attribute__ ((packed));
 
 enum musb_ep_mode {
 	EP_CONT,
@@ -89,7 +91,7 @@ struct musb_hdrc_config {
 
 struct musb_hdrc_platform_data {
 	/* MUSB_HOST, MUSB_PERIPHERAL, or MUSB_OTG */
-	u8 mode;
+	u8 dr_mode;
 
 	/* for clk_get() */
 	const char *clock;
@@ -120,5 +122,35 @@ struct musb_hdrc_platform_data {
 
 	/* Platform specific struct musb_ops pointer */
 	const void *platform_ops;
+};
+
+enum mt_usb_dr_force_mode {
+	MUSB_DR_FORCE_NONE = 0,
+	MUSB_DR_FORCE_HOST,
+	MUSB_DR_FORCE_DEVICE,
+};
+
+enum mt_usb_dr_operation_mode {
+	MUSB_DR_OPERATION_NONE = 0,
+	MUSB_DR_OPERATION_NORMAL,
+	MUSB_DR_OPERATION_HOST,
+	MUSB_DR_OPERATION_DEVICE,
+};
+
+struct otg_switch_mtk {
+	struct regulator *vbus;
+	struct extcon_dev *edev;
+	struct notifier_block vbus_nb;
+	struct work_struct vbus_work;
+	unsigned long vbus_event;
+	struct notifier_block id_nb;
+	struct work_struct id_work;
+	unsigned long id_event;
+	struct usb_role_switch *role_sw;
+	bool role_sw_used;
+	bool manual_drd_enabled;
+	u32 sw_state;
+	enum usb_role latest_role;
+	enum mt_usb_dr_operation_mode op_mode;
 };
 #endif				/* __LINUX_USB_MUSB_H */

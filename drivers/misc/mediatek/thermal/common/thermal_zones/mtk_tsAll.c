@@ -101,11 +101,10 @@ static int tsallts_get_temp(struct thermal_zone_device *thermal, int *t)
 	index = tsallts_get_index(thermal);
 	curr_temp = get_immediate_tsX[index]();
 	tsallts_dprintk("%s ts%d =%d\n", __func__, index, curr_temp);
-
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-allts] %s T_ALLTS=%d\n", __func__, curr_temp);
+#endif
 	*t = curr_temp;
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 
 #if AUTO_GEN_COOLERS
 	thermal->polling_delay = g_tsData[index].interval;

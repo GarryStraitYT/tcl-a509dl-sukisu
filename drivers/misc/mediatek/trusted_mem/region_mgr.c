@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
+
 
 #define PR_FMT_HEADER_MUST_BE_INCLUDED_BEFORE_ALL_HDRS
 #include "private/tmem_pr_fmt.h" PR_FMT_HEADER_MUST_BE_INCLUDED_BEFORE_ALL_HDRS
@@ -120,7 +121,7 @@ static void set_region_state(struct region_mgr_desc *mgr_desc,
 #endif
 #endif
 
-#if IS_ENABLED(CONFIG_MTK_SVP_DISABLE_SODI)
+#if defined(CONFIG_MTK_SVP_DISABLE_SODI)
 	if (mgr_desc->state == REGMGR_REGION_STATE_ON)
 		spm_enable_sodi(false);
 	else

@@ -30,6 +30,19 @@
 
 #ifdef CONFIG_BLK_CGROUP
 
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+enum blk_throtl_type {
+  	BLK_THROTL_TA,
+  	BLK_THROTL_FG,
+  	BLK_THROTL_KBG,
+  	BLK_THROTL_SBG,
+  	BLK_THROTL_BG,
+  	BLK_THROTL_TYPE_NR,
+  };
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
 enum blkg_rwstat_type {
 	BLKG_RWSTAT_READ,
 	BLKG_RWSTAT_WRITE,
@@ -57,6 +70,11 @@ struct blkcg {
 #ifdef CONFIG_CGROUP_WRITEBACK
 	struct list_head		cgwb_list;
 	refcount_t			cgwb_refcnt;
+#endif
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+    unsigned int			type;
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
 #endif
 };
 

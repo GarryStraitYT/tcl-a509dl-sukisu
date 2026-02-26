@@ -1,0 +1,48 @@
+/*start, guang.xiao@tcl.com, 20210828, chipone fp*/
+&spi5{
+    spidev@1 {
+        compatible = "mediatek,fingerprint-spi-dev";
+        spi-max-frequency = <8000000>;
+        reg = <1>;
+        status = "ok";
+    };
+};
+
+&odm {
+    sunwave_pinctrl: sunwave_pinctrl {
+        compatible = "mediatek,fingerprint";
+        finger_vfp-supply = <&mt_pmic_vfp_ldo_reg>;
+        interrupt-parent = <&pio>;
+        interrupts = <22 IRQ_TYPE_EDGE_RISING 22 0>;
+        debounce = <22 0>;
+    };
+};
+
+/* pinctrl-x from buffalo-focaltech.dtsi*/
+&sunwave_pinctrl{
+    pinctrl-names = "fpsensor_power_low", "fpsensor_power_high",
+        "fpsensor_eint",
+        "fpsensor_rst_low", "fpsensor_rst_high",
+        "fpsensor_spi_cs_low", "fpsensor_spi_cs_high",
+        "fpsensor_spi_clk_low", "fpsensor_spi_clk_high",
+        "fpsensor_spi_mo_low", "fpsensor_spi_mo_high",
+        "fpsensor_spi_mi_low", "fpsensor_spi_mi_high";
+    pinctrl-0 = <&fpsensor_power_low>;
+    pinctrl-1 = <&fpsensor_power_high>;
+    pinctrl-2 = <&fpsensor_eint_low>;
+    pinctrl-3 = <&fpsensor_rst_low>;
+    pinctrl-4 = <&fpsensor_rst_high>;
+    pinctrl-5 = <&fpsensor_spi_cs_low>;
+    pinctrl-6 = <&fpsensor_spi_cs_high>;
+    pinctrl-7 = <&fpsensor_spi_clk_low>;
+    pinctrl-8 = <&fpsensor_spi_clk_high>;
+    pinctrl-9 = <&fpsensor_spi_mo_low>;
+    pinctrl-10 = <&fpsensor_spi_mo_high>;
+    pinctrl-11 = <&fpsensor_spi_mi_low>;
+    pinctrl-12 = <&fpsensor_spi_mi_high>;
+
+    status = "okay";
+};
+
+
+/*end, guang.xiao@tcl.com, 20210828, chipone fp*/

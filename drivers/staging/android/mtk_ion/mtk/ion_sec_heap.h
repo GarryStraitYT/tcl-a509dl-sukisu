@@ -3,6 +3,12 @@
 #ifndef __ION_SEC_HEAP_H__
 #define __ION_SEC_HEAP_H__
 
+#include <linux/dma-buf.h>
+#ifdef CONFIG_MTK_TRUSTED_MEMORY_SUBSYSTEM
+#include "trusted_mem_api.h"
+#endif
+#include "ion_drv.h"
+
 struct ion_sec_buffer_info {
 	struct mutex lock;/*mutex lock on secure buffer*/
 	int module_id;
@@ -18,4 +24,17 @@ struct ion_sec_buffer_info {
 	pid_t pid;
 };
 
+#ifdef CONFIG_MTK_TRUSTED_MEMORY_SUBSYSTEM
+enum TRUSTED_MEM_REQ_TYPE ion_get_trust_mem_type(struct dma_buf *dmabuf);
+
+enum TRUSTED_MEM_REQ_TYPE
+ion_hdl2sec_type(struct ion_handle *handle,
+		 int *sec, int *iommu_sec_id,
+		 ion_phys_addr_t *sec_hdl);
+
+enum TRUSTED_MEM_REQ_TYPE
+ion_fd2sec_type(int fd, int *sec, int *iommu_sec_id,
+		ion_phys_addr_t *sec_hdl);
+
+#endif
 #endif

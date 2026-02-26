@@ -53,6 +53,9 @@ struct mtk_pd_adapter_info {
 //void notify_adapter_event(enum adapter_type type, enum adapter_event evt,
 //	void *val);
 
+#if defined(CONFIG_TCT_TYPEC_HEADSET)
+extern irqreturn_t accdet_typec_ex_eint_handler(int irq, void *data);
+#endif
 
 static int pd_tcp_notifier_call(struct notifier_block *pnb,
 				unsigned long event, void *data)
@@ -61,6 +64,10 @@ static int pd_tcp_notifier_call(struct notifier_block *pnb,
 	struct mtk_pd_adapter_info *pinfo;
 	struct adapter_device *adapter;
 	int ret = 0;
+
+#if defined(CONFIG_TCT_TYPEC_HEADSET)
+	int ret_accdet = 0;
+#endif
 
 	pinfo = container_of(pnb, struct mtk_pd_adapter_info, pd_nb);
 	adapter = pinfo->adapter_dev;
@@ -137,6 +144,15 @@ static int pd_tcp_notifier_call(struct notifier_block *pnb,
 			pinfo->pd_type = MTK_PD_CONNECT_NONE;
 			ret = srcu_notifier_call_chain(&adapter->evt_nh,
 				MTK_PD_CONNECT_NONE, NULL);
+
+#if defined(CONFIG_TCT_TYPEC_HEADSET)
+		} else if(noti->typec_state.new_state == TYPEC_ATTACHED_AUDIO ||
+		noti->typec_state.old_state == TYPEC_ATTACHED_AUDIO){// change
+			ret_accdet = accdet_typec_ex_eint_handler((int)NULL,(void *)NULL);
+			if(-1 == ret_accdet){
+				pr_err("%s() accdet_typec failed, ret_accdet = %d", __func__, ret_accdet);
+			}
+#endif
 		}
 		break;
 	case TCP_NOTIFY_WD_STATUS:
@@ -283,7 +299,7 @@ static int pd_get_cap(struct adapter_device *dev,
 
 	uint8_t cap_i = 0;
 	int ret;
-	int idx = 0;
+	unsigned int idx = 0;
 	unsigned int i, j;
 	struct mtk_pd_adapter_info *info;
 

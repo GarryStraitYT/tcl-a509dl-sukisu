@@ -20,6 +20,10 @@ obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)   +=  focaltech_point_report_chec
 obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)   +=  focaltech_proximity.o
 obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)   +=  focaltech_test/
 
-obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)   +=  focaltech_i2c.o
+
 obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)	+=  focaltech_flash.o
 obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)   +=  focaltech_flash/
+
+
+
+obj-$(CONFIG_TOUCHSCREEN_MTK_FT5446_BANGKOKTF)   +=  focaltech_i2c.o

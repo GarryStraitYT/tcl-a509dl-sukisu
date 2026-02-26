@@ -13,9 +13,12 @@
 #endif
 /* #define RUNTIME_SHMOO */
 
-#if defined(CONFIG_MTK_ENG_BUILD) || defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+/* Begin modified by bitao.xiong for task-11457779 on 2021-08-26 */
+#if defined(CONFIG_MTK_ENG_BUILD) || defined(TARGET_BUILD_MMITEST) || \
+    defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
 #define DRAMC_MEMTEST_DEBUG_SUPPORT
 #endif
+/* End modified by bitao.xiong for task-11457779 on 2021-08-26 */
 
 /* Registers define */
 #define PDEF_DRAMC0_CHA_REG_0E4	IOMEM((DRAMC_AO_CHA_BASE_ADDR + 0x00e4))

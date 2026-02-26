@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
 
 #include <linux/init.h>
 #include <linux/export.h>
@@ -146,12 +146,13 @@ void dcm_set_default(unsigned int type)
 			dcm->saved_state = dcm->default_state;
 			dcm->current_state = dcm->default_state;
 			dcm->disable_refcnt = 0;
-
-#ifndef ENABLE_DCM_IN_LK
-			if (dcm->typeid) {
+#ifdef ENABLE_DCM_IN_LK
+			if (INIT_DCM_TYPE_BY_K & dcm->typeid) {
+#endif
 				if (dcm->preset_func)
 					dcm->preset_func();
 				dcm->func(dcm->current_state);
+#ifdef ENABLE_DCM_IN_LK
 			}
 #endif
 
@@ -307,6 +308,22 @@ void dcm_dump_state(int type)
 	}
 }
 
+void dcm_sync_hw_state(void)
+{
+	int i;
+	struct DCM *dcm;
+
+	for (i = 0, dcm = &dcm_array[0]; i < NR_DCM_TYPE; i++, dcm++) {
+		if (dcm->func_is_on != NULL) {
+			dcm->current_state = dcm->func_is_on();
+			dcm_pr_info("[%-16s 0x%08x] sync hw state:%d (%d)\n",
+				 dcm->name, dcm->typeid, dcm->current_state,
+				 dcm->disable_refcnt);
+		}
+	}
+
+}
+
 #ifdef CONFIG_PM
 static ssize_t dcm_state_show(struct kobject *kobj, struct kobj_attribute *attr,
 				  char *buf)
@@ -454,6 +471,7 @@ int __init mt_dcm_init(void)
 #endif /* #ifndef DCM_DEFAULT_ALL_OFF */
 
 	dcm_dump_regs();
+	dcm_sync_hw_state();
 
 #ifdef CONFIG_PM
 	{

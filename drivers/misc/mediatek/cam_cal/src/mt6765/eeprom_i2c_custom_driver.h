@@ -8,16 +8,29 @@ unsigned int Custom_read_region(struct i2c_client *client,
 				unsigned char *data,
 				unsigned int size);
 
-/*Begin ersen.shang for config af otp T10017042 20210106*/
-unsigned int gc8034_read_region(struct i2c_client *client, 
+//begin 20210816 ljt add for jetta
+unsigned int gc08a3_read_region(struct i2c_client *client, 
 				unsigned int addr,
 				unsigned char *data, 
 				unsigned int size);
-
-unsigned int s5k4h7_read_region(struct i2c_client *client, 
+//end 20210816 ljt add for jetta
+unsigned int hi846_read_region(struct i2c_client *client, 
 				unsigned int addr,
-				unsigned char *data,
+				unsigned char *data, 
 				unsigned int size);
-/*End   ersen.shang for config af otp T10017042 20210106*/
-
+#if defined(CONFIG_MTK_LUNA84GVZW_CAMERA)
+unsigned int gc05a2_read_region(struct i2c_client *client, unsigned int addr,
+                                unsigned char *data, unsigned int size);
+/*Begin jiantaohuang for LUNA84GVZW-3892, otp porting for lunavzw hi846 on 20221215*/
+unsigned int hi846_new_read_region(struct i2c_client *client, 
+				unsigned int addr,
+				unsigned char *data, 
+				unsigned int size);
+/*End jiantaohuang for LUNA84GVZW-3892, otp porting for lunavzw hi846 on 20221215*/
+#endif
+#if defined(TCT_CAMERA_PROJECT_CIVIC)
+unsigned int gc05a2_front_read_region(struct i2c_client *client, unsigned int addr,
+                                unsigned char *data, unsigned int size);
+//Begin modified by chengyixuan for CIVICPL-3060 on 2022-07-16
+#endif
 #endif				/* __CAM_CAL_LIST_H */

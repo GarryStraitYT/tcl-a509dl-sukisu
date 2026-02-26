@@ -23,67 +23,104 @@ ifneq ($(strip $(TARGET_NO_KERNEL)),true)
   mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
   current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 
+  kernel_build_config_suffix := .mtk
   ifeq ($(KERNEL_TARGET_ARCH),arm64)
+    kernel_build_config_suffix := $(kernel_build_config_suffix).aarch64
     ifeq ($(strip $(TARGET_KERNEL_USE_CLANG)),true)
-      include $(current_dir)/build.config.mtk.aarch64
     else
-      include $(current_dir)/build.config.mtk.aarch64.gcc
+      kernel_build_config_suffix := $(kernel_build_config_suffix).gcc
     endif
   else
+    kernel_build_config_suffix := $(kernel_build_config_suffix).arm
     ifeq ($(strip $(TARGET_KERNEL_USE_CLANG)),true)
-      include $(current_dir)/build.config.mtk.arm
     else
       $(error TARGET_KERNEL_USE_CLANG is not set)
     endif
   endif
+  ifeq ($(PLATFORM_VERSION),Tiramisu)
+    kernel_build_config_suffix := $(kernel_build_config_suffix).tiramisu
+  endif
+  include $(current_dir)/build.config$(kernel_build_config_suffix)
 
   ARGS := CROSS_COMPILE=$(CROSS_COMPILE)
-  ifneq ($(CLANG_TRIPLE),)
-    ARGS += CLANG_TRIPLE=$(CLANG_TRIPLE)
-  endif
-  ifneq ($(LD),)
-    ARGS += LD=$(LD)
-  endif
-  ifneq ($(LD_LIBRARY_PATH),)
-    ARGS += LD_LIBRARY_PATH=$(KERNEL_ROOT_DIR)/$(LD_LIBRARY_PATH)
-  endif
-  ifneq ($(NM),)
-    ARGS += NM=$(NM)
-  endif
-  ifneq ($(OBJCOPY),)
-    ARGS += OBJCOPY=$(OBJCOPY)
-  endif
-  ifeq ("$(CC)", "gcc")
-    CC :=
-  endif
-
-  ifneq ($(filter-out false,$(USE_CCACHE)),)
-    CCACHE_EXEC ?= /usr/bin/ccache
-    CCACHE_EXEC := $(abspath $(wildcard $(CCACHE_EXEC)))
-  else
-    CCACHE_EXEC :=
-  endif
-  ifneq ($(CCACHE_EXEC),)
-    ifneq ($(CC),)
-      ARGS += CCACHE_CPP2=yes CC='$(CCACHE_EXEC) $(CC)'
-    endif
-  else
-    ifneq ($(CC),)
-      ARGS += CC=$(CC)
-    endif
-  endif
-
-  ifeq ($(strip $(TARGET_BUILD_HW)),true)
-    ARGS += TARGET_BUILD_HW=$(TARGET_BUILD_HW)
-  endif
+  # Begin added by bitao.xiong for task-11412249 on 2021-08-09
   ifeq ($(strip $(TARGET_BUILD_MMITEST)),true)
   ARGS += TARGET_BUILD_MMITEST=$(TARGET_BUILD_MMITEST)
   endif
   ifeq ($(strip $(TARGET_BUILD_CERTIFICATION)),true)
   ARGS += TARGET_BUILD_CERTIFICATION=$(TARGET_BUILD_CERTIFICATION)
   endif
+  ifeq ($(strip $(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)),true)
+  ARGS += DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY=$(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+  endif
+  # End added by bitao.xiong for task-11412249 on 2021-08-09
+  ifeq ($(strip $(TCL_THERMAL_DEBUG)),true)
+  ARGS += TCL_THERMAL_DEBUG=$(TCL_THERMAL_DEBUG)
+  endif
+  # Begin added by qiaozhen.li for task-11468129 20210901
   ifeq ($(strip $(TARGET_BUILD_ENDURANCE)),true)
   ARGS += TARGET_BUILD_ENDURANCE=$(TARGET_BUILD_ENDURANCE)
+  endif
+  # End added by qiaozhen.li for task-11468129 20210901
+
+  # Begin added by bing-zhang for task-11582209 20211015
+  ifeq ($(strip $(TCL_SECURE_BOOT_FAILURE)),true)
+  ARGS += TCL_SECURE_BOOT_FAILURE=$(TCL_SECURE_BOOT_FAILURE)
+  endif
+  # End added by bing-zhang for task-11582209 20211015
+
+  # Begin added by bitao.xiong for task-11672350 2021-11-15
+  ifeq ($(strip $(TARGET_BUILD_IEEE1725)),true)
+  ARGS += TARGET_BUILD_IEEE1725=$(TARGET_BUILD_IEEE1725)
+  endif
+  # End added by bitao.xiong for task-11672350 2021-11-15
+
+  # Begin added by bitao.xiong for ENCORETF-42 on 2022-07-25
+  ifeq ($(strip $(TCT_TARGET_GCF)),true)
+    ARGS += TCT_TARGET_GCF=$(TCT_TARGET_GCF)
+  endif
+  # End added by bitao.xiong for ENCORETF-42 on 2022-07-25
+
+  #Add-start by baiwei.peng for ENCOREVZW-8180 on 2022/11/17
+  ifeq ($(strip $(TCT_TARGET_OP)),VZW)
+  ifeq ($(strip $(TARGET_BUILD_CERTIFICATION)),true)
+    ARGS += TARGET_BUILD_USBIF_COMPLIANCE=$(TARGET_BUILD_USBIF_COMPLIANCE)
+  endif
+  endif
+  #Add-start by baiwei.peng for ENCOREVZW-8180 on 2022/11/17
+
+  ifneq ($(LLVM),)
+    ARGS += LLVM=1
+    ifneq ($(filter-out false,$(USE_CCACHE)),)
+      CCACHE_EXEC ?= /usr/bin/ccache
+      CCACHE_EXEC := $(abspath $(wildcard $(CCACHE_EXEC)))
+    else
+      CCACHE_EXEC :=
+    endif
+    ifneq ($(CCACHE_EXEC),)
+      ARGS += CCACHE_CPP2=yes CC='$(CCACHE_EXEC) clang'
+    else
+      ARGS += CC=clang
+    endif
+    ifneq ($(LLVM_IAS),)
+      ARGS += LLVM_IAS=$(LLVM_IAS)
+    endif
+    ifeq ($(HOSTCC),)
+      ifneq ($(CC),)
+        ARGS += HOSTCC=$(CC)
+      endif
+    else
+      ARGS += HOSTCC=$(HOSTCC)
+    endif
+    ifneq ($(LD),)
+      ARGS += LD=$(LD) HOSTLD=$(LD)
+      ifneq ($(suffix $(LD)),)
+        ARGS += HOSTLDFLAGS=-fuse-ld=$(subst .,,$(suffix $(LD)))
+      endif
+    endif
+    ifneq ($(LD_LIBRARY_PATH),)
+      ARGS += LD_LIBRARY_PATH=$(KERNEL_ROOT_DIR)/$(LD_LIBRARY_PATH)
+    endif
   endif
 
   TARGET_KERNEL_CROSS_COMPILE := $(KERNEL_ROOT_DIR)/$(LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN)/$(CROSS_COMPILE)
@@ -110,5 +147,5 @@ ifneq ($(strip $(TARGET_NO_KERNEL)),true)
   else
     BUILT_KERNEL_TARGET := $(TARGET_PREBUILT_KERNEL)
   endif #TARGET_PREBUILT_KERNEL is empty
-    KERNEL_MAKE_OPTION += PROJECT_DTB_NAMES=$(PROJECT_DTB_NAMES)
+    KERNEL_MAKE_OPTION += PROJECT_DTB_NAMES='$(PROJECT_DTB_NAMES)'
 endif #TARGET_NO_KERNEL

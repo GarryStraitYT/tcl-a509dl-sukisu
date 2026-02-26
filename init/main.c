@@ -366,37 +366,7 @@ static const unsigned int setup_max_cpus = NR_CPUS;
 static inline void setup_nr_cpu_ids(void) { }
 static inline void smp_prepare_cpus(unsigned int maxcpus) { }
 #endif
-//BEGIN add by wang.zhou for task-10467998
-unsigned char tct_boardid = 0;
-EXPORT_SYMBOL(tct_boardid);
-void tct_get_boardid(char *cmdline)
-{
-	char board_str[25] = {0};
-	char *ptr = NULL, *ptr_e = NULL;
-	char keyword[] = "boardid=";
-	int size = 0;
 
-	ptr = strstr(cmdline, keyword);
-	if (ptr != 0) {
-		ptr_e = strstr(ptr, " ");
-		if (ptr_e == 0)
-			goto end;
-
-		size = ptr_e - (ptr + strlen(keyword));
-		if (size <= 0)
-			goto end;
-		strncpy(board_str, ptr + strlen(keyword), size);
-		tct_boardid = board_str[0] - '0';
-		pr_info("boardid = %d\n", tct_boardid);
-	} else {
-		goto end;
-	}
-	return;
-end:
-	tct_boardid = 0x44;
-	pr_err("boardid read error\n");
-}
-//END add by wang.zhou for task-10467998
 /*
  * We need to store the untouched command line for future reference.
  * We also need to store the touched command line since the parameter
@@ -412,9 +382,6 @@ static void __init setup_command_line(char *command_line)
 	static_command_line = memblock_virt_alloc(strlen(command_line) + 1, 0);
 	strcpy(saved_command_line, boot_command_line);
 	strcpy(static_command_line, command_line);
-	//BEGIN add by wang.zhou for task-10467998
-	tct_get_boardid(command_line);
-	//END add by wang.zhou for task-10467998
 }
 
 /*
@@ -546,14 +513,16 @@ static void __init report_meminit(void)
 {
 	const char *stack;
 
-	if (IS_ENABLED(CONFIG_INIT_STACK_ALL))
-		stack = "all";
+	if (IS_ENABLED(CONFIG_INIT_STACK_ALL_PATTERN))
+		stack = "all(pattern)";
+	else if (IS_ENABLED(CONFIG_INIT_STACK_ALL_ZERO))
+		stack = "all(zero)";
 	else if (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF_ALL))
-		stack = "byref_all";
+		stack = "byref_all(zero)";
 	else if (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF))
-		stack = "byref";
+		stack = "byref(zero)";
 	else if (IS_ENABLED(CONFIG_GCC_PLUGIN_STRUCTLEAK_USER))
-		stack = "__user";
+		stack = "__user(zero)";
 	else
 		stack = "off";
 
@@ -707,7 +676,6 @@ asmlinkage __visible void __init start_kernel(void)
 	boot_init_stack_canary();
 
 	time_init();
-	printk_safe_init();
 	perf_event_init();
 	profile_init();
 	call_function_init();

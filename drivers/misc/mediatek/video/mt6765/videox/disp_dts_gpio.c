@@ -24,7 +24,15 @@ static const char *this_state_name[DTS_GPIO_STATE_MAX] = {
 	"lcd_bias_enp0_gpio",
 	"lcd_bias_enp1_gpio",
 	"lcd_bias_enn0_gpio",
-	"lcd_bias_enn1_gpio"
+	"lcd_bias_enn1_gpio",
+	"lcd_bl_en0_gpio",
+	"lcd_bl_en1_gpio",
+//Begin mod by dingting.meng for T-LUNA84GVZW-3932 on 2023.01.04
+	"lcd_vdd3v3_en0_gpio",
+	"lcd_vdd3v3_en1_gpio",
+        "lcm_vdd_out0_gpio",
+        "lcm_vdd_out1_gpio"
+//End mod by dingting.meng for T-LUNA84GVZW-3932 on 2023.01.04
 };
 
 /* pinctrl implementation */

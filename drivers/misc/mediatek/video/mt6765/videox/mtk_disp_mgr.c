@@ -629,7 +629,7 @@ static int disp_input_get_dirty_roi(struct disp_frame_cfg_t *cfg)
 		size = cfg->input_cfg[i].dirty_roi_num *
 			sizeof(struct layer_dirty_roi);
 		addr = kmalloc(size, GFP_KERNEL);
-		if (IS_ERR_OR_NULL(addr))
+		if (IS_ERR_OR_NULL(addr) || IS_ERR_OR_NULL(cfg->input_cfg[i].dirty_roi_addr))
 			goto layer_err;
 
 		if (copy_from_user(addr,
@@ -1051,6 +1051,9 @@ static int _ioctl_wait_all_jobs_done(unsigned long arg)
 	unsigned int session_id = (unsigned int)arg;
 	struct frame_queue_head_t *head;
 	int ret = 0;
+
+	if (session_id > MAX_SESSION_COUNT - 1)
+		return -EINVAL;
 
 	head = get_frame_queue_head(session_id);
 	if (!head) {

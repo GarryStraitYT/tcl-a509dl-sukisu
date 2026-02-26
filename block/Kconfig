@@ -107,7 +107,7 @@ config BLK_DEV_ZONED
 config BLK_DEV_THROTTLING
 	bool "Block layer bio throttling support"
 	depends on BLK_CGROUP=y
-	default n
+	default y
 	---help---
 	Block layer bio throttling support. It can be used to limit
 	the IO rate to a device. IO rate policies are per cgroup and
@@ -216,6 +216,14 @@ config BLK_INLINE_ENCRYPTION_FALLBACK
 	  Enabling this lets the block layer handle inline encryption
 	  by falling back to the kernel crypto API when inline
 	  encryption hardware is not present.
+
+# cheng.chang add for f2fs antiaging
+config BLK_TCL_EXT
+	bool "block tcl extern feature"
+	default y
+	---help---
+	If you are building a kernel for tcl, you should
+	say Y here.
 
 menu "Partition Types"
 

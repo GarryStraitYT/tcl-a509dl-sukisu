@@ -12,8 +12,18 @@
 #include <linux/export.h>
 #include <linux/rwsem.h>
 #include <linux/atomic.h>
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+#include <tcl/tcl_uxthread.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 #include "rwsem.h"
+#ifdef CONFIG_MTK_TASK_TURBO
+#include <mt-plat/turbo_common.h>
+#endif
 
 /*
  * lock for reading
@@ -24,6 +34,13 @@ void __sched down_read(struct rw_semaphore *sem)
 	rwsem_acquire_read(&sem->dep_map, 0, 0, _RET_IP_);
 
 	LOCK_CONTENDED(sem, __down_read_trylock, __down_read);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+	uxrwsem_reader_addlist(sem, current);
+#endif
+// #endif /* VENDOR_EDIT */
 	rwsem_set_reader_owned(sem);
 }
 
@@ -55,6 +72,13 @@ int down_read_trylock(struct rw_semaphore *sem)
 	if (ret == 1) {
 		rwsem_acquire_read(&sem->dep_map, 0, 1, _RET_IP_);
 		rwsem_set_reader_owned(sem);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+		uxrwsem_reader_addlist(sem, current);
+#endif
+// #endif /* VENDOR_EDIT */
 	}
 	return ret;
 }
@@ -120,6 +144,13 @@ void up_read(struct rw_semaphore *sem)
 	DEBUG_RWSEMS_WARN_ON(sem->owner != RWSEM_READER_OWNED);
 
 	__up_read(sem);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+	uxrwsem_reader_removelist(sem, current);
+#endif
+// #endif /* VENDOR_EDIT */
 }
 
 EXPORT_SYMBOL(up_read);
@@ -133,6 +164,11 @@ void up_write(struct rw_semaphore *sem)
 	DEBUG_RWSEMS_WARN_ON(sem->owner != current);
 
 	rwsem_clear_owner(sem);
+#ifndef CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_MTK_TASK_TURBO
+	rwsem_stop_turbo_inherit(sem);
+#endif
+#endif
 	__up_write(sem);
 }
 
@@ -147,6 +183,20 @@ void downgrade_write(struct rw_semaphore *sem)
 	DEBUG_RWSEMS_WARN_ON(sem->owner != current);
 
 	rwsem_set_reader_owned(sem);
+
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+//#if defined(CONFIG_TCL_UXEXPRESS) && defined(CONFIG_TCL_UXISO)
+#if defined(CONFIG_TCL_UXEXPRESS)
+	uxrwsem_reader_addlist(sem, current);
+#endif
+// #endif /* VENDOR_EDIT */
+
+#ifndef CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_MTK_TASK_TURBO
+	rwsem_stop_turbo_inherit(sem);
+#endif
+#endif
 	__downgrade_write(sem);
 }
 

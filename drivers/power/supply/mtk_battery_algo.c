@@ -1780,6 +1780,8 @@ void fgr_set_int1(struct mtk_battery *gm)
 
 	bm_debug("[%s] done\n", __func__);
 }
+
+/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
 void battery_ocv_to_soc(struct mtk_battery *gm)
 {
 	int is_bat_exist;
@@ -1790,7 +1792,7 @@ void battery_ocv_to_soc(struct mtk_battery *gm)
 	gauge_get_property(GAUGE_PROP_BATTERY_EXIST, &is_bat_exist);
 	bm_err("is_bat_exist = %d\n", is_bat_exist);
 	bm_err("MTK Battery algo init bat_exist:%d\n",
-		is_bat_exist);
+               is_bat_exist);
 
 	if (is_bat_exist) {
 		fgr_construct_table_by_temp(gm, true,
@@ -1798,17 +1800,15 @@ void battery_ocv_to_soc(struct mtk_battery *gm)
 		bm_err("ocv_to_soc: leave fg_construct_table_by_temp\n");
 		fgr_construct_vboot(gm,
 			ptable->temperature_tb1);
-                bm_err("ocv_to_soc: leave fg_construct_vboot\n");
+		bm_err("ocv_to_soc: leave fg_construct_vboot\n");
 
 		fgr_dump_table(gm, ptable->temperature_tb1);
 		bm_err("ocv_to_soc: leave fgr_dump_table\n");
 
-                gm->soc_pl = OCV_to_SOC_c(gm, (gm->pl_bat_vol)*10);
-
+		gm->soc_pl = OCV_to_SOC_c(gm, (gm->pl_bat_vol)*10);
 	}
-
 }
-
+/* end add by bing-zhang for getting ocv from preloader on 20210827 */
 void battery_algo_init(struct mtk_battery *gm)
 {
 	int is_bat_exist;
@@ -1821,6 +1821,8 @@ void battery_algo_init(struct mtk_battery *gm)
 	algo->aging_factor = 10000;
 	algo->DC_ratio = 100;
 	gauge_get_property(GAUGE_PROP_BATTERY_EXIST, &is_bat_exist);
+	bm_err("MTK Battery algo init bat_exist:%d\n",
+		is_bat_exist);
 
 	if (is_bat_exist) {
 		fgr_construct_table_by_temp(gm, true,

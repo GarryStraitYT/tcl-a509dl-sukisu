@@ -82,6 +82,8 @@ enum upower_dtype {
 	NR_UPOWER_DTYPE,
 };
 
+extern int cpu_cluster_mapping(unsigned int cpu);
+
 #ifdef __cplusplus
 }
 #endif

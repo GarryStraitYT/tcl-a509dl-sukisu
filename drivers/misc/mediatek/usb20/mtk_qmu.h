@@ -16,7 +16,7 @@
 #define GPD_LEN_ALIGNED (64)	/* > gpd len (16) and cache line size aligned */
 #define GPD_EXT_LEN (48)
 #define GPD_SZ (16)
-#define DFT_MAX_GPD_NUM 36
+#define DFT_MAX_GPD_NUM 144
 #ifndef MUSB_QMU_LIMIT_SUPPORT
 #define RXQ_NUM 8
 #define TXQ_NUM 8
@@ -38,7 +38,7 @@
 /*#define TXZLP NO_ZLP */
 
 /* #define CFG_RX_ZLP_EN */
-/* #define CFG_RX_COZ_EN */
+#define CFG_RX_COZ_EN
 
 #define CFG_CS_CHECK
 /* #define CFG_EMPTY_CHECK */
@@ -130,7 +130,7 @@ static inline int mtk_dbg_level(unsigned int level)
 #define LOG_INFO		6
 #define LOG_DBG		7
 
-#define QMU_DBG_ON
+//#define QMU_DBG_ON //qiaozhen.li removed for performance
 #ifdef QMU_DBG_ON
 #define QMU_ERR(format, args...) do {if (mtk_dbg_level(LOG_ERR)) \
 	pr_notice("QMU_ERR,<%s %d>, " format, __func__, __LINE__, ## args);  } \

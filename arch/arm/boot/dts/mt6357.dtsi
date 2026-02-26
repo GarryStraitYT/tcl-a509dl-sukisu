@@ -36,7 +36,7 @@
 		};
 
 		home {
-			linux,keycodes = <114>; //Modified for VolumeDown key
+			linux,keycodes = <115>;
 		};
 	};
 
@@ -102,9 +102,7 @@
 
 	mtk_gauge: mtk_gauge {
 		compatible = "mediatek,mt6357-gauge";
-#ifdef CONFIG_MFD_MT6370_PMU // add by TCT-cuiping.shi
 		charger = <&mt6370_chg>;
-#endif // add by TCT-cuiping.sh
 		bootmode = <&chosen>;
 		io-channels = <&pmic_auxadc AUXADC_BAT_TEMP>,
 				<&pmic_auxadc AUXADC_BATADC>,
@@ -416,16 +414,6 @@
 
 	mt63xx-oc-debug {
 		compatible = "mediatek,mt63xx-oc-debug";
-	};
-
-	leds-mt6357 {
-		compatible = "mediatek,mt6357_leds";
-		Isink1 {
-			reg = <1>;
-			label = "red";
-			linux,default-trigger = "none";
-			default-state = "off";
-		};
 	};
 
 	mtk_rtc: mtk_rtc {

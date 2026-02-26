@@ -28,10 +28,12 @@
 #include <linux/interrupt.h>
 #include <linux/debug_locks.h>
 #include <linux/osq_lock.h>
-
-#ifdef CONFIG_TCT_UI_TURBO
-#include <linux/tct/uiturbo.h>
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+#include <tcl/tcl_uxthread.h>
 #endif
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_DEBUG_MUTEXES
 # include "mutex-debug.h"
 #else
@@ -47,6 +49,12 @@ __mutex_init(struct mutex *lock, const char *name, struct lock_class_key *key)
 #ifdef CONFIG_MUTEX_SPIN_ON_OWNER
 	osq_lock_init(&lock->osq);
 #endif
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	lock->ux_task = NULL;
+#endif
+// #endif /* VENDOR_EDIT */
 
 	debug_mutex_init(lock, name, key);
 }
@@ -191,6 +199,21 @@ __mutex_add_waiter(struct mutex *lock, struct mutex_waiter *waiter,
 		__mutex_set_flag(lock, MUTEX_FLAG_WAITERS);
 }
 
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+static void __sched
+__uxmutex_add_waiter(struct mutex *lock, struct mutex_waiter *waiter,
+		  struct list_head *list)
+{
+   debug_mutex_add_waiter(lock, waiter, current);
+
+   mutex_list_add(current, waiter, list, lock);
+   if (__mutex_waiter_is_first(lock, waiter))
+	   __mutex_set_flag(lock, MUTEX_FLAG_WAITERS);
+}
+#endif
+// #endif /* VENDOR_EDIT */
 /*
  * Give up ownership to a specific task, when @task = NULL, this is equivalent
  * to a regular unlock. Sets PICKUP on a handoff, clears HANDOF, preserves
@@ -260,75 +283,6 @@ void __sched mutex_lock(struct mutex *lock)
 		__mutex_lock_slowpath(lock);
 }
 EXPORT_SYMBOL(mutex_lock);
-#endif
-
-#ifdef CONFIG_TCT_UI_TURBO
-static inline void
-mutex_uiturbo_list_add(struct task_struct *p, struct list_head *entry,
-		       struct list_head *head)
-{
-	if (test_task_uiturbo(p)) {
-		struct list_head *pos;
-		struct mutex_waiter *waiter;
-		list_for_each(pos, head) {
-			waiter = list_entry(pos, struct mutex_waiter, list);
-			if (!test_task_uiturbo(waiter->task)) {
-				list_add(entry, waiter->list.prev);
-				return;
-			}
-		}
-	}
-	list_add_tail(entry, head);
-}
-
-static inline void __mutex_uiturbo_add_waiter(struct mutex *lock,
-					      struct mutex_waiter *waiter,
-					      struct list_head *list)
-{
-	debug_mutex_add_waiter(lock, waiter, current);
-
-	mutex_uiturbo_list_add(current, &waiter->list, list);
-	if (__mutex_waiter_is_first(lock, waiter))
-		__mutex_set_flag(lock, MUTEX_FLAG_WAITERS);
-}
-
-struct task_struct *mutex_lock_owner(void *wo)
-{
-	struct mutex *lock = wo;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
-	return __mutex_owner(lock);
-#else
-	return lock->owner;
-#endif
-}
-
-static inline void
-mutex_dynamic_uiturbo_enqueue(struct mutex *lock, struct task_struct *p)
-{
-	struct task_struct *owner = NULL;
-	if (unlikely(!lock)) {
-		return;
-	}
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)
-	owner = __mutex_owner(lock);
-#else
-	owner = lock->owner;
-#endif
-	if (test_set_dynamic_uiturbo(p) && !lock->ui_dep_task
-	    && owner && !test_task_uiturbo(owner)) {
-		lock->ui_dep_task = owner;
-		dynamic_uiturbo_enqueue(owner, DYNAMIC_UITURBO_MUTEX, p->uiturbo_depth);
-	}
-}
-
-static inline void
-mutex_dynamic_uiturbo_dequeue(struct mutex *lock, struct task_struct *p)
-{
-	if (p && lock && lock->ui_dep_task == p) {
-		dynamic_uiturbo_dequeue(p, DYNAMIC_UITURBO_MUTEX);
-		lock->ui_dep_task = NULL;
-	}
-}
 #endif
 
 /*
@@ -681,7 +635,7 @@ static inline int mutex_can_spin_on_owner(struct mutex *lock)
  */
 static __always_inline bool
 mutex_optimistic_spin(struct mutex *lock, struct ww_acquire_ctx *ww_ctx,
-		      const bool use_ww_ctx, struct mutex_waiter *waiter)
+		      struct mutex_waiter *waiter)
 {
 	if (!waiter) {
 		/*
@@ -757,7 +711,7 @@ fail:
 #else
 static __always_inline bool
 mutex_optimistic_spin(struct mutex *lock, struct ww_acquire_ctx *ww_ctx,
-		      const bool use_ww_ctx, struct mutex_waiter *waiter)
+		      struct mutex_waiter *waiter)
 {
 	return false;
 }
@@ -977,10 +931,13 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 	struct ww_mutex *ww;
 	int ret;
 
+	if (!use_ww_ctx)
+		ww_ctx = NULL;
+
 	might_sleep();
 
 	ww = container_of(lock, struct ww_mutex, base);
-	if (use_ww_ctx && ww_ctx) {
+	if (ww_ctx) {
 		if (unlikely(ww_ctx == READ_ONCE(ww->ctx)))
 			return -EALREADY;
 
@@ -997,10 +954,10 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 	mutex_acquire_nest(&lock->dep_map, subclass, 0, nest_lock, ip);
 
 	if (__mutex_trylock(lock) ||
-	    mutex_optimistic_spin(lock, ww_ctx, use_ww_ctx, NULL)) {
+	    mutex_optimistic_spin(lock, ww_ctx, NULL)) {
 		/* got the lock, yay! */
 		lock_acquired(&lock->dep_map, ip);
-		if (use_ww_ctx && ww_ctx)
+		if (ww_ctx)
 			ww_mutex_set_context_fastpath(ww, ww_ctx);
 		preempt_enable();
 		return 0;
@@ -1011,7 +968,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 	 * After waiting to acquire the wait_lock, try again.
 	 */
 	if (__mutex_trylock(lock)) {
-		if (use_ww_ctx && ww_ctx)
+		if (ww_ctx)
 			__ww_mutex_check_waiters(lock, ww_ctx);
 
 		goto skip_wait;
@@ -1022,13 +979,15 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 	lock_contended(&lock->dep_map, ip);
 
 	if (!use_ww_ctx) {
-#ifdef CONFIG_TCT_UI_TURBO
-		__mutex_uiturbo_add_waiter(lock, &waiter, &lock->wait_list);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+		__uxmutex_add_waiter(lock, &waiter, &lock->wait_list);
 #else
-		/* add waiting tasks to the end of the waitqueue (FIFO): */
+	/* add waiting tasks to the end of the waitqueue (FIFO): */
 		__mutex_add_waiter(lock, &waiter, &lock->wait_list);
 #endif
-
+// #endif /* VENDOR_EDIT */
 
 #ifdef CONFIG_DEBUG_MUTEXES
 		waiter.ww_ctx = MUTEX_POISON_WW_CTX;
@@ -1047,9 +1006,6 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 
 	waiter.task = current;
 
-#ifdef CONFIG_TCT_UI_TURBO
-	task_set_waiter(current, lock, WT_MUTEX);
-#endif
 	set_current_state(state);
 	for (;;) {
 		/*
@@ -1071,14 +1027,17 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 			goto err;
 		}
 
-		if (use_ww_ctx && ww_ctx) {
+		if (ww_ctx) {
 			ret = __ww_mutex_check_kill(lock, &waiter, ww_ctx);
 			if (ret)
 				goto err;
 		}
-#ifdef CONFIG_TCT_UI_TURBO
-		mutex_dynamic_uiturbo_enqueue(lock, current);
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+		mutex_dynamic_ux_enqueue(lock, current);
 #endif
+// #endif /* VENDOR_EDIT */
 
 		spin_unlock(&lock->wait_lock);
 		schedule_preempt_disabled();
@@ -1087,7 +1046,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		 * ww_mutex needs to always recheck its position since its waiter
 		 * list is not FIFO ordered.
 		 */
-		if ((use_ww_ctx && ww_ctx) || !first) {
+		if (ww_ctx || !first) {
 			first = __mutex_waiter_is_first(lock, &waiter);
 			if (first)
 				__mutex_set_flag(lock, MUTEX_FLAG_HANDOFF);
@@ -1100,19 +1059,22 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		 * or we must see its unlock and acquire.
 		 */
 		if (__mutex_trylock(lock) ||
-		    (first && mutex_optimistic_spin(lock, ww_ctx, use_ww_ctx, &waiter)))
+		    (first && mutex_optimistic_spin(lock, ww_ctx, &waiter)))
 			break;
 
 		spin_lock(&lock->wait_lock);
 	}
 	spin_lock(&lock->wait_lock);
 acquired:
-#ifdef CONFIG_TCT_UI_TURBO
-	task_clear_waiter(current);
-#endif
 	__set_current_state(TASK_RUNNING);
 
-	if (use_ww_ctx && ww_ctx) {
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	clear_reverse_flag(current);
+#endif
+// #endif /* VENDOR_EDIT */
+	if (ww_ctx) {
 		/*
 		 * Wound-Wait; we stole the lock (!first_waiter), check the
 		 * waiters as anyone might want to wound us.
@@ -1132,7 +1094,7 @@ skip_wait:
 	/* got the lock - cleanup and rejoice! */
 	lock_acquired(&lock->dep_map, ip);
 
-	if (use_ww_ctx && ww_ctx)
+	if (ww_ctx)
 		ww_mutex_lock_acquired(ww, ww_ctx);
 
 	spin_unlock(&lock->wait_lock);
@@ -1140,9 +1102,6 @@ skip_wait:
 	return 0;
 
 err:
-#ifdef CONFIG_TCT_UI_TURBO
-	task_clear_waiter(current);
-#endif
 	__set_current_state(TASK_RUNNING);
 	mutex_remove_waiter(lock, &waiter, current);
 err_early_kill:
@@ -1317,9 +1276,13 @@ static noinline void __sched __mutex_unlock_slowpath(struct mutex *lock, unsigne
 
 	spin_lock(&lock->wait_lock);
 	debug_mutex_unlock(lock);
-#ifdef CONFIG_TCT_UI_TURBO
-	mutex_dynamic_uiturbo_dequeue(lock, current);
+
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	mutex_dynamic_ux_denqueue(lock, current);
 #endif
+// #endif /* VENDOR_EDIT */
 
 	if (!list_empty(&lock->wait_list)) {
 		/* get the first entry from the wait-list: */

@@ -1,0 +1,23 @@
+&odm {
+        nfc:nfc {
+                compatible = "mediatek,nfc-gpio-v2";
+                gpio-rst = <94>;
+                gpio-rst-std = <&pio 94 0x0>;
+                gpio-irq = <6>;
+                gpio-irq-std = <&pio 6 0x0>;
+        };
+        irq_nfc:irq_nfc {
+                compatible = "mediatek,irq_nfc-eint";
+                interrupt-parent = <&pio>;
+                interrupts = <6 IRQ_TYPE_LEVEL_HIGH>;
+                status = "okay";
+        };
+};
+
+/*&i2c3 {
+        nfc_mtk:nfc@08 {
+                compatible = "mediatek,nfc";
+                reg = <0x08>;
+                status = "okay";
+        };
+};*/

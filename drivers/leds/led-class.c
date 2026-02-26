@@ -24,7 +24,9 @@
 #include "leds.h"
 
 static struct class *leds_class;
-
+/*begin add by peisong.cao for  11674384*/
+int ro_maxbrightness;
+/*end add by peisong.cao for  11674384*/
 static ssize_t brightness_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -173,6 +175,7 @@ void led_classdev_suspend(struct led_classdev *led_cdev)
 {
 	led_cdev->flags |= LED_SUSPENDED;
 	led_set_brightness_nopm(led_cdev, 0);
+	flush_work(&led_cdev->set_brightness_work);
 }
 EXPORT_SYMBOL_GPL(led_classdev_suspend);
 
@@ -296,8 +299,11 @@ int of_led_classdev_register(struct device *parent, struct device_node *np,
 	up_write(&leds_list_lock);
 
 	if (!led_cdev->max_brightness)
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+		led_cdev->max_brightness = LED_HBM;
+#else
 		led_cdev->max_brightness = LED_FULL;
-
+#endif
 	led_update_brightness(led_cdev);
 
 	led_init_core(led_cdev);
@@ -310,7 +316,13 @@ int of_led_classdev_register(struct device *parent, struct device_node *np,
 
 	dev_dbg(parent, "Registered led device: %s\n",
 			led_cdev->name);
-
+/*begin add by peisong.cao for  11674384*/
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+	ro_maxbrightness = LED_FULL;
+#else
+	ro_maxbrightness = led_cdev->max_brightness;
+#endif
+/*end add by peisong.cao for  11674384*/
 	return 0;
 }
 EXPORT_SYMBOL_GPL(of_led_classdev_register);

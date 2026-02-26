@@ -2990,6 +2990,7 @@ static inline void Disable_Unprepare_ccf_clock(void)
 #endif
 static void ISP_EnableClock(bool En)
 {
+	log_inf("- E. En: %d. G_u4EnableClockCount:%d.", En, G_u4EnableClockCount);
 #if defined(EP_NO_CLKMGR)
 	unsigned int setReg;
 #endif
@@ -3077,6 +3078,7 @@ static void ISP_EnableClock(bool En)
 		Disable_Unprepare_ccf_clock();
 #endif
 	}
+	log_inf("- X. En: %d. G_u4EnableClockCount:%d.", En, G_u4EnableClockCount);
 }
 
 static inline void ISP_Reset(signed int rst_path)
@@ -3813,8 +3815,7 @@ static long ISP_REF_CNT_CTRL_FUNC(unsigned long Param)
 	/*      */
 	if (copy_from_user(&ref_cnt_ctrl, (void __user *)Param,
 			   sizeof(struct ISP_REF_CNT_CTRL_STRUCT)) == 0) {
-		if ((ref_cnt_ctrl.id < 0) ||
-		    (ref_cnt_ctrl.id >= ISP_REF_CNT_ID_MAX)) {
+		if (ref_cnt_ctrl.id >= ISP_REF_CNT_ID_MAX) {
 			log_err("[rc] invalid ref_cnt_ctrl.id %d\n",
 				ref_cnt_ctrl.id);
 			return -EFAULT;
@@ -8290,8 +8291,7 @@ static signed int ISP_MARK_IRQ(struct ISP_WAIT_IRQ_STRUCT irqinfo)
 			irqinfo.UserInfo.UserKey, IRQ_USER_NUM_MAX);
 		return 0;
 	}
-	if ((irqinfo.UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) ||
-	    (irqinfo.UserInfo.Type < 0)) {
+	if (irqinfo.UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) {
 		log_err("invalid type(%d), max(%d)", irqinfo.UserInfo.Type,
 			ISP_IRQ_TYPE_AMOUNT);
 		return 0;
@@ -8377,8 +8377,7 @@ static signed int ISP_GET_MARKtoQEURY_TIME(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 		Ret = -EFAULT;
 		return Ret;
 	}
-	if ((irqinfo->UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) ||
-	    (irqinfo->UserInfo.Type < 0)) {
+	if (irqinfo->UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) {
 		log_err("invalid type(%d), max(%d)", irqinfo->UserInfo.Type,
 			ISP_IRQ_TYPE_AMOUNT);
 		Ret = -EFAULT;
@@ -8420,9 +8419,7 @@ static signed int ISP_GET_MARKtoQEURY_TIME(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 		}
 		/*      */
 		if (irqinfo->TimeInfo.passedbySigcnt > 0) {
-			if ((irqinfo->UserInfo.Type >= 0) &&
-				(irqinfo->UserInfo.Type < ISP_IRQ_TYPE_AMOUNT) &&
-				(idx >= 0) &&
+			if ((irqinfo->UserInfo.Type < ISP_IRQ_TYPE_AMOUNT) &&
 				(idx < 32)) {
 				irqinfo->TimeInfo.tLastSig2GetSig_usec =
 					(time_ready2return.tv_usec -
@@ -8461,8 +8458,7 @@ static signed int ISP_GET_MARKtoQEURY_TIME(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 		Ret = -EFAULT;
 	}
 	spin_unlock_irqrestore(&(IspInfo.SpinLockIrq[eIrq]), flags);
-	if ((irqinfo->UserInfo.Type < 0) || (irqinfo->UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) ||
-		(idx < 0) || (idx >= 32)) {
+	if ((irqinfo->UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) || (idx >= 32)) {
 		log_err("Error: invalid index");
 		Ret = -EFAULT;
 		return Ret;
@@ -8554,8 +8550,7 @@ static signed int ISP_FLUSH_IRQ_V3(struct ISP_WAIT_IRQ_STRUCT irqinfo)
 			irqinfo.UserInfo.UserKey, IRQ_USER_NUM_MAX);
 		return 0;
 	}
-	if ((irqinfo.UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) ||
-	    (irqinfo.UserInfo.Type < 0)) {
+	if (irqinfo.UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) {
 		log_err("invalid type(%d), max(%d)\n", irqinfo.UserInfo.Type,
 			ISP_IRQ_TYPE_AMOUNT);
 		return 0;
@@ -8884,8 +8879,7 @@ static signed int ISP_WaitIrq_v3(struct ISP_WAIT_IRQ_STRUCT *WaitIrq)
 			WaitIrq->UserInfo.UserKey, IRQ_USER_NUM_MAX);
 		return 0;
 	}
-	if ((WaitIrq->UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) ||
-	    (WaitIrq->UserInfo.Type < 0)) {
+	if (WaitIrq->UserInfo.Type >= ISP_IRQ_TYPE_AMOUNT) {
 		log_err("invalid type(%d), max(%d)\n", WaitIrq->UserInfo.Type,
 			ISP_IRQ_TYPE_AMOUNT);
 		return 0;
@@ -9128,7 +9122,6 @@ static signed int ISP_WaitIrq_v3(struct ISP_WAIT_IRQ_STRUCT *WaitIrq)
 				      [WaitIrq->UserInfo.Type]) {
 		if ((WaitIrq->UserInfo.UserKey >= 0) &&
 			(WaitIrq->UserInfo.UserKey < IRQ_USER_NUM_MAX) &&
-			(WaitIrq->UserInfo.Type >= 0) &&
 			(WaitIrq->UserInfo.Type < ISP_IRQ_TYPE_AMOUNT) &&
 			(idx >= 0) &&
 			(idx < 32)) {
@@ -9272,7 +9265,6 @@ EXIT:
 			(~WaitIrq->UserInfo.Status);
 		if ((WaitIrq->UserInfo.UserKey >= 0) &&
 			(WaitIrq->UserInfo.UserKey < IRQ_USER_NUM_MAX) &&
-			(WaitIrq->UserInfo.Type >= 0) &&
 			(WaitIrq->UserInfo.Type < ISP_IRQ_TYPE_AMOUNT) &&
 			(idx >= 0) &&
 			(idx < 32)) {
@@ -13159,6 +13151,7 @@ static signed int bPass1_On_In_Resume_TG2;
 static signed int ISP_suspend(struct platform_device *pDev, pm_message_t Mesg)
 {
 	unsigned int regTG1Val, regTG2Val;
+	unsigned int loopcnt = 0;
 
 	if (IspInfo.UserCount == 0) {
 		log_dbg("ISP UserCount=0");
@@ -13188,6 +13181,14 @@ static signed int ISP_suspend(struct platform_device *pDev, pm_message_t Mesg)
 		bPass1_On_In_Resume_TG2 = 1;
 		ISP_WR32(ISP_ADDR + 0x4B4, (regTG2Val & (~0x01)));
 	}
+	spin_lock(&(IspInfo.SpinLockClock));
+	loopcnt = G_u4EnableClockCount; //"G_u4EnableClockCount" times
+	spin_unlock(&(IspInfo.SpinLockClock));
+	while( loopcnt ){//make sure G_u4EnableClockCount dec to 0
+		ISP_EnableClock(MFALSE);
+		log_inf("isp suspend G_u4EnableClockCount: %d", G_u4EnableClockCount);
+		loopcnt--;
+	}
 
 	return 0;
 }
@@ -13200,6 +13201,8 @@ static signed int ISP_resume(struct platform_device *pDev)
 		log_dbg("ISP UserCount=0");
 		return 0;
 	}
+	//enable clock
+	ISP_EnableClock(MTRUE);
 
 	/* TG_VF_CON[0] (0x15004414[0]): VFDATA_EN.     TG1     Take Picture
 	 * Request.
@@ -13363,7 +13366,7 @@ bool ISP_RegCallback(struct ISP_CALLBACK_STRUCT *pCallback)
 	}
 	/*      */
 	log_dbg("Type(%d)", pCallback->Type);
-	if ((pCallback->Type >= 0) && (pCallback->Type < ISP_CALLBACK_AMOUNT))
+	if (pCallback->Type < ISP_CALLBACK_AMOUNT)
 		IspInfo.Callback[pCallback->Type].Func = pCallback->Func;
 	/*      */
 	return MTRUE;
@@ -13379,7 +13382,7 @@ bool ISP_UnregCallback(enum ISP_CALLBACK_ENUM Type)
 	}
 	/*      */
 	log_dbg("Type(%d)", Type);
-	if ((Type >= 0) && (Type < ISP_CALLBACK_AMOUNT))
+	if (Type < ISP_CALLBACK_AMOUNT)
 		IspInfo.Callback[Type].Func = NULL;
 	/*      */
 	return MTRUE;

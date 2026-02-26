@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 
 #include <linux/module.h>
 #include <linux/sched.h>
@@ -40,7 +41,7 @@
 #include <mach/irqs.h>
 #endif
 
-#include <trace/events/mtk_events.h>
+//#include <trace/events/mtk_events.h>
 #include <mtk_gpu_utility.h>
 
 #define mfg_readl(addr) readl(addr)

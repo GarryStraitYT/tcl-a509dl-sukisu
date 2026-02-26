@@ -230,6 +230,13 @@ struct bio {
 	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);
 
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-11-30 add for f2fs antiaging
+#ifdef CONFIG_BLK_TCL_EXT
+	bool inflight;
+#endif
+// #endif /*VENDOR_EDIT*/
+
 	/*
 	 * We can inline a number of vecs at the end of the bio, to avoid
 	 * double allocations for a small number of bio_vecs. This member
@@ -350,17 +357,18 @@ enum req_flag_bits {
 	__REQ_RAHEAD,		/* read ahead, can fail anytime */
 	__REQ_BACKGROUND,	/* background IO */
 	__REQ_NOWAIT,           /* Don't wait if request will block */
-#ifdef CONFIG_TCT_UI_TURBO
-	__REQ_UI,
-	__REQ_FG,
-#endif
-
 	/* command specific flags for REQ_OP_WRITE_ZEROES: */
 	__REQ_NOUNMAP,		/* do not free blocks when zeroing */
 
 	/* for driver use */
 	__REQ_DRV,
 	__REQ_SWAP,		/* swapping request. */
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+	__REQ_FG,		/* foreground */
+#endif
+// #endif /* VENDOR_EDIT */
 	__REQ_NR_BITS,		/* stops here */
 };
 
@@ -375,14 +383,15 @@ enum req_flag_bits {
 #define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
 #define REQ_FUA			(1ULL << __REQ_FUA)
 #define REQ_PREFLUSH		(1ULL << __REQ_PREFLUSH)
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+#define REQ_FG			(1ULL << __REQ_FG)
+#endif
+// #endif /* VENDOR_EDIT */
 #define REQ_RAHEAD		(1ULL << __REQ_RAHEAD)
 #define REQ_BACKGROUND		(1ULL << __REQ_BACKGROUND)
 #define REQ_NOWAIT		(1ULL << __REQ_NOWAIT)
-#ifdef CONFIG_TCT_UI_TURBO
-#define REQ_UI			(1ULL << __REQ_UI)
-#define REQ_FG			(1ULL << __REQ_FG)
-#endif
-
 #define REQ_NOUNMAP		(1ULL << __REQ_NOUNMAP)
 
 #define REQ_DRV			(1ULL << __REQ_DRV)
@@ -406,14 +415,6 @@ enum stat_group {
 	((bio)->bi_opf & REQ_OP_MASK)
 #define req_op(req) \
 	((req)->cmd_flags & REQ_OP_MASK)
-#ifdef CONFIG_TCT_UI_TURBO
-#define req_is_ui(req) \
-	((req)->cmd_flags & REQ_UI)
-#define req_is_fg(req) \
-    ((req)->cmd_flags & REQ_FG)
-#define req_is_read(req) \
-    (req_op(req) == REQ_OP_READ)
-#endif
 
 /* obsolete, don't use in new code */
 static inline void bio_set_op_attrs(struct bio *bio, unsigned op,

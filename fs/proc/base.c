@@ -98,8 +98,25 @@
 #include <trace/events/oom.h>
 #include "internal.h"
 #include "fd.h"
-
+// #ifdef VENDOR_EDIT
+// bin4.zhong@ARCH, 2021/01/19, add for sched-opt CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_TCL_UXEXPRESS
+#include <tcl/ktc.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+#include <linux/hyperhold_inf.h>
+#endif
+// #endif /* VENDOR_EDIT */
 #include "../../lib/kstrtox.h"
+
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+#include <tcl/tcl_healthinfo.h>
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 
 /* NOTE:
  *	Implementing inode permission operations in /proc is almost
@@ -1036,7 +1053,6 @@ static ssize_t oom_adj_read(struct file *file, char __user *buf, size_t count,
 
 static int __set_oom_adj(struct file *file, int oom_adj, bool legacy)
 {
-	static DEFINE_MUTEX(oom_adj_mutex);
 	struct mm_struct *mm = NULL;
 	struct task_struct *task;
 	int err = 0;
@@ -1076,7 +1092,7 @@ static int __set_oom_adj(struct file *file, int oom_adj, bool legacy)
 		struct task_struct *p = find_lock_task_mm(task);
 
 		if (p) {
-			if (atomic_read(&p->mm->mm_users) > 1) {
+			if (test_bit(MMF_MULTIPROCESS, &p->mm->flags)) {
 				mm = p->mm;
 				mmgrab(mm);
 			}
@@ -2456,6 +2472,62 @@ static const struct file_operations proc_pid_set_timerslack_ns_operations = {
 	.release	= single_release,
 };
 
+// #ifdef VENDOR_EDIT
+// bin4.zhong@ARCH, 2021/01/19, add for sched-opt CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_TCL_UXEXPRESS
+static int ktc_group_show(struct seq_file *m, void *v)
+{
+	struct inode *inode = m->private;
+	struct task_struct *p;
+	int err = 0;
+	struct ktc_group *ktcg;
+
+	p = get_proc_task(inode);
+	if (!p)
+		return -ESRCH;
+
+	task_lock(p);
+	ktcg = rcu_dereference(p->ktc_group);
+	if (!ktcg) {
+		seq_printf(m, "this task isn't ktc task\n");
+		task_unlock(p);
+		goto out;
+	}
+	seq_printf(m, "id:%d, %s\n"
+		"little core minfreq: %d\n"
+		"big core minfreq: %d\n"
+		"min util: %d\n"
+		"prio: %d\n"
+		"preferred_bigcore: %d\n"
+		"threads_related: %d\n",
+		 ktcg->id, ktcg->is_active > 0?"actived":"deactivated",
+		 ktcg->minfreq[0],
+		 ktcg->minfreq[1],
+		 ktcg->min_util,
+		 ktcg->prio,
+		 ktcg->preferred_bigcore,
+		 ktcg->threads_related);
+	task_unlock(p);
+
+out:
+	put_task_struct(p);
+
+	return err;
+}
+
+static int ktc_group_open(struct inode *inode, struct file *filp)
+{
+	return single_open(filp, ktc_group_show, inode);
+}
+
+static const struct file_operations proc_pid_ktc_group_operations = {
+	.open		= ktc_group_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+#endif
+
 static struct dentry *proc_pident_instantiate(struct dentry *dentry,
 	struct task_struct *task, const void *ptr)
 {
@@ -2941,6 +3013,26 @@ static int proc_pid_patch_state(struct seq_file *m, struct pid_namespace *ns,
 }
 #endif /* CONFIG_LIVEPATCH */
 
+#ifdef CONFIG_MTK_TASK_TURBO
+static int proc_turbo_task_show(struct seq_file *m, struct pid_namespace *ns,
+		struct pid *pid, struct task_struct *p)
+{
+	unsigned int is_turbo;
+	unsigned int is_inherit_turbo;
+
+	if (!p)
+		return -ESRCH;
+	task_lock(p);
+	is_turbo = p->turbo;
+	is_inherit_turbo = atomic_read(&p->inherit_types);
+	seq_printf(m, "tid=%d turbo = %d,inherit turbo = %d prio=%d bk_prio=%d\n",
+			p->pid, is_turbo, is_inherit_turbo,
+			p->prio, NICE_TO_PRIO(p->nice_backup));
+	task_unlock(p);
+	return 0;
+}
+#endif
+
 /*
  * Thread groups
  */
@@ -2985,8 +3077,22 @@ static const struct pid_entry tgid_base_stuff[] = {
 	REG("mounts",     S_IRUGO, proc_mounts_operations),
 	REG("mountinfo",  S_IRUGO, proc_mountinfo_operations),
 	REG("mountstats", S_IRUSR, proc_mountstats_operations),
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	REG("laginfo", S_IRUSR | S_IRGRP | S_IWUSR | S_IWGRP, proc_laginfo_operations),
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 #ifdef CONFIG_PROCESS_RECLAIM
 	REG("reclaim", 0222, proc_reclaim_operations),
+#endif
+#ifdef CONFIG_INTELLIGENT_RECLAIM
+	REG("intelligent_reclaim", 0222, proc_intelligent_reclaim_operations),
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	REG("hyperhold", S_IWUSR, proc_hyperhold_operations),
 #endif
 #ifdef CONFIG_PROC_PAGE_MONITOR
 	REG("clear_refs", S_IWUSR, proc_clear_refs_operations),
@@ -3042,6 +3148,17 @@ static const struct pid_entry tgid_base_stuff[] = {
 	REG("timers",	  S_IRUGO, proc_timers_operations),
 #endif
 	REG("timerslack_ns", S_IRUGO|S_IWUGO, proc_pid_set_timerslack_ns_operations),
+// #ifdef VENDOR_EDIT
+// bin4.zhong@ARCH, 2021/01/19, add for sched-opt CONFIG_TCL_UXEXPRESS
+#ifdef CONFIG_TCL_UXEXPRESS
+	REG("ktc_group_args", S_IRUGO|S_IWUGO, proc_pid_ktc_group_operations),
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru start
+#ifdef CONFIG_TCL_ADDR_RECLAIM
+	REG("process_reclaim", 0222, proc_addr_reclaim_operations),
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru end
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_LIVEPATCH
 	ONE("patch_state",  S_IRUSR, proc_pid_patch_state),
 #endif
@@ -3438,6 +3555,9 @@ static const struct pid_entry tid_base_stuff[] = {
 #ifdef CONFIG_CPU_FREQ_TIMES
 	ONE("time_in_state", 0444, proc_time_in_state_show),
 #endif
+#ifdef CONFIG_MTK_TASK_TURBO
+	ONE("turbo", 0444, proc_turbo_task_show),
+#endif
 };
 
 static int proc_tid_base_readdir(struct file *file, struct dir_context *ctx)
@@ -3668,3 +3788,13 @@ void __init set_proc_pid_nlink(void)
 	nlink_tid = pid_entry_nlink(tid_base_stuff, ARRAY_SIZE(tid_base_stuff));
 	nlink_tgid = pid_entry_nlink(tgid_base_stuff, ARRAY_SIZE(tgid_base_stuff));
 }
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+struct task_struct *get_task_from_proc(struct inode *inode)
+{
+	return get_proc_task(inode);
+}
+EXPORT_SYMBOL(get_task_from_proc);
+#endif
+// #endif /* VENEDOR_EDIT */

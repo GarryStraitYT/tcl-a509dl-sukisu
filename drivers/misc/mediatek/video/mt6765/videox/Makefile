@@ -23,7 +23,6 @@ endif
 
 obj-$(CONFIG_MTK_FB) += mtkfb_console.o		\
 			disp_assert_layer.o	\
-			disp_pm_qos.o	\
 			mtkfb.o			\
 			mtkfb_fence.o		\
 			fbconfig_kdebug.o	\
@@ -45,11 +44,15 @@ obj-$(CONFIG_MTK_FB) += mtkfb_console.o		\
 			layering_rule.o \
 			frame_queue.o
 
-# BEGIN: add by jitao.bie for secure boot display error task:9845525
+#Begin add by bing-zhang for secure boot display error task 11582209
+ifeq ($(CONFIG_MTK_PLATFORM), "mt6761")
+obj-$(CONFIG_MTK_FB) += tct_fbcon.o
+endif
+
 ifeq ($(CONFIG_MTK_PLATFORM), "mt6765")
 obj-$(CONFIG_MTK_FB) += tct_fbcon.o
 endif
-# END: add by jitao.bie for secure boot display error task:9845525
+#End add by bing-zhang for secure boot display error task 11582209
 
 #ifneq ($(CONFIG_MTK_FB), y) # already in video/common/
 #obj-y += mtkfb_dummy.o

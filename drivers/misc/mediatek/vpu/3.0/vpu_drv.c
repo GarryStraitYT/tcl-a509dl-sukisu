@@ -1085,8 +1085,7 @@ static long vpu_ioctl(struct file *flip, unsigned int cmd, unsigned long arg)
 
 		/*opp_step counted by vpu driver*/
 	if (req->power_param.boost_value != 0xff) {
-		if (req->power_param.boost_value >= 0 &&
-			req->power_param.boost_value <= 100) {
+		if (req->power_param.boost_value <= 100) {
 			req->power_param.opp_step =
 			vpu_boost_value_to_opp(req->power_param.boost_value);
 			req->power_param.freq_step =
@@ -1761,8 +1760,8 @@ static int vpu_probe(struct platform_device *pdev)
 	vpu_device->vpu_base[core] = (unsigned long) of_iomap(node, 0);
 	/* get physical address of binary data loaded by LK */
 	if (vpu_num_devs == 0) {
-		uint32_t phy_addr;
-		uint32_t phy_size;
+		uint32_t phy_addr = 0;
+		uint32_t phy_size = 0;
 
 		if (of_property_read_u32(node, "bin-phy-addr", &phy_addr) ||
 			of_property_read_u32(node, "bin-size", &phy_size)) {

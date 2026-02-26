@@ -45,6 +45,7 @@ u64 cmdq_virtual_flag_from_scenario_default(enum CMDQ_SCENARIO_ENUM scn)
 		flag = 0LL;
 		break;
 	case CMDQ_SCENARIO_TRIGGER_LOOP:
+	case CMDQ_SCENARIO_TRIGGER_LOOP_SUB:
 	case CMDQ_SCENARIO_HIGHP_TRIGGER_LOOP:
 	case CMDQ_SCENARIO_LOWP_TRIGGER_LOOP:
 		/* Trigger loop does not related to any HW by itself. */
@@ -194,6 +195,7 @@ bool cmdq_virtual_is_disp_scenario(const enum CMDQ_SCENARIO_ENUM scenario)
 	case CMDQ_SCENARIO_RDMA2_DISP:
 	case CMDQ_SCENARIO_RDMA0_COLOR0_DISP:
 	case CMDQ_SCENARIO_TRIGGER_LOOP:
+	case CMDQ_SCENARIO_TRIGGER_LOOP_SUB:
 	case CMDQ_SCENARIO_HIGHP_TRIGGER_LOOP:
 	case CMDQ_SCENARIO_LOWP_TRIGGER_LOOP:
 	case CMDQ_SCENARIO_DISP_CONFIG_AAL:
@@ -220,6 +222,14 @@ bool cmdq_virtual_is_disp_scenario(const enum CMDQ_SCENARIO_ENUM scenario)
 #endif
 		dispScenario = true;
 		break;
+#if IS_ENABLED(CONFIG_MTK_MT6382_BDG)
+	case CMDQ_BDG_SCENARIO_DISP_TEST:
+	case CMDQ_BDG_SCENARIO_DISP_TEST2:
+	/* TODO */
+		dispScenario = true;
+		break;
+
+#endif
 	default:
 		break;
 	}
@@ -262,6 +272,9 @@ bool cmdq_virtual_should_enable_prefetch(enum CMDQ_SCENARIO_ENUM scenario)
 		 * Also, since thread 0/1 shares one prefetch buffer,
 		 * we allow only PRIMARY path to use prefetch.
 		 */
+#if IS_ENABLED(CONFIG_MTK_MT6382_BDG)
+	/* TODO */
+#endif
 		shouldPrefetch = true;
 		break;
 	default:
@@ -298,10 +311,12 @@ int cmdq_virtual_disp_thread(enum CMDQ_SCENARIO_ENUM scenario)
 	case CMDQ_SCENARIO_DISP_CONFIG_SUB_PQ:
 	case CMDQ_SCENARIO_DISP_CONFIG_SUB_PWM:
 	case CMDQ_SCENARIO_SUB_MEMOUT:
+#if IS_ENABLED(CONFIG_MACH_MT6768)
+		return 3;
+#else
 		return 1;
+#endif
 
-	case CMDQ_SCENARIO_MHL_DISP:
-		return 5;
 
 	case CMDQ_SCENARIO_HIGHP_TRIGGER_LOOP:
 	case CMDQ_SCENARIO_DISP_VFP_CHANGE:
@@ -310,6 +325,7 @@ int cmdq_virtual_disp_thread(enum CMDQ_SCENARIO_ENUM scenario)
 	case CMDQ_SCENARIO_DISP_ESD_CHECK:
 		return 6;
 
+	case CMDQ_SCENARIO_MHL_DISP:
 	case CMDQ_SCENARIO_DISP_SCREEN_CAPTURE:
 	case CMDQ_SCENARIO_DISP_MIRROR_MODE:
 		return 3;
@@ -320,6 +336,16 @@ int cmdq_virtual_disp_thread(enum CMDQ_SCENARIO_ENUM scenario)
 		return 4;
 	case CMDQ_SCENARIO_TRIGGER_LOOP:
 		return 7;
+	case CMDQ_SCENARIO_TRIGGER_LOOP_SUB:
+		return 5;
+#if IS_ENABLED(CONFIG_MTK_MT6382_BDG)
+	case CMDQ_BDG_SCENARIO_DISP_TEST:
+		return BIT(5) | 20;
+	case CMDQ_BDG_SCENARIO_DISP_TEST2:
+		return BIT(5) | 21;
+	/* TODO */
+#endif
+
 	default:
 		/* freely dispatch */
 		return CMDQ_INVALID_THREAD;
@@ -362,7 +388,7 @@ int cmdq_virtual_get_thread_index(enum CMDQ_SCENARIO_ENUM scenario,
 		 * secure thread is enough
 		 */
 		return CMDQ_THREAD_SEC_MDP;
-#if IS_ENABLED(CONFIG_MACH_MT6765)
+#if IS_ENABLED(CONFIG_MACH_MT6768) || IS_ENABLED(CONFIG_MACH_MT6771)
 	case CMDQ_SCENARIO_ISP_FDVT:
 	case CMDQ_SCENARIO_ISP_FDVT_OFF:
 		return CMDQ_THREAD_SEC_SUB_DISP;
@@ -427,7 +453,11 @@ enum CMDQ_HW_THREAD_PRIORITY_ENUM cmdq_virtual_priority_from_scenario(
 
 	case CMDQ_SCENARIO_LOWP_TRIGGER_LOOP:
 		return CMDQ_THR_PRIO_SUPERLOW;
-
+#if IS_ENABLED(CONFIG_MTK_MT6382_BDG)
+	case CMDQ_BDG_SCENARIO_DISP_TEST:
+		return CMDQ_THR_PRIO_DISPLAY_ESD;
+	/* TODO */
+#endif
 	default:
 		/* other cases need exta logic, see below. */
 		break;
@@ -458,7 +488,8 @@ bool cmdq_virtual_is_disp_loop(enum CMDQ_SCENARIO_ENUM scenario)
 {
 	bool is_disp_loop = false;
 
-	if (scenario == CMDQ_SCENARIO_TRIGGER_LOOP)
+	if (scenario == CMDQ_SCENARIO_TRIGGER_LOOP ||
+		scenario == CMDQ_SCENARIO_TRIGGER_LOOP_SUB)
 		is_disp_loop = true;
 
 	return is_disp_loop;
@@ -910,6 +941,9 @@ u64 cmdq_virtual_flag_from_scenario(enum CMDQ_SCENARIO_ENUM scn)
 	case CMDQ_SCENARIO_RDMA1_DISP:
 		flag = ((1LL << CMDQ_ENG_DISP_RDMA1));
 		break;
+#if IS_ENABLED(CONFIG_MTK_MT6382_BDG)
+	/* TODO */
+#endif
 	default:
 		flag = 0LL;
 		break;

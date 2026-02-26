@@ -15,7 +15,7 @@
 #include <linux/mfd/mt6357/registers.h>
 #include <linux/mfd/mt6357/core.h>
 
-#include <mt-plat/mtk_boot_common.h> //Added by baiwei.peng for FR-10458713 on 2020/10/14
+#include <mt-plat/mtk_boot_common.h> //Added by baiwei.peng for AGBR-831/JTVZ-4734 on 2021/11/16
 
 #define MTK_PMIC_PWRKEY_INDEX	0
 #define MTK_PMIC_HOMEKEY_INDEX	1
@@ -171,14 +171,16 @@ static void mtk_pmic_keys_lp_reset_setup(struct mtk_pmic_keys *keys,
 		"mediatek,long-press-mode", &long_press_mode);
 	if (ret)
 		long_press_mode = LP_DISABLE;
+#if defined(TARGET_BUILD_MMITEST) || defined(TARGET_BUILD_CERTIFICATION) || defined(TARGET_BUILD_GCF)
+	long_press_mode = LP_TWOKEY;
+#endif
 
-/* Add-start by baiwei.peng for FR-10458713 on 2020/12/14 */
-#ifdef JRD_PROJECT_FULL_TOKYO_LITE_TMO
+/* Add-start by baiwei.peng for AGBR-831/JTVZ-4734 on 2021/11/16 */
 	if (get_boot_mode() == RECOVERY_BOOT) {
 		long_press_mode = LP_TWOKEY;
-        }
-#endif
-/* Add-end by baiwei.peng FR-10458713 on 2020/12/14 */
+		dev_err(keys->dev, "Recovery mode set LP_TWOKEY\n");
+	}
+/* Add-end by baiwei.peng AGBR-831/JTVZ-4734 on 2021/11/16 */
 
 	switch (long_press_mode) {
 	case LP_ONEKEY:
@@ -240,7 +242,7 @@ static irqreturn_t mtk_pmic_keys_irq_handler_thread(int irq, void *data)
 	input_report_key(info->keys->input_dev, info->keycode, pressed);
 	input_sync(info->keys->input_dev);
 
-	dev_dbg(info->keys->dev, "(%s) key =%d using PMIC\n",
+	dev_err(info->keys->dev, "(%s) key =%d using PMIC\n",
 		 pressed ? "pressed" : "released", info->keycode);
 
 	return IRQ_HANDLED;

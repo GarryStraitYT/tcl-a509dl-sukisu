@@ -72,6 +72,7 @@ obj-$(CONFIG_DM_INTEGRITY)	+= dm-integrity.o
 obj-$(CONFIG_DM_ZONED)		+= dm-zoned.o
 obj-$(CONFIG_DM_WRITECACHE)	+= dm-writecache.o
 obj-$(CONFIG_DM_BOW)		+= dm-bow.o
+obj-$(CONFIG_DM_USER)		+= dm-user.o
 
 ifeq ($(CONFIG_DM_UEVENT),y)
 dm-mod-objs			+= dm-uevent.o
@@ -84,3 +85,9 @@ endif
 ifeq ($(CONFIG_DM_VERITY_FEC),y)
 dm-verity-objs			+= dm-verity-fec.o
 endif
+
+# BEGIN: add by bing-zhang for secure boot display error task:11582209
+ifeq ($(TCL_SECURE_BOOT_FAILURE), true)
+KBUILD_CFLAGS += -DTCL_SECURE_BOOT_FAILURE
+endif
+# END: add by bing-zhang for secure boot display error task:11582209

@@ -1,0 +1,8 @@
+
+config FINGERPRINT_REGULATOR_MT6371
+    tristate "Fingerprint regulator use MT6371 VOUT_LDO"
+    default n
+    help
+      If you say Y to this option, support will be use ldo for
+      the fingerprint regulator.
+

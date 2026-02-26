@@ -208,27 +208,6 @@ struct task_group;
 /* Task command name length: */
 #define TASK_COMM_LEN			16
 
-#ifdef CONFIG_TCT_UI_TURBO
-enum DYNAMIC_UITURBO_TYPE
-{
-	DYNAMIC_UITURBO_BINDER = 0,
-	DYNAMIC_UITURBO_RWSEM,
-	DYNAMIC_UITURBO_MUTEX,
-	DYNAMIC_UITURBO_SEM,
-	DYNAMIC_UITURBO_FUTEX,
-	DYNAMIC_UITURBO_MAX,
-};
-#define UITURBO_MSG_LEN 64
-
-enum wait_type
-{
-	WT_NONE = 0,
-	WT_RWSEM = 1,
-	WT_MUTEX,
-	WT_FUTEX,
-};
-#endif
-
 extern void scheduler_tick(void);
 
 #define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
@@ -348,6 +327,13 @@ struct sched_info {
 /* Increase resolution of cpu_capacity calculations */
 # define SCHED_CAPACITY_SHIFT		SCHED_FIXEDPOINT_SHIFT
 # define SCHED_CAPACITY_SCALE		(1L << SCHED_CAPACITY_SHIFT)
+
+static inline unsigned int scale_from_percent(unsigned int pct)
+{
+	WARN_ON(pct > 100);
+
+	return ((SCHED_FIXEDPOINT_SCALE * pct) / 100);
+}
 
 struct load_weight {
 	unsigned long			weight;
@@ -688,18 +674,14 @@ struct task_struct {
 	unsigned int			flags;
 	unsigned int			ptrace;
 
-#ifdef CONFIG_TCT_UI_TURBO
-	int static_uiturbo;
-	int uiturbo_depth;
-	atomic64_t dynamic_uiturbo;
-	struct list_head ui_entry;
-	u64 enqueue_time;
-	u64 dynamic_uiturbo_start;
-	raw_spinlock_t uiturbo_lock;
-	void *uiturbo_wo;
-	int uiturbo_wt;
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+        u64 rtstart_time;
+        u64 rtend_time;
 #endif
-
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 #ifdef CONFIG_SMP
 	struct llist_node		wake_entry;
 	int				on_cpu;
@@ -740,6 +722,7 @@ struct task_struct {
 	int				boost;
 	u64				boost_period;
 	u64				boost_expires;
+	u64				last_enqueued_ts;
 
 #ifdef CONFIG_CGROUP_SCHED
 	struct task_group		*sched_task_group;
@@ -827,6 +810,11 @@ struct task_struct {
 	/* Bit to tell LSMs we're in execve(): */
 	unsigned			in_execve:1;
 	unsigned			in_iowait:1;
+	// #ifdef VENDOR_EDIT
+	// zhipeng5.wei@arch 2020/11/25 add for ux thread CONFIG_TCL_UXEXPRESS
+	unsigned			in_binder_sleep:1;
+	unsigned			in_futex_sleep:1;
+	// #endif /* VENDOR_EDIT */
 #ifndef TIF_RESTORE_SIGMASK
 	unsigned			restore_sigmask:1;
 #endif
@@ -1321,6 +1309,38 @@ struct task_struct {
 	/* A live task holds one reference: */
 	atomic_t			stack_refcount;
 #endif
+// #ifdef VENDOR_EDIT
+// jiajiun.xu@arch 2020/11/05 add for ux thread
+// #ifdef CONFIG_TCL_UXEXPRESS
+	int static_ux;
+	atomic64_t dynamic_ux;
+	struct list_head ux_entry;
+	int ux_depth;
+	u64 dynamic_ux_start;
+	u64 enqueue_time;
+	int parent_ux;
+	raw_spinlock_t uxlock_lock;
+	void *uxlock_owner;
+	atomic_t vruntime_flag;
+	int uxlock_type;
+	void *ktc_group;            // struct ktc_group pointer
+	struct list_head owner_list;
+	struct list_head ktc_list;
+	struct rw_semaphore *ux_rwsem;
+	atomic_t rw_flag;
+// #ifdef VENDOR_EDIT
+// shu5.zhang@arch 2020/11/05 add for ux thread
+#ifdef CONFIG_TCL_UXEXPRESS
+	int all_cpu_flag;
+#endif
+// #endif /* VENDOR_EDIT */
+	unsigned int benchmark_flag;
+// #endif
+// xiwu1.peng@KERNEL, 2022/08/29 add for process reclaim
+#if defined(CONFIG_TCL_ADDR_RECLAIM) && defined(CONFIG_TCL_FREEZE)
+	atomic_t thaw_flag;     // bit0 1:thawed just now; bit1 1:in reclaim
+#endif
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_LIVEPATCH
 	int patch_state;
 #endif
@@ -1328,15 +1348,36 @@ struct task_struct {
 	/* Used by LSM modules for access restriction: */
 	void				*security;
 #endif
+	/* task is frozen/stopped (used by the cgroup freezer) */
+	ANDROID_KABI_USE(1, unsigned frozen:1);
 
-	ANDROID_KABI_RESERVE(1);
-	ANDROID_KABI_RESERVE(2);
+	/* 095444fad7e3 ("futex: Replace PF_EXITPIDONE with a state") */
+	ANDROID_KABI_USE(2, unsigned int futex_state);
+
+	/*
+	 * f9b0c6c556db ("futex: Add mutex around futex exit")
+	 * A struct mutex takes 32 bytes, or 4 64bit entries, so pick off
+	 * 4 of the reserved members, and replace them with a struct mutex.
+	 * Do the GENKSYMS hack to work around the CRC issues
+	 */
+#ifdef __GENKSYMS__
 	ANDROID_KABI_RESERVE(3);
 	ANDROID_KABI_RESERVE(4);
 	ANDROID_KABI_RESERVE(5);
 	ANDROID_KABI_RESERVE(6);
+#else
+	struct mutex			futex_exit_mutex;
+#endif
+
 	ANDROID_KABI_RESERVE(7);
 	ANDROID_KABI_RESERVE(8);
+#ifdef CONFIG_MTK_TASK_TURBO
+	unsigned short turbo:1;
+	unsigned short render:1;
+	unsigned short inherit_cnt:14;
+	short nice_backup;
+	atomic_t inherit_types;
+#endif
 
 	/*
 	 * New fields for task_struct should be added above here, so that
@@ -1344,6 +1385,11 @@ struct task_struct {
 	 */
 	randomized_struct_fields_end
 
+// xiwu1.peng@kernel 2021/09/03 add for io acct
+// #ifdef CONFIG_TCL_IOACCT
+	struct task_io_accounting	io_swi[2];
+	bool io_index;
+// #endif
 	/* CPU-specific state of this task: */
 	struct thread_struct		thread;
 
@@ -1514,7 +1560,19 @@ extern struct pid *cad_pid;
  */
 #define PF_IDLE			0x00000002	/* I am an IDLE thread */
 #define PF_EXITING		0x00000004	/* Getting shut down */
-#define PF_EXITPIDONE		0x00000008	/* PI exit done on shut down */
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2023/02/06 add for ux isolate
+#ifdef CONFIG_TCL_UXEXPRESS
+/*
+ * Ux task can not preempt task with PF_UX_ISOLATE, and also can
+ * not pick the rq which links this task.
+ * For ux performance task should not keep this flag for long time.
+ */
+#define PF_UX_ISOLATE	0x00000008
+#endif
+// #endif /* VENDOR_EDIT */
+
 #define PF_VCPU			0x00000010	/* I'm a virtual CPU */
 #define PF_WQ_WORKER		0x00000020	/* I'm a workqueue worker */
 #define PF_FORKNOEXEC		0x00000040	/* Forked but didn't exec */
@@ -1589,7 +1647,22 @@ static inline bool is_percpu_thread(void)
 #define PFA_SPEC_SSB_FORCE_DISABLE	4	/* Speculative Store Bypass force disabled*/
 #define PFA_SPEC_IB_DISABLE		5	/* Indirect branch speculation restricted */
 #define PFA_SPEC_IB_FORCE_DISABLE	6	/* Indirect branch speculation permanently restricted */
+#ifndef CONFIG_TCL_FREEZE
 #define PFA_NO_FREEZE			7	//[TCT-ROM][PERF]Add by jingyuan.wei for freezer on 2019/09/05
+#endif
+
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]begin added by xizheng.mo for 9572106 blkio type on 20200716
+#define PFA_IN_PAGEFAULT	27
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@kernel 2021/09/03 add for iolimit
+#ifdef CONFIG_CGROUP_IOLIMIT
+#define PFA_IN_PAGEFAULT		29
+#endif
+// #endif /* VENDOR_EDIT */
 
 #define TASK_PFA_TEST(name, func)					\
 	static inline bool task_##func(struct task_struct *p)		\
@@ -1628,11 +1701,30 @@ TASK_PFA_CLEAR(SPEC_IB_DISABLE, spec_ib_disable)
 TASK_PFA_TEST(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
 TASK_PFA_SET(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Modify by jingyuan.wei for freezer on 2019/09/05
 TASK_PFA_TEST(NO_FREEZE, no_freeze)
 TASK_PFA_SET(NO_FREEZE, no_freeze)
 TASK_PFA_CLEAR(NO_FREEZE, no_freeze)
 //[TCT-ROM][PERF]End Modify by jingyuan.wei for freezer on 2019/09/05
+#endif
+
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]begin added by xizheng.mo for 9572106 blkio type on 20200716
+TASK_PFA_TEST(IN_PAGEFAULT, in_pagefault)
+TASK_PFA_SET(IN_PAGEFAULT, in_pagefault)
+TASK_PFA_CLEAR(IN_PAGEFAULT, in_pagefault)
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@kernel 2021/09/03 add for iolimit
+#ifdef CONFIG_CGROUP_IOLIMIT
+TASK_PFA_TEST(IN_PAGEFAULT, in_pagefault)
+TASK_PFA_SET(IN_PAGEFAULT, in_pagefault)
+TASK_PFA_CLEAR(IN_PAGEFAULT, in_pagefault)
+#endif
+// #endif /* VENDOR_EDIT */
 
 static inline void
 current_restore_flags(unsigned long orig_flags, unsigned long flags)

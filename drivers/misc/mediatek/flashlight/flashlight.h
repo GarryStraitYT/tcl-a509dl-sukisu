@@ -103,6 +103,12 @@ struct flashlight_user_arg {
 #define FLASH_IOC_GET_HW_TIMEOUT           _IOWR(FLASHLIGHT_MAGIC, 240, int)
 #define FLASH_IOC_GET_HW_FAULT             _IOR(FLASHLIGHT_MAGIC, 250, int)
 #define FLASH_IOC_GET_HW_FAULT2            _IOR(FLASHLIGHT_MAGIC, 251, int)
-
+struct flashlight_user_data {
+  int type_id;
+  int ct_id;
+  int arg;
+  int data[32];
+};
+#define FLASH_IOC_SET_HW_TABLE             _IOR(FLASHLIGHT_MAGIC, 252, int)
 #endif /* _FLASHLIGHT_H */
 

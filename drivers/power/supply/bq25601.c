@@ -23,12 +23,28 @@
 #include "charger_class.h"
 #include <linux/power_supply.h>
 #include <linux/regulator/driver.h>
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#include <linux/regulator/machine.h>
+#endif
+#include "mtk_charger.h"
 
 
 #define GETARRAYNUM(array) (ARRAY_SIZE(array))
 
-/*bq25601 REG06 VREG[5:0]*/
-const unsigned int VBAT_CV_VTH[] = {
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+#if IS_ENABLED(CONFIG_TCT_CHG_PASSAT)
+static unsigned int now_cv = 4450000;
+static unsigned int max_cv = 4450000;
+#else
+static unsigned int now_cv = 4400000;
+static unsigned int max_cv = 4400000;
+#endif
+#endif
+/* End add by jin.wang */
+
+/*bq25601 REG04 VREG[7:3]*/
+static const unsigned int VBAT_CV_VTH[] = {
 	3856000, 3888000, 3920000, 3952000,
 	3984000, 4016000, 4048000, 4080000,
 	4112000, 4144000, 4176000, 4208000,
@@ -39,8 +55,9 @@ const unsigned int VBAT_CV_VTH[] = {
 
 };
 
-/*BQ25601 REG04 ICHG[6:0]*/
-const unsigned int CS_VTH[] = {
+/* Begin modified by jin.wang for PR 11476064 on 2021-9-8 */
+/*BQ25601 REG02 ICHG[5:0]*/
+static const unsigned int CS_VTH[] = {
 	0, 6000, 12000, 18000, 24000,
 	30000, 36000, 42000, 48000, 54000,
 	60000, 66000, 72000, 78000, 84000,
@@ -48,11 +65,15 @@ const unsigned int CS_VTH[] = {
 	120000, 126000, 132000, 138000, 144000,
 	150000, 156000, 162000, 168000, 174000,
 	180000, 186000, 192000, 198000, 204000,
-	210000, 216000, 222000, 228000
+	210000, 216000, 222000, 228000, 234000,
+	240000, 246000, 252000, 258000, 264000,
+	270000, 276000, 282000, 288000, 294000,
+	300000
 };
+/* End modified by jin.wang for PR 11476064 on 2021-9-8 */
 
-/*BQ25601 REG00 IINLIM[5:0]*/
-const unsigned int INPUT_CS_VTH[] = {
+/*BQ25601 REG00 IINLIM[4:0]*/
+static const unsigned int INPUT_CS_VTH[] = {
 	10000, 20000, 30000, 40000,
 	50000, 60000, 70000, 80000,
 	90000, 100000, 110000, 120000,
@@ -64,7 +85,7 @@ const unsigned int INPUT_CS_VTH[] = {
 };
 
 
-const unsigned int VCDT_HV_VTH[] = {
+static const unsigned int VCDT_HV_VTH[] = {
 	4200000, 4250000, 4300000, 4350000,
 	4400000, 4450000, 4500000, 4550000,
 	4600000, 6000000, 6500000, 7000000,
@@ -72,19 +93,27 @@ const unsigned int VCDT_HV_VTH[] = {
 
 };
 
-
-const unsigned int VINDPM_REG[] = {
+/* Begin modified by jin.wang for PR 11476064 on 2021-9-8 */
+/*BQ25601 REG06 VINDPM[3:0], mV */
+static const unsigned int VINDPM_REG[] = {
 	3900, 4000, 4100, 4200, 4300, 4400,
 	4500, 4600, 4700, 4800, 4900, 5000,
-	5100, 5200, 5300, 5400, 5500, 5600,
-	5700, 5800, 5900, 6000, 6100, 6200,
-	6300, 6400
+	5100, 5200, 5300, 5400
 };
+/* End modified by jin.wang for PR 11476064 on 2021-9-8 */
 
-/* BQ25601 REG0A BOOST_LIM[2:0], mA */
-const unsigned int BOOST_CURRENT_LIMIT[] = {
+/* BQ25601 REG02 BOOST_LIM[7], mA */
+static const unsigned int BOOST_CURRENT_LIMIT[] = {
 	500, 1200
 };
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+struct bq25601_state {
+	u8 vbus_stat;
+	u8 chg_stat;
+	bool pg_stat;
+};
+#endif
 
 struct bq25601_info {
 	struct charger_device *chg_dev;
@@ -93,17 +122,44 @@ struct bq25601_info {
 	const char *chg_dev_name;
 	const char *eint_name;
 	int irq;
+
+/* Begin mod by jin.wang for androidT on 2022-4-6 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int intr_gpio;
+	int ceb_gpio;
+	struct power_supply_desc psy_desc;
+	struct power_supply *psy;
+	struct bq25601_state state;
+	struct mutex lock; /* protect state data */
+#endif
+/* End mod by jin.wang */
+
+/* Begin add by jin.wang for androidT at 2022-4-6 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int slave_mode;
+#endif
+/* End add by jin.wang */
+
 	struct regulator_dev *otg_rdev;
+/*Add-start by weijun for task JTVZ-7479 on 2022/03/08*/
+	unsigned char chip_pn;
+/*Add-end by weijun for task JTVZ-7479 on 2022/03/08*/
+
+#if defined(DONT_USB_MTK_BQ25601_PATCH)
+	struct power_supply_desc psy_desc;
+	struct power_supply_config psy_cfg;
+	struct power_supply *psy;
+#endif
 };
 
-DEFINE_MUTEX(g_input_current_mutex);
+static DEFINE_MUTEX(g_input_current_mutex);
 static struct i2c_client *new_client;
 static const struct i2c_device_id bq25601_i2c_id[] = { {"bq25601", 0}, {} };
 
 static int bq25601_driver_probe(struct i2c_client *client,
 				const struct i2c_device_id *id);
 
-unsigned int charging_value_to_parameter(const unsigned int
+static unsigned int __maybe_unused charging_value_to_parameter(const unsigned int
 		*parameter, const unsigned int array_size,
 		const unsigned int val)
 {
@@ -115,7 +171,7 @@ unsigned int charging_value_to_parameter(const unsigned int
 
 }
 
-unsigned int charging_parameter_to_value(const unsigned int
+static unsigned int charging_parameter_to_value(const unsigned int
 		*parameter, const unsigned int array_size,
 		const unsigned int val)
 {
@@ -172,15 +228,15 @@ static unsigned int bmt_find_closest_level(const unsigned int *pList,
 }
 
 
-unsigned char bq25601_reg[bq25601_REG_NUM] = { 0 };
+static unsigned char bq25601_reg[bq25601_REG_NUM] = { 0 };
 
 static DEFINE_MUTEX(bq25601_i2c_access);
 static DEFINE_MUTEX(bq25601_access_lock);
 
-int g_bq25601_hw_exist;
+static int g_bq25601_hw_exist;
 
 #ifdef CONFIG_MTK_I2C_EXTENSION
-unsigned int bq25601_read_byte(unsigned char cmd,
+static unsigned int bq25601_read_byte(unsigned char cmd,
 			       unsigned char *returnData)
 {
 	char cmd_buf[1] = { 0x00 };
@@ -216,7 +272,7 @@ unsigned int bq25601_read_byte(unsigned char cmd,
 	return 1;
 }
 
-unsigned int bq25601_write_byte(unsigned char cmd,
+static unsigned int bq25601_write_byte(unsigned char cmd,
 				unsigned char writeData)
 {
 	char write_data[2] = { 0 };
@@ -242,7 +298,7 @@ unsigned int bq25601_write_byte(unsigned char cmd,
 	return 1;
 }
 #else
-unsigned int bq25601_read_byte(unsigned char cmd,
+static unsigned int bq25601_read_byte(unsigned char cmd,
 			       unsigned char *returnData)
 {
 	unsigned char xfers = 2;
@@ -285,7 +341,7 @@ unsigned int bq25601_read_byte(unsigned char cmd,
 	return ret == xfers ? 1 : -1;
 }
 
-unsigned int bq25601_write_byte(unsigned char cmd,
+static unsigned int bq25601_write_byte(unsigned char cmd,
 				unsigned char writeData)
 {
 	unsigned char xfers = 1;
@@ -325,7 +381,7 @@ unsigned int bq25601_write_byte(unsigned char cmd,
 	return ret == xfers ? 1 : -1;
 }
 #endif
-unsigned int bq25601_read_interface(unsigned char RegNum,
+static unsigned int bq25601_read_interface(unsigned char RegNum,
 				    unsigned char *val, unsigned char MASK,
 				    unsigned char SHIFT)
 {
@@ -345,7 +401,7 @@ unsigned int bq25601_read_interface(unsigned char RegNum,
 	return ret;
 }
 
-unsigned int bq25601_config_interface(unsigned char RegNum,
+static unsigned int bq25601_config_interface(unsigned char RegNum,
 				      unsigned char val, unsigned char MASK,
 				      unsigned char SHIFT)
 {
@@ -375,7 +431,7 @@ unsigned int bq25601_config_interface(unsigned char RegNum,
 }
 
 /* write one register directly */
-unsigned int bq25601_reg_config_interface(unsigned char RegNum,
+static unsigned int __maybe_unused bq25601_reg_config_interface(unsigned char RegNum,
 		unsigned char val)
 {
 	unsigned int ret = 0;
@@ -386,7 +442,7 @@ unsigned int bq25601_reg_config_interface(unsigned char RegNum,
 }
 
 /* CON0---------------------------------------------------- */
-void bq25601_set_en_hiz(unsigned int val)
+static void bq25601_set_en_hiz(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -397,7 +453,7 @@ void bq25601_set_en_hiz(unsigned int val)
 				      );
 }
 
-void bq25601_set_iinlim(unsigned int val)
+static void bq25601_set_iinlim(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -408,7 +464,23 @@ void bq25601_set_iinlim(unsigned int val)
 				      );
 }
 
-void bq25601_set_stat_ctrl(unsigned int val)
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+unsigned int bq25601_get_iinlim(void)
+{
+	unsigned int ret = 0;
+	unsigned char val = 0;
+
+	ret = bq25601_read_interface(
+					(unsigned char) (bq25601_CON0),
+					(&val),
+					(unsigned char) (CON0_IINLIM_MASK),
+					(unsigned char) (CON0_IINLIM_SHIFT)
+					);
+	return val;
+}
+#endif
+
+static void __maybe_unused bq25601_set_stat_ctrl(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -421,7 +493,7 @@ void bq25601_set_stat_ctrl(unsigned int val)
 
 /* CON1---------------------------------------------------- */
 
-void bq25601_set_reg_rst(unsigned int val)
+static void __maybe_unused bq25601_set_reg_rst(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -432,7 +504,7 @@ void bq25601_set_reg_rst(unsigned int val)
 				      );
 }
 
-void bq25601_set_pfm(unsigned int val)
+static void bq25601_set_pfm(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -443,7 +515,7 @@ void bq25601_set_pfm(unsigned int val)
 				      );
 }
 
-void bq25601_set_wdt_rst(unsigned int val)
+static void bq25601_set_wdt_rst(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -454,7 +526,7 @@ void bq25601_set_wdt_rst(unsigned int val)
 				      );
 }
 
-void bq25601_set_otg_config(unsigned int val)
+static void bq25601_set_otg_config(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -465,7 +537,7 @@ void bq25601_set_otg_config(unsigned int val)
 				      );
 }
 
-unsigned int bq25601_get_otg_config(void)
+static unsigned int bq25601_get_otg_config(void)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
@@ -478,7 +550,7 @@ unsigned int bq25601_get_otg_config(void)
 	return val;
 }
 
-void bq25601_set_chg_config(unsigned int val)
+static void bq25601_set_chg_config(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -490,7 +562,7 @@ void bq25601_set_chg_config(unsigned int val)
 }
 
 
-void bq25601_set_sys_min(unsigned int val)
+static void bq25601_set_sys_min(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -501,7 +573,7 @@ void bq25601_set_sys_min(unsigned int val)
 				      );
 }
 
-void bq25601_set_batlowv(unsigned int val)
+static void bq25601_set_batlowv(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -515,7 +587,7 @@ void bq25601_set_batlowv(unsigned int val)
 
 
 /* CON2---------------------------------------------------- */
-void bq25601_set_rdson(unsigned int val)
+static void bq25601_set_rdson(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -526,7 +598,7 @@ void bq25601_set_rdson(unsigned int val)
 				      );
 }
 
-void bq25601_set_boost_lim(unsigned int val)
+static void bq25601_set_boost_lim(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -537,7 +609,7 @@ void bq25601_set_boost_lim(unsigned int val)
 				      );
 }
 
-void bq25601_set_ichg(unsigned int val)
+static void bq25601_set_ichg(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -548,8 +620,24 @@ void bq25601_set_ichg(unsigned int val)
 				      );
 }
 
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+unsigned int bq25601_get_ichg(void)
+{
+	unsigned int ret = 0;
+	unsigned char val = 0;
+
+	ret = bq25601_read_interface((unsigned char) (bq25601_CON2),
+					(&val),
+					(unsigned char) (CON2_ICHG_MASK),
+					(unsigned char) (CON2_ICHG_SHIFT)
+	);
+
+	return val;
+}
+#endif
+
 #ifdef FIXME //this function does not exist on bq25601
-void bq25601_set_force_20pct(unsigned int val)
+static void bq25601_set_force_20pct(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -562,7 +650,7 @@ void bq25601_set_force_20pct(unsigned int val)
 #endif
 /* CON3---------------------------------------------------- */
 
-void bq25601_set_iprechg(unsigned int val)
+static void bq25601_set_iprechg(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -573,7 +661,7 @@ void bq25601_set_iprechg(unsigned int val)
 				      );
 }
 
-void bq25601_set_iterm(unsigned int val)
+static void bq25601_set_iterm(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -586,7 +674,7 @@ void bq25601_set_iterm(unsigned int val)
 
 /* CON4---------------------------------------------------- */
 
-void bq25601_set_vreg(unsigned int val)
+static void bq25601_set_vreg(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -597,7 +685,7 @@ void bq25601_set_vreg(unsigned int val)
 				      );
 }
 
-void bq25601_set_topoff_timer(unsigned int val)
+static void __maybe_unused bq25601_set_topoff_timer(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -610,7 +698,7 @@ void bq25601_set_topoff_timer(unsigned int val)
 }
 
 
-void bq25601_set_vrechg(unsigned int val)
+static void bq25601_set_vrechg(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -623,7 +711,7 @@ void bq25601_set_vrechg(unsigned int val)
 
 /* CON5---------------------------------------------------- */
 
-void bq25601_set_en_term(unsigned int val)
+static void bq25601_set_en_term(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -636,7 +724,7 @@ void bq25601_set_en_term(unsigned int val)
 
 
 
-void bq25601_set_watchdog(unsigned int val)
+static void bq25601_set_watchdog(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -647,7 +735,7 @@ void bq25601_set_watchdog(unsigned int val)
 				      );
 }
 
-void bq25601_set_en_timer(unsigned int val)
+static void bq25601_set_en_timer(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -658,7 +746,7 @@ void bq25601_set_en_timer(unsigned int val)
 				      );
 }
 
-void bq25601_set_chg_timer(unsigned int val)
+static void __maybe_unused bq25601_set_chg_timer(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -671,7 +759,7 @@ void bq25601_set_chg_timer(unsigned int val)
 
 /* CON6---------------------------------------------------- */
 
-void bq25601_set_treg(unsigned int val)
+static void __maybe_unused bq25601_set_treg(unsigned int val)
 {
 #ifdef FIXME
 	unsigned int ret = 0;
@@ -684,7 +772,7 @@ void bq25601_set_treg(unsigned int val)
 #endif
 }
 
-void bq25601_set_vindpm(unsigned int val)
+static void bq25601_set_vindpm(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -696,7 +784,7 @@ void bq25601_set_vindpm(unsigned int val)
 }
 
 
-void bq25601_set_ovp(unsigned int val)
+static void __maybe_unused bq25601_set_ovp(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -708,7 +796,7 @@ void bq25601_set_ovp(unsigned int val)
 
 }
 
-void bq25601_set_boostv(unsigned int val)
+static void __maybe_unused bq25601_set_boostv(unsigned int val)
 {
 
 	unsigned int ret = 0;
@@ -724,7 +812,7 @@ void bq25601_set_boostv(unsigned int val)
 
 /* CON7---------------------------------------------------- */
 
-void bq25601_set_tmr2x_en(unsigned int val)
+static void __maybe_unused bq25601_set_tmr2x_en(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -735,7 +823,7 @@ void bq25601_set_tmr2x_en(unsigned int val)
 					);
 }
 
-void bq25601_set_batfet_disable(unsigned int val)
+static void __maybe_unused bq25601_set_batfet_disable(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -747,7 +835,7 @@ void bq25601_set_batfet_disable(unsigned int val)
 }
 
 
-void bq25601_set_batfet_delay(unsigned int val)
+static void __maybe_unused bq25601_set_batfet_delay(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -758,7 +846,7 @@ void bq25601_set_batfet_delay(unsigned int val)
 				      );
 }
 
-void bq25601_set_batfet_reset_enable(unsigned int val)
+static void __maybe_unused bq25601_set_batfet_reset_enable(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -772,7 +860,7 @@ void bq25601_set_batfet_reset_enable(unsigned int val)
 
 /* CON8---------------------------------------------------- */
 
-unsigned int bq25601_get_system_status(void)
+static unsigned int __maybe_unused bq25601_get_system_status(void)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
@@ -784,7 +872,7 @@ unsigned int bq25601_get_system_status(void)
 	return val;
 }
 
-unsigned int bq25601_get_vbus_stat(void)
+static unsigned int __maybe_unused bq25601_get_vbus_stat(void)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
@@ -797,7 +885,7 @@ unsigned int bq25601_get_vbus_stat(void)
 	return val;
 }
 
-unsigned int bq25601_get_chrg_stat(void)
+static unsigned int bq25601_get_chrg_stat(void)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
@@ -810,7 +898,7 @@ unsigned int bq25601_get_chrg_stat(void)
 	return val;
 }
 
-unsigned int bq25601_get_vsys_stat(void)
+static unsigned int __maybe_unused bq25601_get_vsys_stat(void)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
@@ -823,7 +911,7 @@ unsigned int bq25601_get_vsys_stat(void)
 	return val;
 }
 
-unsigned int bq25601_get_pg_stat(void)
+static unsigned int __maybe_unused bq25601_get_pg_stat(void)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
@@ -838,7 +926,7 @@ unsigned int bq25601_get_pg_stat(void)
 
 /*CON10----------------------------------------------------------*/
 
-void bq25601_set_int_mask(unsigned int val)
+static void bq25601_set_int_mask(unsigned int val)
 {
 	unsigned int ret = 0;
 
@@ -855,34 +943,58 @@ static int bq25601_dump_register(struct charger_device *chg_dev)
 	unsigned char i = 0;
 	unsigned int ret = 0;
 
-	pr_info("[bq25601] ");
+/* Begin add by jin.wang for androidT on 2022-4-18 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	pr_info("[bq25601]\n");
+#endif
+/* End add by jin.wang */
+
 	for (i = 0; i < bq25601_REG_NUM; i++) {
 		ret = bq25601_read_byte(i, &bq25601_reg[i]);
 		if (ret == 0) {
 			pr_info("[bq25601] i2c transfor error\n");
 			return 1;
 		}
+/* Begin mod by jin.wang for androidT on 2022-4-18 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		pr_info("[0x%x]=0x%x\n", i, bq25601_reg[i]);
+#else
 		pr_info("[0x%x]=0x%x ", i, bq25601_reg[i]);
+#endif
+/* End mod by jin.wang */
 	}
-	pr_debug("\n");
+
+/* Begin del by jin.wang for androidT on 2022-4-18 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
+	for (i = 0; i < bq25601_REG_NUM; i++)
+	{
+		pr_info("[%s %d] [0x%x]=0x%x ", __func__, __LINE__, i, bq25601_reg[i]);
+	}
+	pr_info("\n");
+#endif
+/* End del by jin.wang */
+
 	return 0;
 }
 
 
-static void bq25601_hw_component_detect(void)
+//static void bq25601_hw_component_detect(void) // modify by weijun
+static void bq25601_hw_component_detect(struct bq25601_info *info)
 {
 	unsigned int ret = 0;
 	unsigned char val = 0;
 
 	ret = bq25601_read_interface(0x0B, &val, 0xFF, 0x0);
 
+	info->chip_pn = (val & 0x78) >> 3; // add by weijun
+
 	if (val == 0)
 		g_bq25601_hw_exist = 0;
 	else
 		g_bq25601_hw_exist = 1;
 
-	pr_info("[%s] exist=%d, Reg[0x0B]=0x%x\n", __func__,
-		g_bq25601_hw_exist, val);
+	pr_info("[%s] exist=%d, pn=%d, Reg[0x0B]=0x%x\n", __func__,
+		g_bq25601_hw_exist, info->chip_pn, val);
 }
 
 
@@ -890,6 +1002,12 @@ static int bq25601_enable_charging(struct charger_device *chg_dev,
 				   bool en)
 {
 	int status = 0;
+/*Add-start by weijun for task JTVZ-7583 on 2022/03/03*/
+#if IS_ENABLED(CONFIG_TCT_CHG_JETTA_VZW)
+	static int pre_en = 0;
+	struct bq25601_info *info = dev_get_drvdata(&chg_dev->dev);
+#endif
+/*Add-end by weijun for task JTVZ-7583 on 2022/03/03*/
 
 	pr_info("enable state : %d\n", en);
 	if (en) {
@@ -901,10 +1019,20 @@ static int bq25601_enable_charging(struct charger_device *chg_dev,
 		/* bq25601_config_interface(bq25601_CON3, 0x0, 0x1, 4); */
 		/* enable charging */
 		bq25601_set_chg_config(en);
-		pr_info("[charging_enable] under test mode: disable charging\n");
+		//pr_info("[charging_enable] under test mode: disable charging\n");
 
 		/*bq25601_set_en_hiz(0x1);*/
 	}
+
+/*Add-start by weijun for task JTVZ-7583 on 2022/03/03*/
+#if IS_ENABLED(CONFIG_TCT_CHG_JETTA_VZW)
+	if (pre_en != en) {
+		pr_info("enable state : %d - %d\n", pre_en, en);
+		pre_en = en;
+		power_supply_changed(info->psy);
+	}
+#endif
+/*Add-end by weijun for task JTVZ-7583 on 2022/03/03*/
 
 	return status;
 }
@@ -913,6 +1041,13 @@ static int bq25601_get_current(struct charger_device *chg_dev,
 			       u32 *ichg)
 {
 	unsigned int ret_val = 0;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	unsigned int array_size;
+	u8 reg_value;
+	reg_value = bq25601_get_ichg();
+	array_size = GETARRAYNUM(CS_VTH);
+	*(u32 *) ichg = charging_value_to_parameter(CS_VTH, array_size, reg_value);
+#endif
 #ifdef FIXME
 	unsigned char ret_force_20pct = 0;
 
@@ -955,10 +1090,15 @@ static int bq25601_set_current(struct charger_device *chg_dev,
 	return status;
 }
 
+/* Begin mod by jin.wang to disable wrong api on 2022-07-18 */
 static int bq25601_get_input_current(struct charger_device *chg_dev,
 				     u32 *aicr)
 {
 	int ret = 0;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	*(u32 *) aicr = 0;
+	return -EINVAL;
+#endif
 #ifdef FIXME
 	unsigned char val = 0;
 
@@ -969,7 +1109,7 @@ static int bq25601_get_input_current(struct charger_device *chg_dev,
 #endif
 	return ret;
 }
-
+/* End mod by jin.wang */
 
 static int bq25601_set_input_current(struct charger_device *chg_dev,
 				     u32 current_value)
@@ -1000,6 +1140,15 @@ static int bq25601_set_cv_voltage(struct charger_device *chg_dev,
 	unsigned int array_size;
 	unsigned int set_cv_voltage;
 	unsigned short register_value;
+
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	now_cv = cv;
+	if (max_cv < now_cv) {
+		max_cv = now_cv;
+	}
+#endif
+/* End add by jin.wang */
 
 	array_size = GETARRAYNUM(VBAT_CV_VTH);
 	set_cv_voltage = bmt_find_closest_level(VBAT_CV_VTH, array_size, cv);
@@ -1044,6 +1193,63 @@ static int bq25601_set_vindpm_voltage(struct charger_device *chg_dev,
 	return status;
 }
 
+/* Begin mod by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static int bq25601_get_charging_status(struct charger_device *chg_dev,
+				       int *status)
+{
+	int reg_value = 0;
+
+	*status = POWER_SUPPLY_STATUS_UNKNOWN;
+	reg_value = bq25601_get_chrg_stat();
+	pr_err("%s: reg_value:0x%x\n", __func__, reg_value);
+
+	switch (reg_value) {
+	case 0x00:
+		*status = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		break;
+	case 0x01:
+	case 0x02:
+		*status = POWER_SUPPLY_STATUS_CHARGING;
+		break;
+	case 0x03:
+		if (now_cv < max_cv) {  // sync with bq25601_is_charging_done
+			pr_err("now_cv(%d) < max_cv(%d), report charging\n",
+					now_cv, max_cv);
+			*status = POWER_SUPPLY_STATUS_CHARGING;
+		} else {
+			*status = POWER_SUPPLY_STATUS_FULL;
+		}
+		break;
+	default:
+		break;
+	}
+    return 0;
+}
+
+static int bq25601_is_charging_done(struct charger_device *chg_dev,
+				       bool *is_done)
+{
+	unsigned int status = true;
+	unsigned int ret_val;
+
+	ret_val = bq25601_get_chrg_stat();
+
+	pr_info("%s: reg_value:%d\n", __func__, ret_val);
+	if (now_cv < max_cv) {
+		*is_done = false;
+		pr_err("now_cv(%d) < max_cv(%d) never full\n", now_cv, max_cv);
+		return 0;
+	}
+
+	if (ret_val == 0x3)
+		*is_done = true;
+	else
+		*is_done = false;
+
+	return status;
+}
+#else
 static int bq25601_get_charging_status(struct charger_device *chg_dev,
 				       bool *is_done)
 {
@@ -1059,6 +1265,8 @@ static int bq25601_get_charging_status(struct charger_device *chg_dev,
 
 	return status;
 }
+#endif
+/* End mod by jin.wang */
 
 static int bq25601_enable_otg(struct charger_device *chg_dev, bool en)
 {
@@ -1068,7 +1276,9 @@ static int bq25601_enable_otg(struct charger_device *chg_dev, bool en)
 	if (en) {
 		bq25601_set_chg_config(0);
 		bq25601_set_otg_config(1);
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 		bq25601_set_watchdog(0x3);	/* WDT 160s */
+#endif
 	} else {
 		bq25601_set_otg_config(0);
 		bq25601_set_chg_config(1);
@@ -1118,26 +1328,106 @@ static int bq25601_get_is_safetytimer_enable(struct charger_device
 	return val;
 }
 
+/* Begin add by jin.wang for task: 2064 at 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+static bool chip_enabled = 0;
+static int bq25601_enable_chip(struct charger_device *dev, bool en)
+{
+	bq25601_set_en_hiz(en ? 0x00 : 0x01);
+	chip_enabled = en;
+	pr_err("%s: %s bq25601 chip\n", __func__,
+			en ? "enable" : "disable");
+	return 0;
+}
+static int bq25601_is_chip_enabled(struct charger_device *dev, bool *en)
+{
+	*en = chip_enabled;
+	return 0;
+}
+#endif
+/* End add by jin.wang */
 
+/* Begin mod by jin.wang for task: 2064 at 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH) \
+	|| IS_ENABLED(CONFIG_TCT_CHG_JETTA_VZW)
+static unsigned int charging_hw_init(struct bq25601_info *info)
+#else
 static unsigned int charging_hw_init(void)
+#endif
+/* End mod by jin.wang */
 {
 	unsigned int status = 0;
 
+/* Begin mod by jin.wang for task: 2064 at 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (info->slave_mode) {  /* Slave mode */
+		bq25601_set_ovp(0x2);	/* set ovp to 10.5V */
+		bq25601_set_otg_config(0);	/* disable OTG function */
+		bq25601_set_chg_config(0);  /* sw control disable chg */
+		bq25601_set_en_hiz(0x1);  /* enable Hiz mode */
+		chip_enabled = false;
+	} else {
+		bq25601_set_en_hiz(0x0);  /* disable Hiz mode */
+		bq25601_set_ovp(0x1);	/* set ovp to 6.5V */
+		chip_enabled = true;
+	}
+
+	if (info->ceb_gpio > 0) {
+		gpio_direction_output(info->ceb_gpio, 0); /* hw control enable chg */
+	}
+#else
 	bq25601_set_en_hiz(0x0);
-	bq25601_set_vindpm(0x6);	/* VIN DPM check 4.6V */
+#endif
+/* End mod by jin.wang */
+
+	bq25601_set_vindpm(0x6);	/* VIN DPM check 4.5V */
 	bq25601_set_wdt_rst(0x1);	/* Kick watchdog */
 	bq25601_set_sys_min(0x5);	/* Minimum system voltage 3.5V */
 	bq25601_set_iprechg(0x8);	/* Precharge current 540mA */
 	bq25601_set_iterm(0x2);	/* Termination current 180mA */
 	bq25601_set_vreg(0x11);	/* VREG 4.4V */
-	bq25601_set_pfm(0x1);//disable pfm
+
+/* Begin mod by jin.wang for androidT on 2022-4-18 */
+/*Add-start by weijun for task JTVZ-7479 on 2022/03/08*/
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	bq25601_set_pfm(0x0);   // enable pfm
+#elif IS_ENABLED(CONFIG_TCT_CHG_JETTA_VZW)
+	if (info->chip_pn == 0x7) {
+		bq25601_set_pfm(0x0);//eable pfm
+	} else {
+		bq25601_set_pfm(0x1);//disable pfm
+	}
+#else
+	bq25601_set_pfm(0x1);   //disable pfm
+#endif
+/*Add-end by weijun for task JTVZ-7479 on 2022/03/08*/
+/* End mod by jin.wang */
+
 	bq25601_set_rdson(0x0);     /*close rdson*/
 	bq25601_set_batlowv(0x1);	/* BATLOWV 3.0V */
 	bq25601_set_vrechg(0x0);	/* VRECHG 0.1V (4.108V) */
 	bq25601_set_en_term(0x1);	/* Enable termination */
 	bq25601_set_watchdog(0x0);	/* WDT disable */
-	bq25601_set_en_timer(0x0);	/* Enable charge timer */
+
+/* Begin mod by jin.wang for ALM 11700191 on 2022-3-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	bq25601_set_chg_timer(1);	/* Set chg timer as 20h */
+	bq25601_set_en_timer(1);	/* Enable charge timer */
+#else
+	bq25601_set_en_timer(0x0);	/* Disable charge timer */
+#endif
+/* End mod by jin.wang */
+
 	bq25601_set_int_mask(0x0);	/* Disable fault interrupt */
+
+/* Begin add by jin.wang for AndroidT on 2022.4.6 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+#if IS_ENABLED(TARGET_BUILD_MMITEST)
+	bq25601_set_chg_config(0);  // turnoff charging in mmitest when boot up
+#endif
+#endif
+/* End add by jin.wang */
+
 	pr_info("%s: hw_init down!\n", __func__);
 	return status;
 }
@@ -1146,7 +1436,12 @@ static int bq25601_parse_dt(struct bq25601_info *info,
 			    struct device *dev)
 {
 	struct device_node *np = dev->of_node;
-	//int bq25601_en_pin = 0;
+
+/* Begin added by jin.wang for task 2064 on 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int ret = 0;
+#endif
+/* End added by jin.wang */
 
 	pr_info("%s\n", __func__);
 	if (!np) {
@@ -1160,49 +1455,80 @@ static int bq25601_parse_dt(struct bq25601_info *info,
 		pr_info("%s: no charger name\n", __func__);
 	}
 
+/* Begin add by jin.wang for jira 2064 at 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (info->chg_dev_name
+		&& !strncmp(info->chg_dev_name,
+				"secondary_chg", strlen("secondary_chg"))) {
+		info->slave_mode = 1;
+		pr_info("%s: slave mode\n", __func__);
+	}
+#endif
+/* End add by jin.wang */
+
 	if (of_property_read_string(np, "alias_name",
 				    &(info->chg_props.alias_name)) < 0) {
 		info->chg_props.alias_name = "bq25601";
 		pr_info("%s: no alias name\n", __func__);
 	}
-	/*
-	 * bq25601_en_pin = of_get_named_gpio(np,"gpio_bq25601_en",0);
-	 * if(bq25601_en_pin < 0){
-	 * pr_info("%s: no bq25601_en_pin\n", __func__);
-	 * return -ENODATA;
-	 * }
-	 * gpio_request(bq25601_en_pin,"bq25601_en_pin");
-	 * gpio_direction_output(bq25601_en_pin,0);
-	 * gpio_set_value(bq25601_en_pin,0);
-	 */
+
 	/*
 	 * if (of_property_read_string(np, "eint_name", &info->eint_name) < 0) {
 	 * info->eint_name = "chr_stat";
 	 * pr_debug("%s: no eint name\n", __func__);
 	 * }
 	 */
+
+/* Begin mod by jin.wang for androidT on 2022-4-6 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	ret = of_get_named_gpio(np, "bq25601,intr_gpio", 0);
+	if (ret < 0) {
+		dev_err(info->dev, "%s no bq25601,intr_gpio(%d)\n",
+				      __func__, ret);
+		info->intr_gpio = -1;
+	} else {
+		info->intr_gpio = ret;
+	}
+
+	ret = of_get_named_gpio(np, "bq25601,en_gpio", 0);
+	if (ret < 0) {
+		dev_err(info->dev, "%s no bq25601,en_gpio(%d)\n",
+				    __func__, ret);
+		info->ceb_gpio = -1;
+	} else {
+		info->ceb_gpio = ret;
+	}
+#endif
+/* End mod by jin.wang */
+
 	return 0;
 }
 
 static int bq25601_do_event(struct charger_device *chg_dev, u32 event,
 			    u32 args)
 {
+	struct bq25601_info *info = NULL;
+
 	if (chg_dev == NULL)
 		return -EINVAL;
-
 	pr_info("%s: event = %d\n", __func__, event);
-#ifdef FIXME
+
+	info = (struct bq25601_info *)dev_get_drvdata(&chg_dev->dev);
+	if (info == NULL)
+		return -EINVAL;
+
 	switch (event) {
-	case EVENT_EOC:
+	case EVENT_FULL:
 		charger_dev_notify(chg_dev, CHARGER_DEV_NOTIFY_EOC);
+		power_supply_changed(info->psy);
 		break;
 	case EVENT_RECHARGE:
 		charger_dev_notify(chg_dev, CHARGER_DEV_NOTIFY_RECHG);
+		power_supply_changed(info->psy);
 		break;
 	default:
 		break;
 	}
-#endif
 	return 0;
 }
 
@@ -1234,7 +1560,7 @@ static const struct regulator_ops bq25601_vbus_ops = {
 };
 
 static const struct regulator_desc bq25601_otg_rdesc = {
-	.of_match = "usb-otg-vbus",
+    //.of_match = "usb-otg-vbus", //Delete by bin.song.hz for task:9988113 on 2020.9.22
 	.name = "usb-otg-vbus",
 	.ops = &bq25601_vbus_ops,
 	.owner = THIS_MODULE,
@@ -1243,10 +1569,23 @@ static const struct regulator_desc bq25601_otg_rdesc = {
 	.n_voltages = 1,
 };
 
+static const struct regulator_init_data bq25601_vbus_init_data = {
+	.constraints = {
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
+	},
+};
+
 static struct charger_ops bq25601_chg_ops = {
 #ifdef FIXME
 	.enable_hz = bq25601_enable_hz,
 #endif
+
+/* Begin add by jin.wang for task: 2064 at 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	.enable_chip = bq25601_enable_chip,
+	.is_chip_enabled = bq25601_is_chip_enabled,
+#endif
+/* End add by jin.wang */
 
 	/* Normal charging */
 	.dump_registers = bq25601_dump_register,
@@ -1259,7 +1598,15 @@ static struct charger_ops bq25601_chg_ops = {
 	.set_constant_voltage = bq25601_set_cv_voltage,
 	.kick_wdt = bq25601_reset_watch_dog_timer,
 	.set_mivr = bq25601_set_vindpm_voltage,
+
+/* Begin mod by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	.is_charging_done = bq25601_is_charging_done,
+	.get_chg_status = bq25601_get_charging_status,
+#else
 	.is_charging_done = bq25601_get_charging_status,
+#endif
+/* End mod by jin.wang */
 
 	/* Safety timer */
 	.enable_safety_timer = bq25601_enable_safetytimer,
@@ -1270,12 +1617,315 @@ static struct charger_ops bq25601_chg_ops = {
 	/*.enable_powerpath = bq25601_enable_power_path, */
 	/*.is_powerpath_enabled = bq25601_get_is_power_path_enable, */
 
-
 	/* OTG */
 	.enable_otg = bq25601_enable_otg,
 	.set_boost_current_limit = bq25601_set_boost_current_limit,
+
 	.event = bq25601_do_event,
 };
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+enum bq25601_charging_status {
+	BQ25601_CHG_STATUS_NOT_CHARGING = 0,
+	BQ25601_CHG_STATUS_PRECHARGE,
+	BQ25601_CHG_STATUS_FAST_CHARGING,
+	BQ25601_CHG_STATUS_DONE,
+	BQ25601_CHG_STATUS_MAX,
+};
+
+static enum power_supply_usb_type bq25601_charger_usb_types[] = {
+#if defined(DONT_USB_MTK_BQ25601_PATCH)
+static enum power_supply_property bq25601_psy_properties[] = {
+	POWER_SUPPLY_PROP_STATUS,
+	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_USB_TYPE,
+};
+
+static enum power_supply_usb_type bq25601_usb_types[] = {
+#endif
+	POWER_SUPPLY_USB_TYPE_UNKNOWN,
+	POWER_SUPPLY_USB_TYPE_SDP,
+	POWER_SUPPLY_USB_TYPE_DCP,
+	POWER_SUPPLY_USB_TYPE_CDP,
+	POWER_SUPPLY_USB_TYPE_FLOAT,
+};
+
+static enum power_supply_property bq25601_charger_properties[] = {
+	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_STATUS,
+	POWER_SUPPLY_PROP_USB_TYPE,
+};
+
+static int bq25601_get_charger_type(struct bq25601_info *info, union power_supply_propval *val)
+{
+	static struct power_supply *chg_psy;
+
+	if (chg_psy == NULL) {
+		chg_psy = power_supply_get_by_name("mtk_charger_type");
+	}
+
+	if (IS_ERR_OR_NULL(chg_psy)) {
+		dev_notice(info->dev, "%s Couldn't get chg_psy\n", __func__);
+		return -EINVAL;
+	} else {
+		power_supply_get_property(chg_psy,
+				POWER_SUPPLY_PROP_USB_TYPE, val);
+		switch (val->intval) {
+		case POWER_SUPPLY_USB_TYPE_UNKNOWN:
+			info->psy_desc.type = POWER_SUPPLY_TYPE_UNKNOWN;
+			break;
+		case POWER_SUPPLY_USB_TYPE_SDP:
+			info->psy_desc.type = POWER_SUPPLY_TYPE_USB;
+			break;
+		case POWER_SUPPLY_USB_TYPE_CDP:
+			info->psy_desc.type = POWER_SUPPLY_TYPE_USB_CDP;
+			break;
+		case POWER_SUPPLY_USB_TYPE_DCP:
+			info->psy_desc.type = POWER_SUPPLY_TYPE_USB_DCP;
+			break;
+		case POWER_SUPPLY_USB_TYPE_FLOAT:
+			info->psy_desc.type = POWER_SUPPLY_TYPE_USB_FLOAT;
+			break;
+		}
+	}
+	return 0;
+}
+
+static int bq25601_get_chip_state(struct bq25601_state *state)
+{
+	state->vbus_stat = bq25601_get_vbus_stat();
+	state->pg_stat = bq25601_get_pg_stat();
+	state->chg_stat = bq25601_get_chrg_stat();
+	return 0;
+}
+
+static int bq25601_charger_get_property(struct power_supply *psy,
+			enum power_supply_property psp, union power_supply_propval *val)
+{
+	struct bq25601_info *info = power_supply_get_drvdata(psy);
+	struct bq25601_state state;
+	int ret = 0;
+
+	bq25601_get_chip_state(&state);
+
+	mutex_lock(&info->lock);
+	info->state = state;
+	mutex_unlock(&info->lock);
+
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = state.pg_stat;
+		break;
+	case POWER_SUPPLY_PROP_STATUS:
+		if (!state.pg_stat)
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+		else {
+			switch (state.chg_stat) {
+				case BQ25601_CHG_STATUS_NOT_CHARGING:
+					val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+					break;
+				case BQ25601_CHG_STATUS_PRECHARGE:
+				case BQ25601_CHG_STATUS_FAST_CHARGING:
+					val->intval = POWER_SUPPLY_STATUS_CHARGING;
+					break;
+				case BQ25601_CHG_STATUS_DONE:
+					val->intval = POWER_SUPPLY_STATUS_FULL;
+					break;
+				default:
+					val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
+					break;
+				}
+		}
+		break;
+	case POWER_SUPPLY_PROP_USB_TYPE:
+		ret = bq25601_get_charger_type(info, val);
+		if (ret)
+			return -ENODATA;
+		break;
+	default:
+		ret = -ENODATA;
+	}
+	return ret;
+}
+
+static char *bq25601_charger_supplied_to[] = {
+	"battery",
+};
+
+static const struct power_supply_desc bq25601_charger_desc = {
+	.name = "bq25601",
+	.type			= POWER_SUPPLY_TYPE_USB,
+	.properties		= bq25601_charger_properties,
+	.num_properties		= ARRAY_SIZE(bq25601_charger_properties),
+	.get_property		= bq25601_charger_get_property,
+	.usb_types		= bq25601_charger_usb_types,
+	.num_usb_types		= ARRAY_SIZE(bq25601_charger_usb_types),
+};
+
+static bool bq25601_state_changed(struct bq25601_info *info,
+				  struct bq25601_state *new_state)
+{
+	int ret;
+
+	mutex_lock(&info->lock);
+	ret = (info->state.chg_stat != new_state->chg_stat ||
+	       info->state.pg_stat != new_state->pg_stat ||
+	       info->state.pg_stat != new_state->pg_stat);
+	mutex_unlock(&info->lock);
+
+	return ret;
+}
+
+static irqreturn_t bq25601_irq_handler(int irq, void *private)
+{
+	struct bq25601_info *info = private;
+	int ret;
+	unsigned int en = 0; //add by bitao.xiong for defect-11703571 on 2022-02-07
+	struct bq25601_state state;
+
+	pm_stay_awake(info->dev);
+	if (IS_ERR_OR_NULL(info))
+		goto handled;
+
+	/* Begin add by bitao.xiong for defect-11703571 on 2022-02-07 */
+	msleep(100); //avoid to can't get charge state for some charger,eg:eta6963
+
+	/* Skip irq if in OTG mode */
+	en = bq25601_get_otg_config();
+	if (en)
+		goto handled;
+	/* End add by bitao.xiong for defect-11703571 on 2022-02-07 */
+
+	ret = bq25601_get_chip_state(&state);
+	if (ret < 0)
+		goto handled;
+
+	if (!bq25601_state_changed(info, &state))
+		goto handled;
+
+	mutex_lock(&info->lock);
+	info->state = state;
+	mutex_unlock(&info->lock);
+	power_supply_changed(info->psy);
+
+handled:
+	pm_relax(info->dev);
+	return IRQ_HANDLED;
+}
+
+static int bq25601_register_irq(struct bq25601_info *info)
+{
+	int ret = 0;
+
+/* Begin add by jin.wang for androidT on 2022-4-18 */
+	if (info->intr_gpio <= 0) {
+		pr_err("%s: intr_gpio %d invalid\n",
+				__func__, info->intr_gpio);
+		return -EINVAL;
+	}
+/* End add by jin.wang*/
+
+	dev_info(info->dev, "%s\n", __func__);
+
+	ret = devm_gpio_request_one(info->dev, info->intr_gpio, GPIOF_DIR_IN,
+			devm_kasprintf(info->dev, GFP_KERNEL,
+			"bq25601_intr_gpio.%s", dev_name(info->dev)));
+	if (ret < 0) {
+		dev_notice(info->dev, "%s gpio request fail(%d)\n",
+				      __func__, ret);
+		return ret;
+	}
+
+	info->irq = gpio_to_irq(info->intr_gpio);
+	if (info->irq < 0) {
+		dev_notice(info->dev, "%s gpio2irq fail(%d)\n",
+				      __func__, info->irq);
+		return info->irq;
+	}
+	dev_info(info->dev, "%s irq = %d\n", __func__, info->irq);
+
+	/* Request threaded IRQ */
+	ret = devm_request_threaded_irq(info->dev, info->irq, NULL,
+					bq25601_irq_handler,
+					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+					devm_kasprintf(info->dev, GFP_KERNEL,
+					"bq25601_irq.%s", dev_name(info->dev)),
+					info);
+	if (ret < 0) {
+		dev_notice(info->dev, "%s request threaded irq fail(%d)\n",
+				      __func__, ret);
+		return ret;
+	}
+
+/* Begin mod by jin.wang for androidT on 2022-4-18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	enable_irq_wake(info->irq);
+#else
+	device_init_wakeup(info->dev, true);
+#endif
+/* End mod by jin.wang */
+
+	return ret;
+}
+#endif
+
+/* Begin add by jin.wang for 11375396 on 2021-08-05 */
+#ifdef CONFIG_TCT_DEVICEINFO
+extern char charger_module_name[256];
+#endif
+/* End add by jin.wang for 11375396 on 2021-08-05 */
+#if defined(DONT_USB_MTK_BQ25601_PATCH)
+};
+
+static int psy_bq25601_get_property(struct power_supply *psy,
+	enum power_supply_property psp, union power_supply_propval *val)
+{
+	struct bq25601_info *info = NULL;
+	struct power_supply *chg_type_psy = NULL;
+	unsigned int ret_val;
+
+	info = (struct bq25601_info *)power_supply_get_drvdata(psy);
+	if (info == NULL) {
+		pr_info("%s get info fail\n", __func__);
+		return -EINVAL;
+	}
+
+	chg_type_psy = devm_power_supply_get_by_phandle(info->dev, "charger");
+	if (IS_ERR_OR_NULL(chg_type_psy)) {
+		pr_info("%s get chg_type_psy fail\n", __func__);
+		return -EINVAL;
+	}
+
+	pr_info("%s psp:%d\n", __func__, psp);
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		ret_val = bq25601_get_chrg_stat();
+		if (ret_val == 0)
+			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		else if (ret_val == 1 || ret_val == 2)
+			val->intval = POWER_SUPPLY_STATUS_CHARGING;
+		else if (ret_val == 3)
+			val->intval = POWER_SUPPLY_STATUS_FULL;
+		else
+			return -EINVAL;
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		power_supply_get_property(chg_type_psy, POWER_SUPPLY_PROP_ONLINE, val);
+		break;
+	case POWER_SUPPLY_PROP_USB_TYPE:
+		power_supply_get_property(chg_type_psy, POWER_SUPPLY_PROP_USB_TYPE, val);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static char *bq25601_supplied_to[] = {
+	"battery"
+};
+#endif
 
 static int bq25601_driver_probe(struct i2c_client *client,
 				const struct i2c_device_id *id)
@@ -1283,7 +1933,9 @@ static int bq25601_driver_probe(struct i2c_client *client,
 	int ret = 0;
 	struct bq25601_info *info = NULL;
 	struct regulator_config config = { };
-
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	struct power_supply_config charger_cfg = {};
+#endif
 	pr_info("[%s]\n", __func__);
 
 	info = devm_kzalloc(&client->dev, sizeof(struct bq25601_info),
@@ -1294,12 +1946,24 @@ static int bq25601_driver_probe(struct i2c_client *client,
 	new_client = client;
 	info->dev = &client->dev;
 
+	//bq25601_hw_component_detect(); // modify by weijun
+	bq25601_hw_component_detect(info);
+
+/* Begin modified by jin.wang for task: 2064 at 2021-10-25 */
+	if (!g_bq25601_hw_exist)
+		return -ENODEV;
+
 	ret = bq25601_parse_dt(info, &client->dev);
 	if (ret < 0)
 		return ret;
 
-	bq25601_hw_component_detect();
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH) \
+	|| IS_ENABLED(CONFIG_TCT_CHG_JETTA_VZW)
+	charging_hw_init(info);
+#else
 	charging_hw_init();
+#endif
+/* End modified by jin.wang */
 
 	/* Register charger device */
 	info->chg_dev = charger_device_register(info->chg_dev_name,
@@ -1312,8 +1976,27 @@ static int bq25601_driver_probe(struct i2c_client *client,
 		return ret;
 	}
 
+/* Begin mod by jin.wang for task: 2064 at 2021-11-2 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (!info->slave_mode) {
+		/* otg regulator */
+		config.dev = info->dev;
+		config.driver_data = info;
+		config.init_data = &bq25601_vbus_init_data;
+		info->otg_rdev = devm_regulator_register(info->dev,
+							&bq25601_otg_rdesc, &config);
+		if (IS_ERR(info->otg_rdev)) {
+			ret = PTR_ERR(info->otg_rdev);
+			pr_info("%s: register otg regulator failed (%d)\n", __func__, ret);
+			return ret;
+		}
+	}
+#else
 	/* otg regulator */
 	config.dev = info->dev;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	config.init_data = &bq25601_vbus_init_data;
+#endif
 	config.driver_data = info;
 	info->otg_rdev = devm_regulator_register(info->dev,
 						&bq25601_otg_rdesc, &config);
@@ -1322,14 +2005,74 @@ static int bq25601_driver_probe(struct i2c_client *client,
 		pr_info("%s: register otg regulator failed (%d)\n", __func__, ret);
 		return ret;
 	}
+#endif
+/* End mod by jin.wang */
 
+/* Begin add by jin.wang for andoidT at 2022-4-18 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	mutex_init(&info->lock);
+	/* power supply */
+	memcpy(&info->psy_desc, &bq25601_charger_desc, sizeof(info->psy_desc));
+	charger_cfg.drv_data = info;
+	charger_cfg.of_node = info->dev->of_node;
+	charger_cfg.supplied_to = bq25601_charger_supplied_to;
+	charger_cfg.num_supplicants = ARRAY_SIZE(bq25601_charger_supplied_to);
+	info->psy = devm_power_supply_register(info->dev,
+					      &info->psy_desc, &charger_cfg);
+	if (IS_ERR(info->psy)) {
+		dev_err(info->dev, "Fail to register power supply dev\n");
+		return PTR_ERR(info->psy);
+	}
+#endif
+/* End add by jin.wang */
+
+/* Begin mod by jin.wang for androidT on 2022-4-18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (!info->slave_mode) {
+		bq25601_register_irq(info);
+	}
+#elif IS_ENABLED(CONFIG_TCT_CHARGER)
+	bq25601_register_irq(info);
+#endif
+/* End mod by jin.wang */
+
+#if !defined(DONT_USB_MTK_BQ25601_PATCH)
+/* Begin mod by jin.wang for androidT on 2022-4-6 */
+#if IS_ENABLED(CONFIG_TCT_DEVICEINFO)
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	if (!info->slave_mode) {
+		sprintf(charger_module_name, "BQ25601:TI:DUMMY:DUMMY");
+	}
+#else
+	sprintf(charger_module_name, "BQ25601:TI:DUMMY:DUMMY");
+#endif
+#endif
+/* End mod by jin.wang */
+#else
+	info->psy_desc.name = "charger_bq25601";
+	info->psy_desc.type = POWER_SUPPLY_TYPE_UNKNOWN;
+	info->psy_desc.properties = bq25601_psy_properties;
+	info->psy_desc.num_properties = ARRAY_SIZE(bq25601_psy_properties);
+	info->psy_desc.get_property = psy_bq25601_get_property;
+	info->psy_desc.usb_types = bq25601_usb_types,
+	info->psy_desc.num_usb_types = ARRAY_SIZE(bq25601_usb_types),
+
+	info->psy_cfg.drv_data = info;
+	info->psy_cfg.of_node = client->dev.of_node;
+	info->psy_cfg.supplied_to = bq25601_supplied_to;
+	info->psy_cfg.num_supplicants = ARRAY_SIZE(bq25601_supplied_to);
+
+	info->psy = power_supply_register(info->dev, &info->psy_desc, &info->psy_cfg);
+	if (IS_ERR(info->psy))
+		chr_err("register psy fail:%d\n", PTR_ERR(info->psy));
+#endif
 
 	bq25601_dump_register(info->chg_dev);
 
 	return 0;
 }
 
-unsigned char g_reg_value_bq25601;
+static unsigned char g_reg_value_bq25601;
 static ssize_t bq25601_access_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
 {
@@ -1349,8 +2092,8 @@ static ssize_t bq25601_access_store(struct device *dev,
 	pr_info("[%s]\n", __func__);
 
 	if (buf != NULL && size != 0) {
-		pr_info("[%s] buf is %s and size is %zu\n", __func__, buf,
-			size);
+		pr_info("[%s] buf is %s and size is %zu\n",
+				__func__, buf, size);
 
 		pvalue = (char *)buf;
 		if (size > 3) {
@@ -1364,22 +2107,21 @@ static ssize_t bq25601_access_store(struct device *dev,
 		if (size > 3) {
 			val = strsep(&pvalue, " ");
 			ret = kstrtou32(val, 16, (unsigned int *)&reg_value);
-			pr_info(
-			"[%s] write bq25601 reg 0x%x with value 0x%x !\n",
-			__func__,
-			(unsigned int) reg_address, reg_value);
+
+			pr_info("[%s] write bq25601 reg 0x%x with value 0x%x !\n",
+					__func__, (unsigned int) reg_address, reg_value);
 			ret = bq25601_config_interface(reg_address,
 				reg_value, 0xFF, 0x0);
 		} else {
 			ret = bq25601_read_interface(reg_address,
 					     &g_reg_value_bq25601, 0xFF, 0x0);
-			pr_info(
-			"[%s] read bq25601 reg 0x%x with value 0x%x !\n",
-			__func__,
-			(unsigned int) reg_address, g_reg_value_bq25601);
-			pr_info(
-			"[%s] use \"cat bq25601_access\" to get value\n",
-			__func__);
+
+			pr_info("[%s] read bq25601 reg 0x%x with value 0x%x !\n",
+					__func__, (unsigned int) reg_address,
+					g_reg_value_bq25601);
+
+			pr_info("[%s] use \"cat bq25601_access\" to get value\n",
+				__func__);
 		}
 	}
 	return size;
@@ -1399,7 +2141,7 @@ static int bq25601_user_space_probe(struct platform_device *dev)
 	return 0;
 }
 
-struct platform_device bq25601_user_space_device = {
+static struct platform_device bq25601_user_space_device = {
 	.name = "bq25601-user",
 	.id = -1,
 };

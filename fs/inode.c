@@ -23,6 +23,13 @@
 #include <trace/events/writeback.h>
 #include "internal.h"
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+#include <linux/protect_lru.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 /*
  * Inode locking rules:
  *
@@ -134,6 +141,16 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	static const struct file_operations no_open_fops = {.open = no_open};
 	struct address_space *const mapping = &inode->i_data;
 
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	inode->i_protect = 0;
+	#ifdef CONFIG_MEMCG_FINE_GRANULARITY_PROTECT_LRU
+	inode->last_region = NULL;
+	INIT_LIST_HEAD(&inode->i_protect_head);
+	#endif
+	#endif
+	// #endif /* VENDOR_EDIT */
 	inode->i_sb = sb;
 	inode->i_blkbits = sb->s_blocksize_bits;
 	inode->i_flags = 0;
@@ -411,6 +428,13 @@ static void inode_lru_list_add(struct inode *inode)
 {
 	if (list_lru_add(&inode->i_sb->s_inode_lru, &inode->i_lru))
 		this_cpu_inc(nr_unused);
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	else if (protect_lru_enable && inode->i_protect != 0)
+		list_lru_move(&inode->i_sb->s_inode_lru, &inode->i_lru);
+#endif
+// #endif /* VENDOR_EDIT */
 	else
 		inode->i_state |= I_REFERENCED;
 }

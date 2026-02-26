@@ -593,8 +593,7 @@ void msdc_dump_host_state(char **buff, unsigned long *size,
 
 	if (host->start_dma_time > host->stop_dma_time) {
 		SPREAD_PRINTF(buff, size, m,
-		"DMA pending DMA_CFG_SATUS(%d): start %llu, stop %llu\n",
-			MSDC_READ32(MSDC_DMA_CFG) & MSDC_DMA_CFG_STS,
+		"DMA start %llu, stop %llu\n",
 			host->start_dma_time, host->stop_dma_time);
 	}
 
@@ -983,7 +982,7 @@ static void msdc_set_field(struct seq_file *m, void __iomem *address,
 {
 	unsigned long field;
 
-	if (start_bit > 31 || start_bit < 0 || len > 31 || len <= 0
+	if (start_bit > 31 || len > 31 || len <= 0
 	 || (start_bit + len > 32)) {
 		seq_puts(m, "[SD_Debug]invalid reg field range or length\n");
 	} else {
@@ -2166,6 +2165,22 @@ static void msdc_dump_sdio_setting(struct msdc_host *host, struct seq_file *m)
 #endif
 
 int g_count;
+#define MSDC_REGISTER_MAP_OFFSET	0x2000
+#define MSDC_TOP_REGISTER_MAP_OFFSET	0x1000
+static int msdc_check_register_offset(struct msdc_host *host,
+		struct seq_file *m, unsigned int offset, unsigned int map_offset)
+{
+	if ((map_offset == MSDC_REGISTER_MAP_OFFSET && offset > map_offset) ||
+		(map_offset == MSDC_TOP_REGISTER_MAP_OFFSET && offset > map_offset)) {
+		seq_puts(m, "invalid register offset\n");
+		return 1;
+	}
+	if (offset % 4) {
+		seq_puts(m, "register offset not align by 0x4\n");
+		return 1;
+	}
+	return 0;
+}
 /* ========== driver proc interface =========== */
 static int msdc_debug_proc_show(struct seq_file *m, void *v)
 {
@@ -2177,7 +2192,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 	int thread_num, compare_count, multi_address;
 	void __iomem *base = NULL;
 	ulong data_for_wr;
-	unsigned int offset = 0;
+	unsigned int offset = 0, msdc_map_offset = 0;
 	unsigned int reg_value;
 	int spd_mode = MMC_TIMING_LEGACY;
 	struct msdc_host *host = NULL;
@@ -2204,7 +2219,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 
 	if (cmd == SD_TOOL_ZONE) {
 		id = p1;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 
 		host = mtk_msdc_host[id];
@@ -2221,7 +2236,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 		}
 	} else if (cmd == SD_TOOL_DMA_SIZE) {
 		id = p2;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 		if (p1 == 0) {
 			drv_mode[id] = p3;
@@ -2240,19 +2255,24 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 		host = mtk_msdc_host[id];
 		if (cmd == SD_TOOL_REG_ACCESS) {
 			base = host->base;
+			msdc_map_offset = MSDC_REGISTER_MAP_OFFSET;
 			if ((offset == 0x18 || offset == 0x1C) && p1 != 4) {
 				seq_puts(m, "[SD_Debug] Err: Accessing TXDATA and RXDATA is forbidden\n");
 				goto out;
 			}
 		} else {
+			msdc_map_offset = MSDC_TOP_REGISTER_MAP_OFFSET;
 			base = host->base_top;
 		}
 
-		if (p1 == 0) {
-			if (offset > 0x1000) {
-				seq_puts(m, "invalid register offset\n");
+		if (p1 >= 0 && p1 <= 3) {
+			if (msdc_check_register_offset(host, m, offset,
+								msdc_map_offset)) {
+				mmc_release_host(host->mmc);
 				goto out;
 			}
+		}
+		if (p1 == 0) {
 			reg_value = p4;
 			seq_printf(m, "[SD_Debug][MSDC Reg]Original:0x%p+0x%x (0x%x)\n",
 				base, offset, MSDC_READ32(base + offset));
@@ -2275,7 +2295,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 		char *device_str, *get_set_str;
 
 		id = p2;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 		host = mtk_msdc_host[id];
 
@@ -2320,7 +2340,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 			host->hw->driving_applied->ds_drv);
 	} else if (cmd == SD_TOOL_ENABLE_SLEW_RATE) {
 		id = p1;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 		host = mtk_msdc_host[id];
 		if ((unsigned char)p2 > 1 || (unsigned char)p3 > 1
@@ -2334,7 +2354,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 		}
 	} else if (cmd == SD_TOOL_SET_RDTDSEL) {
 		id = p1;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 		host = mtk_msdc_host[id];
 		if ((p2 < 0) || (p2 > 2)) {
@@ -2358,7 +2378,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 		}
 	} else if (cmd == SD_TOOL_ENABLE_SMT) {
 		id = p1;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 		host = mtk_msdc_host[id];
 		msdc_set_smt(host, p2);
@@ -2421,7 +2441,7 @@ static int msdc_debug_proc_show(struct seq_file *m, void *v)
 	} else if (cmd == SD_TOOL_MSDC_HOST_MODE) {
 		id = p2;
 		spd_mode = p3;
-		if (id >= HOST_MAX_NUM || id < 0)
+		if (id >= HOST_MAX_NUM || id < 0 || mtk_msdc_host[id] == NULL)
 			goto invalid_host_id;
 		host = mtk_msdc_host[id];
 		if (p1 == 1) {

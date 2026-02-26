@@ -72,14 +72,14 @@ static u32 MTK_FB_XRES;
 static u32 MTK_FB_YRES;
 static u32 MTK_FB_BPP;
 //static u32 MTK_FB_PAGES;
-//BEGIN: add by jitao.bie for secure boot display error task:9845525
+//Begin add by bing-zhang for secure boot display error task 11582209
 #if 1//(TCL_SECURE_BOOT_FAILURE == 1)
 #include "tct_fbcon.h"
 u32 MTK_FB_PAGES;
 #else
 static u32 MTK_FB_PAGES;
 #endif
-//END: add by jitao.bie for secure boot display error task:9845525
+//End add by bing-zhang for secure boot display error task 11582209
 static u32 fb_xres_update;
 static u32 fb_yres_update;
 static size_t mtkfb_log_on = true;
@@ -188,7 +188,8 @@ static int mtkfb_get_overlay_layer_info(
 #ifdef CONFIG_OF
 static int _parse_tag_videolfb(void);
 #endif
-static void mtkfb_late_resume(void);
+// Add by jinggao.zhou for ENCOREVZW-7282, add BOOT DETECT timeout 5 mins 2022/11/01
+void mtkfb_late_resume(void);
 static void mtkfb_early_suspend(void);
 
 
@@ -940,7 +941,7 @@ unsigned int mtkfb_fm_auto_test(void)
 	}
 
 	if (idle_state_backup) {
-		primary_display_idlemgr_kick(__func__, 0);
+		primary_display_idlemgr_kick(__func__, 1);
 		disp_helper_set_option(DISP_OPT_IDLEMGR_ENTER_ULPS, 0);
 	}
 	fbVirAddr = (unsigned long)fbdev->fb_va_base;
@@ -974,7 +975,7 @@ unsigned int mtkfb_fm_auto_test(void)
 
 	mtkfb_pan_display_impl(&mtkfb_fbi->var, mtkfb_fbi);
 	msleep(100);
-	primary_display_idlemgr_kick(__func__, 0);
+	primary_display_idlemgr_kick(__func__, 1);
 	result = primary_display_lcm_ATA();
 
 	if (idle_state_backup)
@@ -993,7 +994,7 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd,
 	unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
-	enum DISP_STATUS ret = 0;
+	int ret = 0;
 	int r = 0;
 
 	DISPFUNC();
@@ -1053,7 +1054,7 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd,
 
 		aod_pm = (enum mtkfb_aod_power_mode)arg;
 		DISPCHECK("AOD: ioctl: %s\n",
-			aod_pm ? "AOD_DOZE_SUSPEND" : "AOD_DOZE");
+			aod_pm != MTKFB_AOD_DOZE ? "AOD_DOZE_SUSPEND" : "AOD_DOZE");
 
 		if (!primary_is_aod_supported()) {
 			DISPCHECK("AOD: feature not support\n");
@@ -1089,7 +1090,8 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd,
 		}
 		if (ret < 0)
 			DISPERR("AOD: set %s failed\n",
-				aod_pm ? "AOD_SUSPEND" : "AOD_RESUME");
+				(aod_pm == MTKFB_AOD_DOZE_SUSPEND) ?
+					"AOD_SUSPEND" : "AOD_RESUME");
 
 		break;
 	}
@@ -2442,25 +2444,25 @@ static int mtkfb_probe(struct platform_device *pdev)
 		unsigned long fbVA = (unsigned long)(fbdev->fb_va_base);
 		unsigned long fbPA = fb_pa;
 
-		//BEGIN: add by jitao.bie for secure boot display error task:9845525
+		//Begin add by bing-zhang for secure boot display error task 11582209
 		#if (TCL_SECURE_BOOT_FAILURE == 1)
 		unsigned long tct_fbVA = (unsigned long)(fbdev->fb_va_base);
 		unsigned long tct_fbPA = fb_pa;
 		//printk(KERN_ERR "mtkfb_probe tct_fbVA = %d, tct_fbPA =  %d\n", (uint)tct_fbVA,(uint)tct_fbPA);
 		#endif
-		//END: add by jitao.bie for secure boot display error task:9845525
+		//End add by bing-zhang for secure boot display error task 11582209
 
 		/* / DAL init here */
 		fbVA += DISP_GetFBRamSize();
 		fbPA += DISP_GetFBRamSize();
 		ret = DAL_Init(fbVA, fbPA);
 		DISPMSG("DAL_Init done\n");
-		//BEGIN: add by jitao.bie for secure boot display error task:9845525
+		//Begin add by bing-zhang for secure boot display error task 11582209
 		#if (TCL_SECURE_BOOT_FAILURE == 1)
 		tct_fb_Init(tct_fbVA, tct_fbPA);
 		//ret = tct_fb_Init(fbVA, fbPA);
 		#endif
-		//END: add by jitao.bie for secure boot display error task:9845525
+		//End add by bing-zhang for secure boot display error task 11582209
 	}
 
 	if (disp_helper_get_stage() != DISP_HELPER_STAGE_NORMAL)
@@ -2630,7 +2632,7 @@ static void mtkfb_early_suspend(void)
 
 }
 
-static void mtkfb_late_resume(void)
+ void mtkfb_late_resume(void)
 {
 	int ret = 0;
 

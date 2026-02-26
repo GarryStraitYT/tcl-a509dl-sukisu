@@ -156,6 +156,7 @@ TRACE_EVENT(binder_transaction,
 		  __entry->reply, __entry->flags, __entry->code)
 );
 
+#ifndef CONFIG_TCL_FREEZE
 TRACE_EVENT(binder_freeze_transaction,
 	TP_PROTO(int from, int to, const char* descriptor,
 		 int code, bool oneway),
@@ -179,6 +180,7 @@ TRACE_EVENT(binder_freeze_transaction,
 		  __entry->descriptor, __entry->code,
 		  __entry->oneway)
 );
+#endif
 
 TRACE_EVENT(binder_transaction_received,
 	TP_PROTO(struct binder_transaction *t),
@@ -427,6 +429,53 @@ TRACE_EVENT(binder_return,
 		  _IOC_NR(__entry->cmd) < ARRAY_SIZE(binder_return_strings) ?
 			  binder_return_strings[_IOC_NR(__entry->cmd)] :
 			  "unknown")
+);
+
+DECLARE_EVENT_CLASS(bd_handle_thaw_class,
+
+	TP_PROTO(pid_t sender, pid_t target),
+
+	TP_ARGS(sender, target),
+
+	TP_STRUCT__entry(
+		__field(  pid_t,			sender		)
+		__field(  pid_t,			target		)
+	),
+
+	TP_fast_assign(
+		__entry->sender = sender;
+		__entry->target = target;
+	),
+
+	TP_printk("sender[%d] target[%d]", __entry->sender, __entry->target)
+);
+
+DEFINE_EVENT(bd_handle_thaw_class, bd_handle_thaw_sg,
+
+	TP_PROTO(pid_t sender, pid_t target),
+
+	TP_ARGS(sender, target)
+);
+
+DEFINE_EVENT(bd_handle_thaw_class, bd_handle_thaw_new,
+
+	TP_PROTO(pid_t sender, pid_t target),
+
+	TP_ARGS(sender, target)
+);
+
+DEFINE_EVENT(bd_handle_thaw_class, bd_handle_thaw_legacy,
+
+	TP_PROTO(pid_t sender, pid_t target),
+
+	TP_ARGS(sender, target)
+);
+
+DEFINE_EVENT(bd_handle_thaw_class, bd_handle_thaw_reply,
+
+	TP_PROTO(pid_t sender, pid_t target),
+
+	TP_ARGS(sender, target)
 );
 
 #endif /* _BINDER_TRACE_H */

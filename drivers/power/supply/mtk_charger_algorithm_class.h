@@ -69,6 +69,12 @@ struct chg_limit_setting {
 	int input_current_limit2;
 	int charging_current_limit1;
 	int charging_current_limit2;
+/* Begin add by jin.wang task 2064 on 2021.10.26 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int total_ibus_limit;
+	int total_ibatt_limit;
+#endif
+/* End add by jin.wang */
 };
 
 enum chg_alg_props {

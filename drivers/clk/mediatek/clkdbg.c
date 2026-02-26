@@ -33,6 +33,8 @@
 #define CLKDBG_HACK_CLK			0
 #define CLKDBG_HACK_CLK_CORE		1
 
+#define MAX_CLK_NUM	1024
+#define MAX_PD_NUM	32
 
 #if !CLKDBG_CCF_API_4_4
 
@@ -337,12 +339,29 @@ EXPORT_SYMBOL(print_regs);
 static void seq_print_reg(const struct regname *rn, void *data)
 {
 	struct seq_file *s = data;
+	const char *pg = rn->base->pg;
+	struct clk *clk;
+	struct clk_hw *c_hw;
+	bool is_pwr_on = true;
 
 	if (!is_valid_reg(ADDR(rn)))
 		return;
 
-	seq_printf(s, "%-21s: [0x%08x][0x%p] = 0x%08x\n",
-		rn->name, PHYSADDR(rn), ADDR(rn), clk_readl(ADDR(rn)));
+	if (pg) {
+		clk = __clk_lookup(pg);
+		if (!clk)
+			return;
+		c_hw = __clk_get_hw(clk);
+		if (c_hw)
+			is_pwr_on = clk_hw_is_prepared(c_hw);
+	}
+
+	if (is_pwr_on)
+		seq_printf(s, "%-21s: [0x%08x][0x%p] = 0x%08x\n",
+			rn->name, PHYSADDR(rn), ADDR(rn), clk_readl(ADDR(rn)));
+	else
+		seq_printf(s, "%-21s: [0x%08x][0x%p] cannot read, pwr_off\n",
+			rn->name, PHYSADDR(rn), ADDR(rn));
 }
 
 static int seq_print_regs(struct seq_file *s, void *v)
@@ -456,7 +475,7 @@ static const char *get_provider_name(struct device_node *node, u32 *cells)
 {
 	const char *name;
 	const char *p;
-	u32 cc;
+	u32 cc = 0;
 
 	if (of_property_read_u32(node, "#clock-cells", &cc) != 0)
 		cc = 0;
@@ -485,7 +504,7 @@ static const char *get_provider_name(struct device_node *node, u32 *cells)
 
 struct provider_clk *get_all_provider_clks(void)
 {
-	static struct provider_clk provider_clks[512];
+	static struct provider_clk provider_clks[MAX_CLK_NUM];
 	struct device_node *node = NULL;
 	unsigned int n = 0;
 
@@ -536,7 +555,7 @@ struct provider_clk *get_all_provider_clks(void)
 				++n;
 			}
 		}
-	} while (node != NULL);
+	} while (node != NULL && n < MAX_CLK_NUM);
 
 	return provider_clks;
 }
@@ -916,7 +935,7 @@ static int clkdbg_set_rate(struct seq_file *s, void *v)
 	char *clk_name;
 	char *rate_str;
 	struct clk *clk;
-	unsigned long rate;
+	unsigned long rate = 0;
 	int r;
 
 	strncpy(cmd, last_cmd, sizeof(cmd));
@@ -945,13 +964,14 @@ static int clkdbg_set_rate(struct seq_file *s, void *v)
 	return r;
 }
 
+#if defined(CONFIG_MTK_ENG_BUILD)
 static void *reg_from_str(const char *str)
 {
 	static phys_addr_t phys;
 	static void __iomem *virt;
 
 	if (sizeof(void *) == sizeof(unsigned long)) {
-		unsigned long v;
+		unsigned long v = 0;
 
 		if (kstrtoul(str, 0, &v) == 0U) {
 			if ((0xf0000000 & v) < 0x20000000) {
@@ -1030,7 +1050,7 @@ static int parse_reg_val_from_cmd(void __iomem **preg, unsigned long *pval)
 static int clkdbg_reg_read(struct seq_file *s, void *v)
 {
 	void __iomem *reg;
-	unsigned long val;
+	unsigned long val = 0;
 
 	if (parse_reg_val_from_cmd(&reg, NULL) != 1)
 		return 0;
@@ -1046,7 +1066,7 @@ static int clkdbg_reg_read(struct seq_file *s, void *v)
 static int clkdbg_reg_write(struct seq_file *s, void *v)
 {
 	void __iomem *reg;
-	unsigned long val;
+	unsigned long val = 0;
 
 	if (parse_reg_val_from_cmd(&reg, &val) != 2)
 		return 0;
@@ -1093,6 +1113,8 @@ static int clkdbg_reg_clr(struct seq_file *s, void *v)
 
 	return 0;
 }
+#endif /* CONFIG_MTK_ENG_BUILD */
+
 
 static int parse_val_from_cmd(unsigned long *pval)
 {
@@ -1139,7 +1161,7 @@ static int clkdbg_show_flags(struct seq_file *s, void *v)
 
 static int clkdbg_set_flag(struct seq_file *s, void *v)
 {
-	unsigned long val;
+	unsigned long val = 0;
 
 	if (parse_val_from_cmd(&val) != 1)
 		return 0;
@@ -1153,7 +1175,7 @@ static int clkdbg_set_flag(struct seq_file *s, void *v)
 
 static int clkdbg_clr_flag(struct seq_file *s, void *v)
 {
-	unsigned long val;
+	unsigned long val = 0;
 
 	if (parse_val_from_cmd(&val) != 1)
 		return 0;
@@ -1170,8 +1192,8 @@ static int clkdbg_clr_flag(struct seq_file *s, void *v)
 
 static struct generic_pm_domain **get_all_genpd(void)
 {
-	static struct generic_pm_domain *pds[20];
-	static int num_pds;
+	static struct generic_pm_domain *pds[MAX_PD_NUM];
+	static unsigned int num_pds;
 	const size_t maxpd = ARRAY_SIZE(pds);
 	struct device_node *node;
 #if CLKDBG_PM_DOMAIN_API_4_9 || CLKDBG_PM_DOMAIN_API_4_19
@@ -1189,6 +1211,8 @@ static struct generic_pm_domain **get_all_genpd(void)
 
 #if CLKDBG_PM_DOMAIN_API_4_9 || CLKDBG_PM_DOMAIN_API_4_19
 	pdev = platform_device_alloc("traverse", 0);
+	if (!pdev)
+		return NULL;
 #endif
 
 	for (num_pds = 0; num_pds < maxpd; num_pds++) {
@@ -1235,7 +1259,7 @@ static struct platform_device *pdev_from_name(const char *name)
 {
 	struct generic_pm_domain **pds = get_all_genpd();
 
-	for (; *pds != NULL; pds++) {
+	for (; pds != NULL && *pds != NULL; pds++) {
 		struct pm_domain_data *pdd;
 		struct generic_pm_domain *pd = *pds;
 
@@ -1258,7 +1282,7 @@ static struct generic_pm_domain *genpd_from_name(const char *name)
 {
 	struct generic_pm_domain **pds = get_all_genpd();
 
-	for (; *pds != NULL; pds++) {
+	for (; pds != NULL && *pds != NULL; pds++) {
 		struct generic_pm_domain *pd = *pds;
 
 		if (IS_ERR_OR_NULL(pd))
@@ -1293,7 +1317,7 @@ static void save_all_genpd_state(struct genpd_state *genpd_states,
 	struct genpd_dev_state *devst = genpd_dev_states;
 	struct generic_pm_domain **pds = get_all_genpd();
 
-	for (; *pds != NULL; pds++) {
+	for (; pds != NULL && *pds != NULL; pds++) {
 		struct pm_domain_data *pdd;
 		struct generic_pm_domain *pd = *pds;
 
@@ -1421,7 +1445,7 @@ static void dump_genpd_state(struct genpd_state *pdst, struct seq_file *s)
 static void seq_print_all_genpd(struct seq_file *s)
 {
 	static struct genpd_dev_state devst[100];
-	static struct genpd_state pdst[20];
+	static struct genpd_state pdst[MAX_PD_NUM];
 
 	save_all_genpd_state(pdst, devst);
 	dump_genpd_state(pdst, s);
@@ -1584,7 +1608,7 @@ static int genpd_op(const char *gpd_op_name, struct seq_file *s)
 	if (strcmp(pd_name, "all") == 0) {
 		struct generic_pm_domain **pds = get_all_genpd();
 
-		for (; *pds != NULL; pds++) {
+		for (; pds != NULL && *pds != NULL; pds++) {
 			genpd = *pds;
 
 			if (IS_ERR_OR_NULL(genpd))
@@ -1676,6 +1700,27 @@ static struct pdev_drv pderv[] = {
 	PDEV_DRV("clkdbg-pd8"),
 	PDEV_DRV("clkdbg-pd9"),
 	PDEV_DRV("clkdbg-pd10"),
+	PDEV_DRV("clkdbg-pd11"),
+	PDEV_DRV("clkdbg-pd12"),
+	PDEV_DRV("clkdbg-pd13"),
+	PDEV_DRV("clkdbg-pd14"),
+	PDEV_DRV("clkdbg-pd15"),
+	PDEV_DRV("clkdbg-pd16"),
+	PDEV_DRV("clkdbg-pd17"),
+	PDEV_DRV("clkdbg-pd18"),
+	PDEV_DRV("clkdbg-pd19"),
+	PDEV_DRV("clkdbg-pd20"),
+	PDEV_DRV("clkdbg-pd21"),
+	PDEV_DRV("clkdbg-pd22"),
+	PDEV_DRV("clkdbg-pd23"),
+	PDEV_DRV("clkdbg-pd24"),
+	PDEV_DRV("clkdbg-pd25"),
+	PDEV_DRV("clkdbg-pd26"),
+	PDEV_DRV("clkdbg-pd27"),
+	PDEV_DRV("clkdbg-pd28"),
+	PDEV_DRV("clkdbg-pd29"),
+	PDEV_DRV("clkdbg-pd30"),
+	PDEV_DRV("clkdbg-pd31"),
 };
 
 static void reg_pdev_drv(const char *pdname, struct seq_file *s)
@@ -1685,7 +1730,7 @@ static void reg_pdev_drv(const char *pdname, struct seq_file *s)
 	bool allpd = (pdname == NULL || strcmp(pdname, "all") == 0);
 	int r;
 
-	for (i = 0; i < ARRAY_SIZE(pderv) && *pds != NULL; i++, pds++) {
+	for (i = 0; i < ARRAY_SIZE(pderv) && pds != NULL && *pds != NULL; i++, pds++) {
 		const char *name = pderv[i].pdrv.driver.name;
 		struct generic_pm_domain *pd = *pds;
 
@@ -1827,9 +1872,9 @@ struct provider_clk_state {
 
 struct save_point {
 	u32 spm_pwr_status;
-	struct provider_clk_state clks_states[512];
+	struct provider_clk_state clks_states[MAX_CLK_NUM];
 #if CLKDBG_PM_DOMAIN
-	struct genpd_state genpd_states[20];
+	struct genpd_state genpd_states[MAX_PD_NUM];
 	struct genpd_dev_state genpd_dev_states[100];
 #endif
 };
@@ -2059,10 +2104,12 @@ EXPORT_SYMBOL(set_custom_cmds);
 static int clkdbg_cmds(struct seq_file *s, void *v);
 
 static const struct cmd_fn common_cmds[] = {
+#if !defined(CONFIG_MACH_MT6781)
 	CMDFN("dump_regs", seq_print_regs),
 	CMDFN("dump_regs2", clkdbg_dump_regs2),
-	CMDFN("dump_state", clkdbg_dump_state_all),
 	CMDFN("dump_clks", clkdbg_dump_provider_clks),
+#endif
+	CMDFN("dump_state", clkdbg_dump_state_all),
 	CMDFN("dump_muxes", clkdbg_dump_muxes),
 	CMDFN("fmeter", seq_print_fmeter_all),
 	CMDFN("pwr_status", clkdbg_pwr_status),
@@ -2076,10 +2123,12 @@ static const struct cmd_fn common_cmds[] = {
 	CMDFN("disable_unprepare_provider", clkdbg_disable_unprepare_provider),
 	CMDFN("set_parent", clkdbg_set_parent),
 	CMDFN("set_rate", clkdbg_set_rate),
+#if defined(CONFIG_MTK_ENG_BUILD)
 	CMDFN("reg_read", clkdbg_reg_read),
 	CMDFN("reg_write", clkdbg_reg_write),
 	CMDFN("reg_set", clkdbg_reg_set),
 	CMDFN("reg_clr", clkdbg_reg_clr),
+#endif /* CONFIG_MTK_ENG_BUILD */
 	CMDFN("show_flags", clkdbg_show_flags),
 	CMDFN("set_flag", clkdbg_set_flag),
 	CMDFN("clr_flag", clkdbg_clr_flag),
@@ -2165,7 +2214,7 @@ static ssize_t clkdbg_write(
 
 	last_cmd[len] = '\0';
 
-	if (last_cmd[len - 1UL] == '\n')
+	if (len >= 1 && last_cmd[len - 1UL] == '\n')
 		last_cmd[len - 1UL] = '\0';
 
 	return (ssize_t)len;

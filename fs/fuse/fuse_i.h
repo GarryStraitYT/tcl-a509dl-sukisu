@@ -28,11 +28,8 @@
 #include <linux/refcount.h>
 #include <linux/user_namespace.h>
 
-/** Default max number of pages that can be used in a single read request */
-#define FUSE_DEFAULT_MAX_PAGES_PER_REQ 32
-
-/** Maximum of max_pages received in init_out */
-#define FUSE_MAX_MAX_PAGES 256
+/** Max number of pages that can be used in a single read request */
+#define FUSE_MAX_PAGES_PER_REQ 32
 
 /** Bias for fi->writectr, meaning new writepages must not be sent */
 #define FUSE_NOWRITE INT_MIN
@@ -41,7 +38,7 @@
 #define FUSE_NAME_MAX 1024
 
 /** Number of dentries for each connection in the control filesystem */
-#define FUSE_CTL_NUM_DENTRIES 6
+#define FUSE_CTL_NUM_DENTRIES 5
 
 /** Number of page pointers embedded in fuse_req */
 #define FUSE_REQ_INLINE_PAGES 1
@@ -90,7 +87,7 @@ struct fuse_inode {
 	/** Version of last attribute change */
 	u64 attr_version;
 
-	/** Files usable in writepage.  Protected by fi->lock */
+	/** Files usable in writepage.  Protected by fc->lock */
 	struct list_head write_files;
 
 	/** Writepages pending on truncate or fsync */
@@ -104,16 +101,13 @@ struct fuse_inode {
 	wait_queue_head_t page_waitq;
 
 	/** List of writepage requestst (pending or sent) */
-	struct rb_root writepages;
+	struct list_head writepages;
 
 	/** Miscellaneous bits describing inode state */
 	unsigned long state;
 
 	/** Lock for serializing lookup and readdir for back compatibility*/
 	struct mutex mutex;
-
-	/** Lock to protect write related fields */
-	spinlock_t lock;
 };
 
 /** FUSE inode state bits */
@@ -128,15 +122,23 @@ enum {
 
 struct fuse_conn;
 
+/**
+ * Reference to lower filesystem file for read/write operations handled in
+ * passthrough mode.
+ * This struct also tracks the credentials to be used for handling read/write
+ * operations.
+ */
+struct fuse_passthrough {
+	struct file *filp;
+	struct cred *cred;
+};
+
 /** FUSE specific file data */
 struct fuse_file {
 	/** Fuse connection for this file */
 	struct fuse_conn *fc;
 
-	/*
-	 * Request reserved for flush and release.
-	 * Modified under relative fuse_inode::lock.
-	 */
+	/** Request reserved for flush and release */
 	struct fuse_req *reserved_req;
 
 	/** Kernel file handle guaranteed to be unique */
@@ -157,11 +159,8 @@ struct fuse_file {
 	/** Entry on inode's write_files list */
 	struct list_head write_entry;
 
-	/**
-	 * Reference to lower filesystem file for read/write operations
-	 * handled in pass-through mode
-	 */
-	struct file *passthrough_filp;
+	/** Container for data related to the passthrough functionality */
+	struct fuse_passthrough passthrough;
 
 	/** RB node to be linked on fuse_conn->polled_files */
 	struct rb_node polled_node;
@@ -248,15 +247,11 @@ struct fuse_args {
 		unsigned numargs;
 		struct fuse_in_arg args[3];
 
-#ifdef CONFIG_FUSE_PASSTHROUGH_WORKAROUND
-		char *fname;
-#endif
 	} in;
 	struct {
 		unsigned argvar:1;
 		unsigned numargs;
 		struct fuse_arg args[2];
-		struct file *passthrough_filp;
 
 		/* Path used for completing d_canonical_path */
 		struct path *canonical_path;
@@ -336,6 +331,9 @@ struct fuse_req {
 	/** refcount */
 	refcount_t count;
 
+	/** Unique ID for the interrupt request */
+	u64 intr_unique;
+
 	/* Request flags, updated with test/set/clear_bit() */
 	unsigned long flags;
 
@@ -397,19 +395,13 @@ struct fuse_req {
 	struct fuse_io_priv *io;
 
 	/** Link on fi->writepages */
-	struct rb_node writepages_entry;
+	struct list_head writepages_entry;
 
 	/** Request completion callback */
 	void (*end)(struct fuse_conn *, struct fuse_req *);
 
 	/** Request is stolen from fuse_file->reserved_req */
 	struct file *stolen_file;
-
-	/** Lower filesystem file pointer used in pass-through mode */
-	struct file *passthrough_filp;
-#ifdef CONFIG_FUSE_PASSTHROUGH_WORKAROUND
-	char *fname;
-#endif
 };
 
 struct fuse_iqueue {
@@ -442,9 +434,6 @@ struct fuse_iqueue {
 	struct fasync_struct *fasync;
 };
 
-#define FUSE_PQ_HASH_BITS 8
-#define FUSE_PQ_HASH_SIZE (1 << FUSE_PQ_HASH_BITS)
-
 struct fuse_pqueue {
 	/** Connection established */
 	unsigned connected;
@@ -452,8 +441,8 @@ struct fuse_pqueue {
 	/** Lock protecting accessess to  members of this structure */
 	spinlock_t lock;
 
-	/** Hash table of requests being processed */
-	struct list_head *processing;
+	/** The list of requests being processed */
+	struct list_head processing;
 
 	/** The list of requests under I/O */
 	struct list_head io;
@@ -498,9 +487,6 @@ struct fuse_conn {
 	/** The group id for this mount */
 	kgid_t group_id;
 
-	/** Creds of process which created this mount point */
-	const struct cred *creator_cred;
-
 	/** The pid namespace for this mount */
 	struct pid_namespace *pid_ns;
 
@@ -513,14 +499,11 @@ struct fuse_conn {
 	/** Maximum write size */
 	unsigned max_write;
 
-	/** Maxmum number of pages that can be used in a single request */
-	unsigned int max_pages;
-
 	/** Input queue */
 	struct fuse_iqueue iq;
 
 	/** The next unique kernel file handle */
-	atomic64_t khctr;
+	u64 khctr;
 
 	/** rbtree of fuse_files waiting for poll events indexed by ph */
 	struct rb_root polled_files;
@@ -539,10 +522,6 @@ struct fuse_conn {
 
 	/** The list of background requests set aside for later queuing */
 	struct list_head bg_queue;
-
-	/** Protects: max_background, congestion_threshold, num_background,
-	 * active_background, bg_queue, blocked */
-	spinlock_t bg_lock;
 
 	/** Flag indicating that INIT reply has been received. Allocating
 	 * any fuse request will be suspended until the flag is set */
@@ -681,7 +660,7 @@ struct fuse_conn {
 	/** Allow other than the mounter user to access the filesystem ? */
 	unsigned allow_other:1;
 
-	/** Pass-through mode for read/write IO */
+	/** Passthrough mode for read/write IO */
 	unsigned int passthrough:1;
 
 	/** The number of requests waiting for completion */
@@ -690,10 +669,6 @@ struct fuse_conn {
 	/** Negotiated minor version */
 	unsigned minor;
 
-#ifdef CONFIG_FUSE_PASSTHROUGH_WORKAROUND
-	/** offset of fd in file handle, eg. mediaprovider::fuse::handle */
-	int fh_to_fd;
-#endif
 	/** Entry on the fuse_conn_list */
 	struct list_head entry;
 
@@ -713,7 +688,7 @@ struct fuse_conn {
 	struct fuse_req *destroy_req;
 
 	/** Version counter for attribute changes */
-	atomic64_t attr_version;
+	u64 attr_version;
 
 	/** Called on final put */
 	void (*release)(struct fuse_conn *);
@@ -726,6 +701,12 @@ struct fuse_conn {
 
 	/** List of device instances belonging to this connection */
 	struct list_head devices;
+
+	/** IDR for passthrough requests */
+	struct idr passthrough_req;
+
+	/** Proctects passthrough_req */
+	spinlock_t passthrough_req_lock;
 };
 
 static inline struct fuse_conn *get_fuse_conn_super(struct super_block *sb)
@@ -746,11 +727,6 @@ static inline struct fuse_inode *get_fuse_inode(struct inode *inode)
 static inline u64 get_node_id(struct inode *inode)
 {
 	return get_fuse_inode(inode)->nodeid;
-}
-
-static inline u64 fuse_get_attr_version(struct fuse_conn *fc)
-{
-	return atomic64_read(&fc->attr_version);
 }
 
 /** Device operations */
@@ -800,7 +776,7 @@ struct fuse_file *fuse_file_alloc(struct fuse_conn *fc);
 void fuse_file_free(struct fuse_file *ff);
 void fuse_finish_open(struct inode *inode, struct file *file);
 
-void fuse_sync_release(struct fuse_inode *fi, struct fuse_file *ff, int flags);
+void fuse_sync_release(struct fuse_file *ff, int flags);
 
 /**
  * Send RELEASE or RELEASEDIR request
@@ -868,10 +844,6 @@ struct fuse_req *fuse_request_alloc(unsigned npages);
 
 struct fuse_req *fuse_request_alloc_nofs(unsigned npages);
 
-bool fuse_req_realloc_pages(struct fuse_conn *fc, struct fuse_req *req,
-			    gfp_t flags);
-
-
 /**
  * Free a request
  */
@@ -916,10 +888,12 @@ ssize_t fuse_simple_request(struct fuse_conn *fc, struct fuse_args *args);
  * Send a request in the background
  */
 void fuse_request_send_background(struct fuse_conn *fc, struct fuse_req *req);
-bool fuse_request_queue_background(struct fuse_conn *fc, struct fuse_req *req);
+
+void fuse_request_send_background_locked(struct fuse_conn *fc,
+					 struct fuse_req *req);
 
 /* Abort all requests */
-void fuse_abort_conn(struct fuse_conn *fc);
+void fuse_abort_conn(struct fuse_conn *fc, bool is_abort);
 void fuse_wait_aborted(struct fuse_conn *fc);
 
 /**
@@ -973,6 +947,7 @@ int fuse_allow_current_process(struct fuse_conn *fc);
 
 u64 fuse_lock_owner_id(struct fuse_conn *fc, fl_owner_t id);
 
+void fuse_flush_time_update(struct inode *inode);
 void fuse_update_ctime(struct inode *inode);
 
 int fuse_update_attributes(struct inode *inode, struct file *file);
@@ -981,6 +956,8 @@ void fuse_flush_writepages(struct inode *inode);
 
 void fuse_set_nowrite(struct inode *inode);
 void fuse_release_nowrite(struct inode *inode);
+
+u64 fuse_get_attr_version(struct fuse_conn *fc);
 
 /**
  * File-system tells the kernel to invalidate cache for the given node id.
@@ -1050,20 +1027,14 @@ struct posix_acl;
 struct posix_acl *fuse_get_acl(struct inode *inode, int type);
 int fuse_set_acl(struct inode *inode, struct posix_acl *acl, int type);
 
-int fuse_passthrough_setup(struct fuse_req *req, unsigned int fd);
-void fuse_passthrough_release(struct fuse_file *ff);
+/* passthrough.c */
+int fuse_passthrough_open(struct fuse_dev *fud,
+			  struct fuse_passthrough_out *pto);
+int fuse_passthrough_setup(struct fuse_conn *fc, struct fuse_file *ff,
+			   struct fuse_open_out *openarg);
+void fuse_passthrough_release(struct fuse_passthrough *passthrough);
 ssize_t fuse_passthrough_read_iter(struct kiocb *iocb, struct iov_iter *to);
 ssize_t fuse_passthrough_write_iter(struct kiocb *iocb, struct iov_iter *from);
-int fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma);
-
-#ifdef CONFIG_FUSE_PASSTHROUGH_WORKAROUND
-char *dentry_name(struct dentry *dentry);
-void fuse_validate_passthrough(struct fuse_req *req);
-
-static bool inline fuse_passthrough_workaround_enabled(struct fuse_conn *fc)
-{
-	return !fc->passthrough && fc->fh_to_fd >= 0;
-}
-#endif
+ssize_t fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma);
 
 #endif /* _FS_FUSE_I_H */

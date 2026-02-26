@@ -64,12 +64,6 @@
 #ifdef CONFIG_PRINTK_PREFIX_ENHANCE
 static DEFINE_PER_CPU(char, printk_state);
 #endif
-//Added-Begin by yijun.liu for Task-10303959, 2020-11-29.
-#define TCT_TARGET_DMESG_INFO
-#ifdef  TCT_TARGET_DMESG_INFO
-#include <linux/rtc.h>
-#endif
-//Added-End by yijun.liu for Task-10303959, 2020-11-29.
 
 int console_printk[4] = {
 	CONSOLE_LOGLEVEL_DEFAULT,	/* console_loglevel */
@@ -545,6 +539,18 @@ int get_logtoomuch_enable(void)
 }
 
 #endif
+
+/*
+ * We cannot access per-CPU data (e.g. per-CPU flush irq_work) before
+ * per_cpu_areas are initialised. This variable is set to true when
+ * it's safe to access per-CPU data.
+ */
+static bool __printk_percpu_data_ready __read_mostly;
+
+bool printk_percpu_data_ready(void)
+{
+	return __printk_percpu_data_ready;
+}
 
 /* Return log buffer address */
 char *log_buf_addr_get(void)
@@ -1283,11 +1289,27 @@ static void __init log_buf_add_cpu(void)
 static inline void log_buf_add_cpu(void) {}
 #endif /* CONFIG_SMP */
 
+static void __init set_percpu_data_ready(void)
+{
+	printk_safe_init();
+	/* Make sure we set this flag only after printk_safe() init is done */
+	barrier();
+	__printk_percpu_data_ready = true;
+}
+
 void __init setup_log_buf(int early)
 {
 	unsigned long flags;
 	char *new_log_buf;
 	unsigned int free;
+
+	/*
+	 * Some archs call setup_log_buf() multiple times - first is very
+	 * early, e.g. from setup_arch(), and second - when percpu_areas
+	 * are initialised.
+	 */
+	if (!early)
+		set_percpu_data_ready();
 
 	if (log_buf != __log_buf)
 		return;
@@ -2094,15 +2116,6 @@ int vprintk_store(int facility, int level,
 	size_t text_len;
 	enum log_flags lflags = 0;
 
-//Added-Begin by yijun.liu for Task-10303959, 2020-11-29.
-#ifdef TCT_TARGET_DMESG_INFO
-    static char textbuf1[LOG_LINE_MAX];
-    struct rtc_time tm;
-    unsigned long sec;
-    int timezone_hours;
-#endif
-//Added-End by yijun.liu for Task-10303959, 2020-11-29.
-
 	/*
 	 * The printf needs to come first; we need the syslog
 	 * prefix which might be passed-in as a parameter.
@@ -2110,14 +2123,10 @@ int vprintk_store(int facility, int level,
 	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
 
 	/* mark and strip a trailing newline */
-//Modified-Begin by yijun.liu for Task-10303959, 2020-11-29.
-#ifndef TCT_TARGET_DMESG_INFO
 	if (text_len && text[text_len-1] == '\n') {
 		text_len--;
 		lflags |= LOG_NEWLINE;
 	}
-#endif
-//Modified-End by yijun.liu for Task-10303959, 2020-11-29.
 
 	/* strip kernel syslog prefix and extract log level or control flags */
 	if (facility == 0) {
@@ -2140,23 +2149,6 @@ int vprintk_store(int facility, int level,
 			text += 2;
 		}
 	}
-
-//Added-Begin by yijun.liu for Task-10303959, 2020-11-29.
-#ifdef TCT_TARGET_DMESG_INFO
-	sec = get_seconds();
-	sec -= sys_tz.tz_minuteswest*60;
-	rtc_time_to_tm(sec, &tm);
-	timezone_hours = 0-sys_tz.tz_minuteswest/60;
-	text_len = scnprintf(textbuf1,sizeof(textbuf1),"[%d-%02d-%02d %02d:%02d:%02d GMT%+d] %s",tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-				tm.tm_hour, tm.tm_min, tm.tm_sec, timezone_hours,text);
-	text = textbuf1;
-
-	if (text_len && text[text_len-1] == '\n') {
-		text_len--;
-		lflags |= LOG_NEWLINE;
-	}
-#endif
-//Added-End by yijun.liu for Task-10303959, 2020-11-29.
 
 	if (level == LOGLEVEL_DEFAULT)
 		level = default_message_loglevel;
@@ -2467,6 +2459,9 @@ static int __init console_setup(char *str)
 	char buf[sizeof(console_cmdline[0].name) + 4]; /* 4 for "ttyS" */
 	char *s, *options, *brl_options = NULL;
 	int idx;
+
+	if (str[0] == 0)
+		return 1;
 
 	if (_braille_console_setup(&str, &brl_options))
 		return 1;
@@ -3361,6 +3356,9 @@ static DEFINE_PER_CPU(struct irq_work, wake_up_klogd_work) = {
 
 void wake_up_klogd(void)
 {
+	if (!printk_percpu_data_ready())
+		return;
+
 	preempt_disable();
 	if (waitqueue_active(&log_wait)) {
 		this_cpu_or(printk_pending, PRINTK_PENDING_WAKEUP);
@@ -3371,6 +3369,9 @@ void wake_up_klogd(void)
 
 void defer_console_output(void)
 {
+	if (!printk_percpu_data_ready())
+		return;
+
 	preempt_disable();
 	__this_cpu_or(printk_pending, PRINTK_PENDING_OUTPUT);
 	irq_work_queue(this_cpu_ptr(&wake_up_klogd_work));

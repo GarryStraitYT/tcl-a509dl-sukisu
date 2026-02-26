@@ -10,39 +10,6 @@
 #endif
 enum LCM_DSI_MODE_CON lcm_dsi_mode;
 
-//min.luo defect 8597127:[SWD_TEST]optimize lcd cmd driver 20191113  start
-#define TCT_DCS_LONG_PACKET_ID                  0x00003902
-#define TCT_DCS_SHORT_PACKET_ID_0            0x00000500
-
-#define TCT_GERNERIC_LONG_PACKET_ID        0x00002902
-#define TCTI_GERNERIC_SHORT_PACKET_ID_0 0x00000300
-
-#ifndef TCT_DCS_GENERIC_CMD
-#define TCT_DCS_LONG_PACKET_WRITE           TCT_DCS_LONG_PACKET_ID
-#define TCT_DCS_SHORT_PACKET_WRITE         TCT_DCS_SHORT_PACKET_ID_0
-#else
-#define TCT_DCS_LONG_PACKET_WRITE           TCT_GERNERIC_LONG_PACKET_ID
-#define TCT_DCS_SHORT_PACKET_WRITE         TCTI_GERNERIC_SHORT_PACKET_ID_0
-#endif
-
-#define REGFLAG_END_OF_TABLE		(0xFFFD)
-#define REGFLAG_DELAY		0xFFFC
-#define REGFLAG_UDELAY	0xFFFB
-
-#ifdef BUILD_LK
-#define LCD_DEBUG(fmt, args...) printf(fmt, ##args)		
-#else
-#define LCD_DEBUG(fmt, args...) printk(fmt, ##args)
-#endif
-
-
-struct LCM_setting_table {
-	unsigned int cmd;
-	unsigned char count;
-	unsigned char para_list[64];
-};
-//min.luo defect 8597127:[SWD_TEST]optimize lcd cmd driver 20191113  end
-
 /* used to identify float ID PIN status */
 #define LCD_HW_ID_STATUS_LOW      0
 #define LCD_HW_ID_STATUS_HIGH     1
@@ -50,9 +17,67 @@ struct LCM_setting_table {
 #define LCD_HW_ID_STATUS_ERROR  0x03
 
 struct LCM_DRIVER *lcm_driver_list[] = {
-//bangkok tf start 
+#if defined(LUNA_ER88577B_XY_HD_VDO)
+	&luna_er88577b_xy_hd_vdo_lcm_drv,
+#endif
+#if defined(LUNA_ER88577_ZS_HD_VDO)
+	&luna_er88577_zs_hd_vdo_lcm_drv,
+#endif
+//bora start
+#if defined(BORA_FT8006S_COE_HD_VDO)
+    &bora_ft8006s_coe_hd_vdo_lcm_drv,
+#endif
+
+#if defined(BORA_GC7202_YKL_HD_VDO)
+    &bora_gc7202_ykl_hd_vdo_lcm_drv,
+#endif
+
+#if defined(BORA_NL9911C_TDT_HD_VDO)
+    &bora_nl9911c_tdt_hd_vdo_lcm_drv,
+#endif
+
+#if defined(BORA_GC7202H_YKL_HD_VDO)
+    &bora_gc7202h_ykl_hd_vdo_lcm_drv,
+#endif
+//bora end
+//jetta tf start 
+
+#if defined(APOLLO_ILI9881C_TDT_HD_DSI_VDO)
+    &apollo_ili9881c_tdt_hd_dsi_vdo_lcm_drv,
+#endif
+
+#if defined(APOLLO_OTM1287A_HD_DSI_VDO)
+    &apollo_otm1287a_hd_dsi_vdo_lcm_drv,
+#endif
+
+#if defined(APOLLO_ER88577A_HD_DSI_VDO)
+    &apollo_er88577a_hd_dsi_vdo_lcm_drv,
+#endif
+
+#if defined(APOLLO_ER88577A_XY_DSI_VDO)
+    &apollo_er88577a_xy_dsi_vdo_lcm_drv,
+#endif
+
 #if defined(BANGKOK_COE_GH1001_HD_DSI_VDO)
     &bangkok_coe_gh1001_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(DOHATMO_FT8756_HD_DSI_VDO)
+	&dohatmo_ft8756_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(BANGKOK_TDT_GH1001_HD_DSI_VDO)
+    &bangkok_tdt_gh1001_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(JETTA_TXD_GC9702P_HD_DSI_VDO)
+    &jetta_txd_gc9702p_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(JETTA_TXD_GC9702P_NEW_HD_DSI_VDO)
+    &jetta_txd_gc9702p_new_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(JETTA_COE_GH1001_HD_DSI_VDO)
+    &jetta_coe_gh1001_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(JETTA_YKL_GH1001_HD_DSI_VDO)
+    &jetta_ykl_gh1001_hd_dsi_vdo_lcm_drv,
 #endif
 #if defined(BANGKOK_TDT_ILI9881D_HD_DSI_VDO)
     &bangkok_tdt_ili9881d_hd_dsi_vdo_lcm_drv,
@@ -66,40 +91,65 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 #if defined(BANGKOK_YKL_XM96120_HD_DSI_VDO)
     &bangkok_ykl_xm96120_hd_dsi_vdo_lcm_drv,
 #endif
-//bangkok tf end
 
-//begin add by kun.zheng for task 8998289 on 2020/03/24
-#if defined(TOKYOLITETMO_NT36525BH_HD_DSI_VDO)
-	&tokyolitetmo_nt36525bh_hd_dsi_vdo_lcm_drv,
-#endif
-//end add by kun.zheng for task 8998289 on 2020/03/24
-
-//begin add by kun.zheng for task 8998289 on 2020/05/30
-#if defined(TOKYOLITETMO_FT8006S_HD_DSI_VDO)
-	&tokyolitetmo_ft8006s_hd_dsi_vdo_lcm_drv,
-#endif
-//end add by kun.zheng for task 8998289 on 2020/05/30
-
-#if defined(TOKYO_TF_FT8006_HD_DSI_VDO)
-	&tokyo_tf_ft8006_hd_dsi_vdo_lcm_drv,
+#if defined(SONATA_ICNL9916_HDP_DSI_VDO)
+    &sonata_icnl9916_hdp_dsi_vdo_lcm_drv,
 #endif
 
-//min.luo defect 8519359:add new txd 2nd lcd/tp driver 20191107  start
-#if defined(TOKYO_TF_ILI9881H_TXD_HD_DSI_VDO)
-	&tokyo_tf_ili9881h_txd_hd_dsi_vdo_lcm_drv,
+#if defined(SONATA_FT8057_HDP_DSI_VDO)
+	&sonata_ft8057_hdp_dsi_vdo_lcm_drv,
 #endif
-//min.luo defect 8519359:add new txd 2nd lcd/tp driver 20191107  end
 
-//min.luo task 8205182:add 2nd lcd/tp driver 20190805  start
-#if defined(TOKYO_TF_ILI9881H_HD_DSI_VDO)
-	&tokyo_tf_ili9881h_hd_dsi_vdo_lcm_drv,
+//jetta tf end
+//cruzelite tf start
+#if defined(CRUZELITETF_TRULY_NL9911C_HD_DSI_VDO)
+    &cruzelitetf_truly_nl9911c_hd_dsi_vdo_lcm_drv,
 #endif
-//min.luo task 8205182:add 2nd lcd/tp driver 20190805  end
 
+#if defined(CRUZELITETF_TDT_NT36525B_HD_DSI_VDO)
+    &cruzelitetf_tdt_nt36525b_hd_dsi_vdo_lcm_drv,
+#endif
+//cruzeliet tf end
+//austintf start
+#if defined(AUSTINTF_TDT_NT36525B_HD_DSI_VDO)
+    &austintf_tdt_nt36525b_hd_dsi_vdo_lcm_drv,
+#endif
+//austintf end
+
+//Begin add by bing-zhang for RATF-425 on 2022/01/05
+#if defined(RAPIDTF_TDT_GH1001_HD_DSI_VDO)
+    &rapidtf_tdt_gh1001_hd_dsi_vdo_lcm_drv,
+#endif
+//End add by bing-zhang for RATF-425 on 2022/01/05
+#if defined(CRUZEPRO_FT8756_TDT_HD_DSI_VDO)
+	&cruzepro_ft8756_tdt_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(CRUZE_NT36525B_TDT_HD_DSI_VDO)
+	&cruze_nt36525b_tdt_hd_dsi_vdo_lcm_drv,
+#endif
+#if defined(CRUZE_NL9911C_TRULY_HD_DSI_VDO)
+        &cruze_nl9911c_truly_hd_dsi_vdo_lcm_drv,
+#endif
+
+#if defined(PASSAT_ILI7835_HEHUI_EDO_FHDPLUS_AMOLED_CMD)
+     &passat_ili7835_hehui_edo_fhdplus_amoled_cmd_lcm_drv,
+#endif
+
+
+#if defined(MODEL_3_ILI7835_HEHUI_EDO_FHDPLUS_AMOLED_CMD)
+     &model_3_ili7835_hehui_edo_fhdplus_amoled_cmd_lcm_drv,
+#endif
+
+
+#if defined(HX83102P_WXGA_VDO_INCELL_BOE)
+	&hx83102p_wxga_vdo_incell_boe_lcm_drv,
+#endif
 #if defined(NT36672AH_HDP_DSI_VDO_TCL_CSOT)
 	&nt36672ah_hdp_dsi_vdo_tcl_csot_lcm_drv,
 #endif
-//end add by xiongbo.huang for android r on 20200601
+#if defined(ES6311_ANX6585_ZIGZAG_WXGA)
+	&es6311_anx6585_zigzag_wxga_lcm_drv,
+#endif
 #if defined(NT36672AH_HDP_DSI_VDO_TCL_CSOT_FWVPLUS)
 	&nt36672ah_hdp_dsi_vdo_tcl_csot_fwvplus_lcm_drv,
 #endif
@@ -108,6 +158,18 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 #endif
 #if defined(OTM1285A_HD720_DSI_VDO_TM)
 	&otm1285a_hd720_dsi_vdo_tm_lcm_drv,
+#endif
+
+#if defined(OTM1901A_FHD_DSI_VDO_TPV)
+	&otm1901a_fhd_dsi_vdo_tpv_lcm_drv,
+#endif
+
+#if defined(R63350A_FHD_DSI_VDO_TRULY)
+	&r63350a_fhd_dsi_vdo_truly_lcm_drv,
+#endif
+
+#if defined(NT35532_FHD_DSI_VDO_SHARP)
+	&nt35532_fhd_dsi_vdo_sharp_lcm_drv,
 #endif
 
 #if defined(NT35595_FHD_DSI_CMD_TRULY_8163)
@@ -1218,13 +1280,18 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 #if defined(HX8394F_HD720_DSI_VDO_TIANMA)
 	&hx8394f_hd720_dsi_vdo_tianma_lcm_drv,
 #endif
-
+#if defined(JD9365_HD720_DSI)
+	&jd9365_hd720_dsi_lcm_drv,
+#endif
 #if defined(NT36672_FHDP_DSI_VDO_AUO)
 	&nt36672_fhdp_dsi_vdo_auo_lcm_drv,
 #endif
 #ifndef CONFIG_MACH_MT6761
 #if defined(NT36672_FHDP_DSI_VDO_AUO_LANESWAP)
 	&nt36672_fhdp_dsi_vdo_auo_laneswap_lcm_drv,
+#endif
+#if defined(NT35521_HD_DSI_VDO_TRULY_NT50358)
+	&nt35521_hd_dsi_vdo_truly_nt50358_lcm_drv,
 #endif
 #endif
 
@@ -1234,6 +1301,10 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 
 #if defined(ILI9881H_HDP_DSI_VDO_ILITEK_RT5081_19_9_90HZ)
 	&ili9881h_hdp_dsi_vdo_ilitek_rt5081_19_9_90hz_lcm_drv,
+#endif
+
+#if defined(ILI9881C_HD_DSI_VDO_ILITEK_NT50358)
+	&ili9881c_hd_dsi_vdo_ilitek_nt50358_lcm_drv,
 #endif
 
 #if defined(HX83112B_FHDP_DSI_CMD_AUO_RT4801)
@@ -1255,9 +1326,23 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 #if defined(HX83112B_FHDP_DSI_VDO_AUO_RT4801)
 	&hx83112b_fhdp_dsi_vdo_auo_rt4801_lcm_drv,
 #endif
+
 #if defined(HX83112B_FHDP_DSI_CMD_AUO_RT5081)
 	&hx83112b_fhdp_dsi_cmd_auo_rt5081_lcm_drv,
 #endif
+
+#if defined(HX83112B_FHDP_DSI_VDO_AUO_RT5081)
+	&hx83112b_fhdp_dsi_vdo_auo_rt5081_lcm_drv,
+#endif
+
+#if defined(HX83112B_FHDP_DSI_CMD_AUO_RT5081_HDP)
+	&hx83112b_fhdp_dsi_cmd_auo_rt5081_hdp_lcm_drv,
+#endif
+
+#if defined(HX83112B_FHDP_DSI_VDO_AUO_RT5081_HDP)
+	&hx83112b_fhdp_dsi_vdo_auo_rt5081_hdp_lcm_drv,
+#endif
+
 #if defined(SOFEG01_FHDPLUS_DSI_CMD_SAMSUNG)
 	&sofeg01_fhdplus_dsi_cmd_samsung_lcm_drv,
 #endif
@@ -1266,9 +1351,88 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 	&nt36672c_fhdp_dsi_vdo_auo_cphy_90hz_tianma_lcm_drv,
 #endif
 
+#if defined(NT36672C_FHDP_DSI_VDO_60HZ_WO_DSC_SHENCHAO)
+	&nt36672c_fhdp_dsi_vdo_60hz_wo_dsc_shenchao_lcm_drv,
+#endif
+
 #if defined(OPPO_TIANMA_TD4310_FHDP_DSI_VDO_RT5081)
 	&oppo_tianma_td4310_fhdp_dsi_vdo_rt5081_lcm_drv,
 #endif
+
+#if defined(NT36672C_FHDP_DSI_VDO_60HZ_SHENCHAO)
+	&nt36672c_fhdp_dsi_vdo_60hz_shenchao_lcm_drv,
+#endif
+
+#if defined(NT36672C_FHDP_DSI_VDO_90HZ_SHENCHAO)
+	&nt36672c_fhdp_dsi_vdo_90hz_shenchao_lcm_drv,
+#endif
+
+#if defined(NT36672C_FHDP_DSI_VDO_90HZ_SHENCHAO_6382)
+	&nt36672c_fhdp_dsi_vdo_90hz_shenchao_6382_lcm_drv,
+#endif
+
+#if defined(TD4320_FHDP_DSI_VDO_AUO_RT5081)
+	&td4320_fhdp_dsi_vdo_auo_rt5081_lcm_drv,
+#endif
+
+#if defined(TD4320_FHDP_DSI_VDO_AUO_RT4801)
+	&td4320_fhdp_dsi_vdo_auo_rt4801_lcm_drv,
+#endif
+
+#if defined(NT36672C_FHDP_DSI_VDO_AUO_CPHY_90HZ_JDI)
+	&nt36672c_fhdp_dsi_vdo_auo_cphy_90hz_jdi_lcm_drv,
+#endif
+
+#if defined(NT36672C_FHDP_DSI_VDO_120HZ_SHENCHAO_6382)
+	&nt36672c_fhdp_dsi_vdo_120hz_shenchao_6382_lcm_drv,
+#endif
+
+#if defined(R66451_FHDP_DSI_CMD_TIANMA)
+	&r66451_fhdp_dsi_cmd_tianma_lcm_drv,
+#endif
+//Begin added by liangjiaqiang for CIVIC-3002 on 2022-07-12
+#if defined(ICNL9916_HDPLUS1612_DSI_VDO_DZX_XE665)
+	&icnl9916_hdplus1612_dsi_vdo_dzx_xe665_lcm_drv,
+#endif
+
+#if defined(FT8057_HDPLUS1612_DSI_VDO_DZX_XE665)
+	&ft8057_hdplus1612_dsi_vdo_dzx_xe665_lcm_drv,
+#endif
+
+#if defined(ICNL9916_HDPLUS1612_DSI_VDO_ZGD_XE665)
+	&icnl9916_hdplus1612_dsi_vdo_zgd_xe665_lcm_drv,
+#endif
+
+#if defined(FT8057S_HDPLUS1612_DSI_VDO_DZX_XE665)
+	&ft8057s_hdplus1612_dsi_vdo_dzx_xe665_lcm_drv,
+#endif
+
+//End added by liangjiaqiang for CIVIC-3002 on 2022-07-12
+
+/*6768 OTM*/
+#if defined(OTM1911A_FHDP_DSI_VDO_TRULY_RT5081)
+	&otm1911a_fhdp_dsi_vdo_truly_rt5081_lcm_drv,
+#endif
+
+#if defined(OTM1911A_FHDP_DSI_VDO_TRULY_RT5081_HDP)
+	&otm1911a_fhdp_dsi_vdo_truly_rt5081_hdp_lcm_drv,
+#endif
+
+#if defined(OTM1911A_FHDP_DSI_VDO_TRULY_RT4801)
+	&otm1911a_fhdp_dsi_vdo_truly_rt4801_lcm_drv,
+#endif
+
+//Begin added by liangjiaqiang for MODEL3-1880 on 2022-09-08
+#if defined(ICNL9916_HDPLUS1600_DSI_VDO_HX_XE671)
+	&icnl9916_hdplus1600_dsi_vdo_hx_xe671_lcm_drv,
+#endif
+//End added by liangjiaqiang for MODEL3-1880 on 2022-09-08
+
+//Begin added by liangjiaqiang for MODEL3-4765 on 2022-11-16
+#if defined(FT8057_HDPLUS1600_DSI_VDO_GX_XE671)
+	&ft8057_hdplus1600_dsi_vdo_gx_xe671_lcm_drv,
+#endif
+//End added by liangjiaqiang for MODEL3-4765 on 2022-11-16
 };
 
 unsigned char lcm_name_list[][128] = {
@@ -1334,6 +1498,9 @@ unsigned char lcm_name_list[][128] = {
 #if defined(NT35695B_FHD_DSI_VDO_AUO_RT5081_HDP)
 	"nt35695B_fhd_dsi_vdo_auo_rt5081_hdp_drv",
 #endif
+#if defined(HX83112B_FHDP_DSI_CMD_FHD_AUO_RT4801)
+	"hx83112b_fhdp_dsi_cmd_fhd_auo_rt4801_drv",
+#endif
 
 #if defined(NT35695B_FHD_DSI_CMD_TRULY_RT5081_720P)
 	"nt35695B_fhd_dsi_cmd_truly_rt5081_720p_lcm_drv",
@@ -1354,114 +1521,6 @@ unsigned char lcm_name_list[][128] = {
 unsigned int lcm_count =
 	sizeof(lcm_driver_list) / sizeof(struct LCM_DRIVER *);
 LCM_COMPILE_ASSERT(sizeof(lcm_driver_list) / sizeof(struct LCM_DRIVER *) != 0);
-
-//min.luo defect 8597127:[SWD_TEST]optimize lcd cmd driver 20191113  start
-void lcm_array_fill(int array_left,int array_num,struct LCM_setting_table *lcm_pata,unsigned int  data_array[],unsigned int i)
-{
-    int para_list_num = (array_num -1)*4 -1;
-
-	unsigned char para_list0 = 0;
-
-	if((array_num ==1) || (para_list_num== -1))
-	{
-	     para_list0 = lcm_pata[i].cmd;
-	}
-	else
-		para_list0 = lcm_pata[i].para_list[para_list_num];
-
-	
-     switch(array_left){
-		 case 1:
-		 	data_array[array_num] = 0x00000000 | para_list0 |(lcm_pata[i].para_list[para_list_num+1] << 8);
-               break;
-		 case 2:
-			data_array[array_num] = 0x00000000 | para_list0 |(lcm_pata[i].para_list[para_list_num+1] << 8)  | (lcm_pata[i].para_list[para_list_num+2] << 16);
-               break;
-		case 3:
-			data_array[array_num] = 0x00000000 | para_list0 |(lcm_pata[i].para_list[para_list_num+1] << 8)  | (lcm_pata[i].para_list[para_list_num+2] << 16) | (lcm_pata[i].para_list[para_list_num+3] << 24);
-               break;
-		case 0:
-			if((array_num ==1) || (para_list_num== -1))
-				 data_array[1] = 0x00000000 | (lcm_pata[i].cmd);
-			else
-		               data_array[array_num] = 0x00000000 | para_list0;
-               break;
-		default:
-				LCD_DEBUG("[min.luo]:lcm_array_fill error array_left!!\n");
-               break;
-	     	}
-
-}
-
-void lcm_array_cmdq(const struct LCM_UTIL_FUNCS *util,struct LCM_setting_table *lcm_pata,unsigned int acount)
-{
-      unsigned int i =0;
-	  unsigned int array_num =0;
-	 unsigned int  data_array[16];
-	unsigned int array_len;
-	int array_left,fill_num,array_cnt;
-
-	//int array_count =0;
-
-	//LCD_DEBUG("[min.luo]:lcm_array_cmdq start acount=%d\n",acount);
-
-	for (i = 0; i < acount; i++) {
-		unsigned cmd;
-		cmd = lcm_pata[i].cmd;
-		
-		switch (cmd) {
-			case REGFLAG_DELAY :
-			case REGFLAG_DELAY_MS_V3:
-				//LCD_DEBUG("[min.luo]:lcm_array_cmdq dalay=%d  !!\n", lcm_pata[i].count );
-				mdelay(lcm_pata[i].count);
-				break;
-
-			case REGFLAG_END_OF_TABLE :
-				//LCD_DEBUG("[min.luo]:lcm_array_cmdq REGFLAG_END_OF_TABLE  !!\n");
-				break;
-
-			default:{
-				array_len = (lcm_pata[i].count)/4;
-                      	array_left = (lcm_pata[i].count)%4;
-
-				//LCD_DEBUG("[min.luo]:lcm_array_cmdq i=%d,count=%d,array_len=%d!!\n", i,lcm_pata[i].count, array_len);
-
-                            if(lcm_pata[i].count==0)//((lcm_pata[i].count==0)||((lcm_pata[i].count==1)&&(lcm_pata[i].para_list[0]==0)))
-                            {
-                                data_array[0] = TCT_DCS_SHORT_PACKET_WRITE | ((lcm_pata[i].cmd)<<16) ;
-				    array_cnt = 1;
-                            }
-				else
-				{
-                      	    data_array[0] = TCT_DCS_LONG_PACKET_WRITE | ((lcm_pata[i].count +1)<<16) ;
-						
-                                for(array_num=1;array_num<=(array_len+1);array_num++)
-                                {
-                                    if(array_num==(array_len+1))
-						fill_num = array_left;
-					 else
-					 	fill_num = 3;
-					 
-                                    lcm_array_fill(fill_num,array_num,lcm_pata,data_array,i);
-					 //LCD_DEBUG("[min.luo]:lcm_array_cmdq 111  data_array[%d]=0x%08x!!\n",array_num,data_array[array_num]);
-                                }
-
-					array_cnt = array_len+2;
-				}
-
-				//LCD_DEBUG("[min.luo]:lcm_array_cmdq 111  data_array0=0x%08x,array_cnt=%d!!\n", data_array[0],array_cnt);
-                      
-                      	//dsi_set_cmdq(data_array, array_len+1, 1);
-                      	util->dsi_set_cmdq(data_array, array_cnt, 1);
-				break;
-			    }
-                      }
-               }
-	//LCD_DEBUG("[min.luo]:lcm_array_cmdq end\n");
-	
-}
-//min.luo defect 8597127:[SWD_TEST]optimize lcd cmd driver 20191113  end
-
 #if defined(NT35520_HD720_DSI_CMD_TM) | \
 	defined(NT35520_HD720_DSI_CMD_BOE) | \
 	defined(NT35521_HD720_DSI_VDO_BOE) | \

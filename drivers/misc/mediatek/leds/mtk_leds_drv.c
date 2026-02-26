@@ -71,7 +71,26 @@ static int mt65xx_led_set_cust(struct cust_mt65xx_led *cust, int level);
 #ifdef CONTROL_BL_TEMPERATURE
 
 /* define int limit for brightness limitation */
+/* Begin jingqing.yan add for app 4096 level mapping to PWM 1023 */
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+static unsigned int limit = 4095;
+//Begin added by liangjiaqiang for MODEL3-1976 2022-09-23
+#elif defined(CONFIG_TCT_PROJECT_JETTA) || \
+	defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE_PRO) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE) || \
+        defined(CONFIG_TCT_PROJECT_SONATA) || \
+        defined(CONFIG_TCT_PROJECT_MODEL_3) || \
+        defined(CONFIG_TCT_PROJECT_CIVIC_S)
+//End added by liangjiaqiang for MODEL3-1976 2022-09-23
+static unsigned int limit = 2047;//255;
+#else
 static unsigned int limit = 255;
+#endif
+#endif//CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING
+/* End jingqing.yan add for app 4096 level mapping to PWM 1023 */
+
 static unsigned int limit_flag;
 static unsigned int last_level;
 static unsigned int current_level;
@@ -102,7 +121,28 @@ int setMaxbrightness(int max_level, int enable)
 		}
 	} else {
 		limit_flag = 0;
+
+/* Begin jingqing.yan add for app 4096 level mapping to PWM 1023 */
+
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+		 limit = 4095;
+//Begin added by liangjiaqiang for MODEL3-1976 2022-09-23
+#elif   defined(CONFIG_TCT_PROJECT_JETTA) || \
+	defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE_PRO) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE) || \
+        defined(CONFIG_TCT_PROJECT_SONATA) || \
+        defined(CONFIG_TCT_PROJECT_MODEL_3) || \
+        defined(CONFIG_TCT_PROJECT_CIVIC_S)
+//End added by liangjiaqiang for MODEL3-1976 2022-09-23
+		limit = 2047;//255;
+#else
 		limit = 255;
+#endif
+#endif
+/* End jingqing.yan add for app 4096 level mapping to PWM 1023 */
+
 		mutex_unlock(&bl_level_limit_mutex);
 
 		if (current_level != 0) {
@@ -122,6 +162,26 @@ int setMaxbrightness(int max_level, int enable)
 }
 EXPORT_SYMBOL(setMaxbrightness);
 #endif
+
+/*Begin add by bing-zhang for 11492194 on 20210913*/
+#if defined(CONFIG_CRUZELITETF_HBM_FEATURE) || \
+    defined(CONFIG_SONATA_HBM_FEATURE)      || \
+	defined(CONFIG_MODEL_3_HBM_FEATURE)
+extern void (*tct_sunlight_process_en)(unsigned int enable);
+static void led_sunlight_set(unsigned int enable)
+{
+	if (0 == enable) {
+		disp_bls_set_backlight(mt_get_bl_brightness());
+	} else if (1 == enable) {
+		disp_bls_set_backlight(1023);
+	} else {
+		pr_info("%s() error param %d", __func__, enable);
+	}
+
+	return;
+}
+#endif
+/*End add by bing-zhang for 11492194 on 20210913*/
 static void get_div_array(void)
 {
 	int i = 0;
@@ -278,9 +338,13 @@ int mt65xx_leds_brightness_set(enum mt65xx_led_type type,
 
 	if (type < 0 || type >= MT65XX_LED_TYPE_TOTAL)
 		return -1;
-
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+	if (level > LED_HBM)
+		level = LED_HBM;
+#else
 	if (level > LED_FULL)
 		level = LED_FULL;
+#endif
 	else if (level < 0)
 		level = 0;
 
@@ -353,7 +417,16 @@ int backlight_brightness_set(int level)
 		return
 		    mt_mt65xx_led_set_cust(&cust_led_list[MT65XX_LED_TYPE_LCD],
 					   level);
-	} else {
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)&& defined(CONFIG_TCT_PROJECT_PASSAT)
+	}
+	 else if(MT65XX_LED_MODE_CUST_LCM ==
+	    cust_led_list[MT65XX_LED_TYPE_LCD].mode) {
+
+		return   mt65xx_led_set_cust(&cust_led_list[MT65XX_LED_TYPE_LCD],
+					   level);
+#endif
+	}else	{
+
 		return mt65xx_led_set_cust(&cust_led_list[MT65XX_LED_TYPE_LCD],
 					   (level >>
 					    (MT_LED_INTERNAL_LEVEL_BIT_CNT -
@@ -400,6 +473,21 @@ static int led_i2c_remove(struct i2c_client *client)
 	return 0;
 }
 #endif
+/*begin add by peisong.cao for  11674384*/
+extern int ro_maxbrightness;
+static ssize_t ro_max_brightness_show(
+    struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%u\n", ro_maxbrightness);
+}
+static ssize_t ro_max_brightness_store(struct device *dev, struct device_attribute *attr,
+  					 const char *buf, size_t size)
+  {
+  	printk("Not Support Write Function\n");
+  	return size;
+  }
+static DEVICE_ATTR(ro_max_brightness, 0664, ro_max_brightness_show,ro_max_brightness_store);
+/*end add by peisong.cao for  11674384*/
 static int mt65xx_leds_probe(struct platform_device *pdev)
 {
 	int i;
@@ -418,7 +506,7 @@ static int mt65xx_leds_probe(struct platform_device *pdev)
 		pr_debug("Unable to add led-i2c driver.\n");
 		return -1;
 	}
-	#endif
+#endif
 	pr_debug("Probe begain!\n");
 	get_div_array();
 	for (i = 0; i < MT65XX_LED_TYPE_TOTAL; i++) {
@@ -443,6 +531,10 @@ static int mt65xx_leds_probe(struct platform_device *pdev)
 
 		g_leds_data[i]->cdev.brightness_set = mt65xx_led_set;
 		g_leds_data[i]->cdev.blink_set = mt65xx_blink_set;
+/*begin add by peisong.cao for  11674384*/
+		if (device_create_file(&(pdev->dev), &dev_attr_ro_max_brightness) < 0)
+			printk("Failed to create ro_max_brightness file!\n");
+/*end add by peisong.cao for  11674384*/
 
 		INIT_WORK(&g_leds_data[i]->work, mt_mt65xx_led_work);
 
@@ -450,11 +542,40 @@ static int mt65xx_leds_probe(struct platform_device *pdev)
 		if (ret)
 			goto err;
 
+		/*Begin add by bing-zhang for 11492194 on 20210913*/
+		#if defined(CONFIG_CRUZELITETF_HBM_FEATURE) || \
+			    defined(CONFIG_SONATA_HBM_FEATURE)  || \
+				defined(CONFIG_MODEL_3_HBM_FEATURE)
+		if (g_leds_data[i]->cust.mode == MT65XX_LED_MODE_CUST_BLS_PWM)
+			tct_sunlight_process_en = led_sunlight_set;
+		#endif
+		/*End add by bing-zhang for 11492194 on 20210913*/
+
 	}
 #ifdef CONTROL_BL_TEMPERATURE
 
 	last_level = 0;
+
+/* Begin jingqing.yan add for app 4096 level mapping to PWM 1023 */
+#if defined(CONFIG_TCT_FEATURE_BACKLIGHT_MAPPING)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+        limit = 4096;
+//Begin added by liangjiaqiang for MODEL3-1976 2022-09-23
+#elif   defined(CONFIG_TCT_PROJECT_JETTA) || \
+	defined(CONFIG_TCT_PROJECT_CRUZELITETF_61) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE_PRO) || \
+	defined(CONFIG_TCT_PROJECT_CRUZE) || \
+        defined(CONFIG_TCT_PROJECT_SONATA) || \
+        defined(CONFIG_TCT_PROJECT_MODEL_3) || \
+        defined(CONFIG_TCT_PROJECT_CIVIC_S)
+//End added by liangjiaqiang for MODEL3-1976 2022-09-23
+	limit = 2047;//255;
+#else
 	limit = 255;
+#endif
+#endif
+/* End jingqing.yan add for app 4096 level mapping to PWM 1023 */
+
 	limit_flag = 0;
 	current_level = 0;
 	pr_debug

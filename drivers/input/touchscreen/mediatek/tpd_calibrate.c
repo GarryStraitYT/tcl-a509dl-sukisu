@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 
 #include "tpd.h"
 /* #ifdef TPD_HAVE_CALIBRATION */

@@ -11,7 +11,9 @@
 #include <linux/sysfs.h>
 #include <linux/wait.h>
 #include "mtk_gauge.h"
-
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+#include "mtk_charger_algorithm_class.h"
+#endif
 
 #define NETLINK_FGD 26
 #define UNIT_TRANS_10	10
@@ -105,9 +107,6 @@ enum battery_property {
 	BAT_PROP_INIT_DONE,
 	BAT_PROP_FG_RESET,
 	BAT_PROP_LOG_LEVEL,
-	/* Begin added by bitao.xiong for task-9919816 on 2020-09-14 */
-	BAT_PROP_COULOMB_COUNT,
-	/* End added by bitao.xiong for task-9919816 on 2020-09-14 */
 };
 
 struct battery_data {
@@ -726,16 +725,32 @@ struct simulator_log {
 /* ============================================================ */
 /* power misc related */
 /* ============================================================ */
+#if IS_ENABLED(TARGET_BUILD_CERTIFICATION)
+#define BAT_VOLTAGE_LOW_BOUND 3200
+#define BAT_VOLTAGE_HIGH_BOUND 3250
+#define LOW_TMP_BAT_VOLTAGE_LOW_BOUND 3150
+#else
 #define BAT_VOLTAGE_LOW_BOUND 3400
 #define BAT_VOLTAGE_HIGH_BOUND 3450
 #define LOW_TMP_BAT_VOLTAGE_LOW_BOUND 3350
+#endif
 #define SHUTDOWN_TIME 40
 #define AVGVBAT_ARRAY_SIZE 30
+
+#if IS_ENABLED(TARGET_BUILD_CERTIFICATION)
+#define INIT_VOLTAGE 3250
+#else
 #define INIT_VOLTAGE 3450
+#endif
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 /* Begin modified by bitao.xiong for task-10031392 on 2020-10-10 */
 #define BATTERY_SHUTDOWN_TEMPERATURE 62 //60
 #define BATTERY_SHUTDOWN_TEMPERATURE_COLD -22
 /* End modified by bitao.xiong for task-10031392 on 2020-10-10 */
+#else
+#define BATTERY_SHUTDOWN_TEMPERATURE 60
+#endif
 
 struct shutdown_condition {
 	bool is_overheat;
@@ -749,7 +764,9 @@ struct shutdown_controller {
 	struct alarm kthread_fgtimer;
 	bool timeout;
 	bool overheat;
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	bool overcold;/* Added by bitao.xiong for task-10031392 on 2020-10-10 */
+#endif
 	wait_queue_head_t  wait_que;
 	struct shutdown_condition shutdown_status;
 	struct timespec pre_time[SHUTDOWN_FACTOR_MAX];
@@ -786,7 +803,16 @@ struct BAT_EC_Struct {
 	int debug_uisoc_value;
 	int debug_kill_daemontest;
 };
-
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+enum peak_state_enum {
+	BAT_ENFORCE_TO_FULL,
+	BAT_DISCHARGING,
+	BAT_NOTCHARGING,
+	BAT_CHARGING
+};
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 struct mtk_battery {
 	/*linux driver related*/
 	wait_queue_head_t  wait_que;
@@ -876,7 +902,7 @@ struct mtk_battery {
 	signed int ptim_lk_i;
 	int lk_boot_coulomb;
 	int pl_bat_vol;
-        int soc_pl;
+	int soc_pl;/* Add by bing-zhang for getting ocv from preloader on 20210827 */
 	int pl_shutdown_time;
 	int pl_two_sec_reboot;
 	int plug_miss_count;
@@ -897,6 +923,32 @@ struct mtk_battery {
 	int bat_cycle_thr;
 	int bat_cycle_car;
 	int bat_cycle_ncar;
+
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+/* samrt peak level management */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    const char *charge_cycle_table;
+    char batt_resistance[20];
+    int BAT_peak_level;
+    int BatteryVerify;
+    bool peak_enforce_full;
+    int g_begin_fg_coulomb;
+    int g_begin_log_coulomb;
+    int g_begin_v_soc;
+    int g_begin_c_soc;
+    int g_stop_fg_coulomb;
+    int g_stop_log_coulomb;
+    int g_stop_v_soc;
+    int g_stop_c_soc;
+    int display_soc;
+    int daemon_uisoc;
+    int k_daemon;
+    int k_display;
+    enum peak_state_enum bat_state;
+	struct delayed_work tracking_to_zero_work;
+	struct timespec old_time;
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 
 	/* power misc */
 	struct shutdown_controller sdc;
@@ -937,13 +989,18 @@ struct mtk_battery {
 
 	/*custom related*/
 	int battery_id;
-        int battery_id_voltage; //Added by baiwei.peng for batt_id on 2020/12/02
 	struct fuel_gauge_custom_data fg_cust_data;
 	struct fuel_gauge_table_custom_data fg_table_cust_data;
 	struct fgd_cmd_param_t_custom fg_data;
-	/* Begin added by bitao.xiong for task-9820878 on 2020-08-27 */
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+/* Begin added by bitao.xiong for task-9820878 on 2020-08-27 */
 	const char *battery_type;
-	/* End added by bitao.xiong for task-9820878 on 2020-08-27 */
+	bool chg_disable;
+	bool is_debug_battery;
+/* End added by bitao.xiong for task-9820878 on 2020-08-27 */
+#endif
+
 	/* hwocv swocv */
 	int ext_hwocv_swocv;
 	int ext_hwocv_swocv_lt;
@@ -960,6 +1017,48 @@ struct mtk_battery {
 
 	int log_level;
 };
+
+/*begin modify by tangshan.bai for LEVIN-4508 on 20220719--base on ODIN5G-7905*/
+#if defined(CONFIG_TCT_FEATURE_SLEEP_CHARGE) || defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+struct remain_guage {
+	unsigned int current_now;
+	unsigned int charge_soc;
+	unsigned int vbat;
+	unsigned int charged_guage;
+	unsigned int remain_second;
+	unsigned int charged_second;
+};
+
+struct peak_guage {
+	unsigned int fg_v_soc;
+	unsigned int fg_coulomb;
+};
+
+#define MAX_DATA_NUMBER 200
+struct smart_sleep_chrging_data{
+	bool enable_smart_slp_chg;
+    int max_charge_current;
+    int max_charge_current_change;
+    int max_charge_current_change_point;
+    int max_charge_current_change_point_RemainSecond;
+	int remain_array_count;
+	struct remain_guage remain_zcv[MAX_DATA_NUMBER];
+};
+
+#define MAX_FG_DATA_NUMBER 800
+struct smart_peak_management_data{
+	bool enable_smart_peak_chg;
+	int peak_array_count;
+	struct peak_guage peak_zcv[MAX_FG_DATA_NUMBER];
+};
+
+extern struct smart_sleep_chrging_data remain_data;
+extern struct smart_peak_management_data peak_data;
+extern bool peak_enforce_full;
+extern struct mtk_charger *get_mtk_charger(void);
+extern void uisoc_tracking_to_full_work(void);
+#endif
+/*End modify by tangshan.bai for LEVIN-4508 on 20220719--base on ODIN5G-7905*/
 
 struct mtk_battery_sysfs_field_info {
 	struct device_attribute attr;
@@ -1020,13 +1119,21 @@ extern void disable_fg(struct mtk_battery *gm);
 extern int get_shutdown_cond(struct mtk_battery *gm);
 extern int get_shutdown_cond_flag(struct mtk_battery *gm);
 extern void set_shutdown_cond_flag(struct mtk_battery *gm, int val);
+//begin Added by tangshan.bai for LEVIN-6148
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+extern int record_fg_maxvalue_batteryverify(void);
+extern unsigned long cal_batt_life(unsigned int log_vsoc_start,unsigned int log_vsoc_stop,int fg_start,int fg_stop);
+extern void calculate_coulomb_charged(enum chg_alg_notifier_events plug_state);
+extern void cal_batt_life_discharge_or_charging(void);
+#endif
+//end Added by tangshan.bai for LEVIN-6148
 /*mtk_battery.c end */
 
 /* mtk_battery_algo.c */
 extern void battery_algo_init(struct mtk_battery *gm);
 extern void do_fg_algo(struct mtk_battery *gm, unsigned int intr_num);
 extern void fg_bat_temp_int_internal(struct mtk_battery *gm);
-extern void battery_ocv_to_soc(struct mtk_battery *gm);
+extern void battery_ocv_to_soc(struct mtk_battery *gm);/* Add by bing-zhang for getting ocv from preloader on 20210827 */
 /* mtk_battery_algo.c end */
 
 #endif /* __MTK_BATTERY_INTF_H__ */

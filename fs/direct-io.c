@@ -39,6 +39,21 @@
 #include <linux/atomic.h>
 #include <linux/prefetch.h>
 
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+#ifdef CONFIG_TCT_IOLIMIT
+#include <linux/iolimit_cgroup.h>
+#endif
+//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@kernel 2021/09/03 add for iolimit
+#ifdef CONFIG_CGROUP_IOLIMIT
+#include <linux/iolimit_cgroup.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 /*
  * How many user pages to map in one call to get_user_pages().  This determines
  * the size of a structure in the slab cache
@@ -869,6 +884,7 @@ submit_page_section(struct dio *dio, struct dio_submit *sdio, struct page *page,
 		    struct buffer_head *map_bh)
 {
 	int ret = 0;
+	int boundary = sdio->boundary;	/* dio_send_cur_page may clear it */
 
 	if (dio->op == REQ_OP_WRITE) {
 		/*
@@ -907,10 +923,10 @@ submit_page_section(struct dio *dio, struct dio_submit *sdio, struct page *page,
 	sdio->cur_page_fs_offset = sdio->block_in_file << sdio->blkbits;
 out:
 	/*
-	 * If sdio->boundary then we want to schedule the IO now to
+	 * If boundary then we want to schedule the IO now to
 	 * avoid metadata seeks.
 	 */
-	if (sdio->boundary) {
+	if (boundary) {
 		ret = dio_send_cur_page(dio, sdio, map_bh);
 		if (sdio->bio)
 			dio_bio_submit(dio, sdio);
@@ -1004,6 +1020,27 @@ static int do_direct_IO(struct dio *dio, struct dio_submit *sdio,
 			unsigned this_chunk_bytes;	/* # of bytes mapped */
 			unsigned this_chunk_blocks;	/* # of blocks */
 			unsigned u;
+
+#ifndef CONFIG_CGROUP_IOLIMIT
+//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+#ifdef CONFIG_TCT_IOLIMIT
+			if (dio->op == REQ_OP_WRITE)
+				io_write_bandwidth_control(PAGE_SIZE);
+			else
+				io_read_bandwidth_control(PAGE_SIZE);
+#endif
+//[TiCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
+#endif
+
+			// #ifdef VENDOR_EDIT
+			// xiwu1.peng@kernel 2021/09/03 add for iolimit
+			#ifdef CONFIG_CGROUP_IOLIMIT
+			if (dio->op == REQ_OP_WRITE)
+				io_write_bandwidth_control(PAGE_SIZE);
+			else
+				io_read_bandwidth_control(PAGE_SIZE);
+			#endif
+			// #endif /* VENDOR_EDIT */
 
 			if (sdio->blocks_available == 0) {
 				/*

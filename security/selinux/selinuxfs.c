@@ -132,6 +132,20 @@ static ssize_t sel_read_enforce(struct file *filp, char __user *buf,
 }
 
 #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
+//[SYSD SYS][tct_token][roottoken]Begin added by dongqin for task 11431746 on  2021-08-19
+#ifdef CONFIG_TCT_FEATURE_TOKEN_SUPPORT
+static bool allow_setenforce = 0;
+module_param_named(asenforce, allow_setenforce, bool, S_IRUGO | S_IWUSR);
+
+static int __init oemtoken_setup(char *str)
+{
+    if (!strcmp(str, "true"))
+        allow_setenforce = 1;
+    return 1;
+}
+__setup("androidboot.roottoken=", oemtoken_setup);
+#endif
+//[SYSD SYS][tct_token][roottoken]End added by dongqin for task 11431746 on  2021-08-19
 static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 				 size_t count, loff_t *ppos)
 
@@ -165,7 +179,13 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 				      current_sid(), SECINITSID_SECURITY,
 				      SECCLASS_SECURITY, SECURITY__SETENFORCE,
 				      NULL);
+        //[SYSD SYS][tct_token][roottoken]Begin added by dongqin for task 11431746 on  2021-08-19
+        #ifdef CONFIG_TCT_FEATURE_TOKEN_SUPPORT
+        if (length && !allow_setenforce)
+        #else
 		if (length)
+        #endif
+        //[SYSD SYS][tct_token][roottoken]End added by dongqin for task 11431746 on  2021-08-19
 			goto out;
 		audit_log(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS,
 			"enforcing=%d old_enforcing=%d auid=%u ses=%u"
@@ -1535,6 +1555,7 @@ static struct avc_cache_stats *sel_avc_get_stat_idx(loff_t *idx)
 		*idx = cpu + 1;
 		return &per_cpu(avc_cache_stats, cpu);
 	}
+	(*idx)++;
 	return NULL;
 }
 

@@ -56,6 +56,12 @@
 #define LCM_I2C_ID_NAME "I2C_LCD_BIAS"
 #endif
 
+//begin add by zhiquan.wen.hz for i2c set address for xr11451676 on 20211109
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+unsigned int lcd_i2c_id_set = 0xff;
+unsigned int lcd_i2c_addr_set =0xff;
+#endif
+//end add by zhiquan.wen.hz for i2c set address for xr11451676 on 20211109
 
 #ifdef CONFIG_MTK_LEGACY
 static struct i2c_board_info _lcm_i2c_board_info __initdata = {
@@ -68,8 +74,13 @@ static const struct of_device_id _lcm_i2c_of_match[] = {
 };
 #endif
 
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+struct i2c_client *_lcm_i2c_client;
+#else
 static struct i2c_client *_lcm_i2c_client;
-
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 
 static int _lcm_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *id);
@@ -236,7 +247,21 @@ enum LCM_STATUS lcm_i2c_set_data(char type, const struct LCM_DATA_T2 *t2)
 	return LCM_STATUS_OK;
 }
 
-
+//begin add by zhiquan.wen.hz for xr11451676 on 20211109
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+enum LCM_STATUS lcm_i2c_set_config_data(char type, const struct LCM_DATA_T2 *t2)
+{
+		pr_info("[LCM][DEBUG] %s: t2-cmd=%d,t2-data=%x\n", __func__, (unsigned int)t2->cmd,(unsigned int)t2->data);
+        if ((unsigned int)t2->cmd==1) {
+            lcd_i2c_id_set = (unsigned int)t2->data;
+        } else if ((unsigned int)t2->cmd==2) {
+            lcd_i2c_addr_set = (unsigned int)t2->data;
+            _lcm_i2c_client->addr=lcd_i2c_addr_set;
+        }
+	return LCM_STATUS_OK;
+}
+#endif
+//end add by zhiquan.wen.hz for xr11451676 on 20211109
 
 #ifndef CONFIG_FPGA_EARLY_PORTING
 module_init(_lcm_i2c_init);

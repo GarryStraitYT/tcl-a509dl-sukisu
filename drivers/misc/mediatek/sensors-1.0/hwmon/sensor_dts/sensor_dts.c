@@ -3,7 +3,7 @@
 #define pr_fmt(fmt) "[Sensor dts] " fmt
 
 #include <cust_acc.h>
-//#include <cust_accelgyro.h>
+#include <cust_accelgyro.h>
 #include <cust_alsps.h>
 #include <cust_baro.h>
 #include <cust_gyro.h>
@@ -356,7 +356,7 @@ int get_baro_dts_func(struct device_node *node, struct baro_hw *hw)
 	}
 	return 0;
 }
-#if 0
+
 int get_accelgyro_dts_func(struct device_node *node, struct accelgyro_hw *hw)
 {
 	int ret;
@@ -409,4 +409,3 @@ int get_accelgyro_dts_func(struct device_node *node, struct accelgyro_hw *hw)
 
 	return 0;
 }
-#endif

@@ -66,7 +66,14 @@
 #include <linux/ftrace.h>
 #include <linux/lockdep.h>
 #include <linux/nmi.h>
+#include <linux/khugepaged.h>
 #include <linux/psi.h>
+#ifdef CONFIG_TCL_FINE_MM_CORE
+#include <linux/zswapd.h>
+#endif
+#ifdef CONFIG_RECLAIM_ACCT
+#include <linux/reclaim_acct.h>
+#endif
 
 #include <asm/sections.h>
 #include <asm/tlbflush.h>
@@ -76,6 +83,32 @@
 #if defined(CONFIG_DMAUSER_PAGES)
 #include <mt-plat/aee.h>
 #endif
+
+#ifdef CONFIG_TCT_MM_MONITOR
+#include "mm_monitor.h"
+#endif
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+#include <tcl/defrag_helper.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+#include <linux/protect_lru.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+#include <linux/hyperhold_inf.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+#include <trace/events/zswapd_tcl.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 /* prevent >1 _updater_ of zone percpu pageset ->high and ->batch fields */
 static DEFINE_MUTEX(pcp_batch_high_lock);
@@ -298,6 +331,12 @@ char * const migratetype_names[MIGRATE_TYPES] = {
 #ifdef CONFIG_CMA
 	"CMA",
 #endif
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	"Defrag-pool",
+#endif
+// #endif /* VENDOR_EDIT */
 	"HighAtomic",
 #ifdef CONFIG_MEMORY_ISOLATION
 	"Isolate",
@@ -1115,8 +1154,11 @@ static void kernel_init_free_pages(struct page *page, int numpages)
 {
 	int i;
 
+	/* s390's use of memset() could override KASAN redzones. */
+	kasan_disable_current();
 	for (i = 0; i < numpages; i++)
 		clear_highpage(page + i);
+	kasan_enable_current();
 }
 
 static __always_inline bool free_pages_prepare(struct page *page,
@@ -1150,6 +1192,14 @@ static __always_inline bool free_pages_prepare(struct page *page,
 			(page + i)->flags &= ~PAGE_FLAGS_CHECK_AT_PREP;
 		}
 	}
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#ifdef CONFIG_MEMCG_PROTECT_LRU
+	if (PageProtect(page))
+		ClearPageProtect(page);
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 	if (PageMappingFlags(page))
 		page->mapping = NULL;
 	if (memcg_kmem_enabled() && PageKmemcg(page))
@@ -1232,6 +1282,11 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 	struct page *page, *tmp;
 	LIST_HEAD(head);
 
+	/*
+	 * Ensure proper count is passed which otherwise would stuck in the
+	 * below while (list_empty(list)) loop.
+	 */
+	count = min(pcp->count, count);
 	while (count) {
 		struct list_head *list;
 
@@ -1704,6 +1759,13 @@ static int __init deferred_init_memmap(void *data)
 	BUG_ON(pgdat->first_deferred_pfn > pgdat_end_pfn(pgdat));
 	pgdat->first_deferred_pfn = ULONG_MAX;
 
+	/*
+	 * Once we unlock here, the zone cannot be grown anymore, thus if an
+	 * interrupt thread must allocate this early in boot, zone must be
+	 * pre-grown prior to start of deferred page initialization.
+	 */
+	pgdat_resize_unlock(pgdat, &flags);
+
 	/* Only the highest zone is deferred so find it */
 	for (zid = 0; zid < MAX_NR_ZONES; zid++) {
 		zone = pgdat->node_zones + zid;
@@ -1728,7 +1790,6 @@ static int __init deferred_init_memmap(void *data)
 		epfn = min_t(unsigned long, zone_end_pfn(zone), PFN_DOWN(epa));
 		deferred_free_pages(nid, zid, spfn, epfn);
 	}
-	pgdat_resize_unlock(pgdat, &flags);
 
 	/* Sanity check that the next zone really is unpopulated */
 	WARN_ON(++zid < MAX_NR_ZONES && populated_zone(++zone));
@@ -1773,17 +1834,6 @@ deferred_grow_zone(struct zone *zone, unsigned int order)
 		return false;
 
 	pgdat_resize_lock(pgdat, &flags);
-
-	/*
-	 * If deferred pages have been initialized while we were waiting for
-	 * the lock, return true, as the zone was grown.  The caller will retry
-	 * this zone.  We won't return to this function since the caller also
-	 * has this static branch.
-	 */
-	if (!static_branch_unlikely(&deferred_pages)) {
-		pgdat_resize_unlock(pgdat, &flags);
-		return true;
-	}
 
 	/*
 	 * If someone grew this zone while we were waiting for spinlock, return
@@ -2128,6 +2178,12 @@ static int fallbacks[MIGRATE_TYPES][4] = {
 #ifdef CONFIG_CMA
 	[MIGRATE_CMA]         = { MIGRATE_TYPES }, /* Never used */
 #endif
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	[MIGRATE_UNMOVABLE_DEFRAG] = { MIGRATE_TYPES }, /* Never used */
+#endif
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_MEMORY_ISOLATION
 	[MIGRATE_ISOLATE]     = { MIGRATE_TYPES }, /* Never used */
 #endif
@@ -2143,6 +2199,23 @@ static __always_inline struct page *__rmqueue_cma_fallback(struct zone *zone,
 static inline struct page *__rmqueue_cma_fallback(struct zone *zone,
 					unsigned int order) { return NULL; }
 #endif
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+struct page *defrag__rmqueue(struct zone *zone, unsigned int order,
+			     int migratetype)
+{
+	if (order < 2) {
+		printk("defrag_rmq: zone:%s, order: %u", zone->name, order);
+		dump_stack();
+	}
+
+	return __rmqueue_smallest(zone, order, migratetype);
+}
+EXPORT_SYMBOL(defrag__rmqueue);
+#endif
+// #endif /* VENDOR_EDIT */
 
 /*
  * Move the free pages in a range to the free lists of the requested type.
@@ -2859,7 +2932,11 @@ void drain_all_pages(struct zone *zone)
 	 * Make sure nobody triggers this path before mm_percpu_wq is fully
 	 * initialized.
 	 */
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	if (WARN_ON_ONCE(!mm_percpu_wq_highpri))
+#else
 	if (WARN_ON_ONCE(!mm_percpu_wq))
+#endif
 		return;
 
 	/*
@@ -2907,7 +2984,11 @@ void drain_all_pages(struct zone *zone)
 	for_each_cpu(cpu, &cpus_with_pcps) {
 		struct work_struct *work = per_cpu_ptr(&pcpu_drain, cpu);
 		INIT_WORK(work, drain_local_pages_wq);
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+		queue_work_on(cpu, mm_percpu_wq_highpri, work);
+#else
 		queue_work_on(cpu, mm_percpu_wq, work);
+#endif
 	}
 	for_each_cpu(cpu, &cpus_with_pcps)
 		flush_work(per_cpu_ptr(&pcpu_drain, cpu));
@@ -3260,6 +3341,13 @@ struct page *rmqueue(struct zone *preferred_zone,
 	 */
 	WARN_ON_ONCE((gfp_flags & __GFP_NOFAIL) && (order > 1));
 	spin_lock_irqsave(&zone->lock, flags);
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	page = defrag_alloc(zone, order, migratetype);
+	if (!page) {
+#endif
+// #endif /* VENDOR_EDIT */
 
 	do {
 		page = NULL;
@@ -3277,6 +3365,12 @@ struct page *rmqueue(struct zone *preferred_zone,
 		if (!page)
 			page = __rmqueue(zone, order, migratetype);
 	} while (page && check_new_pages(page, order));
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	}
+#endif
+// #endif /* VENDOR_EDIT */
 
 	spin_unlock(&zone->lock);
 	if (!page)
@@ -3391,6 +3485,12 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 #ifdef CONFIG_TCT_MEMORY_DEFRAG
 	int i;
 #endif
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	bool defrag_check_flag;
+#endif
+// #endif /* VENDOR_EDIT */
 
 	/* free_pages may go negative - that's OK */
 	free_pages -= (1 << order) - 1;
@@ -3424,6 +3524,14 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 	if (!(alloc_flags & ALLOC_CMA))
 		free_pages -= zone_page_state(z, NR_FREE_CMA_PAGES);
 #endif
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	free_pages -= defrag_calc(z, order, alloc_flags);
+	defrag_check_flag = defrag_check_alloc_flag(alloc_flags, order);
+#endif
+// #endif /* VENDOR_EDIT */
 
 	/*
 	 * Check watermarks for an order-0 allocation request. If these
@@ -3469,6 +3577,16 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 			return true;
 		}
 #endif
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	if (defrag_check_flag &&
+	    !list_empty(&area->free_list[MIGRATE_UNMOVABLE_DEFRAG]))
+		return true;
+#endif
+// #endif /* VENDOR_EDIT */
+
 		if (alloc_harder &&
 			!list_empty(&area->free_list[MIGRATE_HIGHATOMIC]))
 			return true;
@@ -3487,13 +3605,28 @@ static inline bool zone_watermark_fast(struct zone *z, unsigned int order,
 		unsigned long mark, int classzone_idx, unsigned int alloc_flags)
 {
 	long free_pages = zone_page_state(z, NR_FREE_PAGES);
-	long cma_pages = 0;
+	long unusable = 0;
 
 #ifdef CONFIG_CMA
 	/* If allocation can't use CMA areas don't use free CMA pages */
 	if (!(alloc_flags & ALLOC_CMA))
-		cma_pages = zone_page_state(z, NR_FREE_CMA_PAGES);
+		unusable = zone_page_state(z, NR_FREE_CMA_PAGES);
 #endif
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	unusable += defrag_zone_free_size(z);
+#endif
+// #endif /* VENDOR_EDIT */
+
+	/*
+	 * If the caller does not have rights to ALLOC_HARDER then subtract
+	 * the high-atomic reserves. This will over-estimate the size of the
+	 * atomic reserve but it avoids a search.
+	 */
+	if (!(alloc_flags & ALLOC_HARDER))
+		unusable += z->nr_reserved_highatomic;
 
 	/*
 	 * Fast check for order-0 only. If this fails then the reserves
@@ -3502,7 +3635,7 @@ static inline bool zone_watermark_fast(struct zone *z, unsigned int order,
 	 * the caller is !atomic then it'll uselessly search the free
 	 * list. That corner case is then slower but it is harmless.
 	 */
-	if (!order && (free_pages - cma_pages) > mark + z->lowmem_reserve[classzone_idx])
+	if (!order && (free_pages - unusable) > mark + z->lowmem_reserve[classzone_idx])
 		return true;
 
 	return __zone_watermark_ok(z, order, mark, classzone_idx, alloc_flags,
@@ -3716,6 +3849,9 @@ void warn_alloc(gfp_t gfp_mask, nodemask_t *nodemask, const char *fmt, ...)
 
 	cpuset_print_current_mems_allowed();
 
+#ifdef CONFIG_TCT_MM_MONITOR
+	inc_mm_monitor_event(MM_PAGE_ALLOC_FAILED);
+#endif
 	dump_stack();
 	warn_alloc_show_mem(gfp_mask, nodemask);
 }
@@ -3848,6 +3984,12 @@ __alloc_pages_direct_compact(gfp_t gfp_mask, unsigned int order,
 	if (!order)
 		return NULL;
 
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+	TRACE_BEGIN("tpms_alloc_pages_direct_compact");
+#endif
+// #endif /* VENDOR_EDIT */
 	psi_memstall_enter(&pflags);
 	noreclaim_flag = memalloc_noreclaim_save();
 
@@ -3856,6 +3998,12 @@ __alloc_pages_direct_compact(gfp_t gfp_mask, unsigned int order,
 
 	memalloc_noreclaim_restore(noreclaim_flag);
 	psi_memstall_leave(&pflags);
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+	TRACE_END("tpms_alloc_pages_direct_compact");
+#endif
+// #endif /* VENDOR_EDIT */
 
 	if (*compact_result <= COMPACT_INACTIVE)
 		return NULL;
@@ -4060,6 +4208,12 @@ __perform_reclaim(gfp_t gfp_mask, unsigned int order,
 
 	/* We now go into synchronous reclaim */
 	cpuset_memory_pressure_bump();
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+	TRACE_BEGIN("tpms_perform_reclaim");
+#endif
+// #endif /* VENDOR_EDIT */
 	psi_memstall_enter(&pflags);
 	fs_reclaim_acquire(gfp_mask);
 	noreclaim_flag = memalloc_noreclaim_save();
@@ -4073,6 +4227,12 @@ __perform_reclaim(gfp_t gfp_mask, unsigned int order,
 	memalloc_noreclaim_restore(noreclaim_flag);
 	fs_reclaim_release(gfp_mask);
 	psi_memstall_leave(&pflags);
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for PERAPPWK-324 on 2023/03/16, add for psi_mem_monitor
+#ifdef CONFIG_TCL
+	TRACE_END("tpms_perform_reclaim");
+#endif
+// #endif /* VENDOR_EDIT */
 
 	cond_resched();
 
@@ -4102,7 +4262,13 @@ retry:
 	 */
 	if (!page && !drained) {
 		unreserve_highatomic_pageblock(ac, false);
+#ifdef CONFIG_RECLAIM_ACCT
+		reclaimacct_substage_start(RA_DRAINALLPAGES);
+#endif
 		drain_all_pages(NULL);
+#ifdef CONFIG_RECLAIM_ACCT
+		reclaimacct_substage_end(RA_DRAINALLPAGES, 0, NULL);
+#endif
 		drained = true;
 		goto retry;
 	}
@@ -4161,6 +4327,14 @@ gfp_to_alloc_flags(gfp_t gfp_mask)
 	if (gfpflags_to_migratetype(gfp_mask) == MIGRATE_MOVABLE)
 		alloc_flags |= ALLOC_CMA;
 #endif
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	defrag_migrate_to_alloc_flag(alloc_flags, gfpflags_to_migratetype(gfp_mask));
+#endif
+// #endif /* VENDOR_EDIT */
+
 	return alloc_flags;
 }
 
@@ -4355,6 +4529,9 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
 	int no_progress_loops;
 	unsigned int cpuset_mems_cookie;
 	int reserve_flags;
+#ifdef CONFIG_RECLAIM_ACCT
+	struct reclaim_acct ra = {0};
+#endif
 
 	/*
 	 * We also sanity check to catch abuse of atomic reserves being used by
@@ -4476,10 +4653,19 @@ retry:
 	/* Avoid recursion of direct reclaim */
 	if (current->flags & PF_MEMALLOC)
 		goto nopage;
+#ifdef CONFIG_TCT_MM_MONITOR
+	slowpath_alloc_count_inc(order);
+#endif
 
+#ifdef CONFIG_RECLAIM_ACCT
+	reclaimacct_start(DIRECT_RECLAIMS, &ra);
+#endif
 	/* Try direct reclaim and then allocating */
 	page = __alloc_pages_direct_reclaim(gfp_mask, order, alloc_flags, ac,
 							&did_some_progress);
+#ifdef CONFIG_RECLAIM_ACCT
+	reclaimacct_end(DIRECT_RECLAIMS);
+#endif
 	if (page)
 		goto got_pg;
 
@@ -4613,11 +4799,23 @@ static inline bool prepare_alloc_pages(gfp_t gfp_mask, unsigned int order,
 
 	might_sleep_if(gfp_mask & __GFP_DIRECT_RECLAIM);
 
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (gfp_mask & __GFP_KSWAPD_RECLAIM)
+		wake_all_zswapd();
+#endif
+
 	if (should_fail_alloc_page(gfp_mask, order))
 		return false;
 
 	if (IS_ENABLED(CONFIG_CMA) && ac->migratetype == MIGRATE_MOVABLE)
 		*alloc_flags |= ALLOC_CMA;
+
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	defrag_migrate_to_alloc_flag(*alloc_flags, ac->migratetype);
+#endif
+// #endif /* VENDOR_EDIT */
 
 	return true;
 }
@@ -4839,6 +5037,11 @@ refill:
 		if (!page_ref_sub_and_test(page, nc->pagecnt_bias))
 			goto refill;
 
+		if (unlikely(nc->pfmemalloc)) {
+			free_the_page(page, compound_order(page));
+			goto refill;
+		}
+
 #if (PAGE_SIZE < PAGE_FRAG_CACHE_MAX_SIZE)
 		/* if size can vary use size else just use PAGE_SIZE */
 		size = nc->size;
@@ -5034,6 +5237,12 @@ long si_mem_available(void)
 	 * low watermark worth of cache, needs to stay.
 	 */
 	pagecache = pages[LRU_ACTIVE_FILE] + pages[LRU_INACTIVE_FILE];
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	pagecache -= (long)get_protected_pages();
+	#endif
+	// #endif /* VENDOR_EDIT */
 	pagecache -= min(pagecache / 2, wmark_low);
 	available += pagecache;
 
@@ -5045,6 +5254,11 @@ long si_mem_available(void)
 	reclaimable = global_node_page_state(NR_SLAB_RECLAIMABLE) +
 			global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE);
 	available += reclaimable - min(reclaimable / 2, wmark_low);
+
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	available += (long)get_hyperhold_cache_pages();
+#endif
 
 	if (available < 0)
 		available = 0;
@@ -5130,6 +5344,12 @@ static void show_migration_types(unsigned char type)
 #ifdef CONFIG_CMA
 		[MIGRATE_CMA]		= 'C',
 #endif
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+		[MIGRATE_UNMOVABLE_DEFRAG] = 'D',
+#endif
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_MEMORY_ISOLATION
 		[MIGRATE_ISOLATE]	= 'I',
 #endif
@@ -5176,6 +5396,16 @@ void show_free_areas(unsigned int filter, nodemask_t *nodemask)
 		" unevictable:%lu dirty:%lu writeback:%lu unstable:%lu\n"
 		" slab_reclaimable:%lu slab_unreclaimable:%lu\n"
 		" mapped:%lu shmem:%lu pagetables:%lu bounce:%lu\n"
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+		" defrag:%lu\n"
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+		" protected:%lu"
+#endif
+// #endif /* VENDOR_EDIT */
 		" free:%lu free_pcp:%lu free_cma:%lu\n",
 		global_node_page_state(NR_ACTIVE_ANON),
 		global_node_page_state(NR_INACTIVE_ANON),
@@ -5193,6 +5423,16 @@ void show_free_areas(unsigned int filter, nodemask_t *nodemask)
 		global_node_page_state(NR_SHMEM),
 		global_zone_page_state(NR_PAGETABLE),
 		global_zone_page_state(NR_BOUNCE),
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+		global_zone_page_state(NR_FREE_DEFRAG_PAGES),
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+		get_protected_pages(),
+#endif
+// #endif /* VENDOR_EDIT */
 		global_zone_page_state(NR_FREE_PAGES),
 		free_pcp,
 		global_zone_page_state(NR_FREE_CMA_PAGES));
@@ -5280,6 +5520,12 @@ void show_free_areas(unsigned int filter, nodemask_t *nodemask)
 			" bounce:%lukB"
 			" free_pcp:%lukB"
 			" local_pcp:%ukB"
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+			" defrag:%lukB"
+#endif
+// #endif /* VENDOR_EDIT */
 			" free_cma:%lukB"
 			"\n",
 			zone->name,
@@ -5304,6 +5550,12 @@ void show_free_areas(unsigned int filter, nodemask_t *nodemask)
 			K(zone_page_state(zone, NR_BOUNCE)),
 			K(free_pcp),
 			K(this_cpu_read(zone->pageset->pcp.count)),
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+			K(zone_page_state(zone, NR_FREE_DEFRAG_PAGES)),
+#endif
+// #endif /* VENDOR_EDIT */
 			K(zone_page_state(zone, NR_FREE_CMA_PAGES)));
 		printk("lowmem_reserve[]:");
 		for (i = 0; i < MAX_NR_ZONES; i++)
@@ -5326,12 +5578,23 @@ void show_free_areas(unsigned int filter, nodemask_t *nodemask)
 
 		spin_lock_irqsave(&zone->lock, flags);
 #ifdef CONFIG_TCT_MEMORY_DEFRAG
+		memset(nr, 0, sizeof(nr));
+		memset(types, 0, sizeof(types));
 		foreach_area_order(i, order, 0) {
 			struct free_area *area = &zone->free_area[i][order];
+			int type;
+
+			nr[order] += area->nr_free;
+			total += area->nr_free << order;
+
+			for (type = 0; type < MIGRATE_TYPES; type++) {
+				if (!list_empty(&area->free_list[type]))
+					types[order] |= 1 << type;
+			}
+		}
 #else
 		for (order = 0; order < MAX_ORDER; order++) {
 			struct free_area *area = &zone->free_area[order];
-#endif
 			int type;
 
 			nr[order] = area->nr_free;
@@ -5343,6 +5606,7 @@ void show_free_areas(unsigned int filter, nodemask_t *nodemask)
 					types[order] |= 1 << type;
 			}
 		}
+#endif
 		spin_unlock_irqrestore(&zone->lock, flags);
 		for (order = 0; order < MAX_ORDER; order++) {
 			printk(KERN_CONT "%lu*%lukB ",
@@ -5775,7 +6039,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat)
  * done. Non-atomic initialization, single-pass.
  */
 void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
-		unsigned long start_pfn, enum memmap_context context,
+		unsigned long start_pfn, enum meminit_context context,
 		struct vmem_altmap *altmap)
 {
 	unsigned long end_pfn = start_pfn + size;
@@ -5802,7 +6066,7 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		 * There can be holes in boot-time mem_map[]s handed to this
 		 * function.  They do not exist on hotplugged memory.
 		 */
-		if (context != MEMMAP_EARLY)
+		if (context != MEMINIT_EARLY)
 			goto not_early;
 
 		if (!early_pfn_valid(pfn))
@@ -5837,7 +6101,7 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 not_early:
 		page = pfn_to_page(pfn);
 		__init_single_page(page, pfn, zone, nid);
-		if (context == MEMMAP_HOTPLUG)
+		if (context == MEMINIT_HOTPLUG)
 			SetPageReserved(page);
 
 		/*
@@ -5852,7 +6116,7 @@ not_early:
 		 * check here not to call set_pageblock_migratetype() against
 		 * pfn out of zone.
 		 *
-		 * Please note that MEMMAP_HOTPLUG path doesn't clear memmap
+		 * Please note that MEMINIT_HOTPLUG path doesn't clear memmap
 		 * because this is done early in sparse_add_one_section
 		 */
 		if (!(pfn & (pageblock_nr_pages - 1))) {
@@ -5881,7 +6145,8 @@ static void __meminit zone_init_free_lists(struct zone *zone)
 
 #ifndef __HAVE_ARCH_MEMMAP_INIT
 #define memmap_init(size, nid, zone, start_pfn) \
-	memmap_init_zone((size), (nid), (zone), (start_pfn), MEMMAP_EARLY, NULL)
+	memmap_init_zone((size), (nid), (zone), (start_pfn), \
+			 MEMINIT_EARLY, NULL)
 #endif
 
 static int zone_batchsize(struct zone *zone)
@@ -6558,6 +6823,10 @@ static void __meminit pgdat_init_internals(struct pglist_data *pgdat)
 	pgdat_page_ext_init(pgdat);
 	spin_lock_init(&pgdat->lru_lock);
 	lruvec_init(node_lruvec(pgdat));
+#if defined(CONFIG_TCL_FINE_MM_CORE)
+	init_waitqueue_head(&pgdat->zswapd_wait);
+	pgdat->lruvec.pgdat = pgdat;
+#endif
 }
 
 static void __meminit zone_init_internals(struct zone *zone, enum zone_type idx, int nid,
@@ -7707,9 +7976,11 @@ int __meminit init_per_zone_wmark_min(void)
 	setup_min_slab_ratio();
 #endif
 
+	khugepaged_min_free_kbytes_update();
+
 	return 0;
 }
-core_initcall(init_per_zone_wmark_min)
+postcore_initcall(init_per_zone_wmark_min)
 
 /*
  * min_free_kbytes_sysctl_handler - just a wrapper around proc_dointvec() so
@@ -8446,7 +8717,7 @@ __offline_isolated_pages(unsigned long start_pfn, unsigned long end_pfn)
 #ifdef CONFIG_TCT_MEMORY_DEFRAG
 		zone->free_area[page_area(page)/2][order].nr_free--;
 #else
- 		zone->free_area[order].nr_free--;
+		zone->free_area[order].nr_free--;
 #endif
 		for (i = 0; i < (1 << order); i++)
 			SetPageReserved((page+i));

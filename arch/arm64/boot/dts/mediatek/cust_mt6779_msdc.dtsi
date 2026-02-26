@@ -3,6 +3,8 @@
 
 &mmc0 {
 	status = "okay";
+	host-index = <0>;
+	host-function = <MSDC_EMMC>;
 	pinctrl-names = "default", "state_uhs";
 	pinctrl-0 = <&mmc0_pins_default>;
 	pinctrl-1 = <&mmc0_pins_uhs>;
@@ -73,6 +75,8 @@
 
 &mmc1 {
 	status = "okay";
+	host-index = <1>;
+	host-function = <MSDC_SD>;
 	pinctrl-names = "default", "state_uhs";
 	pinctrl-0 = <&mmc1_pins_default>;
 	pinctrl-1 = <&mmc1_pins_uhs>;
@@ -82,8 +86,8 @@
 	sd-uhs-sdr12;
 	sd-uhs-sdr25;
 	sd-uhs-sdr50;
-	//sd-uhs-sdr104;
-	//sd-uhs-ddr50;
+	sd-uhs-sdr104;
+	sd-uhs-ddr50;
 	cd-gpios = <&pio 8 GPIO_ACTIVE_LOW>;
 	vmmc-supply = <&mt_pmic_vmch_ldo_reg>;
 	vqmmc-supply = <&mt_pmic_vmc_ldo_reg>;

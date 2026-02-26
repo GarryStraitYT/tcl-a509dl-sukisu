@@ -391,6 +391,13 @@ lookup_protocol:
 		}
 	}
 out:
+	// #ifdef VENDOR_EDIT
+	// bin4.zhong@tcl.com, 2022/8/1, add for Process Traffic Statistic
+	if (!err) {
+		sk->sk_pid = current->tgid;
+		get_task_comm(sk->sk_process_name, current->group_leader);
+	}
+	// #endif /* VENDOR_EDIT */
 	return err;
 out_rcu_unlock:
 	rcu_read_unlock();

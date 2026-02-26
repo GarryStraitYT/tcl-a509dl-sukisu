@@ -176,7 +176,7 @@ extern int alsps_aal_get_data(void);
 
 /* for auto detect */
 extern int alsps_driver_add(struct alsps_init_info *obj);
-extern int ps_report_interrupt_data(int value);
+extern int ps_report_interrupt_data(int *value);
 extern int ps_flush_report(void);
 extern int als_data_report(int value, int status);
 extern int als_data_report_t(int value, int status, int64_t time_stamp);
@@ -188,8 +188,8 @@ extern int rgbw_data_report_t(int value[4], int64_t time_stamp);
 extern int rgbw_flush_report(void);
 extern int als_register_control_path(struct als_control_path *ctl);
 extern int als_register_data_path(struct als_data_path *data);
-extern int ps_data_report(int value, int status);
-extern int ps_data_report_t(int value, int status, int64_t time_stamp);
+extern int ps_data_report(int *value, int status);
+extern int ps_data_report_t(int *value, int status, int64_t time_stamp);
 extern int ps_register_control_path(struct ps_control_path *ctl);
 extern int ps_register_data_path(struct ps_data_path *data);
 extern struct platform_device *get_alsps_platformdev(void);

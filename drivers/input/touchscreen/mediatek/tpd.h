@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 
 #ifndef __TPD_H
 #define __TPD_H
@@ -17,7 +18,7 @@
 #include <generated/autoconf.h>
 #include <linux/kobject.h>
 #include <linux/regulator/consumer.h>
-#include <linux/pinctrl/consumer.h> //Add by baiwei.peng for TP porting
+#include <linux/pinctrl/consumer.h>
 
 /*debug macros */
 #define TPD_DEBUG
@@ -150,8 +151,18 @@ extern int tpd_em_spl_num;
 extern int tpd_em_pressure_threshold;
 extern struct tpd_device *tpd;
 extern void tpd_get_dts_info(void);
+#ifdef CONFIG_TOUCHSCREEN_HIMAX_CHIPSET_8789P1_8185P3
+#define GTP_RST_PORT    2
+#define GTP_INT_PORT    1
+#else
 #define GTP_RST_PORT    0
 #define GTP_INT_PORT    1
+#endif
+
+#ifdef CONFIG_TOUCHSCREEN_LUNA_CHSC5XXX_I2C
+extern void semi_touch_gpio_as_int(int pin);
+#endif
+
 extern void tpd_gpio_as_int(int pin);
 extern void tpd_gpio_output(int pin, int level);
 extern const struct of_device_id touch_of_match[];

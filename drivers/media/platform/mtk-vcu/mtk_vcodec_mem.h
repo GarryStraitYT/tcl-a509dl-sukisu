@@ -9,7 +9,7 @@
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/dma-mapping.h>
-#include <linux/soc/mediatek/mtk-cmdq.h>
+#include <mailbox/cmdq-sec.h>
 
 #ifndef CONFIG_ARM64
 #include "mm/dma.h"
@@ -41,6 +41,11 @@ struct vcu_pa_pages {
 	unsigned long pa;
 	unsigned long kva;
 	atomic_t ref_cnt;
+	struct list_head list;
+};
+
+struct vcu_page_info {
+	struct vcu_pa_pages *page;
 	struct list_head list;
 };
 

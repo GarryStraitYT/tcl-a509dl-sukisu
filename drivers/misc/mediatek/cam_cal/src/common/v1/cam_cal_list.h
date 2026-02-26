@@ -12,9 +12,20 @@ struct stCAM_CAL_LIST_STRUCT {
 	unsigned int sensorID;
 	unsigned int slaveID;
 	cam_cal_cmd_func readCamCalData;
+	/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+	cam_cal_cmd_func writeCamCalData;
+	/*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
 	unsigned int maxEepromSize;
 };
 
+extern unsigned int  zte_s5k4h7_read_region(struct i2c_client *client,
+	unsigned int addr,
+	unsigned char *data,
+	unsigned int size);
+extern unsigned int  zte_s5k4h7_sub_read_region(struct i2c_client *client,
+	unsigned int addr,
+	unsigned char *data,
+	unsigned int size);
 
 unsigned int cam_cal_get_sensor_list
 		(struct stCAM_CAL_LIST_STRUCT **ppCamcalList);

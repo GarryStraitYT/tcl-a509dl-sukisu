@@ -98,6 +98,71 @@ static void dump_instr(const char *lvl, struct pt_regs *regs)
 		__dump_instr(lvl, regs);
 	}
 }
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2022/06/01, add for tcl_action_monitor
+#ifdef CONFIG_TKPERF
+void stack_trace_save_tsk(struct task_struct *tsk, char *buf, int size)
+{
+        struct stackframe frame;
+        int skip = 0;
+	struct pt_regs *regs = NULL;
+	int cnt = 0;
+	int backtrace_cnt = 0;
+	int backtrace_max = 5;
+	int ret;
+
+        if (regs) {
+                if (user_mode(regs))
+                        return;
+                skip = 1;
+        }
+
+        if (!tsk)
+                tsk = current;
+
+        if (!try_get_task_stack(tsk))
+                return;
+
+        if (tsk == current) {
+                frame.fp = (unsigned long)__builtin_frame_address(0);
+                frame.pc = (unsigned long)dump_backtrace;
+        } else {
+                /*
+                 * task blocked in __switch_to
+                 */
+                frame.fp = thread_saved_fp(tsk);
+                frame.pc = thread_saved_pc(tsk);
+        }
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+        frame.graph = tsk->curr_ret_stack;
+#endif
+        while(1) {
+                /* skip until specified stack frame */
+                if (!skip) {
+                       // dump_backtrace_entry(frame.pc);
+			cnt += scnprintf(buf + cnt, size - cnt, "-%lx", frame.pc);
+                } else if (frame.fp == regs->regs[29]) {
+                        skip = 0;
+                        /*
+                         * Mostly, this is the case where this function is
+                         * called in panic/abort. As exception handler's
+                         * stack frame does not contain the corresponding pc
+                         * at which an exception has taken place, use regs->pc
+                         * instead.
+                         */
+                        //dump_backtrace_entry(regs->pc);
+			cnt += scnprintf(buf + cnt, size - cnt, "-%lx", regs->pc);
+			backtrace_cnt ++;
+                }
+		ret = unwind_frame(tsk, &frame);
+		if (ret < 0 || backtrace_cnt > backtrace_max)
+			break;
+        }
+
+        put_task_stack(tsk);
+}
+#endif
+// #endif /* VENDER_EDIT */
 
 void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
 {

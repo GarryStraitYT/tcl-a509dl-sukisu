@@ -69,7 +69,7 @@ int get_layering_opt(enum LYE_HELPER_OPT opt)
 #ifdef CONFIG_MTK_ROUND_CORNER_SUPPORT
 void set_round_corner_opt(enum LYE_HELPER_OPT opt, int value)
 {
-	if (opt >= LYE_OPT_NUM || opt < 0) {
+	if (opt >= LYE_OPT_NUM) {
 		DISPMSG("%s invalid round corner opt:%d\n", __func__, opt);
 		return;
 	}
@@ -79,7 +79,7 @@ void set_round_corner_opt(enum LYE_HELPER_OPT opt, int value)
 
 int get_round_corner_opt(enum LYE_HELPER_OPT opt)
 {
-	if (opt >= LYE_OPT_NUM || opt < 0) {
+	if (opt >= LYE_OPT_NUM) {
 		DISPMSG("%s invalid round corner opt:%d\n", __func__, opt);
 		return -1;
 	}
@@ -1924,7 +1924,7 @@ int layering_rule_start(struct disp_layer_info *disp_info_user, int debug_mode)
 	if (l_rule_info->hrt_idx == 0xffffffff)
 		l_rule_info->hrt_idx = 0;
 
-	l_rule_ops->copy_hrt_bound_table(0, g_emi_bound_table);
+	l_rule_ops->copy_hrt_bound_table(0, g_emi_bound_table, disp_info_user->active_config_id[0]);
 
 	/* 1.Pre-distribution */
 	l_rule_info->dal_enable = is_DAL_Enabled();
@@ -2017,6 +2017,9 @@ int layering_rule_start(struct disp_layer_info *disp_info_user, int debug_mode)
 		layering_info.hrt_num = 0;
 
 	ret = dispatch_ovl_id(&layering_info);
+
+	if (l_rule_ops->clear_layer)
+		l_rule_ops->clear_layer(&layering_info);
 
 	check_layering_result(&layering_info);
 
@@ -2150,7 +2153,7 @@ static int load_hrt_test_data(struct disp_layer_info *disp_info)
 	struct file *filp;
 	mm_segment_t oldfs;
 	int ret, pos, i;
-	long disp_id, test_case;
+	long disp_id = 0, test_case;
 	bool is_end = false, is_test_pass = false;
 	struct layer_config *input_config;
 
@@ -2208,7 +2211,7 @@ static int load_hrt_test_data(struct disp_layer_info *disp_info)
 			if (disp_info->input_config[disp_id] == NULL)
 				return 0;
 		} else if (strncmp(line_buf, "[set_layer]", 11) == 0) {
-			unsigned long tmp_info;
+			unsigned long tmp_info = 0;
 
 			tok = strchr(line_buf, ']');
 			if (!tok)
@@ -2335,8 +2338,6 @@ static int load_hrt_test_data(struct disp_layer_info *disp_info)
 				is_test_pass = false;
 			}
 
-			if (!tok)
-				goto end;
 			tok = parse_hrt_data_value(tok, &hrt_num);
 			if (!tok)
 				goto end;

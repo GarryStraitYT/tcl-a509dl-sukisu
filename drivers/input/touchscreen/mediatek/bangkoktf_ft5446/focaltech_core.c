@@ -2,7 +2,7 @@
  *
  * FocalTech TouchScreen driver.
  *
- * Copyright (c) 2012-2019, FocalTech Systems, Ltd., all rights reserved.
+ * Copyright (c) 2012-2020, FocalTech Systems, Ltd., all rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -51,6 +51,7 @@
 * Private constant and macro definitions using #define
 *****************************************************************************/
 #define FTS_DRIVER_NAME                     "fts_ts"
+#define FTS_DRIVER_PEN_NAME                 "fts_ts,pen"
 #define INTERVAL_READ_REG                   200  /* unit:ms */
 #define TIMEOUT_READ_REG                    1000 /* unit:ms */
 #if FTS_POWER_SOURCE_CUST_EN
@@ -82,6 +83,24 @@ struct fts_ts_data *fts_data;
 /*****************************************************************************
 * Static function prototypes
 *****************************************************************************/
+int fts_check_cid(struct fts_ts_data *ts_data, u8 id_h)
+{
+    int i = 0;
+    struct ft_chip_id_t *cid = &ts_data->ic_info.cid;
+    u8 cid_h = 0x0;
+
+    if (cid->type == 0)
+        return -ENODATA;
+
+    for (i = 0; i < FTS_MAX_CHIP_IDS; i++) {
+        cid_h = ((cid->chip_ids[i] >> 8) & 0x00FF);
+        if (cid_h && (id_h == cid_h)) {
+            return 0;
+        }
+    }
+
+    return -ENODATA;
+}
 
 /*****************************************************************************
 *  Name: fts_wait_tp_to_valid
@@ -96,19 +115,17 @@ int fts_wait_tp_to_valid(void)
     int ret = 0;
     int cnt = 0;
     u8 idh = 0;
-    u8 idl = 0;
-    u8 chip_idh = fts_data->ic_info.ids.chip_idh;
-    u8 chip_idl = fts_data->ic_info.ids.chip_idl;
+    struct fts_ts_data *ts_data = fts_data;
+    u8 chip_idh = ts_data->ic_info.ids.chip_idh;
 
     do {
         ret = fts_read_reg(FTS_REG_CHIP_ID, &idh);
-        ret = fts_read_reg(FTS_REG_CHIP_ID2, &idl);
-        if ((ret < 0) || (idh != chip_idh) || (idl != chip_idl)) {
-            FTS_DEBUG("TP Not Ready,ReadData:0x%02x%02x", idh, idl);
-        } else if ((idh == chip_idh) && (idl == chip_idl)) {
-            FTS_INFO("TP Ready,Device ID:0x%02x%02x", idh, idl);
+        if ((idh == chip_idh) || (fts_check_cid(ts_data, idh) == 0)) {
+            FTS_INFO("TP Ready,Device ID:0x%02x", idh);
             return 0;
-        }
+        } else
+            FTS_DEBUG("TP Not Ready,ReadData:0x%02x,ret:%d", idh, ret);
+
         cnt++;
         msleep(INTERVAL_READ_REG);
     } while ((cnt * INTERVAL_READ_REG) < TIMEOUT_READ_REG);
@@ -191,6 +208,9 @@ void fts_hid2std(void)
     int ret = 0;
     u8 buf[3] = {0xEB, 0xAA, 0x09};
 
+    if (fts_data->bus_type != BUS_TYPE_I2C)
+        return;
+
     ret = fts_write(buf, 3);
     if (ret < 0) {
         FTS_ERROR("hid2std cmd write fail");
@@ -208,11 +228,52 @@ void fts_hid2std(void)
     }
 }
 
+static int fts_match_cid(struct fts_ts_data *ts_data,
+                         u16 type, u8 id_h, u8 id_l, bool force)
+{
+#ifdef FTS_CHIP_ID_MAPPING
+    u32 i = 0;
+    u32 j = 0;
+    struct ft_chip_id_t chip_id_list[] = FTS_CHIP_ID_MAPPING;
+    u32 cid_entries = sizeof(chip_id_list) / sizeof(struct ft_chip_id_t);
+    u16 id = (id_h << 8) + id_l;
+
+    memset(&ts_data->ic_info.cid, 0, sizeof(struct ft_chip_id_t));
+    for (i = 0; i < cid_entries; i++) {
+        if (!force && (type == chip_id_list[i].type)) {
+            break;
+        } else if (force && (type == chip_id_list[i].type)) {
+            FTS_INFO("match cid,type:0x%x", (int)chip_id_list[i].type);
+            ts_data->ic_info.cid = chip_id_list[i];
+            return 0;
+        }
+    }
+
+    if (i >= cid_entries) {
+        return -ENODATA;
+    }
+
+    for (j = 0; j < FTS_MAX_CHIP_IDS; j++) {
+        if (id == chip_id_list[i].chip_ids[j]) {
+            FTS_DEBUG("cid:%x==%x", id, chip_id_list[i].chip_ids[j]);
+            FTS_INFO("match cid,type:0x%x", (int)chip_id_list[i].type);
+            ts_data->ic_info.cid = chip_id_list[i];
+            return 0;
+        }
+    }
+
+    return -ENODATA;
+#else
+    return -EINVAL;
+#endif
+}
+
+
 static int fts_get_chip_types(
     struct fts_ts_data *ts_data,
     u8 id_h, u8 id_l, bool fw_valid)
 {
-    int i = 0;
+    u32 i = 0;
     struct ft_chip_t ctype[] = FTS_CHIP_TYPE_MAPPING;
     u32 ctype_entries = sizeof(ctype) / sizeof(struct ft_chip_t);
 
@@ -224,13 +285,15 @@ static int fts_get_chip_types(
     FTS_DEBUG("verify id:0x%02x%02x", id_h, id_l);
     for (i = 0; i < ctype_entries; i++) {
         if (VALID == fw_valid) {
-            if ((id_h == ctype[i].chip_idh) && (id_l == ctype[i].chip_idl))
+            if (((id_h == ctype[i].chip_idh) && (id_l == ctype[i].chip_idl))
+                || (!fts_match_cid(ts_data, ctype[i].type, id_h, id_l, 0)))
                 break;
         } else {
             if (((id_h == ctype[i].rom_idh) && (id_l == ctype[i].rom_idl))
                 || ((id_h == ctype[i].pb_idh) && (id_l == ctype[i].pb_idl))
-                || ((id_h == ctype[i].bl_idh) && (id_l == ctype[i].bl_idl)))
+                || ((id_h == ctype[i].bl_idh) && (id_l == ctype[i].bl_idl))) {
                 break;
+            }
         }
     }
 
@@ -238,6 +301,7 @@ static int fts_get_chip_types(
         return -ENODATA;
     }
 
+    fts_match_cid(ts_data, ctype[i].type, id_h, id_l, 1);
     ts_data->ic_info.ids = ctype[i];
     return 0;
 }
@@ -285,46 +349,6 @@ static int fts_read_bootid(struct fts_ts_data *ts_data, u8 *id)
 * Output:
 * Return: return 0 if get correct ic information, otherwise return error code
 *****************************************************************************/
-static int fts_reset_to_boot(void)
-{
-	int ret = 0;
-	u8 reg = 0xFC;
-
-	FTS_INFO("send 0xAA and 0x55 to FW, reset to boot environment");
-
-	ret = fts_write_reg(reg, 0xAA);
-	if (ret < 0) {
-		FTS_ERROR("write FC=0xAA fail");
-		return ret;
-	}
-	msleep(10);
-
-	ret = fts_write_reg(reg, 0x55);
-	if (ret < 0) {
-		FTS_ERROR("write FC=0x55 fail");
-		return ret;
-	}
-
-	msleep(80);
-	return 0;
-}
-
-int fts_soft_reset_in_boot(void)
-{
-    int ret = 0;
-    u8 cmd = 0x07;
-
-    FTS_INFO("reset in boot environment");
-    ret = fts_write(&cmd, 1);
-    if (ret < 0) {
-        FTS_ERROR("pram/rom/bootloader reset cmd write fail");
-        return ret;
-    }
-
-    msleep(80);
-    return 0;
-}
-
 static int fts_get_ic_information(struct fts_ts_data *ts_data)
 {
     int ret = 0;
@@ -339,25 +363,15 @@ static int fts_get_ic_information(struct fts_ts_data *ts_data)
         ret = fts_read_reg(FTS_REG_CHIP_ID, &chip_id[0]);
         ret = fts_read_reg(FTS_REG_CHIP_ID2, &chip_id[1]);
         if ((ret < 0) || (0x0 == chip_id[0]) || (0x0 == chip_id[1])) {
-            FTS_DEBUG("i2c read invalid, read:0x%02x%02x",
+            FTS_DEBUG("chip id read invalid, read:0x%02x%02x",
                       chip_id[0], chip_id[1]);
         } else {
-			if((chip_id[0] == 0x54) && (chip_id[1] == 0x22)){
-				ret = fts_reset_to_boot();
-				if (ret < 0){
-					FTS_ERROR("enter into romboot/bootloader fail");
-				}
-				cnt =  TIMEOUT_READ_REG/INTERVAL_READ_REG + 1;
-				break;	
-			}
-			else {
-				ret = fts_get_chip_types(ts_data, chip_id[0], chip_id[1], VALID);
+            ret = fts_get_chip_types(ts_data, chip_id[0], chip_id[1], VALID);
             if (!ret)
                 break;
             else
                 FTS_DEBUG("TP not ready, read:0x%02x%02x",
                           chip_id[0], chip_id[1]);
-			}
         }
 
         cnt++;
@@ -370,27 +384,25 @@ static int fts_get_ic_information(struct fts_ts_data *ts_data)
             fts_hid2std();
         }
 
+
         ret = fts_read_bootid(ts_data, &chip_id[0]);
         if (ret <  0) {
             FTS_ERROR("read boot id fail");
-            goto soft_reboot;
+            return ret;
         }
 
         ret = fts_get_chip_types(ts_data, chip_id[0], chip_id[1], INVALID);
         if (ret < 0) {
             FTS_ERROR("can't get ic informaton");
-            goto soft_reboot;
+            return ret;
         }
     }
-	FTS_INFO("get ic information, chip id = 0x%02x%02x",
-             ts_data->ic_info.ids.chip_idh, ts_data->ic_info.ids.chip_idl);
-	ret = 0;
-	
-soft_reboot:
-	if(fts_soft_reset_in_boot()<0){
-		FTS_ERROR("fts_soft_reset_in_boot fail");
-	}
-    return ret;
+
+    FTS_INFO("get ic information, chip id = 0x%02x%02x(cid type=0x%x)",
+             ts_data->ic_info.ids.chip_idh, ts_data->ic_info.ids.chip_idl,
+             ts_data->ic_info.cid.type);
+
+    return 0;
 }
 
 /*****************************************************************************
@@ -423,14 +435,14 @@ static void fts_show_touch_buffer(u8 *data, int datalen)
 
 void fts_release_all_finger(void)
 {
-    struct input_dev *input_dev = fts_data->input_dev;
+    struct fts_ts_data *ts_data = fts_data;
+    struct input_dev *input_dev = ts_data->input_dev;
 #if FTS_MT_PROTOCOL_B_EN
     u32 finger_count = 0;
-    u32 max_touches = fts_data->pdata->max_touch_number;
+    u32 max_touches = ts_data->pdata->max_touch_number;
 #endif
 
-    FTS_FUNC_ENTER();
-    mutex_lock(&fts_data->report_mutex);
+    mutex_lock(&ts_data->report_mutex);
 #if FTS_MT_PROTOCOL_B_EN
     for (finger_count = 0; finger_count < max_touches; finger_count++) {
         input_mt_slot(input_dev, finger_count);
@@ -442,10 +454,15 @@ void fts_release_all_finger(void)
     input_report_key(input_dev, BTN_TOUCH, 0);
     input_sync(input_dev);
 
-    fts_data->touchs = 0;
-    fts_data->key_state = 0;
-    mutex_unlock(&fts_data->report_mutex);
-    FTS_FUNC_EXIT();
+#if FTS_PEN_EN
+    input_report_key(ts_data->pen_dev, BTN_TOOL_PEN, 0);
+    input_report_key(ts_data->pen_dev, BTN_TOUCH, 0);
+    input_sync(ts_data->pen_dev);
+#endif
+
+    ts_data->touchs = 0;
+    ts_data->key_state = 0;
+    mutex_unlock(&ts_data->report_mutex);
 }
 
 /*****************************************************************************
@@ -640,14 +657,73 @@ static int fts_input_report_a(struct fts_ts_data *data)
 }
 #endif
 
+#if FTS_PEN_EN
+static int fts_input_pen_report(struct fts_ts_data *data)
+{
+    struct input_dev *pen_dev = data->pen_dev;
+    struct pen_event *pevt = &data->pevent;
+    u8 *buf = data->point_buf;
+
+
+    if (buf[3] & 0x08)
+        input_report_key(pen_dev, BTN_STYLUS, 1);
+    else
+        input_report_key(pen_dev, BTN_STYLUS, 0);
+
+    if (buf[3] & 0x02)
+        input_report_key(pen_dev, BTN_STYLUS2, 1);
+    else
+        input_report_key(pen_dev, BTN_STYLUS2, 0);
+
+    pevt->inrange = (buf[3] & 0x20) ? 1 : 0;
+    pevt->tip = (buf[3] & 0x01) ? 1 : 0;
+    pevt->x = ((buf[4] & 0x0F) << 8) + buf[5];
+    pevt->y = ((buf[6] & 0x0F) << 8) + buf[7];
+    pevt->p = ((buf[8] & 0x0F) << 8) + buf[9];
+    pevt->id = buf[6] >> 4;
+    pevt->flag = buf[4] >> 6;
+    pevt->tilt_x = (buf[10] << 8) + buf[11];
+    pevt->tilt_y = (buf[12] << 8) + buf[13];
+    pevt->tool_type = BTN_TOOL_PEN;
+
+    if (data->log_level >= 2  ||
+        ((1 == data->log_level) && (FTS_TOUCH_DOWN == pevt->flag))) {
+        FTS_DEBUG("[PEN]x:%d,y:%d,p:%d,inrange:%d,tip:%d,flag:%d DOWN",
+                  pevt->x, pevt->y, pevt->p, pevt->inrange,
+                  pevt->tip, pevt->flag);
+    }
+
+    if ( (data->log_level >= 1) && (!pevt->inrange)) {
+        FTS_DEBUG("[PEN]UP");
+    }
+
+    input_report_abs(pen_dev, ABS_X, pevt->x);
+    input_report_abs(pen_dev, ABS_Y, pevt->y);
+    input_report_abs(pen_dev, ABS_PRESSURE, pevt->p);
+
+    /* check if the pen support tilt event */
+    if ((pevt->tilt_x != 0) || (pevt->tilt_y != 0)) {
+        input_report_abs(pen_dev, ABS_TILT_X, pevt->tilt_x);
+        input_report_abs(pen_dev, ABS_TILT_Y, pevt->tilt_y);
+    }
+
+    input_report_key(pen_dev, BTN_TOUCH, pevt->tip);
+    input_report_key(pen_dev, BTN_TOOL_PEN, pevt->inrange);
+    input_sync(pen_dev);
+
+    return 0;
+}
+#endif
+
+
 static int fts_read_touchdata(struct fts_ts_data *data)
 {
     int ret = 0;
+    int size = 0;
     u8 *buf = data->point_buf;
 
     memset(buf, 0xFF, data->pnt_buf_size);
     buf[0] = 0x01;
-
 
     if (data->gesture_mode) {
         if (0 == fts_gesture_readdata(data, NULL)) {
@@ -656,11 +732,43 @@ static int fts_read_touchdata(struct fts_ts_data *data)
         }
     }
 
-    ret = fts_read(buf, 1, buf + 1, data->pnt_buf_size - 1);
+#if defined(FTS_HIGH_REPORT) && FTS_HIGH_REPORT
+    if (data->point_num >= data->pdata->max_touch_number)
+        size = data->pnt_buf_size - 1;
+    else if (data->point_num > 2)
+        size = data->point_num * 6 + 3;
+    else
+        size = FTS_SIZE_DEFAULT;
+#if defined(FTS_PEN_EN) && FTS_PEN_EN
+    size = FTS_SIZE_DEFAULT;
+#endif
+
+    ret = fts_read(buf, 1, buf + 1, size);
     if (ret < 0) {
         FTS_ERROR("read touchdata failed, ret:%d", ret);
         return ret;
     }
+
+    if ((buf[size] != 0xFF) && (size < (data->pnt_buf_size - 1))
+#if defined(FTS_PEN_EN) && FTS_PEN_EN
+        && ((buf[2] & 0xF0) != 0xB0)
+#endif
+       ) {
+        buf[0] += size;
+        ret = fts_read(buf, 1, buf + 1 + size, data->pnt_buf_size - 1 - size);
+        if (ret < 0) {
+            FTS_ERROR("read touchdata2 failed, ret:%d", ret);
+            return ret;
+        }
+    }
+#else
+    size = data->pnt_buf_size - 1;
+    ret = fts_read(buf, 1, buf + 1, size);
+    if (ret < 0) {
+        FTS_ERROR("read touchdata failed, ret:%d", ret);
+        return ret;
+    }
+#endif
 
     if (data->log_level >= 3) {
         fts_show_touch_buffer(buf, data->pnt_buf_size);
@@ -684,6 +792,13 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
         return ret;
     }
 
+#if FTS_PEN_EN
+    if ((buf[2] & 0xF0) == 0xB0) {
+        fts_input_pen_report(data);
+        return 2;
+    }
+#endif
+
     data->point_num = buf[FTS_TOUCH_POINT_NUM] & 0x0F;
     data->touch_point = 0;
 
@@ -693,12 +808,14 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
             FTS_DEBUG("touch buff is 0xff, need recovery state");
             fts_release_all_finger();
             fts_tp_state_recovery(data);
+            data->point_num = 0;
             return -EIO;
         }
     }
 
     if (data->point_num > max_touch_num) {
         FTS_INFO("invalid point_num(%d)", data->point_num);
+        data->point_num = 0;
         return -EIO;
     }
 
@@ -729,7 +846,7 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
     }
 
     if (data->touch_point == 0) {
-        FTS_INFO("no touch point information");
+        FTS_INFO("no touch point information(%02x)", buf[2]);
         return -EIO;
     }
 
@@ -767,7 +884,7 @@ static void fts_irq_read_report(void)
 
 static int touch_event_handler(void *unused)
 {
-    struct sched_param param = { .sched_priority = 4 };//RTPM_PRIO_TPD
+    struct sched_param param = { .sched_priority = RTPM_PRIO_TPD };
 
     sched_setscheduler(current, SCHED_RR, &param);
     do {
@@ -826,6 +943,48 @@ static int fts_irq_registration(struct fts_ts_data *ts_data)
     return ret;
 }
 
+#if FTS_PEN_EN
+static int fts_input_pen_init(struct fts_ts_data *ts_data)
+{
+    int ret = 0;
+    struct input_dev *pen_dev;
+    struct fts_ts_platform_data *pdata = ts_data->pdata;
+
+    FTS_FUNC_ENTER();
+    pen_dev = input_allocate_device();
+    if (!pen_dev) {
+        FTS_ERROR("Failed to allocate memory for input_pen device");
+        return -ENOMEM;
+    }
+
+    pen_dev->dev.parent = ts_data->dev;
+    pen_dev->name = FTS_DRIVER_PEN_NAME;
+    pen_dev->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+    __set_bit(ABS_X, pen_dev->absbit);
+    __set_bit(ABS_Y, pen_dev->absbit);
+    __set_bit(BTN_STYLUS, pen_dev->keybit);
+    __set_bit(BTN_STYLUS2, pen_dev->keybit);
+    __set_bit(BTN_TOUCH, pen_dev->keybit);
+    __set_bit(BTN_TOOL_PEN, pen_dev->keybit);
+    __set_bit(INPUT_PROP_DIRECT, pen_dev->propbit);
+    input_set_abs_params(pen_dev, ABS_X, pdata->x_min, pdata->x_max, 0, 0);
+    input_set_abs_params(pen_dev, ABS_Y, pdata->y_min, pdata->y_max, 0, 0);
+    input_set_abs_params(pen_dev, ABS_PRESSURE, 0, 4096, 0, 0);
+
+    ret = input_register_device(pen_dev);
+    if (ret) {
+        FTS_ERROR("Input device registration failed");
+        input_free_device(pen_dev);
+        pen_dev = NULL;
+        return ret;
+    }
+
+    ts_data->pen_dev = pen_dev;
+    FTS_FUNC_EXIT();
+    return 0;
+}
+#endif
+
 static int fts_input_init(struct fts_ts_data *ts_data)
 {
     int ret = 0;
@@ -842,8 +1001,10 @@ static int fts_input_init(struct fts_ts_data *ts_data)
 
     /* Init and register Input device */
     input_dev->name = FTS_DRIVER_NAME;
-
-    input_dev->id.bustype = BUS_I2C;
+    if (ts_data->bus_type == BUS_TYPE_I2C)
+        input_dev->id.bustype = BUS_I2C;
+    else
+        input_dev->id.bustype = BUS_SPI;
     input_dev->dev.parent = ts_data->dev;
 
     input_set_drvdata(input_dev, ts_data);
@@ -881,8 +1042,18 @@ static int fts_input_init(struct fts_ts_data *ts_data)
         return ret;
     }
 
-    ts_data->input_dev = input_dev;
+#if FTS_PEN_EN
+    ret = fts_input_pen_init(ts_data);
+    if (ret) {
+        FTS_ERROR("Input-pen device registration failed");
+        input_set_drvdata(input_dev, NULL);
+        input_free_device(input_dev);
+        input_dev = NULL;
+        return ret;
+    }
+#endif
 
+    ts_data->input_dev = input_dev;
     FTS_FUNC_EXIT();
     return 0;
 }
@@ -1054,8 +1225,8 @@ static void fts_platform_data_init(struct fts_ts_data *ts_data)
                  pdata->key_x_coords[2], pdata->key_y_coords[2]);
     }
     pdata->max_touch_number = tpd_dts_data.touch_max_num;
-    pdata->irq_gpio = 1;
-    pdata->reset_gpio = 0;
+    pdata->irq_gpio = 0;
+    pdata->reset_gpio = 46;
     pdata->x_min = 0;
     pdata->x_max = TPD_RES_X;
     pdata->y_min = 0;
@@ -1205,6 +1376,9 @@ err_power_init:
     kfree_safe(ts_data->events);
 err_report_buffer:
     input_unregister_device(ts_data->input_dev);
+#if FTS_PEN_EN
+    input_unregister_device(ts_data->pen_dev);
+#endif
 err_input_init:
     if (ts_data->ts_workqueue)
         destroy_workqueue(ts_data->ts_workqueue);
@@ -1244,6 +1418,9 @@ static int fts_ts_remove_entry(struct fts_ts_data *ts_data)
 
     free_irq(ts_data->irq, ts_data);
     input_unregister_device(ts_data->input_dev);
+#if FTS_PEN_EN
+    input_unregister_device(ts_data->pen_dev);
+#endif
 
     if (ts_data->ts_workqueue)
         destroy_workqueue(ts_data->ts_workqueue);
@@ -1276,7 +1453,7 @@ static int fts_ts_remove_entry(struct fts_ts_data *ts_data)
 /*****************************************************************************
 * TP Driver
 *****************************************************************************/
-extern char ctp_module_name[256];
+extern char ctp_module_name1[256];
 //extern int tp_firmware_version;
 
 static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -1309,6 +1486,7 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
     ts_data->dev = &client->dev;
     ts_data->log_level = 1;
     ts_data->fw_is_running = 0;
+    ts_data->bus_type = BUS_TYPE_I2C;
     i2c_set_clientdata(client, ts_data);
 
     ret = fts_ts_probe_entry(ts_data);
@@ -1318,7 +1496,7 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
         return ret;
     }
 
-    snprintf(ctp_module_name, 256, "FT5446:TDT\n");
+    snprintf(ctp_module_name1, 256, "FT5446:TDT\n");
 
     FTS_INFO("Touch Screen(I2C BUS) driver prboe successfully");
     return 0;

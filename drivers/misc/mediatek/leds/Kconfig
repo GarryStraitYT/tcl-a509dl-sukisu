@@ -14,6 +14,44 @@ config LIGHTNESS_MAPPING_VALUE
 	help
 	  Backlight brightness mapping value, from 0 to 255.
 
+
+#Begin meng.zhang for 2047 level to 1024 pwn output
+if BACKLIGHT_2047LEVEL_TO_1024PWM_MAPPING
+config LIGHTNESS_MAPPING_VALUE
+	int "Backlight brightness mapping value"
+	default 2047
+	---help---
+	  Backlight brightness mapping value, from 0 to 2047.
+endif
+#End meng.zhang for 2047 level to 1024 pwn output
+
+# Begin add by bing-zhang for 11671805 on 2021/11/15
+config BACKLIGHT_2047LEVEL_TO_1024PWM_MAPPING_AUSTINTF
+	bool "Backlight brightness mapping value"
+	default n
+	---help---
+	  Backlight brightness mapping value, from 0 to 2047.
+# End add by bing-zhang for 11671805 on 2021/11/15
+
+#Begin add by jingqing.yan for aod mode 2021.11.25
+config TCT_FEATURE_AOD_FUNCTION
+	bool "support aod mode enable"
+	default n
+	help
+	  AOD mode enable.
+	  Set y to support.
+	  Set n to disable.
+	  For aod mode enable.
+#End add by jingqing.yan for aod mode 2021.11.25
+
+#Begin add by jiaxin.pi for sonata backlight curve 2022.7.13
+config TCT_PROJECT_SONATA_BACKLIGHT_CURVE
+        bool "sonata backlight curve enable"
+        default n
+        help
+          sonata backlight curve
+#End add by jiaxin.pi for sonata backlight curve 2022.7.13
+
 config BACKLIGHT_SUPPORT_LP8557
 	bool "Support backlight lp8557 board"
 	default n
@@ -40,3 +78,42 @@ config LEDS_MT6357
 	  Mediatek MT6357 PMIC.
 	  If you want to use MediaTek(R) LEDs support, say Y or M here.
 	  If unsure, say N.
+
+
+config LEDS_MTK_DISP
+	tristate "Mediatek display LED support"
+	depends on LEDS_CLASS
+	---help---
+	  This option enables support for Mediatek display LEDs.
+	  say 'y' to enable this
+          Set n to disable.
+	  To compile this driver as a module, the module will be called leds-mtk-disp.
+
+config LEDS_MTK_PWM
+	tristate "Mediatek pwm LED support"
+	depends on LEDS_CLASS
+	depends on PWM_MTK_DISP
+	help
+	  This option enables support for Mediatek pwm LEDs.
+	  say 'y' to enable this
+
+	  To compile this driver as a module, choose 'M' here: the module
+	  will be called leds-mtk-pwm.
+
+config LEDS_MTK_I2C
+	tristate "Mediatek i2c LED support"
+	depends on LEDS_CLASS
+	help
+	  This option enables support for Mediatek i2c LEDs.
+	  say 'y' to enable this
+
+	  To compile this driver as a module, choose 'M' here: the module
+	  will be called leds-mtk-i2c.
+
+config CONTROL_BL_TEMPERATURE
+	bool "Support backlight controlled by thermal"
+	---help---
+	  This option enables support thermal to set max brightness.
+	  Set y to support.
+	  Set n to not support.
+	  This option enables means thermal can set brightness by the api of led driver.

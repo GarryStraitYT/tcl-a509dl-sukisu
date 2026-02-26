@@ -99,7 +99,6 @@ static struct dts_predef clkbuf_dts[DTS_NUM] = {
 	[XO_HW_SEL] = {"pmic-xo-mode", 7, 0, 0x3, 0},
 
 	[BBL_SW_EN] = {"pmic-bblpm-sw", 1, 0, 0x1, 0},
-
 	[MISC_SRCLKENI_EN] = {"pmic-srclkeni3", 1, 0, 0x1, 0},
 
 	[PWRAP_DCXO_EN] = {"pwrap-dcxo-en", 1, 0, 0xffff, 0},
@@ -243,8 +242,7 @@ static unsigned int _clk_buf_mode_get(enum clk_buf_id id)
 {
 	unsigned int val = 0;
 
-	if (CLK_BUF_STATUS[id] != CLOCK_BUFFER_DISABLE)
-		clkbuf_read(XO_HW_SEL, id, &val);
+	clkbuf_read(XO_HW_SEL, id, &val);
 
 	return val;
 }
@@ -485,12 +483,10 @@ static int _clk_buf_ctrl_internal(enum clk_buf_id id,
 	short ret = 0, no_lock = 0;
 	int val = 0;
 
-	if (!_clk_buf_get_init_sta())
-		return -1;
-
 	/* we should not turn off SOC 26M */
 	if (id < 0 || id >= CLK_BUF_INVALID ||
-			CLK_BUF_STATUS[id] == CLOCK_BUFFER_DISABLE) {
+	   (CLK_BUF_STATUS[id] == CLOCK_BUFFER_DISABLE &&
+	   cmd != CLK_BUF_OFF)) {
 		pr_info("%s: id=%d isn't supported\n", __func__, id);
 		return -1;
 	}
@@ -582,7 +578,7 @@ static void _pmic_clk_buf_ctrl(enum CLK_BUF_TYPE *status)
 	if (!_clk_buf_get_init_sta())
 		return;
 
-	for (i = 0; i < XO_NUMBER; i++)
+	for (i = 0; i < CLK_BUF_INVALID; i++)
 		_clk_buf_ctrl_internal(i, status[i] % 2);
 
 	pr_info("%s clk_buf_swctrl=[%u %u %u %u 0 0 %u]\n",
@@ -723,7 +719,7 @@ static ssize_t _clk_buf_show_status_info_internal(char *buf)
 	len += _clk_buf_dump_misc_log(buf);
 	len += _clk_buf_dump_dws_log(buf);
 
-	for (i = 0; i < XO_NUMBER; i++) {
+	for (i = 0; i < CLK_BUF_INVALID; i++) {
 		if (CLK_BUF_STATUS[i] == CLOCK_BUFFER_DISABLE)
 			continue;
 
@@ -898,7 +894,7 @@ static ssize_t clk_buf_debug_store(struct kobject *kobj,
 	if ((sscanf(buf, "%31s %10s", cmd, xo_user) != 2))
 		return -EPERM;
 
-	for (i = 0; i < XO_NUMBER; i++)
+	for (i = 0; i < CLK_BUF_INVALID; i++)
 		if (!strcmp(xo_user, XO_NAME[i])) {
 			if (_clk_buf_debug_internal(cmd, i) < 0)
 				goto ERROR_CMD;
@@ -985,15 +981,130 @@ static ssize_t clk_buf_bblpm_show(struct kobject *kobj,
 	return len;
 }
 
+static u32 default_cap_id = 0x55;
+static ssize_t clk_buf_capid_store(struct kobject *kobj,
+	struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	u32 cap_id = 0;
+	const char *capid_buf;
+	int ret = 0;
+
+	if (buf != NULL && count != 0) {
+		if (!strncmp(buf, "cmd1#", 5)) {
+			if (check_pmic_clkbuf_op())
+				pmic_op->pmic_clk_buf_set_cap_id_pre();
+		} else if (!strncmp(buf, "cmd2#", 5)) {
+			capid_buf = &buf[5];
+			ret = kstrtouint(capid_buf, 0, &cap_id);
+			if (ret) {
+				pr_info("wrong format!\n");
+				return ret;
+			}
+
+			if (cap_id > 0xFF) {
+				pr_info("offset should be within(%x) %x!\n",
+					0xFF, cap_id);
+				return -EINVAL;
+			}
+
+			if (check_pmic_clkbuf_op())
+				pmic_op->pmic_clk_buf_set_cap_id_new(cap_id);
+
+			mdelay(1);
+		} else {
+			if ((kstrtouint(buf, 10, &cap_id))) {
+				pr_info("cap id input error\n");
+				return -EPERM;
+			}
+
+			pr_info("cap id input (%d)\n", cap_id);
+			if (cap_id < 256) {
+				if (default_cap_id == 0x55) {
+					if (check_pmic_clkbuf_op())
+						pmic_op->pmic_clk_buf_get_cap_id(
+						&default_cap_id);
+				}
+
+				if (check_pmic_clkbuf_op())
+					pmic_op->pmic_clk_buf_set_cap_id(cap_id);
+			} else {
+				return -EPERM;
+			}
+		}
+	} else {
+		pr_info("invalid parameter!\n");
+		return -EINVAL;
+	}
+
+	return count;
+}
+
+static ssize_t clk_buf_capid_show(struct kobject *kobj,
+	struct kobj_attribute *attr, char *buf)
+{
+	u32 cap_id = 0;
+	int len = 0;
+
+	if (check_pmic_clkbuf_op())
+		pmic_op->pmic_clk_buf_get_cap_id(&cap_id);
+	pr_info("default cap id(%#x), cap id(%#x)\n", default_cap_id, cap_id);
+	len += snprintf(buf, PAGE_SIZE, "default cap id(%#x), cap id(%#x)\n",
+		default_cap_id, cap_id);
+	return len;
+}
+
+static ssize_t clk_buf_heater_store(struct kobject *kobj,
+	struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	bool on;
+	const char *on_buf;
+	int ret = 0;
+
+	on_buf = &buf[0];
+	ret = kstrtobool(on_buf, &on);
+	if (ret) {
+		pr_info("wrong format!\n");
+		return ret;
+	}
+
+	if (check_pmic_clkbuf_op() && pmic_op->pmic_clk_buf_set_heater) {
+		if (on)
+			pmic_op->pmic_clk_buf_set_heater(true);
+		else
+			pmic_op->pmic_clk_buf_set_heater(false);
+	};
+
+	return count;
+}
+
+static ssize_t clk_buf_heater_show(struct kobject *kobj,
+	struct kobj_attribute *attr, char *buf)
+{
+	bool on;
+	int len = 0;
+
+	if (check_pmic_clkbuf_op() && pmic_op->pmic_clk_buf_get_heater) {
+		pmic_op->pmic_clk_buf_get_heater(&on);
+		len += snprintf(buf+len, PAGE_SIZE-len, "dcxo heater: 0x%x\n", on);
+	}
+
+	return len;
+}
+
+
 DEFINE_ATTR_RW(clk_buf_ctrl);
 DEFINE_ATTR_RW(clk_buf_debug);
 DEFINE_ATTR_RW(clk_buf_bblpm);
+DEFINE_ATTR_RW(clk_buf_capid);
+DEFINE_ATTR_RW(clk_buf_heater);
 
 static struct attribute *clk_buf_attrs[] = {
 	/* for clock buffer control */
 	__ATTR_OF(clk_buf_ctrl),
 	__ATTR_OF(clk_buf_debug),
 	__ATTR_OF(clk_buf_bblpm),
+	__ATTR_OF(clk_buf_capid),
+	__ATTR_OF(clk_buf_heater),
 
 	/* must */
 	NULL,
@@ -1287,7 +1398,7 @@ static void _clk_buf_xo_init(void)
 		CLK_BUF_STATUS[XO_NFC] = CLOCK_BUFFER_DISABLE;
 
 	/* save setting after init done */
-	for (i = 0; i < XO_NUMBER; i++) {
+	for (i = 0; i < CLK_BUF_INVALID; i++) {
 		if (CLK_BUF_STATUS[i] != CLOCK_BUFFER_DISABLE)
 			clkbuf_read(XO_HW_SEL, i, &xo_mode_init[i]);
 		else {

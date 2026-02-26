@@ -56,7 +56,23 @@ obj-$(CONFIG_TOUCHSCREEN_MX25)		+= fsl-imx25-tcq.o
 obj-$(CONFIG_TOUCHSCREEN_MC13783)	+= mc13783_ts.o
 obj-$(CONFIG_TOUCHSCREEN_MCS5000)	+= mcs5000_ts.o
 obj-$(CONFIG_TOUCHSCREEN_MELFAS_MIP4)	+= melfas_mip4.o
+ifeq ($(CONFIG_MACH_MT6739),y)
+obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
+else
 obj-$(CONFIG_TOUCHSCREEN_MTK_GT1151)	+= GT1151/
+endif
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX_LM),y)
+obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
+endif
+ifeq ($(CONFIG_TOUCHSCREEN_GOODIX_BRL),y)
+obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
+endif
+ifeq ($(CONFIG_TOUCHSCREEN_HIMAX_IC_HX83102),y)
+obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
+endif
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT5688),y)
+obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
+endif
 obj-$(CONFIG_TOUCHSCREEN_MTK_NT36572_COMMON)   +=  nt36572_common/
 obj-$(CONFIG_TOUCHSCREEN_MIGOR)		+= migor_ts.o
 obj-$(CONFIG_TOUCHSCREEN_MMS114)	+= mms114.o
@@ -113,15 +129,40 @@ obj-$(CONFIG_TOUCHSCREEN_COLIBRI_VF50)	+= colibri-vf50-ts.o
 obj-$(CONFIG_TOUCHSCREEN_ROHM_BU21023)	+= rohm_bu21023.o
 obj-$(CONFIG_TOUCHSCREEN_MTK_FOCALTECH_HD)	+= focaltech_hd_touch/
 obj-$(CONFIG_TOUCHSCREEN_MTK_FOCALTECH_FHD)	+= focaltech_fhd_touch/
-#Add-begin by baiwei.peng for TP porting on 2020/09/03
+#starat by bo_liu for TP porting on 2021-7-14
 obj-$(CONFIG_TOUCHSCREEN_MTK)           += mediatek/
-#Add-end by baiwei.peng for TP porting on 2020/09/03
+#end by bo_liu for TP porting on 2021-7-14
 obj-$(CONFIG_TOUCHSCREEN_MTK_SYNAPTICS_I2C_RMI4)	+=  synaptics_i2c_rmi4/
+obj-$(CONFIG_TOUCHSCREEN_DOHATMO_FT8756)	+= dohatmo_ft8756_touch/
+obj-$(CONFIG_TOUCHSCREEN_CRUZE_PRO_FT8756)	+= cruze_pro_ft8756_touch/
+obj-$(CONFIG_TOUCHSCREEN_CRUZELITETF_CHIPONE)	+= cruzelitetf_chipone-tddi/
+obj-$(CONFIG_TOUCHSCREEN_PASSAT_FT3519_FHDPLUS_I2C)        += passat_ft3519_fhdplus_i2c_touch/
+obj-$(CONFIG_TOUCHSCREEN_NT36xxx_HOSTDL_SPI)	+= cruze_nt36525b_spi/
+obj-$(CONFIG_TOUCHSCREEN_CRUZE_NL9911C) += cruze_nl9911c_tddi/
+obj-$(CONFIG_TOUCHSCREEN_NT36XXX_HOSTDL_SPI)	+= cruzelitetf_nt36525b_spi/
+#austin tf start
+obj-$(CONFIG_TOUCHSCREEN_NT36XXX_SPI_AUSTINTF)	+= austintf_nt36525b_spi/
+#austin tf end
+#Begin add by bing-zhang for RATF-425 on 2022/01/05
+# begin add by jiaxin.pi for buffalo proting ctp on 2022/02/19
+obj-$(CONFIG_TOUCHSCREEN_BUFFALO_FT8756)       += buffalo_ft8756_touch/
+# end add by jiaxin.pi for buffalo proting ctp on 2022/02/19
+obj-$(CONFIG_TOUCHSCREEN_RAPIDTF_CHSC5XXX_I2C)	+= rapidtf_chsc5xxx_i2c/
+#End add by bing-zhang for RATF-425 on 2022/01/05
+
+#Begin add by bing-zhang for  on 2022/06/07
+obj-$(CONFIG_TOUCHSCREEN_ENCORE_NL9916_HDPLUS1612_SPI)	+= encore_nl9916_hdplus1612_spi_touch/
+#End add by bing-zhang for  on 2022/06/07
+
+obj-$(CONFIG_TOUCHSCREEN_ENCORE_FT8057_HDPLUS1612_SPI)	+= encore_ft8057_hdplus1612_spi_touch/
+
+#bora start
+obj-$(CONFIG_TOUCHSCREEN_BORA_FT8006S_HD_SPI)               += bora_ft8006s_hd_spi/
+#obj-$(CONFIG_TOUCHSCREEN_BORA_GC7202_HD_SPI)               += bora_gc7202_hd_spi/
+obj-$(CONFIG_TOUCHSCREEN_BORA_CHIPONE_TDDI_HD_SPI)               += bora_chipone-tddi_hd_spi/
+obj-$(CONFIG_TOUCHSCREEN_BORA_GC7202H_HD_SPI)               += bora_gc7202h_hd_spi/
+#bora end
+obj-$(CONFIG_TOUCHSCREEN_SONATA_ICNL9916_SPI)	+= sonata_icnl9916_spi_touch/
+obj-$(CONFIG_TOUCHSCREEN_FTS8057)	+= sonata_ft8057_spi_touch/
 TOUCH_LISTS := $(subst ",,$(CONFIG_TOUCHSCREEN_MTK_TOUCH))
 obj-y += $(foreach TOUCH,$(TOUCH_LISTS),$(TOUCH)/)
-
-#begin add by lingchen for porting TP on 20200723
-obj-$(CONFIG_TOUCHSCREEN_FT5446)	+= focaltech_ft5446/
-#end add by lingchen for porting TP on 20200723
-
-##obj-$(CONFIG_TOUCHSCREEN_MTK_GT1151_BANGKOKTF)	+= bangkoktf_GT1151/

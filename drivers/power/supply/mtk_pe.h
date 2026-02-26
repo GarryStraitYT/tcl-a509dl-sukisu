@@ -54,6 +54,11 @@ enum pe_state_enum {
 	PE_HW_UNINIT = 0,
 	PE_HW_FAIL,
 	PE_HW_READY,
+/* Begin add by jin.wang task 2064 on 2021.11.18 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	PE_TA_CHECKING,
+#endif
+/* End add by jin.wang */
 	PE_TA_NOT_SUPPORT,
 	PE_RUN,
 	PE_DONE
@@ -66,6 +71,7 @@ struct mtk_pe {
 	struct mutex cable_out_lock;
 	struct wakeup_source *suspend_lock;
 	int state;
+	struct power_supply *bat_psy;
 
 	int ta_vchr_org; /* uA */
 	bool to_tune_ta_vchr;
@@ -93,7 +99,11 @@ struct mtk_pe {
 /* dual charger */
 	int pe_slave_mivr_diff;
 
-
+/* Begin add by jin.wang task 2064 on 2021.10.26 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int main_pct;
+#endif
+/* End add by jin.wang */
 };
 
 extern int pe_hal_init_hardware(struct chg_alg_device *alg);

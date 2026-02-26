@@ -42,11 +42,11 @@ unsigned int get_sim_switch_type(void)
 
 static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 {
-	int ret = 0, retry;
-	int data;
-	char buffer[64];
-	unsigned int sim_slot_cfg[4];
-	char ap_platform[5];
+	int ret = 0, retry = 0;
+	int data = 0;
+	char buffer[64] = {0};
+	unsigned int sim_slot_cfg[4] = {0};
+	char ap_platform[5] = {0};
 	int md_gen = 0;
 	struct device_node *node = NULL;
 	struct ccci_per_md *per_md_data = ccci_get_per_md_data(md_id);
@@ -60,16 +60,33 @@ static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 
 	switch (cmd) {
 	case CCCI_IOC_GET_MD_PROTOCOL_TYPE:
-		snprintf(buffer, sizeof(buffer), "%d",
-			md_gen);
-		snprintf((void *)ap_platform, sizeof(ap_platform), "%d",
-			md_gen);
+
+
+#if (MD_GENERATION < 6292)
+		if (copy_to_user((void __user *)arg, "DHL", sizeof("DHL"))) {
+			CCCI_ERROR_LOG(md_id, FSM,
+				"CCCI_IOC_GET_MD_PROTOCOL_TYPE: copy_from_user fail\n");
+			return -EFAULT;
+		}
+#else
+		/*fix me :The buffer is not used in and can be deleted*/
+		ret = snprintf(buffer, sizeof(buffer), "%d", MD_GENERATION);
+		if (ret < 0 || ret >= sizeof(buffer)) {
+			CCCI_ERROR_LOG(md_id, FSM,
+				"%s-%d:snprintf fail,ret = %d\n", __func__, __LINE__, ret);
+			ret = -EFAULT;
+		}
+		ret = 0;
+//		snprintf(buffer, sizeof(buffer), "%d",md_gen);
+
+		snprintf((void *)ap_platform, sizeof(ap_platform), "%d", md_gen);
 		if (copy_to_user((void __user *)arg,
 			ap_platform, sizeof(ap_platform))) {
 			CCCI_ERROR_LOG(md_id, FSM,
 				"CCCI_IOC_GET_MD_PROTOCOL_TYPE: copy_from_user fail\n");
 			return -EFAULT;
 		}
+#endif
 		break;
 	case CCCI_IOC_SEND_BATTERY_INFO:
 		data = (int)battery_get_bat_voltage();
@@ -110,7 +127,14 @@ static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 		CCCI_NORMAL_LOG(md_id, FSM,
 			"get SIM lock random pattern %x\n", data);
 
-		snprintf(buffer, sizeof(buffer), "%x", data);
+		ret = snprintf(buffer, sizeof(buffer), "%x", data);
+		if (ret < 0 || ret >= sizeof(buffer)) {
+			CCCI_ERROR_LOG(md_id, FSM,
+				"%s-%d:snprintf fail,ret = %d\n", __func__, __LINE__, ret);
+			ret = -EFAULT;
+			break;
+		}
+		ret = 0;
 		set_env("sml_sync", buffer);
 		break;
 #endif
@@ -214,25 +238,15 @@ static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 		}
 		break;
 	case CCCI_IOC_RELOAD_MD_TYPE:
-		data = 0;
 		if (copy_from_user(&data, (void __user *)arg,
 				sizeof(unsigned int))) {
-			CCCI_NORMAL_LOG(md_id, FSM,
+			CCCI_ERROR_LOG(md_id, FSM,
 				"CCCI_IOC_RELOAD_MD_TYPE: copy_from_user fail\n");
 			ret = -EFAULT;
 		} else {
+			ret = set_soc_md_rt_rat_by_idx(md_id, (unsigned int)data);
 			CCCI_NORMAL_LOG(md_id, FSM,
-				"CCCI_IOC_RELOAD_MD_TYPE: 0x%x\n", data);
-			/* add md type check to
-			 * avoid it being changed to illegal value
-			 */
-			if (check_md_type(data) > 0) {
-				if (set_modem_support_cap(md_id, data) == 0)
-					per_md_data->config.load_type = data;
-			} else {
-				CCCI_ERROR_LOG(md_id, FSM,
-				"invalid MD TYPE: 0x%x\n", data);
-			}
+				"CCCI_IOC_RELOAD_MD_TYPE: %d ret:%d\n", data, ret);
 		}
 		break;
 	case CCCI_IOC_SET_MD_IMG_EXIST:
@@ -248,7 +262,7 @@ static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 			"CCCI_IOC_SET_MD_IMG_EXIST: set done!\n");
 		break;
 	case CCCI_IOC_GET_MD_IMG_EXIST:
-		data = get_md_type_from_lk(md_id);
+		data = get_md_img_type(md_id);
 		if (data) {
 			memset(&per_md_data->md_img_exist, 0,
 				sizeof(per_md_data->md_img_exist));
@@ -272,14 +286,19 @@ static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 		}
 		break;
 	case CCCI_IOC_GET_MD_TYPE:
-		retry = 600;
-		do {
-			data = get_legacy_md_type(md_id);
-			if (data)
-				break;
-			msleep(500);
-			retry--;
-		} while (retry);
+		data = get_md_img_type(md_id);
+		if (!data)
+			data = 3; //MT6580 using this
+		else {
+			retry = 6000;
+			do {
+				data = get_soc_md_rt_rat_idx(md_id);
+				if (data)
+					break;
+				msleep(50);
+				retry--;
+			} while (retry);
+		}
 		CCCI_NORMAL_LOG(md_id, FSM,
 			"CCCI_IOC_GET_MD_TYPE: %d!\n", data);
 		ret = put_user((unsigned int)data,
@@ -350,7 +369,7 @@ static int fsm_md_data_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 			per_md_data->sim_setting.sim_mode = sim_slot_cfg[1];
 			per_md_data->sim_setting.slot1_mode = sim_slot_cfg[2];
 			per_md_data->sim_setting.slot2_mode = sim_slot_cfg[3];
-			data = ((data << 16)
+			data = (((unsigned int)data << 16)
 					| per_md_data->sim_setting.sim_mode);
 			switch_sim_mode(md_id, (char *)&data, sizeof(data));
 			fsm_monitor_send_message(md_id,
@@ -434,27 +453,15 @@ long ccci_fsm_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 	switch (cmd) {
 	case CCCI_IOC_GET_MD_STATE:
 		state_for_user = ccci_fsm_get_md_state_for_user(md_id);
-		if (state_for_user >= 0) {
-			ret = put_user((unsigned int)state_for_user,
-					(unsigned int __user *)arg);
-		} else {
-			CCCI_ERROR_LOG(md_id, FSM,
-				"Get MD state fail: %d\n", state_for_user);
-			ret = state_for_user;
-		}
+		ret = put_user((unsigned int)state_for_user,
+				(unsigned int __user *)arg);
+
 		break;
 	case CCCI_IOC_GET_OTHER_MD_STATE:
 		state_for_user =
 		ccci_fsm_get_md_state_for_user(GET_OTHER_MD_ID(md_id));
-		if (state_for_user >= 0) {
-			ret = put_user((unsigned int)state_for_user,
-					(unsigned int __user *)arg);
-		} else {
-			CCCI_ERROR_LOG(md_id, FSM,
-				"Get other MD state fail: %d\n",
-				state_for_user);
-			ret = state_for_user;
-		}
+		ret = put_user((unsigned int)state_for_user,
+				(unsigned int __user *)arg);
 		break;
 	case CCCI_IOC_MD_RESET:
 		CCCI_NORMAL_LOG(md_id, FSM,
@@ -563,6 +570,14 @@ long ccci_fsm_ioctl(int md_id, unsigned int cmd, unsigned long arg)
 			CCCI_MD_MSG_FLIGHT_START_REQUEST, 0);
 		inject_md_status_event(md_id, MD_STA_EV_LEAVE_FLIGHT_E_REQUEST,
 					current->comm);
+		break;
+	/* RILD nodify ccci power off md */
+	case CCCI_IOC_RILD_POWER_OFF_MD:
+		CCCI_NORMAL_LOG(md_id, FSM,
+				"MD will power off ioctl called by %s\n",
+				current->comm);
+		inject_md_status_event(md_id, MD_STA_EV_RILD_POWEROFF_START,
+				current->comm);
 		break;
 	case CCCI_IOC_SET_EFUN:
 		if (copy_from_user(&data, (void __user *)arg,

@@ -67,14 +67,16 @@ static void dump_mem(const char *, const char *, unsigned long, unsigned long);
 
 void dump_backtrace_entry(unsigned long where, unsigned long from, unsigned long frame)
 {
+	unsigned long end = frame + 4 + sizeof(struct pt_regs);
+
 #ifdef CONFIG_KALLSYMS
 	printk("[<%08lx>] (%ps) from [<%08lx>] (%pS)\n", where, (void *)where, from, (void *)from);
 #else
 	printk("Function entered at [<%08lx>] from [<%08lx>]\n", where, from);
 #endif
 
-	if (in_entry_text(from))
-		dump_mem("", "Exception stack", frame + 4, frame + 4 + sizeof(struct pt_regs));
+	if (in_entry_text(from) && end <= ALIGN(frame, THREAD_SIZE))
+		dump_mem("", "Exception stack", frame + 4, end);
 }
 
 void dump_backtrace_stm(u32 *stack, u32 instruction)
@@ -242,7 +244,22 @@ static void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
 		c_backtrace(fp, mode);
 }
 #endif
-
+// #ifdef VENDOR_EDIT
+// yipeng.jiang@tcl.com, 2022/09/08, add for tkperf
+#ifdef CONFIG_TKPERF
+#ifdef CONFIG_ARM_UNWIND
+void stack_trace_save_tsk(struct task_struct *tsk, char *buf, int size)
+{
+	return;//The 32-bit version is not currently supported
+}
+#else
+void stack_trace_save_tsk(struct task_struct *tsk, char *buf, int size)
+{
+	return;//The 32-bit version is not currently supported
+}
+#endif
+#endif
+// #endif /* VENDER_EDIT */
 void show_stack(struct task_struct *tsk, unsigned long *sp)
 {
 	dump_backtrace(NULL, tsk);

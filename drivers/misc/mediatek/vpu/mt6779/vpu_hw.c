@@ -59,6 +59,8 @@ struct wakeup_source *vpu_wake_lock[MTK_VPU_CORE];
 #include "mdla_dvfs.h"
 #include "mtk_qos_bound.h"
 #include <linux/pm_qos.h>
+#include <linux/arm-smccc.h>
+#include <linux/soc/mediatek/mtk_sip_svc.h>
 
 static uint32_t g_efuse_data;
 static uint32_t g_efuse_segment;
@@ -3444,8 +3446,7 @@ int vpu_set_power(struct vpu_user *user, struct vpu_power *power)
 		vvpu_opp_index = 0xFF;
 		dsp_freq_index = 0xFF;
 	} else {
-		if (power->opp_step < VPU_MAX_NUM_OPPS &&
-							power->opp_step >= 0) {
+		if (power->opp_step < VPU_MAX_NUM_OPPS) {
 			vcore_opp_index = opps.vcore.opp_map[power->opp_step];
 			vvpu_opp_index = opps.vvpu.opp_map[power->opp_step];
 			dsp_freq_index =
@@ -4614,10 +4615,16 @@ int vpu_debug_func_core_state(int core_s, enum VpuCoreState state)
 	return 0;
 }
 
+enum MTK_APUSYS_KERNEL_OP {
+	MTK_VPU_SMC_INIT = 0,
+	MTK_APUSYS_KERNEL_OP_NUM
+};
+
 int vpu_boot_up(int core_s, bool secure)
 {
 	int ret = 0;
 	unsigned int core = (unsigned int)core_s;
+	struct arm_smccc_res res;
 
 	/*secure flag is for sdsp force shut down*/
 
@@ -4657,6 +4664,10 @@ int vpu_boot_up(int core_s, bool secure)
 	}
 
 	if (!secure) {
+		arm_smccc_smc(MTK_SIP_APUSYS_CONTROL,
+			MTK_VPU_SMC_INIT,
+			0, 0, 0, 0, 0, 0, &res);
+
 		ret = vpu_hw_boot_sequence(core);
 		if (ret) {
 			LOG_ERR("[vpu_%d]fail to do boot sequence\n", core);
@@ -5925,7 +5936,7 @@ uint8_t vpu_boost_value_to_opp(uint8_t boost_value)
 	uint32_t freq14 = opps.dspcore[0].values[14];
 	uint32_t freq15 = opps.dspcore[0].values[15];
 
-	if ((boost_value <= 100) && (boost_value >= 0))
+	if (boost_value <= 100)
 		freq = boost_value * freq0 / 100;
 	else
 		freq = freq0;

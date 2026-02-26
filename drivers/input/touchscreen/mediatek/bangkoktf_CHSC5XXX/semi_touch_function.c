@@ -44,7 +44,7 @@ int semi_touch_suspend_ctrl(unsigned char en)
     }
     else
     {
-        semi_touch_reset_and_detect();
+        semi_touch_device_prob();
     }
 
     if(en)
@@ -157,10 +157,6 @@ int semi_touch_heart_beat(void)
 
     if(is_suspend_activate(st_dev.stc.ctp_run_status)) 
         return ret;
-    if(is_guesture_activate(st_dev.stc.ctp_run_status))
-        return ret;
-    if(!is_esd_function_en(st_dev.stc.custom_function_en))
-        return ret;
 
     //slave report 0xFD to detect if ic is still alive
     if(semi_touch_check_watch_dog_feed(st_dev.stc.dog_feed_flag))
@@ -173,7 +169,7 @@ int semi_touch_heart_beat(void)
         if(SEMI_DRV_ERR_OK != ret)
         {
             //reset tp + iic detected
-            ret = semi_touch_reset_and_detect();
+            ret = semi_touch_device_prob();
             check_return_if_fail(ret, NULL);  
 
             if(is_guesture_activate(ctp_stc_backup))
@@ -270,15 +266,15 @@ int cmd_send_to_tp(struct m_ctp_cmd_std_t *ptr_cmd, struct m_ctp_rsp_std_t *ptr_
     check_return_if_fail(ret, NULL);
 
     once_delay = max(200, once_delay);
-
-    while(retry++ < 40){
-        delay_us(once_delay);
+	
+    while(retry++ < 30){
+        udelay(once_delay);
         ret = semi_touch_read_bytes(TP_RSP_BUFF_ADDR, (unsigned char*)ptr_rsp, sizeof(struct m_ctp_rsp_std_t));
         check_return_if_fail(ret, NULL);
 
         if(ptr_cmd->id != ptr_rsp->id){
             continue;
-        }
+		}
 
         if(!caculate_checksum_u16((unsigned short*)ptr_rsp, sizeof(struct m_ctp_rsp_std_t))){
             if(0 == ptr_rsp->cc){      //success
@@ -337,18 +333,24 @@ int read_and_report_touch_points(unsigned char *readbuffer, unsigned short len)
 int semi_touch_mode_init(struct sm_touch_dev *st_dev)
 {
     int ret = -SEMI_DRV_ERR_HAL_IO;
-    unsigned char bootCheckOk = 0;
     unsigned char readbuffer[0x34] = {0};
 
-    semi_touch_start_up_check(&bootCheckOk);
+    struct m_ctp_cmd_std_t cmd_send_tp;
+    struct m_ctp_rsp_std_t ack_from_tp;
 
-    if(!bootCheckOk)
+    cmd_send_tp.id = CMD_IDENTITY;
+    ret = cmd_send_to_tp(&cmd_send_tp, &ack_from_tp, 200);
+    check_return_if_fail(ret, NULL);
+
+    if((ack_from_tp.d0 != 0xE902) || (ack_from_tp.d1 != 0x16fd))
     {
         //reset tp + iic detected
-        semi_touch_reset_and_detect();
-        semi_touch_start_up_check(&bootCheckOk);
+        semi_touch_device_prob();
+        cmd_send_tp.id = CMD_IDENTITY;
+        ret = cmd_send_to_tp(&cmd_send_tp, &ack_from_tp, 2000);
+        check_return_if_fail(ret, NULL);
 
-        if(!bootCheckOk)
+        if((ack_from_tp.d0 != 0xE902) || (ack_from_tp.d1 != 0x16fd))
         {
             ret = -SEMI_DRV_ERR_TIMEOUT;
             check_return_if_fail(ret, NULL);
@@ -370,40 +372,32 @@ int semi_touch_mode_init(struct sm_touch_dev *st_dev)
 }
 
 /*
-    Judge whether it's Chipsemi by IIC, if YES return SEMI_DRV_ERR_OK.
+	Judge whether it's Chipsemi by IIC, if YES return SEMI_DRV_ERR_OK.
 */
 int semi_touch_device_prob(void)
 {
-    int retry, regdata;
+	int retry, regdata;
     int ret = -SEMI_DRV_ERR_HAL_IO;
 
-    msleep(10);
-    for(retry = 0; retry < 3; retry++)
+	for(retry = 0; retry < 3; retry++)
     {
-        ret = semi_touch_read_bytes(0x20000018, (unsigned char*)&regdata, 4);
-        if(ret == SEMI_DRV_ERR_OK)
+        semi_touch_reset(no_report_after_reset);
+		msleep(5);
+
+		ret = semi_touch_read_bytes(0x20000018, (unsigned char*)&regdata, 4);
+		if(ret == SEMI_DRV_ERR_OK)
         {
-            break;
-        }
-    }
+			break;
+		}
+	}
 
-    //regdata = 0xff0 | (1<<17);
-    //semi_touch_write_bytes(0x4000700c, (unsigned char*)&regdata, 4);
-    
-    return ret;
-}
-int semi_touch_reset_and_detect(void)
-{
-    int ret = -SEMI_DRV_ERR_HAL_IO;
-
-    semi_touch_reset(no_report_after_reset);
-
-    ret = semi_touch_device_prob();
-
-    msleep(50);
+    msleep(35);
     set_status_pointing(st_dev.stc.ctp_run_status);
 
-    return ret;
+	//regdata = 0xff0 | (1<<17);
+	//semi_touch_write_bytes(0x4000700c, (unsigned char*)&regdata, 4);
+	
+	return ret;
 }
 int semi_touch_start_up_check(unsigned char* checkOK)
 {
@@ -413,7 +407,7 @@ int semi_touch_start_up_check(unsigned char* checkOK)
     for(retry = 0; retry < 10; retry++)
     {
         ret = semi_touch_read_bytes(0x20000014, (unsigned char*)&image_header, sizeof(image_header));
-        check_return_if_fail(ret, NULL);
+	    check_return_if_fail(ret, NULL);
 
         if(image_header.sig == 0x43534843) //"CHSC"
 		{ 

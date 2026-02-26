@@ -13,6 +13,7 @@
 #include "disp_event.h"
 #include "graphics-base-v1.0.h"
 #include "graphics-base-v1.1.h"
+#include <ion.h>
 
 #define _UFMT_ID_SHIFT 0
 #define _UFMT_ID_WIDTH 8
@@ -226,6 +227,7 @@ struct OVL_CONFIG_STRUCT {
 	int ext_layer;
 	int phy_layer;
 	unsigned char compress;
+	struct ion_handle *hnd;
 };
 
 struct OVL_BASIC_STRUCT {
@@ -297,6 +299,7 @@ struct RDMA_CONFIG_STRUCT {
 	enum DISP_BUFFER_TYPE security;
 	unsigned int yuv_range;
 	struct rdma_bg_ctrl_t bg_ctrl;
+	struct ion_handle *hnd;
 };
 
 struct WDMA_CONFIG_STRUCT {
@@ -313,6 +316,7 @@ struct WDMA_CONFIG_STRUCT {
 	unsigned int useSpecifiedAlpha;
 	unsigned char alpha;
 	enum DISP_BUFFER_TYPE security;
+	struct ion_handle *hnd;
 };
 
 struct golden_setting_context {

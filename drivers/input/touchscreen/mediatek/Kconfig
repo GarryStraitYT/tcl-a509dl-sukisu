@@ -31,18 +31,169 @@ config TOUCHSCREEN_PHYSICAL_ROTATION_WITH_LCM
 	  the reported coordination to diagonal position.
 
 	  If unsure, say Y.
+	  
+config TOUCHSCREEN_MTK_SOLOMON
+	bool "SOLOMON for Mediatek package"
+	default n
+	help
+	  Say Y here if you have SOLOMON touch panel.
 
-#Add-begin by baiwei.peng for TP porting on 2020/09/03
-source "drivers/input/touchscreen/mediatek/tokyolitetmo_nt36525bh_touch/Kconfig"
+	  If unsure, say N.
 
-config TOUCHSCREEN_MTK_TOKYOLITETMO_FT8006S
-    bool "TOKYOLITETMO_FT8006S"
-    default n
-    help
-      Say Y here if you have Focaltech touch panel.
-      If unsure, say N.
-source "drivers/input/touchscreen/mediatek/tokyolitetmo_ft8006s_touch/Kconfig"
-#Add-end by baiwei.peng for TP porting on 2020/09/03
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+
+config TOUCHSCREEN_MTK_FOCALTECH_TS
+	bool "FOCALTECH_TS for Mediatek package"
+	default n
+	help
+	  Say Y here if you have focaltech_touch touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+source "drivers/input/touchscreen/mediatek/focaltech_touch/Kconfig"
+
+config TOUCHSCREEN_MTK_GT1151
+	bool "GT1151 for Mediatek package"
+	default n
+	help
+	  Say Y here if you have GT1151 touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+source "drivers/input/touchscreen/mediatek/GT1151/Kconfig"
+
+config TOUCHSCREEN_MTK_GSLX680
+	bool "gslX680 for Mediatek package"
+	help
+	  Say Y here if you have gslX680 touch panel.
+
+	  If unsure, say N.
+
+	  you can config it if you want to use MTK9XX_LM for
+	  touch panel.
+
+config TOUCHSCREEN_MTK_NT36xxx
+	bool "NT36xxx for Mediatek package"
+	default n
+	help
+	  Say Y here if you have NT36xxx touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+source "drivers/input/touchscreen/mediatek/NT36xxx/Kconfig"
+
+config TOUCHSCREEN_MTK_GT9XX_LM
+	bool "GT9XX_LM for Mediatek package"
+	help
+	  Say Y here if you have GT9XX_LM touch panel.
+
+	  If unsure, say N.
+
+	  you can config it if you want to use MTK9XX_LM for
+	  touch panel.
+
+source "drivers/input/touchscreen/mediatek/GT9XX_LM/Kconfig"
+
+config TOUCHSCREEN_FT5X26
+	bool "FT5X26 for Mediatek package"
+	help
+	  Say Y here if you have FT5X26 touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+config TOUCHSCREEN_FT5X26_WUXGA
+	bool "FT5X26 WUXGA for Mediatek package"
+	help
+	  Say Y here if you have FT5X26 touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+source "drivers/input/touchscreen/mediatek/FT5X26/Kconfig"
+
+config TOUCHSCREEN_MTK_GT5688
+	bool "GT1151 for Mediatek package"
+	help
+	  Say Y here if you have GT5688 touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+source "drivers/input/touchscreen/mediatek/GT5688/Kconfig"
+source "drivers/input/touchscreen/mediatek/hxchipset/Kconfig"
+
+config TOUCHSCREEN_HIMAX_CHIPSET_8789P1_8185P3
+	bool "hxchipset for Mediatek 8789p1 and 8185p3 package"
+	default n
+	help
+	  Say Y here if you have hxchipset touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
+source "drivers/input/touchscreen/mediatek/hxchipset_8789p1_8185p3/Kconfig"
+
+config TOUCHSCREEN_MTK_GT911
+	bool "GT911 for Mediatek package"
+	help
+	  Say Y here if you have GT911 touch panel.
+
+	  If unsure, say N.
+	  this is a GT911 touch driver config, you can use it
+	  if you want.
+
+source "drivers/input/touchscreen/mediatek/GT911/Kconfig"
+
+config TOUCHSCREEN_MTK_FOCALTECH_FHD
+	bool "Focaltech FHD Touchscreen"
+	depends on I2C
+	help
+	  Say Y here if you have Focaltech touch panel.
+	  If unsure, say N.
+
+config TOUCHSCREEN_MTK_GT9157
+	bool "GT9157 for Mediatek package"
+	help
+	  Say Y here if you have GT9157 touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called
+
+source "drivers/input/touchscreen/mediatek/GT9157/Kconfig"
+
+config TOUCHSCREEN_HIMAX_CHIPSET
+	bool "Himax touchpanel CHIPSET"
+	depends on SPI
+	help
+	Say Y here if you have a Himax CHIPSET touchscreen.
+	HIMAX controllers are multi touch controllers which can
+	report 10 touches at a time.
+
+	If unsure, say N.
+source "drivers/input/touchscreen/mediatek/hxchipset_hx83102p/Kconfig"
+
 
 config TOUCHSCREEN_MTK_GT1151_BANGKOKTF
     bool "CONFIG_TOUCHSCREEN_MTK_GT1151_BANGKOKTF"
@@ -76,6 +227,29 @@ config TOUCHSCREEN_MTK_CHSC5XXX_BANGKOKTF
 	  module will be called.
 source "drivers/input/touchscreen/mediatek/bangkoktf_CHSC5XXX/Kconfig"
 
+config TOUCHSCREEN_MTK_CHSC5XXX_JETTA
+	bool "bangkoktf chsc5xxx for Mediatek package"
+	default n
+	help
+	  Say Y here if you have chsc5xxx touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+source "drivers/input/touchscreen/mediatek/jetta_chsc5xxx/Kconfig"
+
+config TOUCHSCREEN_MTK_CHIPONE_JETTA
+	bool "jetta chipone-ts for Mediatek package"
+	default n
+	help
+	  Say Y here if you have chipone-ts touch panel.
+
+	  If unsure, say N.
+
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
 
 config TOUCHSCREEN_MTK_BETTERLIFE_BANGKOKTF
 	bool "bangkoktf betterlife for Mediatek package"
@@ -88,5 +262,78 @@ config TOUCHSCREEN_MTK_BETTERLIFE_BANGKOKTF
 	  To compile this dirver as a module, choose M here: the
 	  module will be called.
 source "drivers/input/touchscreen/mediatek/bangkoktf_betterlife_ts/Kconfig"
+config TOUCHSCREEN_GOODIX_BRL
+	bool "Goodix berlin touchscreen"
+	help
+	  Say Y here if you have a Goodix berlin series touch controller
+	  to your system.
+
+	  If build module, say M.
+	  If unsure, say N.
+source "drivers/input/touchscreen/mediatek/goodix_berlin_driver/Kconfig"
+
+config BUFFALOTMO_GC7202_TOUCH
+	bool "GC7202 for tct touch"
+	default n
+	help
+	  Say Y here if you have GC7202 touch panel.
+
+	  If unsure, say N.
+
+	  you can config it if you want to use GC7202 for
+	  touch panel.
+
+#Begin added by liangjiaqiang for MODEL3-1881 on 2022-09-09
+source "drivers/input/touchscreen/mediatek/chipone-tddi_xe671/Kconfig"
+#End added by liangjiaqiang for MODEL3-1881 on 2022-09-09
+
+#Begin added by liangjiaqiang for MODEL3-4765 on 2022-11-16
+source "drivers/input/touchscreen/mediatek/Focaltech_Touch_FT8057_xe671/Kconfig"
+#End added by liangjiaqiang for MODEL3-4765 on 2022-11-16
 
 endif
+config TOUCHSCREEN_MTK_APOLLO_GT912
+    bool "APOLLO_GT912"
+    default n
+    help
+      Say Y here if you have Focaltech touch panel.
+      If unsure, say N.
+source "drivers/input/touchscreen/mediatek/apollo_gt912/Kconfig"
+
+#Begin added by yan.gong for CIVIC-3003 on 2022-07-12
+config TOUCHSCREEN_CHIPONE_CIVI
+	bool "touchscreen chipone civi"
+	help
+	  Say Y here if you have a Goodix berlin series touch controller
+	  to your system.
+
+	  If unsure, say N.
+source "drivers/input/touchscreen/mediatek/chipone-tddi/Kconfig"
+source "drivers/input/touchscreen/mediatek/Focaltech_Touch_FT8057/Kconfig"
+
+config TOUCHSCREEN_PROXIMITY_ENABLE
+	bool "enable tp proximity"
+	default n
+
+#End added by yan.gong for CIVIC-3003 on 2022-07-12
+
+#Add-start by jiaxin.pi for tp bl7401 porting on 2021/07/06
+config TOUCHSCREEN_MTK_APOLLO_BL7401
+    bool "APOLLO_BL7401"
+    default n
+    help
+      Say Y here if you have Focaltech touch panel.
+      If unsure, say N.
+source "drivers/input/touchscreen/mediatek/apollo_bl7401/Kconfig"
+
+config ODIN_CHSC5XXX_TOUCH
+	bool "CHSC5XXX for tct touch"
+	default n
+	help
+	  Say Y here if you have CHSC5XXX touch panel.
+	  If unsure, say N.
+source "drivers/input/touchscreen/mediatek/odin_chsc5xxx_touch/Kconfig"
+source "drivers/input/touchscreen/mediatek/odin_focaltech_touch/Kconfig"
+
+source "drivers/input/touchscreen/mediatek/luna_chsc5xxx_wxga_i2c_touch/Kconfig"
+source "drivers/input/touchscreen/mediatek/luna_focaltech_wxga_i2c_touch/Kconfig"

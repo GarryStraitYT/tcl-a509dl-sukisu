@@ -874,7 +874,7 @@ static void create_ctp_node_forMMI(void)
 	return;
 }
 #endif
-extern char ctp_module_name[256];
+extern char ctp_module_name1[256];
 
 static int tpd_local_init(void)
 {
@@ -952,7 +952,7 @@ static int tpd_local_init(void)
 	tpd_type_cap = 1;
 
 	//sprintf(CTP_NAME,"GT1151QM:LCE");
-	snprintf(ctp_module_name, 256, "GT1151QM:LCE\n");
+	snprintf(ctp_module_name1, 256, "GT1151QM:LCE\n");
 
 	//create_ctp_node_forMMI();
 

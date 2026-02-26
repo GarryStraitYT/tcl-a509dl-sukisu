@@ -7,6 +7,9 @@
 #include "charger_class.h"
 #include "adapter_class.h"
 #include "mtk_charger_algorithm_class.h"
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#include <linux/notifier.h>
+#endif
 
 #define CHARGING_INTERVAL 10
 #define CHARGING_FULL_INTERVAL 20
@@ -51,6 +54,10 @@ struct mtk_charger;
 #define AC_CHARGER_INPUT_CURRENT		3200000
 #define NON_STD_AC_CHARGER_CURRENT		500000
 #define CHARGING_HOST_CHARGER_CURRENT		650000
+
+/* [BSP]Begin added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+#define WEAK_AC_CHARGER_INPUT_CURRENT    1500000
+/* [BSP]End added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
 
 /* dynamic mivr */
 #define V_CHARGER_MIN_1 4400000 /* 4.4 V */
@@ -118,6 +125,29 @@ struct battery_thermal_protection_data {
 #define TEMP_T0_THRES_PLUS_X_DEGREE  0
 #define TEMP_NEG_10_THRES 0
 
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if defined(CONFIG_TCT_CHARGER)
+#define JEITA_TEMP_ABOVE_T4_CURRENT			0
+#define JEITA_TEMP_T3_TO_T4_CURRENT			1000000
+#define JEITA_TEMP_T2_TO_T3_CURRENT			1000000
+#define JEITA_TEMP_T1_TO_T2_CURRENT			1000000
+#define JEITA_TEMP_T0_TO_T1_CURRENT			500000
+#define JEITA_TEMP_BELOW_T0_CURRENT			0
+
+#define SLAVE_JEITA_TEMP_ABOVE_T4_CURRENT	0
+#define SLAVE_JEITA_TEMP_T3_TO_T4_CURRENT	1000000
+#define SLAVE_JEITA_TEMP_T2_TO_T3_CURRENT	1000000
+#define SLAVE_JEITA_TEMP_T1_TO_T2_CURRENT	1000000
+#define SLAVE_JEITA_TEMP_T0_TO_T1_CURRENT	500000
+#define SLAVE_JEITA_TEMP_BELOW_T0_CURRENT	0
+
+#define STEP_CHG_VBAT						4200000
+#define STEP_CHG_VBAT_HYSTERESIS			80000
+#define STEP_CHG_CURRENT					1000000
+#define SLAVE_STEP_CHG_CURRENT				1000000
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
+
 enum sw_jeita_state_enum {
 	TEMP_BELOW_T0 = 0,
 	TEMP_T0_TO_T1,
@@ -154,7 +184,16 @@ struct charger_custom_data {
 	int ac_charger_current;
 	int ac_charger_input_current;
 	int charging_host_charger_current;
-
+/* [BSP]Begin added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
+	int weak_ac_charger_input_current;
+#endif
+/* [BSP]End added by bitao.xiong for SNTBBH-4343 on 2022/12/20 */
+/*Begin:add for sw_aicl check by wanglin.chen on 2023.01.12*/
+#if defined(CONFIG_TCT_CHARGER)
+	bool sw_aicl_done;
+#endif
+/*End:add for sw_aicl check by wanglin.chen on 2023.01.12*/
 	/* sw jeita */
 	int jeita_temp_above_t4_cv;
 	int jeita_temp_t3_to_t4_cv;
@@ -162,10 +201,6 @@ struct charger_custom_data {
 	int jeita_temp_t1_to_t2_cv;
 	int jeita_temp_t0_to_t1_cv;
 	int jeita_temp_below_t0_cv;
-	/* Begin added by bitao.xiong for task-9796564 on 2020-08-20 */
-	int jeita_temp_t1_to_t2_cc;
-	int jeita_temp_t3_to_t4_cc;
-	/* End added by bitao.xiong for task-9796564 on 2020-08-20 */
 	int temp_t4_thres;
 	int temp_t4_thres_minus_x_degree;
 	int temp_t3_thres;
@@ -177,6 +212,29 @@ struct charger_custom_data {
 	int temp_t0_thres;
 	int temp_t0_thres_plus_x_degree;
 	int temp_neg_10_thres;
+
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if defined(CONFIG_TCT_CHARGER)
+	int jeita_temp_above_t4_current;
+	int jeita_temp_t3_to_t4_current;
+	int jeita_temp_t2_to_t3_current;
+	int jeita_temp_t1_to_t2_current;
+	int jeita_temp_t0_to_t1_current;
+	int jeita_temp_below_t0_current;
+
+	int slave_jeita_temp_above_t4_current;
+	int slave_jeita_temp_t3_to_t4_current;
+	int slave_jeita_temp_t2_to_t3_current;
+	int slave_jeita_temp_t1_to_t2_current;
+	int slave_jeita_temp_t0_to_t1_current;
+	int slave_jeita_temp_below_t0_current;
+
+	int step_chg_vbat;
+	int step_chg_vbat_hysteresis;
+	int setp_chg_current;
+	int slave_setp_chg_current;
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
 
 	/* battery temperature protection */
 	int mtk_temperature_recharge_support;
@@ -203,6 +261,25 @@ struct charger_data {
 	int input_current_limit_by_aicl;
 	int junction_temp_min;
 	int junction_temp_max;
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int charging_current_limit_by_jeita;
+	int charging_current_limit_by_vbat;
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
+
+/* Begin add by jin.wang for jira on 2021-11-5 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	int ibus_limit_by_others;
+	int ibat_limit_by_others;
+#endif
+/* End add by jin.wang */
+
+/* Begin add by jin.wang for jira on 2021-11-25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int ibus_limit_by_test;
+#endif
+/* End add by jin.wang */
 };
 
 enum chg_data_idx_enum {
@@ -228,9 +305,9 @@ struct mtk_charger {
 	struct power_supply_desc psy_desc2;
 	struct power_supply_config psy_cfg2;
 	struct power_supply *psy2;
-	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
-	struct power_supply *battery_psy;
-	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
+
+	struct power_supply  *chg_psy;
+	struct power_supply  *bat_psy;
 
 	struct adapter_device *pd_adapter;
 	struct notifier_block pd_nb;
@@ -242,6 +319,13 @@ struct mtk_charger {
 	u32 boottype;
 
 	int chr_type;
+
+/* Begin add by jin.wang task 2064 on 2021.11.30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	bool first_redet;
+#endif
+/* End add by jin.wang */
+
 	int usb_state;
 
 	struct mutex cable_out_lock;
@@ -295,6 +379,12 @@ struct mtk_charger {
 	bool sw_safety_timer_setting;
 	struct timespec charging_begin_time;
 
+/* Begin add by jin.wang for jira on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	bool thermal_disable;
+#endif
+/* End add by jin.wang */
+
 	/* sw jeita */
 	bool enable_sw_jeita;
 	struct sw_jeita_data sw_jeita;
@@ -310,12 +400,19 @@ struct mtk_charger {
 	bool water_detected;
 
 	bool enable_dynamic_mivr;
-	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF)	\
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+	bool enable_sw_aicl;
+/* Begin mod by jin.wang for androidT on 2022-4-12 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER_GCS)
 	int input_avg_current;
-	#endif
-	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+	int nonstand_chg_type;
+#endif
+/* End mod by jin.wang */
+
+/* Begin added by hailong.chen for task 9785237 on 2020-10-10 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	bool enable_step_chg;
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-10 */
 };
 
 /* functions which framework needs*/
@@ -343,6 +440,13 @@ extern void _wake_up_charger(struct mtk_charger *info);
 
 /* functions for other */
 extern int mtk_chg_enable_vbus_ovp(bool enable);
+/* Begin added by hailong.chen for task 9785241 on 2020-10-21 */
+#if defined(CONFIG_TCT_CHARGER)
+extern const char *get_battery_type(struct mtk_charger *info);
+extern int set_hv_flag(int hv_flag);
+extern int battery_do_health_update(struct mtk_charger *info); /* Added by bitao.xiong for AOSP13TMO-4319 on 2022-08-03 */
+#endif
+/* End added by hailong.chen for task 9785241 on 2020-10-21 */
 
 
 #endif /* __MTK_CHARGER_H */

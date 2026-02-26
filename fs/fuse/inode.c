@@ -98,11 +98,10 @@ static struct inode *fuse_alloc_inode(struct super_block *sb)
 	fi->state = 0;
 	INIT_LIST_HEAD(&fi->write_files);
 	INIT_LIST_HEAD(&fi->queued_writes);
-	fi->writepages = RB_ROOT;
+	INIT_LIST_HEAD(&fi->writepages);
 	init_waitqueue_head(&fi->page_waitq);
 	mutex_init(&fi->mutex);
 	fi->forget = fuse_alloc_forget();
-	spin_lock_init(&fi->lock);
 	if (!fi->forget) {
 		kmem_cache_free(fuse_inode_cachep, inode);
 		return NULL;
@@ -129,6 +128,9 @@ static void fuse_destroy_inode(struct inode *inode)
 
 static void fuse_evict_inode(struct inode *inode)
 {
+	/* Will write inode on close/munmap and in all other dirtiers */
+	WARN_ON(inode->i_state & I_DIRTY_INODE);
+
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
 	if (inode->i_sb->s_flags & SB_ACTIVE) {
@@ -166,9 +168,7 @@ void fuse_change_attributes_common(struct inode *inode, struct fuse_attr *attr,
 	struct fuse_conn *fc = get_fuse_conn(inode);
 	struct fuse_inode *fi = get_fuse_inode(inode);
 
-	lockdep_assert_held(&fi->lock);
-
-	fi->attr_version = atomic64_inc_return(&fc->attr_version);
+	fi->attr_version = ++fc->attr_version;
 	fi->i_time = attr_valid;
 
 	inode->i_ino     = fuse_squash_ino(attr->ino);
@@ -213,10 +213,10 @@ void fuse_change_attributes(struct inode *inode, struct fuse_attr *attr,
 	loff_t oldsize;
 	struct timespec64 old_mtime;
 
-	spin_lock(&fi->lock);
+	spin_lock(&fc->lock);
 	if ((attr_version != 0 && fi->attr_version > attr_version) ||
 	    test_bit(FUSE_I_SIZE_UNSTABLE, &fi->state)) {
-		spin_unlock(&fi->lock);
+		spin_unlock(&fc->lock);
 		return;
 	}
 
@@ -231,7 +231,7 @@ void fuse_change_attributes(struct inode *inode, struct fuse_attr *attr,
 	 */
 	if (!is_wb || !S_ISREG(inode->i_mode))
 		i_size_write(inode, attr->size);
-	spin_unlock(&fi->lock);
+	spin_unlock(&fc->lock);
 
 	if (!is_wb && S_ISREG(inode->i_mode)) {
 		bool inval = false;
@@ -326,9 +326,9 @@ struct inode *fuse_iget(struct super_block *sb, u64 nodeid,
 	}
 
 	fi = get_fuse_inode(inode);
-	spin_lock(&fi->lock);
+	spin_lock(&fc->lock);
 	fi->nlookup++;
-	spin_unlock(&fi->lock);
+	spin_unlock(&fc->lock);
 	fuse_change_attributes(inode, attr, attr_valid, attr_version);
 
 	return inode;
@@ -380,7 +380,7 @@ void fuse_unlock_inode(struct inode *inode, bool locked)
 
 static void fuse_umount_begin(struct super_block *sb)
 {
-	fuse_abort_conn(get_fuse_conn_super(sb));
+	fuse_abort_conn(get_fuse_conn_super(sb), false);
 }
 
 static void fuse_send_destroy(struct fuse_conn *fc)
@@ -598,11 +598,9 @@ static void fuse_iqueue_init(struct fuse_iqueue *fiq)
 
 static void fuse_pqueue_init(struct fuse_pqueue *fpq)
 {
-	unsigned int i;
-
+	memset(fpq, 0, sizeof(struct fuse_pqueue));
 	spin_lock_init(&fpq->lock);
-	for (i = 0; i < FUSE_PQ_HASH_SIZE; i++)
-		INIT_LIST_HEAD(&fpq->processing[i]);
+	INIT_LIST_HEAD(&fpq->processing);
 	INIT_LIST_HEAD(&fpq->io);
 	fpq->connected = 1;
 }
@@ -611,7 +609,7 @@ void fuse_conn_init(struct fuse_conn *fc, struct user_namespace *user_ns)
 {
 	memset(fc, 0, sizeof(*fc));
 	spin_lock_init(&fc->lock);
-	spin_lock_init(&fc->bg_lock);
+	spin_lock_init(&fc->passthrough_req_lock);
 	init_rwsem(&fc->killsb);
 	refcount_set(&fc->count, 1);
 	atomic_set(&fc->dev_count, 1);
@@ -621,22 +619,19 @@ void fuse_conn_init(struct fuse_conn *fc, struct user_namespace *user_ns)
 	INIT_LIST_HEAD(&fc->bg_queue);
 	INIT_LIST_HEAD(&fc->entry);
 	INIT_LIST_HEAD(&fc->devices);
+	idr_init(&fc->passthrough_req);
 	atomic_set(&fc->num_waiting, 0);
 	fc->max_background = FUSE_DEFAULT_MAX_BACKGROUND;
 	fc->congestion_threshold = FUSE_DEFAULT_CONGESTION_THRESHOLD;
-	atomic64_set(&fc->khctr, 0);
+	fc->khctr = 0;
 	fc->polled_files = RB_ROOT;
 	fc->blocked = 0;
 	fc->initialized = 0;
 	fc->connected = 1;
-	atomic64_set(&fc->attr_version, 1);
+	fc->attr_version = 1;
 	get_random_bytes(&fc->scramble_key, sizeof(fc->scramble_key));
 	fc->pid_ns = get_pid_ns(task_active_pid_ns(current));
 	fc->user_ns = get_user_ns(user_ns);
-#ifdef CONFIG_FUSE_PASSTHROUGH_WORKAROUND
-	// the offset of fuse::handle::fd is 0
-	fc->fh_to_fd = 0;
-#endif
 }
 EXPORT_SYMBOL_GPL(fuse_conn_init);
 
@@ -647,8 +642,6 @@ void fuse_conn_put(struct fuse_conn *fc)
 			fuse_request_free(fc->destroy_req);
 		put_pid_ns(fc->pid_ns);
 		put_user_ns(fc->user_ns);
-		if (fc->creator_cred)
-			put_cred(fc->creator_cred);
 		fc->release(fc);
 	}
 }
@@ -865,7 +858,6 @@ static void process_init_limits(struct fuse_conn *fc, struct fuse_init_out *arg)
 	sanitize_global_limit(&max_user_bgreq);
 	sanitize_global_limit(&max_user_congthresh);
 
-	spin_lock(&fc->bg_lock);
 	if (arg->max_background) {
 		fc->max_background = arg->max_background;
 
@@ -879,7 +871,6 @@ static void process_init_limits(struct fuse_conn *fc, struct fuse_init_out *arg)
 		    fc->congestion_threshold > max_user_congthresh)
 			fc->congestion_threshold = max_user_congthresh;
 	}
-	spin_unlock(&fc->bg_lock);
 }
 
 static void process_init_reply(struct fuse_conn *fc, struct fuse_req *req)
@@ -941,20 +932,12 @@ static void process_init_reply(struct fuse_conn *fc, struct fuse_req *req)
 			}
 			if (arg->flags & FUSE_ABORT_ERROR)
 				fc->abort_err = 1;
-			if (arg->flags & FUSE_MAX_PAGES) {
-				fc->max_pages =
-					min_t(unsigned int, FUSE_MAX_MAX_PAGES,
-					max_t(unsigned int, arg->max_pages, 1));
-			}
 			if (arg->flags & FUSE_PASSTHROUGH) {
 				fc->passthrough = 1;
 				/* Prevent further stacking */
 				fc->sb->s_stack_depth =
 					FILESYSTEM_MAX_STACK_DEPTH;
 			}
-
-			fc->creator_cred = prepare_creds();
-			BUG_ON(!fc->creator_cred);
 		} else {
 			ra_pages = fc->max_read / PAGE_SIZE;
 			fc->no_lock = 1;
@@ -986,7 +969,7 @@ static void fuse_send_init(struct fuse_conn *fc, struct fuse_req *req)
 		FUSE_DO_READDIRPLUS | FUSE_READDIRPLUS_AUTO | FUSE_ASYNC_DIO |
 		FUSE_WRITEBACK_CACHE | FUSE_NO_OPEN_SUPPORT |
 		FUSE_PARALLEL_DIROPS | FUSE_HANDLE_KILLPRIV | FUSE_POSIX_ACL |
-		FUSE_ABORT_ERROR | FUSE_MAX_PAGES | FUSE_PASSTHROUGH;
+		FUSE_ABORT_ERROR | FUSE_PASSTHROUGH;
 	req->in.h.opcode = FUSE_INIT;
 	req->in.numargs = 1;
 	req->in.args[0].size = sizeof(*arg);
@@ -1002,9 +985,21 @@ static void fuse_send_init(struct fuse_conn *fc, struct fuse_req *req)
 	fuse_request_send_background(fc, req);
 }
 
+static int free_fuse_passthrough(int id, void *p, void *data)
+{
+	struct fuse_passthrough *passthrough = (struct fuse_passthrough *)p;
+
+	fuse_passthrough_release(passthrough);
+	kfree(p);
+
+	return 0;
+}
+
 static void fuse_free_conn(struct fuse_conn *fc)
 {
 	WARN_ON(!list_empty(&fc->devices));
+	idr_for_each(&fc->passthrough_req, free_fuse_passthrough, NULL);
+	idr_destroy(&fc->passthrough_req);
 	kfree_rcu(fc, rcu);
 }
 
@@ -1051,25 +1046,16 @@ static int fuse_bdi_init(struct fuse_conn *fc, struct super_block *sb)
 struct fuse_dev *fuse_dev_alloc(struct fuse_conn *fc)
 {
 	struct fuse_dev *fud;
-	struct list_head *pq;
 
 	fud = kzalloc(sizeof(struct fuse_dev), GFP_KERNEL);
-	if (!fud)
-		return NULL;
+	if (fud) {
+		fud->fc = fuse_conn_get(fc);
+		fuse_pqueue_init(&fud->pq);
 
-	pq = kcalloc(FUSE_PQ_HASH_SIZE, sizeof(struct list_head), GFP_KERNEL);
-	if (!pq) {
-		kfree(fud);
-		return NULL;
+		spin_lock(&fc->lock);
+		list_add_tail(&fud->entry, &fc->devices);
+		spin_unlock(&fc->lock);
 	}
-
-	fud->pq.processing = pq;
-	fud->fc = fuse_conn_get(fc);
-	fuse_pqueue_init(&fud->pq);
-
-	spin_lock(&fc->lock);
-	list_add_tail(&fud->entry, &fc->devices);
-	spin_unlock(&fc->lock);
 
 	return fud;
 }
@@ -1086,7 +1072,6 @@ void fuse_dev_free(struct fuse_dev *fud)
 
 		fuse_conn_put(fc);
 	}
-	kfree(fud->pq.processing);
 	kfree(fud);
 }
 EXPORT_SYMBOL_GPL(fuse_dev_free);
@@ -1180,7 +1165,6 @@ static int fuse_fill_super(struct super_block *sb, void *data, int silent)
 	fc->user_id = d.user_id;
 	fc->group_id = d.group_id;
 	fc->max_read = max_t(unsigned, 4096, d.max_read);
-	fc->max_pages = FUSE_DEFAULT_MAX_PAGES_PER_REQ;
 
 	/* Used by get_root_inode() */
 	sb->s_fs_info = fc;
@@ -1260,7 +1244,7 @@ static void fuse_sb_destroy(struct super_block *sb)
 	if (fc) {
 		fuse_send_destroy(fc);
 
-		fuse_abort_conn(fc);
+		fuse_abort_conn(fc, false);
 		fuse_wait_aborted(fc);
 
 		down_write(&fc->killsb);

@@ -10,7 +10,6 @@
 
 int semi_touch_reset(enum reset_action action);
 int semi_touch_device_prob(void);
-int semi_touch_reset_and_detect(void);
 int semi_touch_start_up_check(unsigned char* checkOK);
 int semi_touch_heart_beat(void);
 int semi_touch_write_bytes(unsigned int reg, const unsigned char* buffer, unsigned short len);

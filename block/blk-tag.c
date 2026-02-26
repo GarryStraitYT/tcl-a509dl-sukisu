@@ -7,7 +7,6 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/slab.h>
-
 #include "blk.h"
 
 /**
@@ -344,13 +343,6 @@ int blk_queue_start_tag(struct request_queue *q, struct request *rq)
 		if (q->in_flight[BLK_RW_ASYNC] > max_depth)
 			return 1;
 	}
-
-#ifdef CONFIG_TCT_UI_TURBO
-	/* reserve 2 tags for ui request */
-	if (blk_queue_qos_on(q) && !req_is_ui(rq) && max_depth >= 16) {
-		max_depth -= 2;
-	}
-#endif
 
 	do {
 		if (bqt->alloc_policy == BLK_TAG_ALLOC_FIFO) {

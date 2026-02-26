@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+
 #ifndef _CAM_CAL_H
 #define _CAM_CAL_H
 
@@ -23,6 +24,9 @@
 #define CAM_CALIOC_S_WRITE _IOW(CAM_CALAGIC, 0, struct stCAM_CAL_INFO_STRUCT)
 /*CAM_CAL read*/
 #define CAM_CALIOC_G_READ _IOWR(CAM_CALAGIC, 5, struct stCAM_CAL_INFO_STRUCT)
+/*CAM_CAL set sensor info*/
+#define CAM_CALIOC_S_SENSOR_INFO \
+	_IOW(CAM_CALAGIC, 10, struct CAM_CAL_SENSOR_INFO)
 
 #ifdef CONFIG_COMPAT
 #define COMPAT_CAM_CALIOC_S_WRITE \

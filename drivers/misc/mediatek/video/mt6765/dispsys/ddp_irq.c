@@ -344,7 +344,11 @@ irqreturn_t disp_irq_handler(int irq, void *dev_id)
 			rdma_start_time[index] = sched_clock();
 			DDPIRQ("IRQ: RDMA%d frame start!\n", index);
 			rdma_start_irq_cnt[index]++;
-			primary_display_wakeup_pf_thread();
+			//Begin add by bing-zhang for SNTBBH-3212 on 2022/10/26
+			 if (!primary_display_is_video_mode()) {
+				primary_display_wakeup_pf_thread();
+			}
+			//End add by bing-zhang for SNTBBH-3212 on 2022/10/26
 		}
 		if (reg_val & (1 << 3)) {
 			mmprofile_log_ex(

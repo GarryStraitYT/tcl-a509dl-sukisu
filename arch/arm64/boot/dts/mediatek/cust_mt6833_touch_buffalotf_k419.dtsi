@@ -1,0 +1,32 @@
+/* TOUCH start */
+
+&spi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	ts@0{
+             status = "okay";
+             compatible = "gcore,touchscreen";
+             reg = <0>;
+             gcore,irq-gpio = <&pio 14 0x0>;
+             gcore,rst-gpio = <&pio 15 0x0>;
+             spi-max-frequency = <5000000>;
+        };
+};
+
+/* TOUCH end */
+
+#if 1
+&touch {
+	tpd-resolution = <720 1600>;
+	tpd-max-touch-num = <10>;
+
+	status = "okay";
+};
+
+
+#endif
+/* TOUCH end */
+
+

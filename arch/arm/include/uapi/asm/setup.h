@@ -16,8 +16,9 @@
 #define _UAPI__ASMARM_SETUP_H
 
 #include <linux/types.h>
-
-#define COMMAND_LINE_SIZE 2048
+/* begin added by yan.gong for CIVICS-4128 on 2023/2/13*/
+#define COMMAND_LINE_SIZE 3072
+/* End added by yan.gong for CIVICS-4128 on 2023/2/13*/
 
 /* The list ends with an ATAG_NONE node. */
 #define ATAG_NONE	0x00000000

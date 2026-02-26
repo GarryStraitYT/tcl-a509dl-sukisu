@@ -26,6 +26,12 @@ struct reclaim_stat {
 	unsigned nr_congested;
 	unsigned nr_writeback;
 	unsigned nr_immediate;
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+	unsigned int nr_pageout;
+#endif
+// #endif /* VENDOR_EDIT */
 	unsigned nr_activate;
 	unsigned nr_ref_keep;
 	unsigned nr_unmap_fail;
@@ -376,12 +382,35 @@ static inline void drain_zonestat(struct zone *zone,
 			struct per_cpu_pageset *pset) { }
 #endif		/* CONFIG_SMP */
 
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+static inline int is_migrate_defrag(int migratetype)
+{
+	return migratetype == MIGRATE_UNMOVABLE_DEFRAG;
+}
+
+static inline void defrag_update_zone_free(struct zone *zone, int migratetype,
+					   int nr_pages)
+{
+	if (unlikely(is_migrate_defrag(migratetype)))
+		__mod_zone_page_state(zone, NR_FREE_DEFRAG_PAGES, nr_pages);
+}
+#endif
+// #endif /* VENDOR_EDIT */
+
 static inline void __mod_zone_freepage_state(struct zone *zone, int nr_pages,
 					     int migratetype)
 {
 	__mod_zone_page_state(zone, NR_FREE_PAGES, nr_pages);
 	if (is_migrate_cma(migratetype))
 		__mod_zone_page_state(zone, NR_FREE_CMA_PAGES, nr_pages);
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	defrag_update_zone_free(zone, migratetype, nr_pages);
+#endif
+// #endif /* VENDOR_EDIT */
 }
 
 extern const char * const vmstat_text[];

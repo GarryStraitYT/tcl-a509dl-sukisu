@@ -9,18 +9,19 @@
 #include "ccci_hif.h"
 #include "ccci_modem.h"
 
-//#if (MD_GENERATION >= 6295)
+#if (MD_GENERATION >= 6295)
 #define MAX_TXQ_NUM 16
 #define MAX_RXQ_NUM 16
-//#else
-//#define MAX_TXQ_NUM 8
-//#define MAX_RXQ_NUM 8
-//#endif
+#else
+#define MAX_TXQ_NUM 8
+#define MAX_RXQ_NUM 8
+#endif
 
 #define PACKET_HISTORY_DEPTH 16	/* must be power of 2 */
 
 extern void *ccci_hif[CCCI_HIF_NUM];
 extern struct ccci_hif_ops *ccci_hif_op[CCCI_HIF_NUM];
+extern void set_ccmni_rps(unsigned long value);
 
 struct ccci_log {
 	struct ccci_header msg;
@@ -44,7 +45,6 @@ struct ccci_hif_traffic {
 		unsigned long long latest_q_rx_time[MAX_RXQ_NUM];
 #ifdef DPMAIF_DEBUG_LOG
 		unsigned long long isr_time_bak;
-		unsigned long long isr_cnt;
 		unsigned long long rx_done_isr_cnt[MAX_RXQ_NUM];
 		unsigned long long rx_other_isr_cnt[MAX_RXQ_NUM];
 		unsigned long long rx_full_cnt;
@@ -52,6 +52,8 @@ struct ccci_hif_traffic {
 		unsigned long long tx_done_isr_cnt[MAX_TXQ_NUM];
 		unsigned long long tx_other_isr_cnt[MAX_TXQ_NUM];
 #endif
+		unsigned long long isr_cnt;
+
 #ifdef DEBUG_FOR_CCB
 		unsigned long long latest_ccb_isr_time;
 		unsigned int last_ccif_r_ch;
@@ -146,8 +148,7 @@ static inline void ccci_md_inc_tx_seq_num(unsigned char md_id,
 	struct ccci_hif_traffic *traffic_info,
 	struct ccci_header *ccci_h)
 {
-	if (ccci_h->channel >= ARRAY_SIZE(traffic_info->seq_nums[OUT])
-		|| ccci_h->channel < 0) {
+	if (ccci_h->channel >= ARRAY_SIZE(traffic_info->seq_nums[OUT])) {
 		CCCI_NORMAL_LOG(md_id, CORE,
 			"ignore seq inc on channel %x\n",
 			*(((u32 *) ccci_h) + 2));
@@ -171,8 +172,14 @@ static inline void ccci_md_inc_tx_seq_num(unsigned char md_id,
 static inline void ccci_channel_update_packet_counter(
 	unsigned long *logic_ch_pkt_cnt, struct ccci_header *ccci_h)
 {
-	if ((ccci_h->channel & 0xFF) < CCCI_MAX_CH_NUM)
+	if ((ccci_h->channel & 0xFFFF) < CCCI_MAX_CH_NUM) {
 		logic_ch_pkt_cnt[ccci_h->channel]++;
+	} else {
+		CCCI_ERROR_LOG(-1, CORE,
+			"channel %d exceeded the threshold %d\n",
+			ccci_h->channel, CCCI_MAX_CH_NUM);
+	}
+
 }
 
 static inline void ccci_channel_dump_packet_counter(
@@ -206,6 +213,24 @@ static inline unsigned int ccci_md_get_seq_num(
 	return traffic_info->seq_nums[dir][ch];
 }
 
+
+int mtk_ccci_speed_monitor_init(void);
+void mtk_ccci_add_dl_pkt_size(int size);
+void mtk_ccci_add_ul_pkt_size(int size);
+int mtk_ccci_toggle_net_speed_log(void);
+
+struct dvfs_ref {
+	u64 speed;
+	int c0_freq; /* Cluster 0 */
+	int c1_freq; /* Cluster 1 */
+	int c2_freq; /* Cluster 2 */
+	int c3_freq; /* Cluster 3 */
+	int dram_lvl;
+	u8 irq_affinity;
+	u8 task_affinity;
+	u8 rps;
+};
+struct dvfs_ref *mtk_ccci_get_dvfs_table(int is_ul, int *tbl_num);
 extern void ccci_hif_register(unsigned char hif_id, void *hif_per_data,
 	struct ccci_hif_ops *ops);
 

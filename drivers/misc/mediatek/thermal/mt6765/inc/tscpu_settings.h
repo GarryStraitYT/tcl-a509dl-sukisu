@@ -177,6 +177,8 @@
 #define CONFIG_THERMAL_AEE_RR_REC (0)
 #endif
 
+#define CFG_THERMAL_KERNEL_IGNORE_HOT_SENSOR (0)
+
 #define thermal_setl(addr, val)     mt_reg_sync_writel(readl(addr) |	\
 					(val), ((void *)addr))
 

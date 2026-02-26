@@ -1,0 +1,38 @@
+
+1.	$Date: 16:36 ‎2021/‎5/‎15 $
+1.1.	新增mtk平台mt6833支持
+
+2.	$Date: 20:28 ‎2021/‎5/‎15 $
+2.1.	pinctrl对应节点配置
+
+
+3.1.	before regulator_get, vdd = 2.8V
+	after reuglator_get, vdd = 0V
+	So, skip all the regulator operations, and we have 2.8V
+
+3.2.	SPI infomation not correct at all, we seek other ways to collect them,
+	ignore for now
+
+3.3.	after insmod, operations are needed,
+	chmod 777 /dev/focaltech_fp	==> so it can be used by everyone
+	ps -ef | grep finger           	==> get biometric_pid
+	dmesg | grep -iE "focal|ff_ctl|finger"
+	logcat | grep -iE "focal|finger|ff_ctl"
+	logcat | grep -iE "focal|finger|ff_ctl|biometric"
+
+
+4.1.	devm_regulator_get rather than regulator_get,
+	which work out fine for setting up voltage for vdd
+
+4.2.	release operation modified respectively, use devm_regulator_put instead of regulator_put.
+
+4.3.	add FF_DTS_CONFIG_VDD_ALWAYS_ON to conditional compile for debugging vdd-always-on,
+	regulator could only be adjusted from the min(could be 1.8V or 2.8V) to max(could be 3V or 3.3V).
+
+5.1.	get property of the spi node, compatible node to get spi-max-frequency
+
+
+6.	$Date: 21:00 ‎2021/‎6/‎10 $
+6.1.	增加spiclk，vdd，irq的资源保护操作，防止二次打开/关闭的动作
+6.2.	增加上下电操作
+6.3.	增加一个上电时序控制，reset low ==> 1ms ==> vdd on ==> 10ms ==> reset high

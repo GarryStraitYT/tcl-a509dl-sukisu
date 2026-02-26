@@ -1,0 +1,1 @@
+obj-$(CONFIG_TOUCHSCREEN_BUFFALO_FT8756) += focaltech_test_ft8756.o

@@ -36,10 +36,24 @@ enum zs_mapmode {
 
 struct zs_pool_stats {
 	/* How many pages were migrated (freed) */
-	unsigned long pages_compacted;
+	atomic_long_t pages_compacted;
 };
 
 struct zs_pool;
+
+#ifdef CONFIG_ZS_MALLOC_EXT
+typedef size_t (ext_size_parse_fn) (void *);
+typedef struct page *(ext_zsmalloc_fn) (void *, gfp_t);
+
+bool is_ext_pool(struct zs_pool *pool);
+extern void zs_pool_enable_ext(struct zs_pool *pool, bool enable,
+				ext_size_parse_fn *parse_fn);
+
+extern void zs_pool_force_ext(struct zs_pool *pool);
+
+extern void zs_pool_ext_malloc_register(struct zs_pool *pool,
+				ext_zsmalloc_fn *fn);
+#endif
 
 struct zs_pool *zs_create_pool(const char *name);
 void zs_destroy_pool(struct zs_pool *pool);

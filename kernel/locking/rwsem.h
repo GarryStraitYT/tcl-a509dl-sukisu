@@ -17,9 +17,6 @@
  *  4) Other non-zero value
  *     - a writer owns the lock and other writers can spin on the lock owner.
  */
-#ifdef CONFIG_TCT_UI_TURBO
-#include <linux/tct/uiturbo.h>
-#endif
 #define RWSEM_ANONYMOUSLY_OWNED	(1UL << 0)
 #define RWSEM_READER_OWNED	((struct task_struct *)RWSEM_ANONYMOUSLY_OWNED)
 
@@ -29,9 +26,6 @@
 # define DEBUG_RWSEMS_WARN_ON(c)
 #endif
 
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-
-#ifdef CONFIG_TCT_UI_TURBO
 enum rwsem_waiter_type {
 	RWSEM_WAITING_FOR_WRITE,
 	RWSEM_WAITING_FOR_READ
@@ -42,8 +36,8 @@ struct rwsem_waiter {
 	struct task_struct *task;
 	enum rwsem_waiter_type type;
 };
-#endif
 
+#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
 /*
  * All writes to owner are protected by WRITE_ONCE() to make sure that
  * store tearing can't happen as optimistic spinners may read and use
@@ -100,59 +94,5 @@ static inline void rwsem_clear_owner(struct rw_semaphore *sem)
 
 static inline void rwsem_set_reader_owned(struct rw_semaphore *sem)
 {
-}
-#endif
-
-#ifdef CONFIG_TCT_UI_TURBO
-static inline bool rwsem_owner_is_writer(struct task_struct *owner)
-{
-	return owner && owner != RWSEM_READER_OWNED;
-}
-
-static inline void
-rwsem_uiturbo_list_add(struct task_struct *p,
-		       struct list_head *entry,
-		       struct list_head *head)
-{
-	if (unlikely(!entry || !head)) {
-		return;
-	}
-	if (test_task_uiturbo(p)) {
-		struct list_head *pos;
-		struct rwsem_waiter *waiter;
-		list_for_each(pos, head) {
-			waiter = list_entry(pos, struct rwsem_waiter, list);
-			if (!test_task_uiturbo(waiter->task)) {
-				list_add(entry, waiter->list.prev);
-				return;
-			}
-		}
-	}
-	list_add_tail(entry, head);
-}
-
-static inline void
-rwsem_dynamic_uiturbo_enqueue(struct task_struct *tsk,
-			      struct task_struct *waiter_task,
-			      struct task_struct *owner,
-			      struct rw_semaphore *sem)
-{
-	if (waiter_task && test_set_dynamic_uiturbo(tsk) &&
-	    rwsem_owner_is_writer(owner) && !test_task_uiturbo(owner) &&
-	    sem && !sem->ui_dep_task) {
-		sem->ui_dep_task = owner;
-		dynamic_uiturbo_enqueue(owner, DYNAMIC_UITURBO_RWSEM,
-					tsk->uiturbo_depth);
-	}
-}
-
-static inline void
-rwsem_dynamic_uiturbo_dequeue(struct rw_semaphore *sem,
-			      struct task_struct *tsk)
-{
-	if (tsk && sem && sem->ui_dep_task == tsk) {
-		dynamic_uiturbo_dequeue(tsk, DYNAMIC_UITURBO_RWSEM);
-		sem->ui_dep_task = NULL;
-	}
 }
 #endif

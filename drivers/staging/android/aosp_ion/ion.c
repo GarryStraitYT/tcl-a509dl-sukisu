@@ -38,6 +38,12 @@ static struct ion_device *internal_dev;
 static int heap_id;
 static atomic_long_t total_heap_bytes;
 
+#ifdef CONFIG_TCT_ION_MONITOR
+struct ion_device* get_ion_device(void){
+	return internal_dev;
+}
+#endif
+
 /* this function should only be called while dev->lock is held */
 static void ion_buffer_add(struct ion_device *dev,
 			   struct ion_buffer *buffer)
@@ -159,6 +165,9 @@ static void _ion_buffer_destroy(struct ion_buffer *buffer)
 static void *ion_buffer_kmap_get(struct ion_buffer *buffer)
 {
 	void *vaddr;
+
+	if (buffer->kmap_cnt + 1 == 0)
+		return ERR_PTR(-EOVERFLOW);
 
 	if (buffer->kmap_cnt) {
 		buffer->kmap_cnt++;
@@ -436,6 +445,14 @@ static const struct dma_buf_ops dma_buf_ops = {
 	.map = ion_dma_buf_kmap,
 	.unmap = ion_dma_buf_kunmap,
 };
+
+#ifdef CONFIG_TCT_ION_MONITOR
+bool is_ion_dma_buf(struct dma_buf* dmabuf){
+	if(dmabuf && dmabuf->ops == &dma_buf_ops)
+		return true;
+	return false;
+}
+#endif
 
 struct ion_buffer *ion_drv_file_to_buffer(struct file *file)
 {

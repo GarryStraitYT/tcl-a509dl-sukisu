@@ -63,6 +63,22 @@ static const struct platform_suspend_ops *suspend_ops;
 static const struct platform_s2idle_ops *s2idle_ops;
 static DECLARE_SWAIT_QUEUE_HEAD(s2idle_wait_head);
 
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+bool bms_sw_support = false;
+EXPORT_SYMBOL(bms_sw_support);
+static int __init get_bms_sw_support(char *str) {//__maybe_unused
+    if (!strncmp(str, "enable", 6))
+        bms_sw_support = true;
+    else
+        bms_sw_support = false;
+    pr_err("__setup bms_sw_support= %d\n", bms_sw_support);
+    return 1;
+}
+__setup("androidboot.bms_sw_support=", get_bms_sw_support);
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
+
 enum s2idle_states __read_mostly s2idle_state;
 static DEFINE_RAW_SPINLOCK(s2idle_lock);
 

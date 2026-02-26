@@ -2,7 +2,7 @@
  *
  * FocalTech fts TouchScreen driver.
  *
- * Copyright (c) 2012-2019, Focaltech Ltd. All rights reserved.
+ * Copyright (c) 2012-2020, Focaltech Ltd. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -36,7 +36,7 @@
 /*****************************************************************************
 * Macro definitions using #define
 *****************************************************************************/
-#define FTS_DRIVER_VERSION                  "Focaltech V3.1 20190807 - compatible 5446 serials 20200119"
+#define FTS_DRIVER_VERSION                  "Focaltech V3.3 20201229"
 
 #define BYTE_OFF_0(x)           (u8)((x) & 0xFF)
 #define BYTE_OFF_8(x)           (u8)(((x) >> 8) & 0xFF)
@@ -54,11 +54,10 @@
 #define FTS_CHIP_IDC            ((FTS_CHIP_TYPE & FLAGBIT(FLAG_IDC_BIT)) == FLAGBIT(FLAG_IDC_BIT))
 #define FTS_HID_SUPPORTTED      ((FTS_CHIP_TYPE & FLAGBIT(FLAG_HID_BIT)) == FLAGBIT(FLAG_HID_BIT))
 
-#define FTS_CHIP_TYPE_MAPPING {\
-	{0x02, 0x54, 0x22, 0x54, 0x22, 0x00, 0x00, 0x54, 0x2C}, \
-	{0x82, 0x54, 0x22, 0x54, 0x22, 0x54, 0x2D, 0x54, 0x2E}, \
-	{0x81, 0x54, 0x52, 0x54, 0x52, 0x00, 0x00, 0x54, 0x5C}, \
-}
+#define FTS_MAX_CHIP_IDS        8
+
+#define FTS_CHIP_TYPE_MAPPING {{0x83, 0x54, 0x56, 0x00, 0x00, 0x00, 0x00, 0x54, 0xA2}}
+
 
 #define FILE_NAME_LENGTH                    128
 #define ENABLE                              1
@@ -71,6 +70,7 @@
 #define FTS_CMD_READ_ID                     0x90
 #define FTS_CMD_READ_ID_LEN                 4
 #define FTS_CMD_READ_ID_LEN_INCELL          1
+#define FTS_CMD_READ_FW_CONF                0xA8
 /*register address*/
 #define FTS_REG_INT_CNT                     0x8F
 #define FTS_REG_FLOW_WORK_CNT               0x91
@@ -122,7 +122,7 @@
 * Global variable or extern global variabls/functions
 *****************************************************************************/
 struct ft_chip_t {
-    u64 type;
+    u16 type;
     u8 chip_idh;
     u8 chip_idl;
     u8 rom_idh;
@@ -133,10 +133,16 @@ struct ft_chip_t {
     u8 bl_idl;
 };
 
+struct ft_chip_id_t {
+    u16 type;
+    u16 chip_ids[FTS_MAX_CHIP_IDS];
+};
+
 struct ts_ic_info {
     bool is_incell;
     bool hid_supported;
     struct ft_chip_t ids;
+    struct ft_chip_id_t cid;
 };
 
 /*****************************************************************************

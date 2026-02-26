@@ -1,13 +1,123 @@
-config TCT_UI_TURBO
-	bool "ui turbo v1.0"
+config TCT_DEVICEINFO
+	bool "TCT_DEVICEINFO"
+	default n
+	help
+	  Say Y here to enable TCT_DEVICEINFO.
+
+config TCT_DEVICEINFO_UFS
+    bool "TCT_DEVICEINFO"
+    default n
+    help
+      Say Y here to enable TCT_DEVICEINFO.
+# Begin add 2021/04/23 by zhuanmen.hu to control log output
+config TCT_FEATUR_LOGCAT_CTL
+	bool "tct log output control"
+	default n
+# End add 2021/04/23 by zhuanmen.hu to control log output
+
+#Begin add by bing-zhang for ENCORETF-21 on 2022/07/29
+config TCT_FEATURE_HBM
+	bool "TCT_FEATURE_HBM"
+	default n
+	help
+	  Say Y here to enable TCT_FEATURE_HBM.
+#End add by bing-zhang for ENCORETF-21 on 2022/07/29
+
+#Begin add by bing-zhang for 11698878 on 2022/01/10
+config TCT_PROJECT_AUSTINTF
+	bool "TCT_PROJECT_AUSTINTF"
+	default n
+	help
+	  Say Y here to enable TCT_PROJECT_AUSTINTF.
+#End add by bing-zhang for 11698878 on 2022/01/10
+
+#Begin add by bing-zhang for ENCORETF-19 on 2022/06/23
+config TCT_PROJECT_ENCORE
+	bool "TCT_PROJECT_ENCORE"
+	default n
+	help
+	  Say Y here to enable TCT_PROJECT_ENCORE.
+#End add by bing-zhang for ENCORETF-19 on 2022/06/23
+
+#Begin add by ce.yang for LUNA84GVZW on 2022/11/29
+config TCT_PROJECT_LUNA84GVZW
+        bool "TCT_PROJECT_LUNA84GVZW"
+        default n
+        help
+          Say Y here to enable TCT_PROJECT_LUNA84GVZW.
+#End add by ce.yang for LUNA84GVZW on 2022/11/29
+
+#Begin add by bing-zhang for AOSP13TF-4772 on 2022/08/09
+config TCT_PROJECT_BUFFALO
+	bool "TCT_PROJECT_BUFFALO"
+	default n
+	help
+	  Say Y here to enable TCT_PROJECT_BUFFALO.
+#End add by bing-zhang for AOSP13TF-4772 on 2022/08/09
+
+#Begin add by bing-zhang for BORATF-23 on 2022/07/08
+config TCT_PROJECT_BORATF
+	bool "TCT_PROJECT_BORATF"
+	default n
+	help
+	  Say Y here to enable TCT_PROJECT_BORATF.
+#End add by bing-zhang for BORATF-23 on 2022/07/08
+
+config TCT_PROJECT_SONATA
+        bool "TCT_PROJECT_SONATA"
+        default n
+        help
+          Say Y here to enable TCT_PROJECT_SONATA.
+
+config CRUZE_HBM_FEATURE
+	bool "CRUZE_HBM_FEATURE"
+	default n
+	help
+	  Say Y here to enable TCT_BSP_FEATURE.
+
+# Begin add by bing-zhang for 11669573 on 2021/11/12
+config TCT_BOARD_ID_COMPATIBLE
+	bool "TCT_BOARD_ID_COMPATIBLE"
+	default n
+	help
+	  Say Y here to enable TCT_BOARD_ID_COMPATIBLE.
+# End add by bing-zhang for 11669573 on 2021/11/12
+
+#modify by yan.gong for CIVICPL-3084 on 2022-07-23
+config TCT_PROJECT_CIVIC_S
+           bool "For civic project"
+           default n
+#modify by yan.gong for CIVICPL-3084 on 2022-07-23
+
+config TCT_MMPRESSURE_DETECT
+        bool "detect mm pressure and report to user space"
+        default n
+
+config TCT_DMCC
+        tristate "RAM Compress and Clean"
+        depends on SYSFS && SWAP
+        default n
+        help
+          Creates background thread for compress and clean used RAM
+          dynamiclly,enabled by write 1 to /sys/kernel/dmcc/enable.
+
+config INTELLIGENT_RECLAIM
+        bool "enable intelligent reclaim"
+        depends on PROC_FS
+        default n
+
+config TCT_LIMIT_MEDIASCANNER
+	bool "limit cpu for mediascanner if run too long."
 	default n
 
-config TCT_STAT
-	bool "tct statistics feature"
-	depends on TCT_UI_TURBO
-	default n
+config SONATA_HBM_FEATURE
+        bool "SONATA_HBM_FEATURE"
+        default n
+        help
+          Say Y here to enable TCT_BSP_FEATURE.
 
-config TCT_PERF
-	bool "tct performace control device"
-	depends on TCT_UI_TURBO
-	default n
+config MODEL_3_HBM_FEATURE
+        bool "MODEL_3_HBM_FEATURE"
+        default n
+        help
+          Say Y here to enable TCT_BSP_FEATURE.

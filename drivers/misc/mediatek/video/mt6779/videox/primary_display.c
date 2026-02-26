@@ -1232,7 +1232,7 @@ int primary_display_get_debug_state(char *stringbuf, int buf_len)
 		primary_display_cmdq_enabled() ? "CMDQ On" : "CMDQ Off");
 
 	/* print HRT table */
-	copy_hrt_bound_table(0, hrt_table);
+	copy_hrt_bound_table(0, hrt_table, 0); /*TODO: Dummy cfg id used here*/
 	len += scnprintf(stringbuf + len, buf_len - len, "|HRT table=[");
 	for (i = 0; i < HRT_LEVEL_NUM-1; i++)
 		len += scnprintf(stringbuf + len, buf_len - len, "%d, ",
@@ -2105,6 +2105,7 @@ static int _DL_switch_to_DC_fast(int block)
 		init_sec_buf();
 		mva = sec_mva;
 		wdma_config.security = DISP_SECURE_BUFFER;
+		wdma_config.hnd = sec_ion_handle;
 	} else {
 		mva = pgc->dc_buf[pgc->dc_buf_id];
 		wdma_config.security = DISP_NORMAL_BUFFER;
@@ -2142,6 +2143,8 @@ static int _DL_switch_to_DC_fast(int block)
 	/* 4.config RDMA from directlink mode to memory mode */
 	rdma_config.address = mva;
 	rdma_config.security = wdma_config.security;
+	if (rdma_config.security == DISP_SECURE_BUFFER)
+		rdma_config.hnd = sec_ion_handle;
 
 	data_config_dl = dpmgr_path_get_last_config(pgc->dpmgr_handle);
 	data_config_dl->rdma_config = rdma_config;
@@ -2889,7 +2892,8 @@ static int _build_path_direct_link(void)
 }
 
 static int _convert_disp_input_to_ovl(struct OVL_CONFIG_STRUCT *dst,
-				      struct disp_input_config *src)
+				      struct disp_input_config *src,
+				      unsigned int session_id)
 {
 	int ret = 0;
 	int force_disable_alpha = 0;
@@ -2946,6 +2950,14 @@ static int _convert_disp_input_to_ovl(struct OVL_CONFIG_STRUCT *dst,
 	dst->identity = src->identity;
 	dst->connected_type = src->connected_type;
 	dst->security = src->security;
+
+	/* only updated secure buffer handle for input */
+	if (dst->security != DISP_NORMAL_BUFFER) {
+		dst->hnd = disp_sync_get_ion_handle(session_id, dst->layer, dst->buff_idx);
+		DISPINFO("%s [SVP]ovl2mem sec layer id: %d, buf_idx:0x%x\n", __func__,
+			 dst->layer, dst->buff_idx);
+	}
+
 	dst->yuv_range = src->yuv_range;
 	dst->ds = (enum android_dataspace)src->dataspace;
 
@@ -3388,7 +3400,7 @@ static void DC_config_nightlight(struct cmdqRecStruct *cmdq_handle)
 	if (all_zero)
 		DISP_PR_INFO("Night light backup param is zero matrix\n");
 	else
-		disp_ccorr_set_color_matrix(cmdq_handle, ccorr_matrix, mode);
+		disp_ccorr_set_color_matrix(cmdq_handle, ccorr_matrix, false, mode);
 }
 
 static int _decouple_update_rdma_config_nolock(void)
@@ -5928,12 +5940,14 @@ static int decouple_trigger_worker_thread(void *data)
 
 static int config_wdma_output(disp_path_handle disp_handle,
 			      struct cmdqRecStruct *cmdq_handle,
-			      struct disp_output_config *output)
+			      struct disp_frame_cfg_t *cfg)
 {
 	struct disp_ddp_path_config *pconfig = NULL;
 	struct WDMA_CONFIG_STRUCT *wcfg = NULL;
+	struct disp_output_config *output;
 
-	ASSERT(output);
+	ASSERT(cfg && (&cfg->output_cfg));
+	output = &cfg->output_cfg;
 
 	pconfig = dpmgr_path_get_last_config(disp_handle);
 	wcfg = &pconfig->wdma_config;
@@ -5951,6 +5965,15 @@ static int config_wdma_output(disp_path_handle disp_handle,
 	wcfg->dstPitch = output->pitch * UFMT_GET_Bpp(wcfg->outputFormat);
 	wcfg->security = output->security;
 	pconfig->wdma_dirty = 1;
+
+	/* only updated secure buffer handle for input */
+	if (wcfg->security == DISP_SECURE_BUFFER) {
+		wcfg->hnd = disp_sync_get_ion_handle(cfg->session_id,
+						disp_sync_get_output_timeline_id(),
+						output->buff_idx);
+		DISPINFO("%s [SVP]ovl2mem sec layer id: %d, buf_idx:0x%x\n", __func__,
+			 disp_sync_get_output_timeline_id(), output->buff_idx);
+	}
 
 	return dpmgr_path_config(disp_handle, pconfig, cmdq_handle);
 }
@@ -6010,7 +6033,7 @@ static int primary_frame_cfg_output(struct disp_frame_cfg_t *cfg)
 		pgc->need_trigger_ovl1to2 = 1;
 	}
 
-	ret = config_wdma_output(disp_handle, cmdq_handle, &cfg->output_cfg);
+	ret = config_wdma_output(disp_handle, cmdq_handle, cfg);
 
 	if ((pgc->session_id > 0) && primary_display_is_decouple_mode())
 		update_frm_seq_info((unsigned long)(cfg->output_cfg.pa), 0,
@@ -6661,7 +6684,7 @@ static int _config_ovl_input(struct disp_frame_cfg_t *cfg,
 			DISPMSG("set AEE layer %d\n", l_id);
 		}
 
-		_convert_disp_input_to_ovl(ovl_cfg, input_cfg);
+		_convert_disp_input_to_ovl(ovl_cfg, input_cfg, cfg->session_id);
 
 		dprec_logger_start(DPREC_LOGGER_PRIMARY_CONFIG,
 				   ((ovl_cfg->src_x & 0xFFFF) << 16) |
@@ -7073,7 +7096,7 @@ static int primary_frame_cfg_input(struct disp_frame_cfg_t *cfg)
 			data_config = dpmgr_path_get_last_config(disp_handle);
 			ret = _convert_disp_input_to_ovl(
 					&(data_config->ovl_config[layer]),
-					&cfg->input_cfg[0]);
+					&cfg->input_cfg[0], cfg->session_id);
 		}
 
 		goto done;
@@ -7115,6 +7138,7 @@ static int primary_frame_cfg_input(struct disp_frame_cfg_t *cfg)
 		else if (!primary_display_is_decouple_mode()) {
 			disp_ccorr_set_color_matrix(cmdq_handle,
 				m_ccorr_config.color_matrix,
+				m_ccorr_config.featureFlag,
 				m_ccorr_config.mode);
 
 			/* backup night params here */

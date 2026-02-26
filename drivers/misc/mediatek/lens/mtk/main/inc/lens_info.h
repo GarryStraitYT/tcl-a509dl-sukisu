@@ -9,7 +9,7 @@
 #include "lens_list.h"
 #include <linux/ioctl.h>
 
-#define MAX_NUM_OF_LENS 32
+#define MAX_NUM_OF_LENS 35
 
 #define AF_MAGIC 'A'
 
@@ -25,6 +25,10 @@
 #define AFDRV_AD5823AF "AD5823AF"
 #define AFDRV_AK7345AF "AK7345AF"
 #define AFDRV_AK7371AF "AK7371AF"
+/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+#define AFDRV_AW86014AF "AW86014AF"
+#define AFDRV_AW8601XAF "AW8601XAF"
+/*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
 #define AFDRV_BU63165AF "BU63165AF"
 #define AFDRV_BU63169AF "BU63169AF"
 #define AFDRV_BU6424AF "BU6424AF"
@@ -34,9 +38,17 @@
 #define AFDRV_BU64745GWZAF "BU64745GWZAF"
 #define AFDRV_DW9714A "DW9714A"
 #define AFDRV_DW9714AF "DW9714AF"
+//#Begain modified by chengyixuan for CIVIC-3005 on 2022-07-12
+#define AFDRV_DW9714AFCIVI "DW9714AFCIVI"
+//#End modified by chengyixuan for CIVIC-3005 on 2022-07-12
 #define AFDRV_DW9718AF "DW9718AF"
+#define AFDRV_DW9718TAF "DW9718TAF"
 #define AFDRV_DW9718SAF "DW9718SAF"
+#define AFDRV_DW9718SAF2ND "DW9718SAF2ND"
 #define AFDRV_DW9800WAF "DW9800WAF"
+//#Begain modified by chengyixuan for CIVIC-3005 on 2022-07-12
+#define AFDRV_DW9800WAFMAC "DW9800WAFMAC"
+//#End modified by chengyixuan for CIVIC-3005 on 2022-07-12
 #define AFDRV_DW9719TAF "DW9719TAF"
 #define AFDRV_DW9763AF "DW9763AF"
 #define AFDRV_DW9814AF "DW9814AF"
@@ -62,7 +74,12 @@
 #define AFDRV_OV8825AF "OV8825AF"
 #define AFDRV_WV511AAF "WV511AAF"
 #define AFDRV_DW9718TAF "DW9718TAF"
-#define AFDRV_DW9718T2NDAF "DW9718T2NDAF"
+//Add by majinrui make Hi846 be compatible with two VCM_drivers(DW9718TAF & DW9718PAF for ODIN5GTMO-4733 on 20220529
+#define AFDRV_DW9718PAF "DW9718PAF"
+//Add by majinrui make Hi846 be compatible with two VCM_drivers(DW9718TAF & DW9718PAF for ODIN5GTMO-4733 on 20220529
+#define AFDRV_GT9772AF "GT9772AF"
+#define AFDRV_GT9768AF "GT9768AF"
+
 #define CONVERT_CCU_TIMESTAMP 0x1000
 
 /* Structures */

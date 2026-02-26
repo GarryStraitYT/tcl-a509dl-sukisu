@@ -352,26 +352,35 @@ out:
 		return -EINVAL;
 
 	if (!strcmp(a->attr.name, "gc_urgent")) {
-		if (t >= 1) {
-			sbi->gc_mode = GC_URGENT;
+		if (t == 0) {
+			sbi->gc_mode = GC_NORMAL;
+		} else if (t == 1) {
+			sbi->gc_mode = GC_URGENT_HIGH;
 			if (sbi->gc_thread) {
 				sbi->gc_thread->gc_wake = 1;
 				wake_up_interruptible_all(
 					&sbi->gc_thread->gc_wait_queue_head);
 				wake_up_discard_thread(sbi, true);
 			}
+		} else if (t == 2) {
+			sbi->gc_mode = GC_URGENT_LOW;
 		} else {
-			sbi->gc_mode = GC_NORMAL;
+			return -EINVAL;
 		}
 		return count;
 	}
 	if (!strcmp(a->attr.name, "gc_idle")) {
-		if (t == GC_IDLE_CB)
+		if (t == GC_IDLE_CB) {
 			sbi->gc_mode = GC_IDLE_CB;
-		else if (t == GC_IDLE_GREEDY)
+		} else if (t == GC_IDLE_GREEDY) {
 			sbi->gc_mode = GC_IDLE_GREEDY;
-		else
+		} else if (t == GC_IDLE_AT) {
+			if (!sbi->am.atgc_enabled)
+				return -EINVAL;
+			sbi->gc_mode = GC_AT;
+		} else {
 			sbi->gc_mode = GC_NORMAL;
+		}
 		return count;
 	}
 
@@ -457,6 +466,7 @@ enum feat_id {
 	FEAT_SB_CHECKSUM,
 	FEAT_CASEFOLD,
 	FEAT_COMPRESSION,
+	FEAT_TEST_DUMMY_ENCRYPTION_V2,
 };
 
 static ssize_t f2fs_feature_show(struct f2fs_attr *a,
@@ -477,6 +487,7 @@ static ssize_t f2fs_feature_show(struct f2fs_attr *a,
 	case FEAT_SB_CHECKSUM:
 	case FEAT_CASEFOLD:
 	case FEAT_COMPRESSION:
+	case FEAT_TEST_DUMMY_ENCRYPTION_V2:
 		return sprintf(buf, "supported\n");
 	}
 	return 0;
@@ -556,6 +567,7 @@ F2FS_RW_ATTR(FAULT_INFO_RATE, f2fs_fault_info, inject_rate, inject_rate);
 F2FS_RW_ATTR(FAULT_INFO_TYPE, f2fs_fault_info, inject_type, inject_type);
 #endif
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, data_io_flag, data_io_flag);
+F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, node_io_flag, node_io_flag);
 F2FS_GENERAL_RO_ATTR(dirty_segments);
 F2FS_GENERAL_RO_ATTR(free_segments);
 F2FS_GENERAL_RO_ATTR(lifetime_write_kbytes);
@@ -576,6 +588,7 @@ F2FS_GENERAL_RO_ATTR(avg_vblocks);
 
 #ifdef CONFIG_FS_ENCRYPTION
 F2FS_FEATURE_RO_ATTR(encryption, FEAT_CRYPTO);
+F2FS_FEATURE_RO_ATTR(test_dummy_encryption_v2, FEAT_TEST_DUMMY_ENCRYPTION_V2);
 #endif
 #ifdef CONFIG_BLK_DEV_ZONED
 F2FS_FEATURE_RO_ATTR(block_zoned, FEAT_BLKZONED);
@@ -637,6 +650,7 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(inject_type),
 #endif
 	ATTR_LIST(data_io_flag),
+	ATTR_LIST(node_io_flag),
 	ATTR_LIST(dirty_segments),
 	ATTR_LIST(free_segments),
 	ATTR_LIST(unusable),
@@ -661,6 +675,7 @@ static struct attribute *f2fs_attrs[] = {
 static struct attribute *f2fs_feat_attrs[] = {
 #ifdef CONFIG_FS_ENCRYPTION
 	ATTR_LIST(encryption),
+	ATTR_LIST(test_dummy_encryption_v2),
 #endif
 #ifdef CONFIG_BLK_DEV_ZONED
 	ATTR_LIST(block_zoned),
@@ -803,6 +818,7 @@ static int __maybe_unused iostat_info_seq_show(struct seq_file *seq,
 	seq_printf(seq, "time:		%-16llu\n", now);
 
 	/* print app write IOs */
+	seq_puts(seq, "[WRITE]\n");
 	seq_printf(seq, "app buffered:	%-16llu\n",
 				sbi->rw_iostat[APP_BUFFERED_IO]);
 	seq_printf(seq, "app direct:	%-16llu\n",
@@ -829,6 +845,7 @@ static int __maybe_unused iostat_info_seq_show(struct seq_file *seq,
 				sbi->rw_iostat[FS_CP_META_IO]);
 
 	/* print app read IOs */
+	seq_puts(seq, "[READ]\n");
 	seq_printf(seq, "app buffered:	%-16llu\n",
 				sbi->rw_iostat[APP_BUFFERED_READ_IO]);
 	seq_printf(seq, "app direct:	%-16llu\n",
@@ -839,12 +856,17 @@ static int __maybe_unused iostat_info_seq_show(struct seq_file *seq,
 	/* print fs read IOs */
 	seq_printf(seq, "fs data:	%-16llu\n",
 				sbi->rw_iostat[FS_DATA_READ_IO]);
+	seq_printf(seq, "fs gc data:	%-16llu\n",
+				sbi->rw_iostat[FS_GDATA_READ_IO]);
+	seq_printf(seq, "fs compr_data:	%-16llu\n",
+				sbi->rw_iostat[FS_CDATA_READ_IO]);
 	seq_printf(seq, "fs node:	%-16llu\n",
 				sbi->rw_iostat[FS_NODE_READ_IO]);
 	seq_printf(seq, "fs meta:	%-16llu\n",
 				sbi->rw_iostat[FS_META_READ_IO]);
 
 	/* print other IOs */
+	seq_puts(seq, "[OTHER]\n");
 	seq_printf(seq, "fs discard:	%-16llu\n",
 				sbi->rw_iostat[FS_DISCARD]);
 
@@ -872,6 +894,169 @@ static int __maybe_unused victim_bits_seq_show(struct seq_file *seq,
 	}
 	return 0;
 }
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-11-30 add for f2fs antiaging
+#ifdef CONFIG_F2FS_TCT_EXT
+static int gc_opt_enable_seq_show(struct seq_file *seq, void *p)
+{
+	struct super_block *sb = seq->private;
+	struct f2fs_sb_info *sbi = F2FS_SB(sb);
+
+	seq_printf(seq, "%d\n", sbi->gc_opt_enable);
+	return 0;
+}
+
+static ssize_t gc_opt_enable_write(struct file *filp, const char __user *ubuf,
+	size_t cnt, loff_t *ppos)
+{
+	char buf[64] = { 0 };
+	int user_set_value = 0;
+	int ret = -1;
+	struct seq_file *seq = filp->private_data;
+	struct super_block *sb = seq->private;
+	struct f2fs_sb_info *sbi = F2FS_SB(sb);
+
+	if (cnt > sizeof(buf) - 1)
+		cnt = sizeof(buf) - 1;
+
+	if (copy_from_user(&buf[0], ubuf, cnt))
+		return -EFAULT;
+	ret = kstrtoint(strstrip(&buf[0]), 0, &user_set_value);
+	if (ret < 0)
+		return ret;
+
+	sbi->gc_opt_enable = !!user_set_value;
+	if (sbi->gc_opt_enable) {
+		sbi->interval_time[GC_TIME] = DEF_GC_IDLE_INTERVAL;
+		sbi->interval_time[SSR_GC_TIME] = DEF_SSR_GC_IDLE_INTERVAL;
+	} else
+		sbi->interval_time[GC_TIME] = DEF_IDLE_INTERVAL;
+	return cnt;
+}
+
+static int gc_opt_enable_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, gc_opt_enable_seq_show, PDE_DATA(inode));
+}
+
+static const struct file_operations f2fs_seq_gc_opt_enable_fops = {
+	.open = gc_opt_enable_open,
+	.read = seq_read,
+	.write = gc_opt_enable_write,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+
+static int dc_opt_enable_seq_show(struct seq_file *seq, void *p)
+{
+	struct super_block *sb = seq->private;
+	struct f2fs_sb_info *sbi = F2FS_SB(sb);
+
+	seq_printf(seq, "%d\n", sbi->dc_opt_enable);
+	return 0;
+}
+
+static ssize_t dc_opt_enable_write(struct file *filp, const char __user *ubuf,
+	size_t cnt, loff_t *ppos)
+{
+	char buf[64] = { 0 };
+	int user_set_value = 0;
+	int ret = -1;
+	struct seq_file *seq = filp->private_data;
+	struct super_block *sb = seq->private;
+	struct f2fs_sb_info *sbi = F2FS_SB(sb);
+
+	if (cnt > sizeof(buf) - 1)
+		cnt = sizeof(buf) - 1;
+
+	if (copy_from_user(&buf[0], ubuf, cnt))
+		return -EFAULT;
+	ret = kstrtoint(strstrip(&buf[0]), 0, &user_set_value);
+	if (ret < 0)
+		return ret;
+
+	sbi->dc_opt_enable = !!user_set_value;
+	if (sbi->dc_opt_enable) {
+		sbi->interval_time[DISCARD_TIME] = DEF_DISCARD_IDLE_INTERVAL;
+	} else
+		sbi->interval_time[DISCARD_TIME] = DEF_IDLE_INTERVAL;
+	return cnt;
+}
+
+static int dc_opt_enable_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, dc_opt_enable_seq_show, PDE_DATA(inode));
+}
+
+static const struct file_operations f2fs_seq_dc_opt_enable_fops = {
+	.open = dc_opt_enable_open,
+	.read = seq_read,
+	.write = dc_opt_enable_write,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+
+struct freefrag_data {
+	block_t total;
+	block_t frags;
+	block_t blocks[10];
+};
+
+static bool __maybe_unused count_freefrag(struct super_block *sb,
+					  unsigned int segno,
+					  unsigned int start,
+					  unsigned int len,
+					  void *priv)
+{
+	struct freefrag_data *ffd = priv;
+	int order = min_t(int, 10, fls(len)) - 1;
+	ffd->total += len;
+	ffd->frags++;
+	ffd->blocks[order] += len;
+	return false;
+}
+
+#define FFSZ(i) ((i) < 8 ?  (4<<(i)): (1<<((i)-8)))
+#define FFU(i) ((i) < 8 ? 'K' : 'M')
+static int __maybe_unused frag_info_seq_show(struct seq_file *seq,
+					     void *offset)
+{
+	struct super_block *sb = seq->private;
+	struct f2fs_sb_info *sbi = F2FS_SB(sb);
+	struct freefrag_data ffd;
+	unsigned int frag_score;
+	unsigned int i;
+	memset(&ffd, 0, sizeof(ffd));
+	f2fs_query_free_range(sb, 0, -1U, count_freefrag, &ffd);
+	frag_score = ffd.total ? ffd.frags * 100UL / ffd.total : 0;
+	seq_printf(seq, "total_segments: %u\n", TOTAL_SEGS(sbi));
+	seq_printf(seq, "free_segments: %u\n", free_segments(sbi));
+	seq_printf(seq, "prefree_segments: %u\n", prefree_segments(sbi));
+	seq_printf(seq, "dirty_segments: %u\n", dirty_segments(sbi));
+	seq_printf(seq, "reserved_segments: %u\n", reserved_segments(sbi));
+	seq_printf(seq, "ovp_segments: %u\n", overprovision_segments(sbi));
+	seq_printf(seq, "frag_score: %u\n", frag_score);
+	seq_printf(seq, "free_blocks: %u\n", ffd.total);
+	seq_printf(seq, "fragments: %u\n", ffd.frags);
+	for (i = 0; i < ARRAY_SIZE(ffd.blocks) - 1; i++) {
+		seq_printf(seq, "%u%cB-%u%cB: %u\n", FFSZ(i), FFU(i),
+			   FFSZ(i+1), FFU(i+1), ffd.blocks[i]);
+	}
+	seq_printf(seq, "%u%cB: %u\n", FFSZ(i), FFU(i), ffd.blocks[i]);
+
+	if (SM_I(sbi)->dcc_info) {
+		seq_printf(seq, "undiscard_blocks: %u\n",
+			   SM_I(sbi)->dcc_info->undiscard_blks);
+		seq_printf(seq, "nr_discard_cmd: %u\n",
+			   atomic_read(&SM_I(sbi)->dcc_info->discard_cmd_cnt));
+	}
+	return 0;
+}
+#undef FFSZ
+#undef FFU
+#endif
+// #endif /*VENDOR_EDIT*/
 
 int __init f2fs_init_sysfs(void)
 {
@@ -929,6 +1114,17 @@ int f2fs_register_sysfs(struct f2fs_sb_info *sbi)
 				iostat_info_seq_show, sb);
 		proc_create_single_data("victim_bits", S_IRUGO, sbi->s_proc,
 				victim_bits_seq_show, sb);
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-11-30 add for f2fs antiaging
+#ifdef CONFIG_F2FS_TCT_EXT
+		proc_create_single_data("frag_info", S_IRUGO, sbi->s_proc,
+				frag_info_seq_show, sb);
+		proc_create_data("gc_opti_enable", 0644, sbi->s_proc,
+				 &f2fs_seq_gc_opt_enable_fops, sb);
+		proc_create_data("dc_opti_enable", 0644, sbi->s_proc,
+				 &f2fs_seq_dc_opt_enable_fops, sb);
+#endif
+// #endif /*VENDOR_EDIT*/
 	}
 	return 0;
 }
@@ -936,6 +1132,14 @@ int f2fs_register_sysfs(struct f2fs_sb_info *sbi)
 void f2fs_unregister_sysfs(struct f2fs_sb_info *sbi)
 {
 	if (sbi->s_proc) {
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-11-30 add for f2fs antiaging
+#ifdef CONFIG_F2FS_TCT_EXT
+		remove_proc_entry("frag_info", sbi->s_proc);
+		remove_proc_entry("gc_opti_enable", sbi->s_proc);
+		remove_proc_entry("dc_opti_enable", sbi->s_proc);
+#endif
+// #endif /*VENDOR_EDIT*/
 		remove_proc_entry("iostat_info", sbi->s_proc);
 		remove_proc_entry("segment_info", sbi->s_proc);
 		remove_proc_entry("segment_bits", sbi->s_proc);
@@ -944,4 +1148,5 @@ void f2fs_unregister_sysfs(struct f2fs_sb_info *sbi)
 	}
 	kobject_del(&sbi->s_kobj);
 	kobject_put(&sbi->s_kobj);
+	wait_for_completion(&sbi->s_kobj_unregister);
 }

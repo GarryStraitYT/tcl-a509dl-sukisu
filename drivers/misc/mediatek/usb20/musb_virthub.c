@@ -15,14 +15,33 @@
 static int h_pre_disable = 1;
 module_param(h_pre_disable, int, 0644);
 
-static void musb_port_suspend(struct musb *musb, bool do_suspend)
+static void musb_host_check_disconnect(struct musb *musb)
+{
+	u8 opstate = musb_readb(musb->mregs, MUSB_OPSTATE);
+	bool is_con = musb->port1_status & USB_PORT_STAT_CONNECTION;
+
+	if (opstate == MUSB_OPSTATE_HOST_WAIT_DEV && is_con) {
+		DBG(0, "disconnect when suspend");
+		musb->int_usb |= MUSB_INTR_DISCONNECT;
+		musb->xceiv->otg->state = OTG_STATE_A_HOST;
+		musb_interrupt(musb);
+	}
+}
+
+int musb_port_suspend(struct musb *musb, bool do_suspend)
 {
 	struct usb_otg *otg = musb->xceiv->otg;
 	u8 power;
 	void __iomem *mbase = musb->mregs;
 
+/* Begin del by jin.wang for task 2064 on 2022-3-23 */
+#if !IS_ENABLED(CONFIG_MUSB_OLD_ARCH)
 	if (!is_host_active(musb))
-		return;
+		return 0;
+#endif
+/* End del by jin.wang */
+
+	DBG(0, "%s\n", do_suspend ? "suspend" : "resume");
 
 	/* NOTE:  this doesn't necessarily put PHY into low power mode,
 	 * turning off its clock; that's a function of PHY integration and
@@ -33,17 +52,20 @@ static void musb_port_suspend(struct musb *musb, bool do_suspend)
 	if (do_suspend) {
 		int retries = 10000;
 
-		power &= ~MUSB_POWER_RESUME;
-		power |= (MUSB_POWER_SUSPENDM | MUSB_POWER_ENSUSPEND);
+		if (power & MUSB_POWER_RESUME)
+			return -EBUSY;
 
-		musb_writeb(mbase, MUSB_POWER, power);
+		if (!(power & MUSB_POWER_SUSPENDM)) {
+			power |= MUSB_POWER_SUSPENDM;
+			musb_writeb(mbase, MUSB_POWER, power);
 
-		/* Needed for OPT A tests */
-		power = musb_readb(mbase, MUSB_POWER);
-		while (power & MUSB_POWER_SUSPENDM) {
+			/* Needed for OPT A tests */
 			power = musb_readb(mbase, MUSB_POWER);
-			if (retries-- < 1)
-				break;
+			while (power & MUSB_POWER_SUSPENDM) {
+				power = musb_readb(mbase, MUSB_POWER);
+				if (retries-- < 1)
+					break;
+			}
 		}
 
 		DBG(3, "Root port suspended, power %02x\n", power);
@@ -78,6 +100,7 @@ static void musb_port_suspend(struct musb *musb, bool do_suspend)
 		musb->port1_status |= MUSB_PORT_STAT_RESUME;
 		musb->rh_timer = jiffies + msecs_to_jiffies(20);
 	}
+	return 0;
 }
 
 static void musb_port_reset(struct musb *musb, bool do_reset)
@@ -200,7 +223,7 @@ void musb_root_disconnect(struct musb *musb)
 			otg_state_string(musb->xceiv->otg->state));
 	}
 }
-
+EXPORT_SYMBOL(musb_root_disconnect);
 
 /*---------------------------------------------------------------------*/
 
@@ -342,7 +365,7 @@ int musb_hub_control(struct usb_hcd *hcd,
 			/* NOTE: it might really be A_WAIT_BCON ... */
 			musb->xceiv->otg->state = OTG_STATE_A_HOST;
 		}
-
+		musb_host_check_disconnect(musb);
 		put_unaligned(cpu_to_le32(musb->port1_status
 					  & ~MUSB_PORT_STAT_RESUME),
 					  (__le32 *) buf);

@@ -10,6 +10,11 @@
 #include <linux/of.h>
 #include <linux/of_fdt.h>
 
+//Begin added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+#include <linux/platform_device.h>
+#include <linux/of_gpio.h>
+//End added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+
 struct pinctrl *pinctrlaud;
 
 #define MT6755_PIN 1
@@ -47,14 +52,14 @@ enum audio_system_gpio_type {
 	GPIO_RCVSPK_HIGH,
 	GPIO_RCVSPK_LOW,
 #endif
+/* Begin meng.zhang HAC control for task 10014578 on 2020/09/28 */
+	GPIO_HAC_PA_HIGH,
+	GPIO_HAC_PA_LOW,
+/* End meng.zhang HAC control for task 10014578 on 2020/09/28 */
 	GPIO_HPDEPOP_HIGH,
 	GPIO_HPDEPOP_LOW,
 	GPIO_AUD_CLK_MOSI_HIGH,
 	GPIO_AUD_CLK_MOSI_LOW,
-#ifdef CONFIG_JRD_HAC_EXTERNAL_PA_SUPPORT
-        GPIO_HAC_HIGH,
-        GPIO_HAC_LOW,
-#endif
 	GPIO_NUM
 };
 
@@ -99,27 +104,91 @@ static struct audio_gpio_attr aud_gpios[GPIO_NUM] = {
 		[GPIO_RCVSPK_HIGH] = {"rcvspk-pullhigh", false, NULL},
 		[GPIO_RCVSPK_LOW] = {"rcvspk-pulllow", false, NULL},
 #endif
-
+/* Begin meng.zhang HAC control for task 10014578 on 2020/09/28 */
+		[GPIO_HAC_PA_HIGH] = {"hac_pa_on", false, NULL},
+		[GPIO_HAC_PA_LOW] = {"hac_pa_off", false, NULL},
+/* End meng.zhang HAC control for task 10014578 on 2020/09/28 */
 		[GPIO_HPDEPOP_HIGH] = {"hpdepop-pullhigh", false, NULL},
 		[GPIO_HPDEPOP_LOW] = {"hpdepop-pulllow", false, NULL},
 		[GPIO_AUD_CLK_MOSI_HIGH] = {"aud_clk_mosi_pull_high", false,
-					    NULL},
+		NULL
+	},
 		[GPIO_AUD_CLK_MOSI_LOW] = {"aud_clk_mosi_pull_low", false,
-					   NULL},
-#ifdef CONFIG_JRD_HAC_EXTERNAL_PA_SUPPORT
-        [GPIO_HAC_HIGH] = {"hac-pullhigh", false, NULL},
-        [GPIO_HAC_LOW] = {"hac-pulllow", false, NULL},
-#endif
+		NULL
+	},
 };
 
 static unsigned int extbuck_fan53526_exist;
 
 static DEFINE_MUTEX(gpio_request_mutex);
 
+//Begin added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+#ifdef CONFIG_EXTPA_AW8737
+int g_down_speaker_gpio;
+int g_down_speaker_mode;
+#endif
+
+#ifdef CONFIG_EXTPA_OCA72317
+int g_up_speaker_gpio;
+int g_up_pa_speaker_mode;
+int g_up_pa_voice_mode;
+#endif
+//End added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+
 void AudDrv_GPIO_probe(void *dev)
 {
 	int ret;
 	int i = 0;
+//Begin added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+#ifdef CONFIG_EXTPA_AW8737
+	struct device_node *np = ((struct device *)dev)->of_node;
+	
+	g_down_speaker_gpio = of_get_named_gpio(np, "down_speaker_gpio", 0);
+	if (g_down_speaker_gpio < 0) {
+		pr_err("%s: get DOWN AUDIO_PA_SDN0 failed (%d)", __func__, g_down_speaker_gpio);
+	} else {
+		ret = devm_gpio_request_one(dev, g_down_speaker_gpio, GPIOF_OUT_INIT_LOW, "down_speaker_gpio");
+		if (ret) {
+			pr_err("down_speaker_gpio gpio_request error\n");
+		} else {
+			pr_err("down_speaker_gpio(%d) gpio_request success\n", g_down_speaker_gpio);
+		}
+	}
+
+	if (of_property_read_u32(np, "down_speaker_mode", &g_down_speaker_mode)) {
+		pr_err("Cannot find down_speaker_mode!\n");
+		g_down_speaker_mode = 3;
+	}
+	pr_err("%s down_speaker_mode=%d\n", __func__, g_down_speaker_mode);	
+#endif
+
+#ifdef CONFIG_EXTPA_OCA72317
+	g_up_speaker_gpio = of_get_named_gpio(np, "up_speaker_gpio", 0);
+	if (g_up_speaker_gpio < 0) {
+		pr_err("%s: get UP AUDIO_PA_SDN1 failed (%d)", __func__, g_up_speaker_gpio);
+	} else {
+		ret = devm_gpio_request_one(dev, g_up_speaker_gpio, GPIOF_OUT_INIT_LOW, "up_speaker_gpio");
+		if (ret) {
+			pr_err("up_speaker_gpio gpio_request error\n");
+		} else {
+			pr_err("up_speaker_gpio(%d) gpio_request success\n", g_up_speaker_gpio);
+		}
+	}
+		
+	if (of_property_read_u32(np, "up_pa_speaker_mode", &g_up_pa_speaker_mode)) {
+		pr_err("Cannot find up_pa_speaker_mode!\n");
+		g_up_pa_speaker_mode = 3;
+	}
+	pr_err("%s up_pa_speaker_mode=%d\n", __func__, g_up_pa_speaker_mode);
+
+		
+	if (of_property_read_u32(np, "up_pa_voice_mode", &g_up_pa_voice_mode)) {
+		pr_err("Cannot find up_pa_voice_mode!\n");
+		g_up_pa_voice_mode = 3;
+	}
+	pr_err("%s up_pa_voice_mode=%d\n", __func__, g_up_pa_voice_mode);
+#endif
+//End added by liangjiaqiang for CIVIC-3069 on 2022-07-13
 
 	pr_debug("%s\n", __func__);
 
@@ -137,9 +206,11 @@ void AudDrv_GPIO_probe(void *dev)
 		extbuck_fan53526_exist);
 	if (extbuck_fan53526_exist) { /* is e2 */
 		struct audio_gpio_attr gpio_hpdepop_high = {
-			"hpdepop-pullhigh_e2", false, NULL};
+			"hpdepop-pullhigh_e2", false, NULL
+		};
 		struct audio_gpio_attr gpio_hpdepop_low = {"hpdepop-pulllow_e2",
-							   false, NULL};
+			false, NULL
+		};
 
 		aud_gpios[GPIO_HPDEPOP_HIGH] = gpio_hpdepop_high;
 		aud_gpios[GPIO_HPDEPOP_LOW] = gpio_hpdepop_low;
@@ -150,14 +221,12 @@ void AudDrv_GPIO_probe(void *dev)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(aud_gpios); i++) {
-		printk("Cydio set pinctrl %s \n",aud_gpios[i].name);
 		aud_gpios[i].gpioctrl =
 			pinctrl_lookup_state(pinctrlaud, aud_gpios[i].name);
 		if (IS_ERR(aud_gpios[i].gpioctrl)) {
 			ret = PTR_ERR(aud_gpios[i].gpioctrl);
 			pr_err("%s pinctrl_lookup_state %s fail %d\n", __func__,
 			       aud_gpios[i].name, ret);
-			printk("Cydio %s pinctrl_lookup_state %s fail %d\n",__func__,aud_gpios[i].name, ret);
 		} else {
 			aud_gpios[i].gpio_prepare = true;
 		}
@@ -426,6 +495,61 @@ int AudDrv_GPIO_I2S_Select(int bEnable)
 	return retval;
 }
 
+
+//Begin added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+#ifdef CONFIG_EXTPA_AW8737
+void down_speaker_gpio_extamp_select(int bEnable)
+{
+	int i;
+	pr_info("soc-codec %s enable=%d, down_speaker_mode=%d\n", __func__, bEnable, g_down_speaker_mode);
+	if (bEnable) {
+		for (i = 0; i < g_down_speaker_mode; i++) {
+			gpio_set_value(g_down_speaker_gpio, 0);
+			udelay(2);
+			gpio_set_value(g_down_speaker_gpio, 1);
+			udelay(2);
+		}
+	} else {
+		gpio_set_value(g_down_speaker_gpio, 0);
+	}
+}
+#endif
+
+#ifdef CONFIG_EXTPA_OCA72317
+void up_speaker_gpio_extamp_select(int bEnable)
+{
+	int i;
+	pr_info("soc-codec %s enable=%d, up_pa_speaker_mode=%d\n", __func__, bEnable, g_up_pa_speaker_mode);
+	if (bEnable) {
+		for (i = 0; i < g_up_pa_speaker_mode; i++) {
+			gpio_set_value(g_up_speaker_gpio, 0);
+			udelay(2);
+			gpio_set_value(g_up_speaker_gpio, 1);
+			udelay(2);
+		}
+	} else {
+		gpio_set_value(g_up_speaker_gpio, 0);
+	}
+}
+
+void up_voice_gpio_extamp_select(int bEnable)
+{
+	int i;
+	pr_info("soc-codec %s enable=%d, up_pa_voice_mode=%d\n", __func__, bEnable, g_up_pa_voice_mode);
+	if (bEnable) {
+		for (i = 0; i < g_up_pa_voice_mode; i++) {
+			gpio_set_value(g_up_speaker_gpio, 0);
+			udelay(2);
+			gpio_set_value(g_up_speaker_gpio, 1);
+			udelay(2);
+		}
+	} else {
+		gpio_set_value(g_up_speaker_gpio, 0);
+	}
+}
+#endif
+
+//End added by liangjiaqiang for CIVIC-3069 on 2022-07-13
 int AudDrv_GPIO_EXTAMP_Select(int bEnable, int mode)
 {
 	int retval = 0;
@@ -433,7 +557,7 @@ int AudDrv_GPIO_EXTAMP_Select(int bEnable, int mode)
 #if MT6755_PIN
 	int extamp_mode;
 	int i;
-	printk("%s extamp enable:%d mode:%d\n",__func__,bEnable,mode);
+
 	mutex_lock(&gpio_request_mutex);
 	if (bEnable == 1) {
 		if (mode == 1)
@@ -560,60 +684,45 @@ int AudDrv_GPIO_HPDEPOP_Select(int bEnable)
 	mutex_unlock(&gpio_request_mutex);
 	return retval;
 }
-
-#ifdef CONFIG_JRD_HAC_EXTERNAL_PA_SUPPORT
-int hac_hw_ctrl(bool bEnable, int mode)
+/* Begin meng.zhang HAC control for task 10014578 on 2020/09/28 */
+int AudDrv_GPIO_HAC_PA_Select(int bEnable)
 {
 	int retval = 0;
-	int extamp_mode;
-	int i;
 
-	pr_warn("%s,benable=%d,mode=%d\n", __func__,bEnable, mode);
+	pr_info("%s() bEnable=%d\n",__func__, bEnable);
 
+#if MT6755_PIN
 
-	if (bEnable) {
-		if (mode == 1)
-			extamp_mode = 1;
-		else if (mode == 2)
-			extamp_mode = 2;
-		else if (mode == 4)
-			extamp_mode = 4;
-		else
-			extamp_mode = 3;	/* default mode is 3 */
-
-		if (aud_gpios[GPIO_HAC_HIGH].gpio_prepare) {
-			for (i = 0; i < extamp_mode; i++) {
-				retval = pinctrl_select_state(pinctrlaud,
-						aud_gpios[GPIO_HAC_LOW].gpioctrl);
-				if (retval){
-					pr_err("could not set aud_gpios[GPIO_HAC_LOW] pins\n");
-				}else{
-					printk("set aud_gpios[GPIO_HAC_LOW] pins success");
-				}
-				udelay(2);
-				retval = pinctrl_select_state(pinctrlaud,
-						aud_gpios[GPIO_HAC_HIGH].gpioctrl);
-				if (retval){
-					pr_err("could not set aud_gpios[GPIO_HAC_HIGH] pins\n");
-				}else{
-					printk("set aud_gpios[GPIO_HAC_HIGH] pins success");
-				}
-				udelay(2);
-			}
+	mutex_lock(&gpio_request_mutex);
+	if (bEnable == 1) {
+		if (aud_gpios[GPIO_HAC_PA_HIGH].gpio_prepare) {
+			retval = pinctrl_select_state(
+				pinctrlaud,
+				aud_gpios[GPIO_HAC_PA_LOW].gpioctrl);
+			if (retval)
+				pr_info("could not set aud_gpios[GPIO_HAC_PA_LOW] pins\n");
+			udelay(2);
+			retval = pinctrl_select_state(
+				pinctrlaud,
+				aud_gpios[GPIO_HAC_PA_HIGH].gpioctrl);
+			if (retval)
+				pr_info("could not set aud_gpios[GPIO_HAC_PA_HIGH] pins\n");
+			udelay(2);
 		}
 	} else {
-		if (aud_gpios[GPIO_HAC_LOW].gpio_prepare) {
-			retval =
-			    pinctrl_select_state(pinctrlaud, aud_gpios[GPIO_HAC_LOW].gpioctrl);
+		if (aud_gpios[GPIO_HAC_PA_LOW].gpio_prepare) {
+			retval = pinctrl_select_state(
+				pinctrlaud,
+				aud_gpios[GPIO_HAC_PA_LOW].gpioctrl);
 			if (retval)
-				pr_err("could not set aud_gpios[GPIO_HAC_LOW] pins\n");
+				pr_info("could not set aud_gpios[GPIO_HAC_PA_LOW] pins\n");
 		}
-
 	}
+	mutex_unlock(&gpio_request_mutex);
+#endif
 	return retval;
 }
-#endif
-
+/* End meng.zhang HAC control for task 10014578 on 2020/09/28 */
 int audio_drv_gpio_aud_clk_pull(bool high)
 {
 	int retval = 0;

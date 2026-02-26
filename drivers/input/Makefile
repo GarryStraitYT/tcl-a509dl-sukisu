@@ -29,6 +29,14 @@ obj-$(CONFIG_INPUT_MISC)	+= misc/
 obj-$(CONFIG_INPUT_APMPOWER)	+= apm-power.o
 
 obj-$(CONFIG_RMI4_CORE)		+= rmi4/
-#Begin Modified by zhikui.li,bring up finger
-obj-$(CONFIG_MTK_FINGERPRINT)  += fingerprint/
-#Begin Modified by zhikui.li,bring up finger
+
+# [TCTNB][FINGERPRINT]Added_begin by Jiancong.Huang for F11394572 at 2021/8/12
+obj-$(CONFIG_MTK_FINGERPRINT_SUPPORT)		+= fingerprint/
+# [TCTNB][FINGERPRINT]Added_end by Jiancong.Huang for F11394572 at 2021/8/12
+
+#Add-start by baiwei.peng for hall & sar sensor porting on 2022/03/16
+obj-$(CONFIG_HALL_SWITCH)               += hallsensor/
+obj-$(CONFIG_HALL_SWITCH_2)             += hallsensor_2/
+obj-$(CONFIG_AW9610X_SAR)              += aw9610x/
+#Add-end by baiwei.peng for hall & sar sensor porting on 2022/03/16
+

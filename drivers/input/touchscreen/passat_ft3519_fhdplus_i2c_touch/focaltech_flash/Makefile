@@ -1,0 +1,1 @@
+obj-$(CONFIG_TOUCHSCREEN_PASSAT_FT3519_FHDPLUS_I2C) += focaltech_upgrade_ft5452i.o

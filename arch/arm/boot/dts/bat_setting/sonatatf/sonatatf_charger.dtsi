@@ -1,0 +1,216 @@
+// SPDX-License-Identifier: GPL-2.0+
+&mt6370_pmu {
+	mt6370,intr_gpio_num = <11>; /* direct defined GPIO num */
+	mt6370,intr_gpio = <&pio 11 0x0>;
+};
+
+&mt6370_typec {
+	mt6370pd,intr_gpio_num = <41>; /* direct defined GPIO num */
+	mt6370pd,intr_gpio = <&pio 41 0x0>;
+/*Begin add for support 9V/2A with PD2.0 by wanglin.chen on 2021.11.16*/
+	pd-data {
+		pd,sink-pdo-size = <2>;
+		/*(5V, 2A), (9V, 2A)*/
+		pd,sink-pdo-data = <0x000190c8 0x0002d0c8>;
+	};
+/*End add for support 9V/2A with PD2.0 by wanglin.chen on 2021.11.16*/
+};
+
+/* Warning: vrt, term, rev6 must configured pairly with host prop */
+&u2port0 {
+	mediatek,eye-vrt = <4>; /* 0~7 */
+	mediatek,eye-term = <4>; /* 0~7 */
+	mediatek,eye-rev6 = <1>; /* 0~3 */
+
+	mediatek,host-eye-vrt = <4>; /* 0~7 */
+	mediatek,host-eye-term = <6>; /* 0~7 */
+	mediatek,host-eye-rev6 = <3>; /* 0~3 */
+};
+
+&i2c3 {
+	sgm41513:sgm41513@1A {
+		compatible = "sgm,sgm41513_slave";
+		reg = <0x1A>;
+		status = "okay";
+		charger_name = "secondary_chg";
+		alias_name = "sgm41513_slave";
+		gpio_sgm41513_en = <&pio 161 0x0>;
+		gpio_sgm41513_intr = <&pio 10 0x0>;
+	};
+	eta6963:eta6963@6B {
+		compatible = "eta,eta6963";
+		reg = <0x6B>;
+		charger_name = "secondary_chg";
+		alias_name = "eta6963-slave";
+		interrupt-parent = <&pio>;
+		interrupts = <10 0>;
+		eta6963_en_gpio = <&pio 161 0x0>;
+		usb-vlim = <4500>;
+		usb-ilim = <100>;
+		usb-vreg = <4400>;
+		usb-ichg = <100>;
+		stat-pin-ctrl = <3>;
+		precharge-current = <240>;
+		termination-current = <180>;
+		boost-voltage = <5000>;
+		boost-current = <1200>;
+		vac-ovp-threshold = <10500>;
+		status = "okay";
+	};
+};
+
+&lk_charger {
+	enable_anime;
+	power_path_support;
+	/* charging current */
+	usb_charger_current = <500000>;
+	ac_charger_current = <2000000>;
+	ac_charger_input_current = <2050000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <1300000>;
+	ta_ac_charger_current = <20500000>;
+	pd_charger_current = <2050000>;
+	max_charger_voltage = <10500000>;
+
+	/* battery temperature protection */
+	temp_t4_threshold = <54>;
+	temp_t3_threshold = <45>;
+	temp_t1_threshold = <6>;
+	temp_t0_threshold = <1>;
+};
+
+&pe {
+	status = "okay";
+	ta_9v_support;
+	pe_ichg_level_threshold = <1000000>; /* uA */
+	ta_ac_12v_input_current = <1300000>;
+	ta_ac_9v_input_current = <1600000>;
+	ta_ac_7v_input_current = <2100000>;
+	pe_charger_current = <3000000>;  // max 15W as PE ta support
+	main_pct = <100>;
+	ta_stop_battery_soc = <80>;
+};
+
+&pe2 {
+	status = "okay";
+	sc_input_current = <1600000>;
+	sc_charger_current = <3000000>;
+	/* dual charger in series */
+	dcs_input_current = <2000000>;
+	dcs_chg1_charger_current = <1860000>;
+	dcs_chg2_charger_current = <1860000>;
+	main_pct = <45>;
+	ta_stop_battery_soc = <80>;
+	pe20_ichg_level_threshold = <1000000>; /* uA */
+	dual_polling_ieoc = <250000>;
+};
+
+&pdc {
+	status = "okay";
+	main_pct = <45>;
+	dcs_input_current = <2000000>;
+	dcs_chg1_charger_current = <1860000>;
+	dcs_chg2_charger_current = <1860000>;
+	pd_vbus_low_bound = <5000000>;
+	pd_vbus_upper_bound = <10000000>;
+	pd_stop_battery_soc = <80>;
+	ibus_err = <14>;
+	vsys_watt = <5000000>;
+	dual_polling_ieoc = <250000>;
+};
+
+&pe4 {
+	status = "disabled";
+	dcs_chg1_charger_current = <2000000>;
+	dcs_chg2_charger_current = <2000000>;
+};
+
+&mtk_charger_type {
+	bc12_active = <1>;
+};
+
+&usb{
+	charger = <&mt6370_chg>;
+};
+
+&charger {
+	charger = <&mt6370_chg>;
+	charger_configuration= <2>;
+	/* common */
+	power_path_support;
+	enable_dynamic_mivr;
+
+	battery_cv = <4400000>;
+
+	enable_pe_2;
+	enable_hv_charging;
+	max_charger_voltage = <10500000>;
+
+	/* charging current */
+	usb_charger_current_suspend = <0>;
+	usb_charger_current_unconfigured = <70000>;
+	usb_charger_current_configured = <500000>;
+	usb_charger_current = <500000>;
+	ac_charger_current = <2000000>;
+	ac_charger_input_current = <2100000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <1300000>;
+
+	/* sw jeita */
+	enable_sw_jeita;
+	jeita_temp_above_t4_cv = <4100000>;
+	jeita_temp_t3_to_t4_cv = <4100000>;
+	jeita_temp_t2_to_t3_cv = <4400000>;
+	jeita_temp_t1_to_t2_cv = <4400000>;
+	jeita_temp_t0_to_t1_cv = <4400000>;
+	jeita_temp_below_t0_cv = <4400000>;
+	temp_t4_thres = <55>;
+	temp_t4_thres_minus_x_degree = <51>;
+	temp_t3_thres = <43>;
+	temp_t3_thres_minus_x_degree = <41>;
+	temp_t2_thres = <11>;
+	temp_t2_thres_plus_x_degree = <12>;
+	temp_t1_thres = <6>;
+	temp_t1_thres_plus_x_degree = <7>;
+	temp_t0_thres = <0>;
+	temp_t0_thres_plus_x_degree = <1>;
+	temp_neg_10_thres = <2>;
+
+	jeita_temp_above_t4_current = <0>;
+	jeita_temp_t3_to_t4_current = <2280000>;
+	jeita_temp_t2_to_t3_current = <3720000>;
+	jeita_temp_t1_to_t2_current = <840000>;
+	jeita_temp_t0_to_t1_current = <840000>;
+	jeita_temp_below_t0_current = <0>;
+
+	/* battery temperature protection */
+	enable_min_charge_temp;
+	min_charge_temp = <1>;
+	min_charge_temp_plus_x_degree = <2>;
+	max_charge_temp = <55>;
+	max_charge_temp_minus_x_degree = <51>;
+
+	enable_step_chg;
+	step_chg_vbat = <4300000>;
+	step_chg_vbat_hysteresis = <100000>;
+	setp_chg_current = <3200000>;
+
+	vbat_cable_imp_threshold = <3300000>; /* uV */
+	car_tune_value_sy6970qcc = <1020>;
+	enable_bcct_lcmoff; /* [TCTCD][BSP]Added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
+	//enable_cl_backlight;
+	//cl_backlight_levels = <180 162 144 126>;
+};
+
+&mt6370_chg {
+	/*
+	bc12_sel = 0, Use charging IC's bc1.2
+	bc12_sel = 1, Use MTK PMIC's bc1.2
+	bc12_sel = 2, Use External IC's bc1.2
+	*/
+	bc12_sel = <1>;
+	ieoc = <250000>; /* uA */
+	mivr = <4500000>;		/* uV */
+	cv = <4400000>;			/* uA */
+};
+

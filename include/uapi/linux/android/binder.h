@@ -295,6 +295,10 @@ enum transaction_flags {
 	TF_ROOT_OBJECT	= 0x04,	/* contents are the component's root object */
 	TF_STATUS_CODE	= 0x08,	/* contents are a 32-bit status code */
 	TF_ACCEPT_FDS	= 0x10,	/* allow replies with file descriptors */
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2022-07-21 add for freeze
+	TF_SG_UNFREEZE	= 0x80000000, /* just wake up single thread */
+// #endif /*VENDOR_EDIT*/
 };
 
 struct binder_transaction_data {
@@ -363,6 +367,7 @@ struct binder_pri_ptr_cookie {
 	binder_uintptr_t cookie;
 };
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 struct binder_freeze_data {
     __u32 pid;
@@ -370,6 +375,7 @@ struct binder_freeze_data {
     __u32 client;
 };
 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+#endif
 
 enum binder_driver_return_protocol {
 	BR_ERROR = _IOR('r', 0, __s32),
@@ -463,9 +469,11 @@ enum binder_driver_return_protocol {
 	 * a bcATTEMPT_ACQUIRE) failed (e.g. out of memory).  No parameters.
 	 */
 
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 	BR_FREEZE = _IOR('r', 18, struct binder_freeze_data),
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 };
 
 enum binder_driver_command_protocol {
@@ -550,11 +558,13 @@ enum binder_driver_command_protocol {
 	 * binder_transaction_data_sg: the sent command.
 	 */
 
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 	BC_FREEZE_BINDER = _IOW('c', 19, __u64),
 	BC_FREEZE_LISTENER = _IOW('c', 20, __u32),
 	BC_FREEZE_DONE = _IOW('c', 21, __u32),
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 };
 
 #endif /* _UAPI_LINUX_BINDER_H */

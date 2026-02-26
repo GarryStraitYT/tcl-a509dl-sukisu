@@ -97,12 +97,14 @@ struct aw36518_chip_data {
 	u8 no_pdata;
 };
 
-static const unsigned char aw36518_torch_level[AW36518_LEVEL_NUM] = {
-	0x06, 0x1F, 0x27, 0x3F, 0x57, 0x7F, 0x8F, 0x00, 0x00, 0x00,
+//Begin modified by xiaoming-zhong for [Task][11686070][change flashlight duty 6 current value to 150mA] on 2021/12/6
+static  unsigned char aw36518_torch_level[AW36518_LEVEL_NUM] = {
+	0x06, 0x0F, 0x17, 0x1F, 0x27, 0x2F, 0x63, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+//End modified by xiaoming-zhong for [Task][11686070][change flashlight duty 6 current value to 150mA] on 2021/12/6
 
-static const unsigned char aw36518_flash_level[AW36518_LEVEL_NUM] = {
+static  unsigned char aw36518_flash_level[AW36518_LEVEL_NUM] = {
 	0x01, 0x07, 0x0A, 0x11, 0x17, 0x1A, 0x21, 0x27, 0x2A, 0x31,
 	0x37, 0x3D, 0x41, 0x47, 0x4D, 0x51, 0x57, 0x5D, 0x61, 0x67,
 	0x71, 0x7D, 0x81, 0x8D, 0x91, 0xA1};
@@ -326,26 +328,6 @@ static ssize_t  backled_store(struct device* dev,
  
 DEVICE_ATTR(backled,     S_IWUSR | S_IRUGO, backled_Show, backled_store);
 
-extern struct device* get_deviceinfo_dev(void);
-static int Create_backled_node(void)
-{
-	struct device * flashglight_front;
-
-	flashglight_front=get_deviceinfo_dev();
-	if (device_create_file(flashglight_front, &dev_attr_backled) < 0){
-		printk("Failed to create device file(%s)!\n", dev_attr_backled.attr.name);
-	}
-
-
-return 0;
-}
-
-
-
-
-
-
-
 
 static struct hrtimer aw36518_timer_ch1;
 static unsigned int aw36518_timeout_ms[AW36518_CHANNEL_NUM];
@@ -388,6 +370,22 @@ int aw36518_timer_cancel(int channel)
 }
 
 
+static int flash_inti_tablevalue(unsigned long fl_data) {
+  int i = 0;
+  struct flashlight_user_data *fl_arg;
+  fl_arg = (struct flashlight_user_data *)fl_data;
+  pr_info("aw36518 flash_inti_tablevalue arg=%d  data[0]=%d\n",fl_arg->arg,fl_arg->data[0]);
+  if (fl_arg->arg == 1) {
+    for (i = 0; i < AW36518_LEVEL_NUM; i++) {
+      aw36518_torch_level[i] = fl_arg->data[i];
+    }
+  } else if (fl_arg->arg == 2) {
+    for (i = 0; i < AW36518_LEVEL_NUM; i++) {
+      aw36518_flash_level[i] = (unsigned char)fl_arg->data[i];
+    }
+  }
+  return 0;
+}
 static int aw36518_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -398,12 +396,17 @@ static int aw36518_ioctl(unsigned int cmd, unsigned long arg)
 	channel = fl_arg->channel;
 
 	/* verify channel */
+	if(cmd!=FLASH_IOC_SET_HW_TABLE){
 	if (channel < 0 || channel >= AW36518_CHANNEL_NUM) {
 		pr_err("Failed with error channel\n");
 		return -EINVAL;
-	}
+	}}
 
 	switch (cmd) {
+	case FLASH_IOC_SET_HW_TABLE:
+	    pr_info("FLASH_IOC_SET_HW_TABLE(%d)\n", channel);
+            flash_inti_tablevalue(arg);
+        break;
 	case FLASH_IOC_SET_TIME_OUT_TIME_MS:
 		pr_info("FLASH_IOC_SET_TIME_OUT_TIME_MS(%d): %d\n",
 				channel, (int)fl_arg->arg);
@@ -615,7 +618,7 @@ aw36518_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	use_count = 0;
 
 	aw36518_create_sysfs(client);
-	Create_backled_node();
+	/*Create_backled_node();*/
 
 	pr_info("%s Probe done.\n", __func__);
 

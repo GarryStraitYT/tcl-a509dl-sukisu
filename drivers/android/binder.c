@@ -76,18 +76,29 @@
 #include <uapi/linux/android/binder.h>
 #include <uapi/linux/sched/types.h>
 
+#ifdef CONFIG_MTK_TASK_TURBO
+#include <mt-plat/turbo_common.h>
+#endif
+
 #include <asm/cacheflush.h>
 
 #include "binder_alloc.h"
 #include "binder_internal.h"
 #include "binder_trace.h"
 
-#ifdef CONFIG_TCT_UI_TURBO
-#include <linux/tct/uiturbo.h>
-#define MAX_UI_WORKS_PROCEEDED 2
-static atomic64_t binder_work_seq;
-static atomic64_t binder_ui_req_num;
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2021.11.30 add it for binder wakeup
+#ifdef CONFIG_TCL_FREEZE
+#include <linux/tcl_kstate.h>
 #endif
+// #endif /* VENDOR_EDIT */
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH 2022/07/21 add for binder unfreeze
+#ifdef CONFIG_TCL_BINDER_UNFREEZE
+#include "binder_unfreeze.h"
+#endif
+// #endif /* VENDOR_EDIT */
 
 static HLIST_HEAD(binder_deferred_list);
 static DEFINE_MUTEX(binder_deferred_lock);
@@ -133,10 +144,12 @@ enum {
 	BINDER_DEBUG_INTERNAL_REFS          = 1U << 12,
 	BINDER_DEBUG_PRIORITY_CAP           = 1U << 13,
 	BINDER_DEBUG_SPINLOCKS              = 1U << 14,
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
         BINDER_DEBUG_FREEZE                 = 1U << 15,
         BINDER_DEBUG_FREEZE_TRANSACTION     = 1U << 16,
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 };
 static uint32_t binder_debug_mask = BINDER_DEBUG_USER_ERROR |
 	BINDER_DEBUG_FAILED_TRANSACTION | BINDER_DEBUG_DEAD_TRANSACTION;
@@ -257,13 +270,21 @@ struct binder_work {
 		BINDER_WORK_DEAD_BINDER,
 		BINDER_WORK_DEAD_BINDER_AND_CLEAR,
 		BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		BINDER_WORK_FREEZE,
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 	} type;
-#ifdef CONFIG_TCT_UI_TURBO
-	uint64_t seq;
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	u64 seq;
+	u64 enqueue_start;
+	bool ux;
 #endif
+// #endif /*VENDOR_EDIT*/
 };
 
 struct binder_error {
@@ -384,6 +405,7 @@ struct binder_ref_death {
 	binder_uintptr_t cookie;
 };
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 struct binder_freeze {
 	struct binder_work work;
@@ -392,6 +414,7 @@ struct binder_freeze {
 	int client;
 };
 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+#endif
 
 /**
  * struct binder_ref_data - binder_ref counts and id
@@ -542,10 +565,6 @@ struct binder_proc {
 	bool is_dead;
 
 	struct list_head todo;
-#ifdef CONFIG_TCT_UI_TURBO
-	struct list_head ui_todo;
-	uint32_t ui_count;
-#endif
 	struct binder_stats stats;
 	struct list_head delivered_death;
 	int max_threads;
@@ -560,6 +579,15 @@ struct binder_proc {
 	spinlock_t outer_lock;
 	struct dentry *binderfs_entry;
 
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	struct list_head ux_todo;
+	uint32_t ux_work_count;
+#endif
+// #endif /*VENDOR_EDIT*/
+
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 	bool is_frozen;
 	bool is_processing;
@@ -567,6 +595,7 @@ struct binder_proc {
         int has_async_transaction;
         int processing_type;
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 };
 
 enum {
@@ -664,7 +693,27 @@ struct binder_transaction {
 	struct timespec timestamp;
 	struct timeval tv;
 #endif
+#ifdef CONFIG_MTK_TASK_TURBO
+	struct task_struct *inherit_task;
+#endif
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	u64 transaction_start;
+#endif
+// #endif /*VENDOR_EDIT*/
 };
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+/*
+ * As binder structs' is defined in binder.c, so this
+ * include line should not be placed in front of the struct defination.
+ */
+#ifdef CONFIG_TCL_UXEXPRESS
+#include "binder_tcl_feature.h"
+#endif
+// #endif /*VENDOR_EDIT*/
 
 #ifdef CONFIG_ANDROID_BINDER_USER_TRACKING
 /*
@@ -730,6 +779,7 @@ struct binder_object {
 	};
 };
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 static struct binder_proc *binder_freeze_listener;
 
@@ -902,6 +952,7 @@ int binder_read_int_32(uint8_t* data, size_t data_size, size_t* data_pos, binder
         }
 }
 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+#endif
 
 /**
  * binder_proc_lock() - Acquire outer lock for given binder_proc
@@ -1070,9 +1121,6 @@ binder_enqueue_work_ilocked(struct binder_work *work,
 {
 	BUG_ON(target_list == NULL);
 	BUG_ON(work->entry.next && !list_empty(&work->entry));
-#ifdef CONFIG_TCT_UI_TURBO
-	work->seq = (uint64_t)atomic64_inc_return(&binder_work_seq);
-#endif
 	list_add_tail(&work->entry, target_list);
 }
 
@@ -1164,71 +1212,6 @@ static struct binder_work *binder_dequeue_work_head_ilocked(
 	return w;
 }
 
-#ifdef CONFIG_TCT_UI_TURBO
-static int binder_count_show(struct seq_file *m, void *unused)
-{
-	seq_printf(m, "Total ui request: %llu\n",
-		   (unsigned long long)atomic64_read(&binder_ui_req_num));
-	return 0;
-}
-DEFINE_SHOW_ATTRIBUTE(binder_count);
-
-static inline bool binder_proc_worklist_empty_ilocked(struct binder_proc *proc)
-{
-	return binder_worklist_empty_ilocked(&proc->todo) &&
-	    binder_worklist_empty_ilocked(&proc->ui_todo);
-}
-
-static inline struct list_head *
-binder_proc_select_worklist_ilocked(struct binder_proc *proc)
-{
-	if (binder_worklist_empty_ilocked(&proc->ui_todo)) {
-		proc->ui_count = 0;
-
-		/* Use 'todo' list when 'fg_todo' is empty */
-		return &proc->todo;
-	}
-
-	if (proc->ui_count >= MAX_UI_WORKS_PROCEEDED) {
-		proc->ui_count = 0;
-
-		if (!binder_worklist_empty_ilocked(&proc->todo)) {
-			struct binder_work *ui_w;
-			struct binder_work *w;
-
-			ui_w = list_first_entry(&proc->ui_todo,
-						struct binder_work, entry);
-			w = list_first_entry(&proc->todo,
-					     struct binder_work, entry);
-
-			if (w->seq < ui_w->seq)
-				return &proc->todo;
-		}
-	}
-
-	proc->ui_count++;
-	return &proc->ui_todo;
-}
-
-static inline void
-binder_thread_check_and_set_dynamic_uiturbo(struct binder_thread *thread,
-					    struct binder_thread *from,
-					    bool oneway)
-{
-	if (!oneway && from && test_set_dynamic_uiturbo(from->task) &&
-	    !test_task_uiturbo(thread->task))
-		dynamic_uiturbo_enqueue(thread->task, DYNAMIC_UITURBO_BINDER,
-					from->task->uiturbo_depth);
-}
-
-static inline void
-binder_thread_check_and_remove_dynamic_uiturbo(struct binder_thread *thread)
-{
-	if (test_dynamic_uiturbo(thread->task, DYNAMIC_UITURBO_BINDER))
-		dynamic_uiturbo_dequeue(thread->task, DYNAMIC_UITURBO_BINDER);
-}
-#endif
-
 static void
 binder_defer_work(struct binder_proc *proc, enum binder_deferred_state defer);
 static void binder_free_thread(struct binder_thread *thread);
@@ -1298,14 +1281,20 @@ err:
 static bool binder_has_work_ilocked(struct binder_thread *thread,
 				    bool do_proc_work)
 {
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 modify for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
 	return thread->process_todo ||
 		thread->looper_need_return ||
 		(do_proc_work &&
-#ifdef CONFIG_TCT_UI_TURBO
-		 !binder_proc_worklist_empty_ilocked(thread->proc));
+		binder_proc_has_work_ilocked(thread->proc));
 #else
+	return thread->process_todo ||
+		thread->looper_need_return ||
+		(do_proc_work &&
 		 !binder_worklist_empty_ilocked(&thread->proc->todo));
 #endif
+// #endif /*VENDOR_EDIT*/
 }
 
 static bool binder_has_work(struct binder_thread *thread, bool do_proc_work)
@@ -1318,6 +1307,70 @@ static bool binder_has_work(struct binder_thread *thread, bool do_proc_work)
 
 	return has_work;
 }
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2021.11.30 add it for binder wakeup
+#ifdef CONFIG_TCL_FREEZE
+bool check_binder_busy(int target_pid)
+{
+	bool ret = false;
+	struct binder_proc *proc = NULL;
+	struct binder_proc *target_proc = NULL;
+	struct binder_thread *target_thread = NULL;
+	struct binder_transaction *t = NULL;
+	struct rb_node *n = NULL;
+
+	mutex_lock(&binder_procs_lock);
+	hlist_for_each_entry(proc, &binder_procs, proc_node) {
+		if (proc->pid == target_pid) {
+			pr_info("%s get pid %d\n", __func__, target_pid);
+			target_proc = proc;
+			break;
+		}
+	}
+
+	if (target_proc == NULL) {
+		mutex_unlock(&binder_procs_lock);
+		return ret;
+	}
+
+	binder_inner_proc_lock(target_proc);
+	if (!binder_worklist_empty_ilocked(&target_proc->todo)) {
+		binder_inner_proc_unlock(target_proc);
+		mutex_unlock(&binder_procs_lock);
+		pr_info("%s pid %d proc has todo list\n", __func__, target_pid);
+		return true;
+	}
+
+	for (n = rb_first(&target_proc->threads); n != NULL; n = rb_next(n)) {
+		target_thread = rb_entry(n, struct binder_thread, rb_node);
+		if (!binder_worklist_empty_ilocked(&target_thread->todo)) {
+			binder_inner_proc_unlock(target_proc);
+			mutex_unlock(&binder_procs_lock);
+			pr_info("%s pid %d thread has todo list\n", __func__, target_pid);
+			return true;
+		}
+
+		t = target_thread->transaction_stack;
+		if (t == NULL)
+			continue;
+
+		pr_info("%s proc has %s transaction stack, %d:%d call %d:%d\n",
+			__func__, (t->flags & TF_ONE_WAY) ? "async" : "sync",
+			(t->from && t->from->proc) ? t->from->proc->pid : 0, t->from ? t->from->pid : 0,
+			t->to_proc ? t->to_proc->pid : 0, t->to_thread ? t->to_thread->pid : 0);
+		binder_inner_proc_unlock(target_proc);
+		mutex_unlock(&binder_procs_lock);
+
+		return true;
+	}
+
+	binder_inner_proc_unlock(target_proc);
+	mutex_unlock(&binder_procs_lock);
+	return ret;
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 static bool binder_available_for_proc_work_ilocked(struct binder_thread *thread)
 {
@@ -2272,6 +2325,18 @@ static int binder_inc_ref_for_node(struct binder_proc *proc,
 	}
 	ret = binder_inc_ref_olocked(ref, strong, target_list);
 	*rdata = ref->data;
+	if (ret && ref == new_ref) {
+		/*
+		 * Cleanup the failed reference here as the target
+		 * could now be dead and have already released its
+		 * references by now. Calling on the new reference
+		 * with strong=0 and a tmp_refs will not decrement
+		 * the node. The new_ref gets kfree'd below.
+		 */
+		binder_cleanup_ref_olocked(new_ref);
+		ref = NULL;
+	}
+
 	binder_proc_unlock(proc);
 	if (new_ref && ref != new_ref)
 		/*
@@ -3142,6 +3207,7 @@ static int binder_fixup_parent(struct binder_transaction *t,
 	return 0;
 }
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 static int binder_proc_freeze(struct binder_proc *proc)
 {
@@ -3238,6 +3304,7 @@ static void binder_enquene_freeze_work(struct binder_proc *proc, int pid, int ev
 	binder_inner_proc_unlock(proc);
 }
 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+#endif
 
 /**
  * binder_proc_transaction() - sends a transaction to a process and wakes it up
@@ -3264,10 +3331,26 @@ static bool binder_proc_transaction(struct binder_transaction *t,
 	struct binder_priority node_prio;
 	bool oneway = !!(t->flags & TF_ONE_WAY);
 	bool pending_async = false;
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2022-07-21 add for binder unfreeze
+#ifdef CONFIG_TCL_BINDER_UNFREEZE
+	enum binder_unfreeze_mode unfreeze_mode = UNFREEZE_NR;
+#endif
+// #endif /*VENDOR_EDIT*/
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 	bool freeze_change = false;
 	int freeze_client;
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
+// #ifdef VENDOR_EDIT
+// zhipeng5.wei@KERNEL 2021/3/8 add for janklog
+#ifdef CONFIG_TCL_UXEXPRESS
+	if(!oneway){
+		current->in_binder_sleep = 1;
+	}
+#endif
+// #endif /* VENDOR_EDIT */
 
 	BUG_ON(!node);
 	binder_node_lock(node);
@@ -3293,25 +3376,58 @@ static bool binder_proc_transaction(struct binder_transaction *t,
 
 	if (!thread && !pending_async)
 		thread = binder_select_thread_ilocked(proc);
-
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2022-07-21 add for binder unfreeze
+#ifdef CONFIG_TCL_BINDER_UNFREEZE
+	if (likely(single_binder_unfreeze_enable) &&
+		(current->tgid != proc->pid) &&
+		(frozen(proc->tsk) || freezing(proc->tsk))) {
+			unfreeze_mode = single_wake_up(t->flags) ? UNFREEZE_THREAD : UNFREEZE_PROCESS;
+	}
+	if (thread != NULL && unfreeze_mode == UNFREEZE_THREAD) {
+		unfreeze_debug("handle thaw single thread: sender=%d target=%d", current->tgid, thread->task->pid);
+		trace_bd_handle_thaw_sg(current->tgid, thread->task->pid);
+		handle_thaw_thread(current->group_leader, thread->task, 0);
+	} else if ((unfreeze_mode == UNFREEZE_PROCESS && !oneway) ||
+                   unfreeze_mode == UNFREEZE_THREAD) {
+		unfreeze_debug("handle thaw process: sender=%d target=%d", current->tgid, proc->tsk->pid);
+		trace_bd_handle_thaw_new(current->tgid, proc->tsk->pid);
+		handle_thaw(current->group_leader, proc->tsk, 0);
+	}
+#endif
+// #endif /*VENDOR_EDIT*/
 	if (thread) {
 		binder_transaction_priority(thread->task, t, node_prio,
 					    node->inherit_rt);
 		binder_enqueue_thread_work_ilocked(thread, &t->work);
-#ifdef CONFIG_TCT_UI_TURBO
-		binder_thread_check_and_set_dynamic_uiturbo(thread, t->from,
-							    oneway);
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		binder_set_dynamic_ux(thread, t->from);
+#endif
+// #endif /*VENDOR_EDIT*/
+
+#ifdef CONFIG_MTK_TASK_TURBO
+		if (binder_start_turbo_inherit(t->from ?
+				t->from->task : NULL, thread->task))
+			t->inherit_task = thread->task;
 #endif
 	} else if (!pending_async) {
-#ifdef CONFIG_TCT_UI_TURBO
-		if (!oneway && test_task_uiturbo(current)) {
-			binder_enqueue_work_ilocked(&t->work, &proc->ui_todo);
-			atomic64_inc(&binder_ui_req_num);
-		} else
-			binder_enqueue_work_ilocked(&t->work, &proc->todo);
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 modify for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		binder_enqueue_work_checkux(&t->work, proc, oneway);
 #else
 		binder_enqueue_work_ilocked(&t->work, &proc->todo);
 #endif
+// #endif /*VENDOR_EDIT*/
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		set_work_enqueue_start(&t->work);
+#endif
+// #endif /*VENDOR_EDIT*/
 	} else {
 		binder_enqueue_work_ilocked(&t->work, &node->async_todo);
 	}
@@ -3319,6 +3435,7 @@ static bool binder_proc_transaction(struct binder_transaction *t,
 	if (!pending_async)
 		binder_wakeup_thread_ilocked(proc, thread, !oneway /* sync */);
 
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
         if (oneway && !pending_async) {
                 proc->has_async_transaction++;
@@ -3332,18 +3449,21 @@ static bool binder_proc_transaction(struct binder_transaction *t,
                 proc->is_processing = true;
                 proc->processing_type = __LINE__;
                 freeze_change = true;
-                freeze_client = oneway ? -1 : t->from->proc->pid;
+                freeze_client = oneway ? -1 : (t->from ? t->from->proc->pid : 0);
                 binder_debug(BINDER_DEBUG_FREEZE,"%d:%d need unfreeze pid:%d client:%d\n line:%d",oneway?-1:t->from->proc->pid,oneway?-1:t->from->pid,proc->pid,freeze_client,__LINE__);
         }
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 
 	binder_inner_proc_unlock(proc);
 	binder_node_unlock(node);
 
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 	if (freeze_change)
 		binder_enquene_freeze_work(binder_freeze_listener,proc->pid,0,freeze_client);
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 
 	return true;
 }
@@ -3435,10 +3555,12 @@ static void binder_transaction(struct binder_proc *proc,
 	e->tv.tv_sec -= (sys_tz.tz_minuteswest * 60);
 #endif
 	if (reply) {
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		bool freeze_change = false;
 		int freeze_client;
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 		binder_inner_proc_lock(proc);
 		in_reply_to = thread->transaction_stack;
 		if (in_reply_to == NULL) {
@@ -3467,6 +3589,7 @@ static void binder_transaction(struct binder_proc *proc,
 			goto err_bad_call_stack;
 		}
 		thread->transaction_stack = in_reply_to->to_parent;
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		if (binder_freeze_listener && proc->is_frozen) {
 			int client = binder_proc_freeze(proc);
@@ -3481,11 +3604,14 @@ static void binder_transaction(struct binder_proc *proc,
 			}
 		}
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 		binder_inner_proc_unlock(proc);
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		if (freeze_change)
 			binder_enquene_freeze_work(binder_freeze_listener,proc->pid,proc->is_cur_frozen ? 1 : 0,freeze_client);
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 		target_thread = binder_get_txn_from_and_acq_inner(in_reply_to);
 		if (target_thread == NULL) {
 			return_error = BR_DEAD_REPLY;
@@ -3560,6 +3686,25 @@ static void binder_transaction(struct binder_proc *proc,
 			return_error_line = __LINE__;
 			goto err_dead_binder;
 		}
+#ifdef CONFIG_TCL_FREEZE
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH 2022/07/21 add for binder unfreeze
+#ifdef CONFIG_TCL_BINDER_UNFREEZE
+		if (unlikely(!single_binder_unfreeze_enable) && (!(tr->flags & TF_ONE_WAY)) &&
+		    (proc->pid != target_proc->pid) &&
+		    (frozen(target_proc->tsk) || freezing(target_proc->tsk))) {
+			trace_bd_handle_thaw_legacy(proc->tsk->pid, target_proc->tsk->pid);
+			handle_thaw(proc->tsk, target_proc->tsk, 0);
+		}
+#else
+		if (!(tr->flags & TF_ONE_WAY) &&
+			(proc->pid != target_proc->pid) &&
+			(frozen(target_proc->tsk) || freezing(target_proc->tsk)))
+			handle_thaw(proc->tsk, target_proc->tsk, 0);
+#endif
+// #endif /* VENDOR_EDIT */
+#endif
+// #endif /* VENDOR_EDIT */
 		e->to_node = target_node->debug_id;
 		if (security_binder_transaction(proc->cred,
 						target_proc->cred) < 0) {
@@ -3639,6 +3784,9 @@ static void binder_transaction(struct binder_proc *proc,
 		return_error_line = __LINE__;
 		goto err_alloc_t_failed;
 	}
+#ifdef CONFIG_MTK_TASK_TURBO
+	t->inherit_task = NULL;
+#endif
 #ifdef CONFIG_ANDROID_BINDER_USER_TRACKING
 	memcpy(&t->timestamp, &e->timestamp, sizeof(struct timespec));
 	/* do_gettimeofday(&t->tv); */
@@ -3725,7 +3873,7 @@ static void binder_transaction(struct binder_proc *proc,
 
 	t->buffer = binder_alloc_new_buf(&target_proc->alloc, tr->data_size,
 		tr->offsets_size, extra_buffers_size,
-		!reply && (t->flags & TF_ONE_WAY));
+		!reply && (t->flags & TF_ONE_WAY), current->tgid);
 	if (IS_ERR(t->buffer)) {
 		/*
 		 * -ESRCH indicates VMA cleared. The target is dying.
@@ -3782,6 +3930,7 @@ static void binder_transaction(struct binder_proc *proc,
 		return_error_line = __LINE__;
 		goto err_copy_data_failed;
 	}
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
         binder_inner_proc_lock(target_proc);
         if ((binder_debug_mask & BINDER_DEBUG_FREEZE_TRANSACTION) && target_proc->is_frozen && !reply) {
@@ -3828,6 +3977,7 @@ static void binder_transaction(struct binder_proc *proc,
 	}
         binder_inner_proc_unlock(target_proc);
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 	if (!IS_ALIGNED(tr->offsets_size, sizeof(binder_size_t))) {
 		binder_user_error("%d:%d got transaction with invalid offsets size, %lld\n",
 				proc->pid, thread->pid, (u64)tr->offsets_size);
@@ -4042,10 +4192,12 @@ static void binder_transaction(struct binder_proc *proc,
 	t->work.type = BINDER_WORK_TRANSACTION;
 
 	if (reply) {
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		bool freeze_change = false;
 		int freeze_client;
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 		binder_enqueue_thread_work(thread, tcomplete);
 		binder_inner_proc_lock(target_proc);
 		if (target_thread->is_dead) {
@@ -4053,8 +4205,14 @@ static void binder_transaction(struct binder_proc *proc,
 			goto err_dead_proc_or_thread;
 		}
 		BUG_ON(t->buffer->async_transaction != 0);
-		binder_pop_transaction_ilocked(target_thread, in_reply_to);
-		binder_enqueue_thread_work_ilocked(target_thread, &t->work);
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		set_reply_start(t, in_reply_to);
+		reset_task_uxlock(target_thread);
+#endif
+// #endif /*VENDOR_EDIT*/
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
                 if (binder_freeze_listener &&
                                 target_proc->is_frozen &&
@@ -4066,16 +4224,33 @@ static void binder_transaction(struct binder_proc *proc,
 			target_proc->is_processing = true;
                         target_proc->processing_type = __LINE__;
 			freeze_change = true;
-			freeze_client = target_thread->transaction_stack->from->proc->pid;
+			freeze_client = target_thread->transaction_stack->from ? target_thread->transaction_stack->from->proc->pid : 0;
 			binder_debug(BINDER_DEBUG_FREEZE,"%d:%d need unfreeze pid:%d client:%d line:%d\n",proc->pid,thread->pid,target_proc->pid,freeze_client,__LINE__);
 		}
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
+		binder_pop_transaction_ilocked(target_thread, in_reply_to);
+		binder_enqueue_thread_work_ilocked(target_thread, &t->work);
 		binder_inner_proc_unlock(target_proc);
+		wake_up_interruptible_sync(&target_thread->wait);
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		if (freeze_change)
 			binder_enquene_freeze_work(binder_freeze_listener,target_proc->pid,0,freeze_client);
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
-		wake_up_interruptible_sync(&target_thread->wait);
+                #endif
+
+#ifdef CONFIG_MTK_TASK_TURBO
+		if (thread->task && in_reply_to->inherit_task == thread->task) {
+			binder_stop_turbo_inherit(thread->task);
+			in_reply_to->inherit_task = NULL;
+		}
+#endif
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		binder_remove_dynamic_ux(thread);
+#endif
+// #endif /*VENDOR_EDIT*/
 		binder_restore_priority(current, in_reply_to->saved_priority);
 		binder_free_transaction(in_reply_to);
 	} else if (!(t->flags & TF_ONE_WAY)) {
@@ -4091,6 +4266,12 @@ static void binder_transaction(struct binder_proc *proc,
 		binder_enqueue_deferred_thread_work_ilocked(thread, tcomplete);
 		t->need_reply = 1;
 		t->from_parent = thread->transaction_stack;
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		set_transaction_start(t);
+#endif
+// #endif /*VENDOR_EDIT*/
 		thread->transaction_stack = t;
 		binder_inner_proc_unlock(proc);
 		if (!binder_proc_transaction(t, target_proc, target_thread)) {
@@ -4187,6 +4368,12 @@ err_invalid_target_handle:
 
 	BUG_ON(thread->return_error.cmd != BR_OK);
 	if (in_reply_to) {
+#ifdef CONFIG_MTK_TASK_TURBO
+		if (thread->task && in_reply_to->inherit_task == thread->task) {
+			binder_stop_turbo_inherit(thread->task);
+			in_reply_to->inherit_task = NULL;
+		}
+#endif
 		binder_restore_priority(current, in_reply_to->saved_priority);
 		thread->return_error.cmd = BR_TRANSACTION_COMPLETE;
 		binder_enqueue_thread_work(thread, &thread->return_error.work);
@@ -4397,10 +4584,12 @@ static int binder_thread_write(struct binder_proc *proc,
 			if (buffer->async_transaction && buffer->target_node) {
 				struct binder_node *buf_node;
 				struct binder_work *w;
+                                #ifndef CONFIG_TCL_FREEZE
                                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
                                 bool freeze_change = false;
                                 int freeze_client;
                                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                                #endif
 
 				buf_node = buffer->target_node;
 				binder_node_inner_lock(buf_node);
@@ -4410,14 +4599,17 @@ static int binder_thread_write(struct binder_proc *proc,
 						&buf_node->async_todo);
 				if (!w) {
 					buf_node->has_async_transaction = false;
+                                        #ifndef CONFIG_TCL_FREEZE
                                         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
                                         proc->has_async_transaction--;
                                         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                                        #endif
 				} else {
 					binder_enqueue_work_ilocked(
 							w, &proc->todo);
 					binder_wakeup_proc_ilocked(proc);
 				}
+                                #ifndef CONFIG_TCL_FREEZE
                                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
                                 if (binder_freeze_listener && proc->is_frozen) {
                                         int client = binder_proc_freeze(proc);
@@ -4432,11 +4624,14 @@ static int binder_thread_write(struct binder_proc *proc,
                                         }
                                 }
                                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                                #endif
 				binder_node_inner_unlock(buf_node);
+                                #ifndef CONFIG_TCL_FREEZE
                                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
                                 if (freeze_change)
                                         binder_enquene_freeze_work(binder_freeze_listener,proc->pid,proc->is_cur_frozen ? 1 : 0,freeze_client);
                                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                                #endif
 			}
 			trace_binder_transaction_buffer_release(buffer);
 			binder_transaction_buffer_release(proc, buffer, 0, false);
@@ -4499,6 +4694,13 @@ static int binder_thread_write(struct binder_proc *proc,
 			thread->looper |= BINDER_LOOPER_STATE_ENTERED;
 			break;
 		case BC_EXIT_LOOPER:
+                        // #ifdef VENDOR_EDIT
+			// xiwu1.peng@KERNEL, 2021.11.30 add it for binder wakeup
+			#ifdef CONFIG_TCL_FREEZE
+			if ((frozen(thread->task) || freezing(thread->task)))
+				handle_thaw(thread->task, thread->task, 0);
+			#endif
+			// #endif /* VENDOR_EDIT */
 			binder_debug(BINDER_DEBUG_THREADS,
 				     "%d:%d BC_EXIT_LOOPER\n",
 				     proc->pid, thread->pid);
@@ -4678,6 +4880,7 @@ static int binder_thread_write(struct binder_proc *proc,
 			}
 			binder_inner_proc_unlock(proc);
 		} break;
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		case BC_FREEZE_BINDER: {
 			uint32_t pid;
@@ -4786,6 +4989,7 @@ static int binder_thread_write(struct binder_proc *proc,
 			}
 		} break;
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 
 		default:
 			pr_err("%d:%d unknown command %d\n",
@@ -4907,6 +5111,9 @@ retry:
 			wait_event_interruptible(binder_user_error_wait,
 						 binder_stop_on_user_error < 2);
 		}
+#ifdef CONFIG_MTK_TASK_TURBO
+		binder_stop_turbo_inherit(current);
+#endif
 		binder_restore_priority(current, proc->default_priority);
 	}
 
@@ -4931,19 +5138,27 @@ retry:
 		struct binder_transaction *t = NULL;
 		struct binder_thread *t_from;
 		size_t trsize = sizeof(*trd);
+		#ifndef CONFIG_TCL_FREEZE
+                //[TCT-ROM][PERF]End Begin by jingyuan.wei for freezer on 2019/08/02
+                int client;
+                //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+		#endif
 
 		binder_inner_proc_lock(proc);
 		if (!binder_worklist_empty_ilocked(&thread->todo))
 			list = &thread->todo;
-#ifdef CONFIG_TCT_UI_TURBO
-		else if (!binder_proc_worklist_empty_ilocked(proc) &&
-			wait_for_proc_work)
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 modify for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		else if (binder_proc_has_work_ilocked(proc) &&
+				wait_for_proc_work)
 			list = binder_proc_select_worklist_ilocked(proc);
 #else
 		else if (!binder_worklist_empty_ilocked(&proc->todo) &&
 			   wait_for_proc_work)
 			list = &proc->todo;
 #endif
+// #endif /*VENDOR_EDIT*/
 		else {
 			binder_inner_proc_unlock(proc);
 
@@ -4958,6 +5173,12 @@ retry:
 			break;
 		}
 		w = binder_dequeue_work_head_ilocked(list);
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		get_inlist_time(w);
+#endif
+// #endif /*VENDOR_EDIT*/
 		if (binder_worklist_empty_ilocked(&thread->todo))
 			thread->process_todo = false;
 
@@ -5122,6 +5343,7 @@ retry:
 			if (cmd == BR_DEAD_BINDER)
 				goto done; /* DEAD_BINDER notifications can cause transactions */
 		} break;
+                #ifndef CONFIG_TCL_FREEZE
                 //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 		case BINDER_WORK_FREEZE: {
 			struct binder_freeze *freeze;
@@ -5152,6 +5374,7 @@ retry:
 			goto done;
 		} break;
                 //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                #endif
 		}
 
 		if (!t)
@@ -5173,7 +5396,31 @@ retry:
 			trd->target.ptr = 0;
 			trd->cookie = 0;
 			cmd = BR_REPLY;
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+			get_timecost(t);
+#endif
+// #endif /*VENDOR_EDIT*/
 		}
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2022-07-21 add for binder unfreeze
+#ifdef CONFIG_TCL_BINDER_UNFREEZE
+		if (likely(single_binder_unfreeze_enable) &&
+		    (thread->looper & (BINDER_LOOPER_STATE_REGISTERED |	BINDER_LOOPER_STATE_ENTERED)) &&
+		    (frozen(proc->tsk) || freezing(proc->tsk))) {
+			if (single_wake_up(t->flags)) {
+				unfreeze_debug("handle thaw in reply: sender=%d target=%d", thread->task->pid, thread->task->pid);
+				trace_bd_handle_thaw_reply(thread->task->pid, thread->task->pid);
+				handle_thaw_thread(thread->task, thread->task, 0);
+			} else {
+				unfreeze_debug("handle thaw in reply: sender=%d target=%d", proc->tsk->pid, proc->tsk->pid);
+				trace_bd_handle_thaw_reply(proc->tsk->pid, proc->tsk->pid);
+				handle_thaw(proc->tsk, proc->tsk, 0);
+			}
+		}
+#endif
+// #endif /*VENDOR_EDIT*/
 		trd->code = t->code;
 		trd->flags = t->flags;
 		trd->sender_euid = from_kuid(current_user_ns(), t->sender_euid);
@@ -5181,16 +5428,23 @@ retry:
 		t_from = binder_get_txn_from(t);
 		if (t_from) {
 			struct task_struct *sender = t_from->proc->tsk;
-#ifdef CONFIG_TCT_UI_TURBO
-			bool oneway = !!(t->flags & TF_ONE_WAY);
-			binder_thread_check_and_set_dynamic_uiturbo(thread,
-								    t_from,
-								    oneway);
-#endif
 
 			trd->sender_pid =
 				task_tgid_nr_ns(sender,
 						task_active_pid_ns(current));
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+			binder_set_dynamic_ux(thread, t_from);
+#endif
+// #endif /*VENDOR_EDIT*/
+
+#ifdef CONFIG_MTK_TASK_TURBO
+			if (binder_start_turbo_inherit(t_from->task,
+							thread->task))
+				t->inherit_task = thread->task;
+#endif
+
 		} else {
 			trd->sender_pid = 0;
 		}
@@ -5242,6 +5496,12 @@ retry:
 			     (u64)trd->data.ptr.buffer,
 			     (u64)trd->data.ptr.offsets);
 
+		#ifndef CONFIG_TCL_FREEZE
+                //[TCT-ROM][PERF]End Begin by jingyuan.wei for freezer on 2019/08/02
+                client = t_from ? t_from->proc->pid : 0;
+                //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+		#endif
+
 		if (t_from)
 			binder_thread_dec_tmpref(t_from);
 		t->buffer->allow_user_free = 1;
@@ -5251,6 +5511,7 @@ retry:
 			t->to_thread = thread;
 			thread->transaction_stack = t;
 			binder_inner_proc_unlock(thread->proc);
+                        #ifndef CONFIG_TCL_FREEZE
                         //[TCT-ROM][PERF]End Begin by jingyuan.wei for freezer on 2019/08/02
                         {
                                 bool freeze_change = false;
@@ -5264,7 +5525,7 @@ retry:
 			                thread->proc->is_processing = true;
                                         thread->proc->processing_type = __LINE__;
 			                freeze_change = true;
-			                freeze_client = t->from->proc->pid;
+			                freeze_client = client;
 			                binder_debug(BINDER_DEBUG_FREEZE,"%d:%d need unfreeze pid:%d client:%d line:%d\n",proc->pid,thread->pid,thread->proc->pid,freeze_client,__LINE__);
 		                }
                                 binder_inner_proc_unlock(thread->proc);
@@ -5272,7 +5533,9 @@ retry:
 				        binder_enquene_freeze_work(binder_freeze_listener,thread->proc->pid,0,freeze_client);
                         }
                         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                        #endif
 		} else {
+                        #ifndef CONFIG_TCL_FREEZE
                         //[TCT-ROM][PERF]End Begin by jingyuan.wei for freezer on 2019/08/02
                         if (cmd == BR_TRANSACTION && (t->flags & TF_ONE_WAY))
                         {
@@ -5295,6 +5558,7 @@ retry:
 				        binder_enquene_freeze_work(binder_freeze_listener,thread->proc->pid,0,freeze_client);
                         }
                         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+                        #endif
 			binder_free_transaction(t);
 		}
 		break;
@@ -5448,6 +5712,12 @@ static void binder_free_proc(struct binder_proc *proc)
 	struct binder_device *device;
 
 	BUG_ON(!list_empty(&proc->todo));
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	BUG_ON(!list_empty(&proc->ux_todo));
+#endif
+// #endif /*VENDOR_EDIT*/
 	BUG_ON(!list_empty(&proc->delivered_death));
 	device = container_of(proc->context, struct binder_device, context);
 	if (refcount_dec_and_test(&device->ref)) {
@@ -5612,21 +5882,57 @@ static int binder_ioctl_write_read(struct file *filp,
 			bwr.read_consumed = 0;
 			if (copy_to_user(ubuf, &bwr, sizeof(bwr)))
 				ret = -EFAULT;
+// #ifdef VENDOR_EDIT
+// zhipeng5.wei@KERNEL 2021/3/8 add for janklog
+#ifdef CONFIG_TCL_UXEXPRESS
+			current->in_binder_sleep = 0;
 			goto out;
 		}
+		if(0 == bwr.read_size)
+			current->in_binder_sleep = 0;
+#else
+			goto out;
+		}
+#endif
+// #endif /* VENDOR_EDIT */
 	}
 	if (bwr.read_size > 0) {
 		ret = binder_thread_read(proc, thread, bwr.read_buffer,
 					 bwr.read_size,
 					 &bwr.read_consumed,
 					 filp->f_flags & O_NONBLOCK);
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL 2020/12/21 add for task thaw
+#ifdef CONFIG_TCL_FREEZE
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2022-07-21 add for binder unfreeze
+#ifdef CONFIG_TCL_BINDER_UNFREEZE
+		if (unlikely(!single_binder_unfreeze_enable) &&
+		    (thread->looper & (BINDER_LOOPER_STATE_REGISTERED | BINDER_LOOPER_STATE_ENTERED)) &&
+			(frozen(proc->tsk) || freezing(proc->tsk))) {
+			trace_bd_handle_thaw_legacy(proc->tsk->pid, proc->tsk->pid);
+			handle_thaw(proc->tsk, proc->tsk, 0);
+		}
+#else
+		if (thread->looper & (BINDER_LOOPER_STATE_REGISTERED |
+				BINDER_LOOPER_STATE_ENTERED)) {
+			if ((frozen(proc->tsk) || freezing(proc->tsk)))
+				handle_thaw(proc->tsk, proc->tsk, 0);
+		}
+#endif
+// #endif /* VENDOR_EDIT */
+#endif
+// #endif /* VENDOR_EDIT */
 		trace_binder_read_done(ret);
 		binder_inner_proc_lock(proc);
-#ifdef CONFIG_TCT_UI_TURBO
-		if (!binder_proc_worklist_empty_ilocked(proc))
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+		if (binder_proc_has_work_ilocked(proc))
 #else
 		if (!binder_worklist_empty_ilocked(&proc->todo))
 #endif
+// #endif /*VENDOR_EDIT*/
 			binder_wakeup_proc_ilocked(proc);
 		binder_inner_proc_unlock(proc);
 		if (ret < 0) {
@@ -5964,7 +6270,7 @@ static int binder_mmap(struct file *filp, struct vm_area_struct *vma)
 	return 0;
 
 err_bad_arg:
-	pr_err("%s: %d %lx-%lx %s failed %d\n", __func__,
+	pr_err_ratelimited("%s: %d %lx-%lx %s failed %d\n", __func__,
 	       proc->pid, vma->vm_start, vma->vm_end, failure_string, ret);
 	return ret;
 }
@@ -5989,10 +6295,12 @@ static int binder_open(struct inode *nodp, struct file *filp)
 	mutex_init(&proc->files_lock);
 	proc->cred = get_cred(filp->f_cred);
 	INIT_LIST_HEAD(&proc->todo);
-#ifdef CONFIG_TCT_UI_TURBO
-	INIT_LIST_HEAD(&proc->ui_todo);
-	proc->ui_count = 0;
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	INIT_LIST_HEAD(&proc->ux_todo);
 #endif
+// #endif /*VENDOR_EDIT*/
 	if (binder_supported_policy(current->policy)) {
 		proc->default_priority.sched_policy = current->policy;
 		proc->default_priority.prio = current->normal_prio;
@@ -6214,6 +6522,7 @@ static void binder_deferred_release(struct binder_proc *proc)
 	proc->tmp_ref++;
 
 	proc->is_dead = true;
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
 	proc->is_frozen = false;
 	if (proc == binder_freeze_listener) {
@@ -6221,6 +6530,7 @@ static void binder_deferred_release(struct binder_proc *proc)
 		binder_freeze_listener = NULL;
 	}
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 	threads = 0;
 	active_transactions = 0;
 	while ((n = rb_first(&proc->threads))) {
@@ -6267,10 +6577,13 @@ static void binder_deferred_release(struct binder_proc *proc)
 	}
 	binder_proc_unlock(proc);
 
-#ifdef CONFIG_TCT_UI_TURBO
-	binder_release_work(proc, &proc->ui_todo);
-#endif
 	binder_release_work(proc, &proc->todo);
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	binder_release_work(proc, &proc->ux_todo);
+#endif
+// #endif /*VENDOR_EDIT*/
 	binder_release_work(proc, &proc->delivered_death);
 
 	binder_debug(BINDER_DEBUG_OPEN_CLOSE,
@@ -6531,9 +6844,11 @@ static void print_binder_proc(struct seq_file *m,
 	header_pos = m->count;
 
 	binder_inner_proc_lock(proc);
+        #ifndef CONFIG_TCL_FREEZE
         //[TCT-ROM][PERF]Begin Added by jingyuan.wei for freezer on 2019/08/02
         seq_printf(m, "frozen %d current frozen %d processing %d type %d\n", proc->is_frozen,proc->is_cur_frozen,proc->is_processing,proc->processing_type);
         //[TCT-ROM][PERF]End Added by jingyuan.wei for freezer on 2019/08/02
+        #endif
 	for (n = rb_first(&proc->threads); n != NULL; n = rb_next(n))
 		print_binder_thread_ilocked(m, rb_entry(n, struct binder_thread,
 						rb_node), print_all);
@@ -6579,11 +6894,14 @@ static void print_binder_proc(struct seq_file *m,
 	list_for_each_entry(w, &proc->todo, entry)
 		print_binder_work_ilocked(m, proc, "  ",
 					  "  pending transaction", w);
-#ifdef CONFIG_TCT_UI_TURBO
-	list_for_each_entry(w, &proc->ui_todo, entry)
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	list_for_each_entry(w, &proc->ux_todo, entry)
 		print_binder_work_ilocked(m, proc, "  ",
-					  "  pending ui transaction", w);
+					  "  pending ux transaction", w);
 #endif
+// #endif /*VENDOR_EDIT*/
 	list_for_each_entry(w, &proc->delivered_death, entry) {
 		seq_puts(m, "  has delivered dead binder\n");
 		break;
@@ -6748,17 +7066,20 @@ static void print_binder_proc_stats(struct seq_file *m,
 	}
 	binder_inner_proc_unlock(proc);
 	seq_printf(m, "  pending transactions: %d\n", count);
-
-#ifdef CONFIG_TCT_UI_TURBO
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
 	count = 0;
 	binder_inner_proc_lock(proc);
-	list_for_each_entry(w, &proc->ui_todo, entry) {
+	list_for_each_entry(w, &proc->ux_todo, entry) {
 		if (w->type == BINDER_WORK_TRANSACTION)
 			count++;
 	}
 	binder_inner_proc_unlock(proc);
-	seq_printf(m, "  pending ui transactions: %d\n", count);
+	seq_printf(m, "  pending ux transactions: %d\n", count);
 #endif
+// #endif /*VENDOR_EDIT*/
+
 	print_binder_stats(m, "  ", &proc->stats);
 }
 
@@ -6895,12 +7216,14 @@ int binder_transaction_log_show(struct seq_file *m, void *unused)
 	return 0;
 }
 
+#ifndef CONFIG_TCL_FREEZE
 //[TCT-ROM][PERF]Begin Add by jingyuan.wei for freezer on 2020/09/14
 int binder_freeze_show(struct seq_file *m, void *unused)
 {
         return 0;
 }
 //[TCT-ROM][PERF]End Add by jingyuan.wei for freezer on 2020/09/14
+#endif
 
 const struct file_operations binder_fops = {
 	.owner = THIS_MODULE,
@@ -6988,13 +7311,6 @@ static int __init binder_init(void)
 				    binder_debugfs_dir_entry_root,
 				    &binder_transaction_log_failed,
 				    &binder_transaction_log_fops);
-#ifdef CONFIG_TCT_UI_TURBO
-		debugfs_create_file("count",
-				    S_IRUGO,
-				    binder_debugfs_dir_entry_root,
-				    NULL,
-				    &binder_count_fops);
-#endif
 	}
 
 	if (!IS_ENABLED(CONFIG_ANDROID_BINDERFS) &&
@@ -7016,6 +7332,13 @@ static int __init binder_init(void)
 				goto err_init_binder_device_failed;
 		}
 	}
+// #ifdef VENDOR_EDIT
+// cheng.chang@ARCH, 2021-02-23 add for ux-binder
+#ifdef CONFIG_TCL_UXEXPRESS
+	if (binder_tcl_sysfs_register())
+		pr_err("binder tcl feature sysfs node create failed\n");
+#endif
+// #endif /*VENDOR_EDIT*/
 
 	ret = init_binderfs();
 	if (ret)

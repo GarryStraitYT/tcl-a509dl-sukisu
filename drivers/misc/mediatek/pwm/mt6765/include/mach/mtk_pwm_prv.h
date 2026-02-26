@@ -12,7 +12,11 @@ extern void __iomem *pwm_infracfg_base;
 #define PWM_INFRACFG_BASE pwm_infracfg_base
 #endif
 
+#ifdef CONFIG_TCT_APOLLO84GBOOSTREFRESH
 #define PWM_HW_V_1_0
+#else
+//#define PWM_HW_V_1_0
+#endif
 #define PWM_ENABLE (PWM_BASE+0x0000)
 
 #define PWM_3DLCM	(PWM_BASE+0x1D0)

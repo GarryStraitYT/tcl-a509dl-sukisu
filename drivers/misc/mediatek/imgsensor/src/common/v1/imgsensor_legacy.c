@@ -96,7 +96,16 @@ int iBurstWriteReg_multi(
 	    i2cId,
 	    timing);
 }
-
-
+//zhongzhu add for tctcamera development start,2022/06/08
+int eeprom_iBurstWriteReg_multi(u8 *pData, u32 bytes, u16 i2cId, u16 timing)
+{
+	return eeprom_i2c_write(
+			pgi2c_cfg_legacy,
+			pData,
+			bytes,
+			i2cId,
+			timing);
+}
+//zhongzhu add for tctcamera development end,2022/06/08
 #endif
 

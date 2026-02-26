@@ -1,0 +1,36 @@
+/* TOUCH start */
+
+&spi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	buffalotp@0{
+		status = "okay";
+		compatible = "buffalo,touch";
+		reg = <0x0>;
+		interrupt-parent = <&pio>;
+		interrupts = <0 IRQ_TYPE_EDGE_FALLING 0 0>;
+		focaltech,reset-gpio = <&pio 15 0x0>;
+		focaltech,irq-gpio = <&pio 14 0x0>;
+//Begin meng.zhang power LCD bias gpio on 20210719 
+                focaltech,bias-neg-gpio = <&pio 137 0x00>;
+                focaltech,bias-pos-gpio = <&pio 138 0x00>;
+//End meng.zhang power LCD bias gpio on 20210719 
+		focaltech,max-touch-number = <10>; //Buffalo_TMO request 10 point touch
+		focaltech,display-coords =  <0 0 720 1600>;
+		spi-max-frequency = <5000000>;
+    
+
+
+
+
+        
+
+	};
+
+};
+
+/* TOUCH end */
+
+

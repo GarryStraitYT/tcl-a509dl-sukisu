@@ -13,41 +13,32 @@ config MTK_FINGERPRINT_SUPPORT
 	  use mediatek fingerprint driver,fingerprint
 	  driver will support fingerprint function
 
-#Begin Modified by zhikui.li,chang the default configuration
-if MTK_FINGERPRINT_SUPPORT
 config MTK_FINGERPRINT_SELECT
 	string "sensor type"
-	default "FT9362"
-#   default "GF318M"
-#end Modified by zhikui.li,chang the default configuration
-endif
+	default "GF318M"
 
-config MTK_FINGERPRINT
-	tristate "Mediatek Fingerprint"
-	default n
+# [TCTNB][FINGERPRINT]Added_begin by Jiancong.Huang for F11394572 at 2021/8/12
+source drivers/input/fingerprint/focaltech_capcitive_b/Kconfig
+# [TCTNB][FINGERPRINT]Added_end by Jiancong.Huang for F11394572 at 2021/8/12
 
-config FOCAL_FINGERPRINT
-        bool "Focaltech Fingerprint"
-        default n
+#added by qianbo.pan for Task:11387489 on 2021.08.24
+source drivers/input/fingerprint/sunwave_fp/Kconfig
 
-config JRD_SUNWAVE_FINGERPRINT
-	tristate "SUNWAVE Fingerprint"
-	default n
+#start, guang.xiao, 2022/02/27, fingerprint porting
+source drivers/input/fingerprint/buffalotmo/focaltech/Kconfig
+source drivers/input/fingerprint/buffalotmo/sunwave_fp/Kconfig
+#end, guang.xiao, 2022/02/27, fingerprint porting
+# Begin added by liuyu for passat-T fingerprint porting on 2022-5-10
+source drivers/input/fingerprint/TCT-fingerprint/chipone_fp/Kconfig
+source drivers/input/fingerprint/TCT-fingerprint/focaltech/Kconfig
+# End added by liuyu for passat-T fingerprint porting on 2022-5-10
 
+#Begin added by liangjiaqiang for MODEL3-1890 on 2022-09-15
+source drivers/input/fingerprint/TCT-fingerprint/regulator/Kconfig
+#End added by liangjiaqiang for MODEL3-1890 on 2022-09-15
 
-if MTK_FINGERPRINT_SELECT = "GF318M" ||  MTK_FINGERPRINT_SELECT = "GF5216"
-config GOODIX_FINGERPRINT
-	bool "Goodix Fingerprint"
-	default y
-	help
-	  Goodix Fingerprint chip GF316M/GF318M/GF3118M/GF518M/GF5118M/GF516M/GF816M/GF3208/GF3206/
-	  GF3266/GF3288/GF5206/GF5216/GF5208 TEE driver
+# Begin added by weizhen.pang for EncoreVZW FR ENCOREVZW-6415 on 20221011
+source drivers/input/fingerprint/fortsense_fp/Kconfig
+# end added by weizhen.pang for EncoreVZW FR ENCOREVZW-6415 on 20221011
 
-config GOODIX_SENSOR_TYPE
-	string "SENSOR_TYPE"
-	default "GF5216"
-	help
-	  Must input sensor type, or default is GF316M GF318M GF3118M GF518M GF5118M GF516M GF816M
-	  GF3208 GF3206 GF3266 GF3288 GF5206 GF5216 GF5208
-endif
 endmenu

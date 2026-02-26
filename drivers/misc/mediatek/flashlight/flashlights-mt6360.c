@@ -17,6 +17,7 @@
 #include <linux/power_supply.h>
 
 #include "richtek/rt-flashlight.h"
+#include "v1/mtk_charger.h"
 
 #include "flashlight-core.h"
 #include "flashlight-dt.h"
@@ -73,6 +74,13 @@ struct mt6360_platform_data {
 	struct flashlight_device_id *dev_id;
 };
 
+#if defined(CONFIG_MACH_MT6877) || defined(CONFIG_MACH_MT6833) \
+|| defined(CONFIG_MACH_MT6893) || defined(CONFIG_MACH_MT6785) \
+|| defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6873)
+/* define charger consumer */
+static struct charger_consumer *flashlight_charger_consumer;
+#define CHARGER_SUPPLY_NAME "charger_port1"
+#else
 static int mt6360_high_voltage_supply(int enable)
 {
 	union power_supply_propval prop;
@@ -94,21 +102,22 @@ static int mt6360_high_voltage_supply(int enable)
 
 	return ret;
 }
+#endif
 
-static const int mt6360_current[MT6360_LEVEL_NUM] = {
+static  int mt6360_current[MT6360_LEVEL_NUM] = {
 	  25,   50,  75, 100, 125, 150, 175,  200,  225,  250,
 	 275,  300, 325, 350, 375, 400, 450,  500,  550,  600,
 	 650,  700, 750, 800, 850, 900, 950, 1000, 1050, 1100,
 	1150, 1200
 };
 
-static const unsigned char mt6360_torch_level[MT6360_LEVEL_TORCH] = {
+static  unsigned char mt6360_torch_level[MT6360_LEVEL_TORCH] = {
 	0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12,
 	0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E
 };
 
 /* 0x00~0x74 6.25mA/step 0x75~0xB1 12.5mA/step */
-static const unsigned char mt6360_strobe_level[MT6360_LEVEL_FLASH] = {
+static  unsigned char mt6360_strobe_level[MT6360_LEVEL_FLASH] = {
 	0x00, 0x04, 0x08, 0x0C, 0x10, 0x14, 0x18, 0x1C, 0x20, 0x24,
 	0x28, 0x2C, 0x30, 0x34, 0x38, 0x3C, 0x44, 0x4C, 0x54, 0x5C,
 	0x64, 0x6C, 0x74, 0x78, 0x7C, 0x80, 0x84, 0x88, 0x8C, 0x90,
@@ -340,13 +349,27 @@ static int mt6360_set_scenario(int scenario)
 	if (scenario & FLASHLIGHT_SCENARIO_CAMERA_MASK) {
 		if (!is_decrease_voltage) {
 			pr_info("Decrease voltage level.\n");
+#if defined(CONFIG_MACH_MT6877) || defined(CONFIG_MACH_MT6833) \
+|| defined(CONFIG_MACH_MT6893) || defined(CONFIG_MACH_MT6785) \
+|| defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6873)
+			charger_manager_enable_high_voltage_charging(
+				flashlight_charger_consumer, false);
+#else
 			mt6360_high_voltage_supply(0);
+#endif
 			is_decrease_voltage = 1;
 		}
 	} else {
 		if (is_decrease_voltage) {
 			pr_info("Increase voltage level.\n");
+#if defined(CONFIG_MACH_MT6877) || defined(CONFIG_MACH_MT6833) \
+|| defined(CONFIG_MACH_MT6893) || defined(CONFIG_MACH_MT6785) \
+|| defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6873)
+			charger_manager_enable_high_voltage_charging(
+				flashlight_charger_consumer, true);
+#else
 			mt6360_high_voltage_supply(1);
+#endif
 			is_decrease_voltage = 0;
 		}
 	}
@@ -527,6 +550,26 @@ static int mt6360_operate(int channel, int enable)
 	return 0;
 }
 
+static int flash_inti_tablevalue(unsigned long fl_data) {
+  int i = 0;
+  struct flashlight_user_data *fl_arg;
+  fl_arg = (struct flashlight_user_data *)fl_data;
+  pr_info("mt6360_inti_value arg=%d  data[0]=%d\n",fl_arg->arg,fl_arg->data[0]);
+  if (fl_arg->arg == 0) {
+    for (i = 0; i < MT6360_LEVEL_NUM; i++) {
+      mt6360_current[i] = fl_arg->data[i];
+    }
+  } else if (fl_arg->arg == 1) {
+    for (i = 0; i < MT6360_LEVEL_TORCH; i++) {
+      mt6360_torch_level[i] = (unsigned char)fl_arg->data[i];
+    }
+  } else if (fl_arg->arg == 2) {
+    for (i = 0; i < MT6360_LEVEL_FLASH; i++) {
+      mt6360_strobe_level[i] = (unsigned char)fl_arg->data[i];
+    }
+  }
+  return 0;
+}
 static int mt6360_ioctl(unsigned int cmd, unsigned long arg)
 {
 	struct flashlight_dev_arg *fl_arg;
@@ -536,12 +579,17 @@ static int mt6360_ioctl(unsigned int cmd, unsigned long arg)
 	channel = fl_arg->channel;
 
 	/* verify channel */
-	if (channel < 0 || channel >= MT6360_CHANNEL_NUM) {
+	if (cmd!=FLASH_IOC_SET_HW_TABLE&&(channel < 0 || channel >= MT6360_CHANNEL_NUM)) {
 		pr_info("Failed with error channel\n");
 		return -EINVAL;
 	}
 
 	switch (cmd) {
+	case FLASH_IOC_SET_HW_TABLE:
+	    pr_info("FLASH_IOC_SET_HW_TABLE(%d)\n", channel);
+        flash_inti_tablevalue(arg);
+        break;
+
 	case FLASH_IOC_SET_TIME_OUT_TIME_MS:
 		pr_debug("FLASH_IOC_SET_TIME_OUT_TIME_MS(%d): %d\n",
 				channel, (int)fl_arg->arg);
@@ -622,7 +670,14 @@ static int mt6360_release(void)
 	/* If camera NE, we need to enable pe by ourselves*/
 	if (fd_use_count == 0 && is_decrease_voltage) {
 		pr_info("Increase voltage level.\n");
-		mt6360_high_voltage_supply(1);
+#if defined(CONFIG_MACH_MT6877) || defined(CONFIG_MACH_MT6833) \
+|| defined(CONFIG_MACH_MT6893) || defined(CONFIG_MACH_MT6785) \
+|| defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6873)
+			charger_manager_enable_high_voltage_charging(
+				flashlight_charger_consumer, true);
+#else
+			mt6360_high_voltage_supply(1);
+#endif
 		is_decrease_voltage = 0;
 	}
 	mutex_unlock(&mt6360_mutex);
@@ -804,7 +859,17 @@ static int mt6360_probe(struct platform_device *pdev)
 	if (flashlight_set_strobe_timeout(flashlight_dev_ch1,
 				MT6360_HW_TIMEOUT, MT6360_HW_TIMEOUT + 200) < 0)
 		pr_info("Failed to set strobe timeout.\n");
-
+#if defined(CONFIG_MACH_MT6877) || defined(CONFIG_MACH_MT6833) \
+|| defined(CONFIG_MACH_MT6893) || defined(CONFIG_MACH_MT6785) \
+|| defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6873)
+	/* get charger consumer manager */
+	flashlight_charger_consumer = charger_manager_get_by_name(
+			&flashlight_dev_ch1->dev, CHARGER_SUPPLY_NAME);
+	if (!flashlight_charger_consumer) {
+		pr_info("Failed to get charger manager.\n");
+		return -EFAULT;
+	}
+#endif
 	/* register flashlight device */
 	if (pdata->channel_num) {
 		for (i = 0; i < pdata->channel_num; i++)

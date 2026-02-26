@@ -15,10 +15,20 @@ enum LCM_STATUS {
 void lcm_common_parse_dts(const struct LCM_DTS *DTS,
 	unsigned char force_update);
 void lcm_common_set_util_funcs(const struct LCM_UTIL_FUNCS *util);
-void lcm_common_get_params(LCM_PARAMS *params);
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+void lcm_common_get_params(struct LCM_PARAMS *params);
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
 void lcm_common_init(void);
 void lcm_common_suspend(void);
 void lcm_common_resume(void);
+
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+void lcm_common_pre_suspend(void);
+void lcm_common_post_suspend(void);
+void lcm_common_pre_resume(void);
+void lcm_common_post_resume(void);
+#endif
+
 void lcm_common_update(unsigned int x, unsigned int y, unsigned int width,
 	unsigned int height);
 void lcm_common_setbacklight(unsigned int level);

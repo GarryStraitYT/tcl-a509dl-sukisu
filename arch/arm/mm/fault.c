@@ -28,6 +28,13 @@
 
 #include "fault.h"
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@kernel 2021/09/03 add for iolimit
+#ifdef CONFIG_CGROUP_IOLIMIT
+#include <linux/iolimit_cgroup.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 #ifdef CONFIG_MMU
 
 #ifdef CONFIG_KPROBES
@@ -375,6 +382,16 @@ retry:
 	}
 
 	up_read(&mm->mmap_sem);
+
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@kernel 2021/09/03 add for iolimit
+	#ifdef CONFIG_CGROUP_IOLIMIT
+	if (task_in_pagefault(current)) {
+		io_read_bandwidth_control(PAGE_SIZE);
+		task_clear_in_pagefault(current);
+	}
+	#endif
+	// #endif /* VENDOR_EDIT */
 
 done:
 	/*

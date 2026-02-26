@@ -3,6 +3,9 @@
 #include <linux/kernel.h>
 #include <linux/rtc.h>
 #include <linux/timer.h>
+#ifdef CCCI_PLATFORM_MT6781
+#include "modem_reg_base.h"
+#endif
 #if defined(CONFIG_MTK_AEE_FEATURE)
 #include <mt-plat/aee.h>
 #endif
@@ -12,7 +15,13 @@
 #include "ccci_fsm_sys.h"
 #include "ccci_platform.h"
 #include "md_sys1_platform.h"
+#include "modem_sys.h"
 
+
+#ifdef CONFIG_HELAEYE_BSP_MODEMCRASH_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+#endif
 
 #ifndef DB_OPT_DEFAULT
 #define DB_OPT_DEFAULT    (0)	/* Dummy macro define to avoid build error */
@@ -127,6 +136,35 @@ static char mdee_more_inf_str[MD_EE_CASE_WDT + 1][64] = {
 	"\n[Others] MD watchdog timeout interrupt\n"
 };
 
+//#[SYSD DRIVER][tct_hela][driver] added by jinggao.zhou for  Online Quality OLQ-9 on  2022-07-04
+#ifdef CONFIG_HELAEYE_BSP_MODEMCRASH_ON
+extern char modem_build_ver[64];
+extern int md_ccci_lasterrcode;
+static int heraeye_md_crash_error(char *crashInfo)
+{
+  char heraeye_cur_time[64] = {0};
+  heraeye_curtime_to_str(heraeye_cur_time);
+
+  pr_info("helaeye_modem :%s %s %s %d %s 0x%x",
+            TKPERF_PERF_MODEM_DRIVER_CRASH_INFO,
+            heraeye_cur_time,
+            modem_build_ver,
+            md_ccci_lasterrcode,
+            crashInfo,
+            TKPERF_MD_EVENTID);
+
+  heraeye_driver_log(TKPERF_DRIVER_MODEMCCCI,"%s %s %s %d %s 0x%x",
+            TKPERF_PERF_MODEM_DRIVER_CRASH_INFO,
+            heraeye_cur_time,
+            modem_build_ver,
+            md_ccci_lasterrcode,
+            crashInfo,
+            TKPERF_MD_EVENTID);
+
+	return 0;
+}
+#endif
+
 static void mdee_output_debug_info_to_buf(struct ccci_fsm_ee *mdee,
 	struct debug_info_t *debug_info, char *ex_info)
 {
@@ -135,6 +173,10 @@ static void mdee_output_debug_info_to_buf(struct ccci_fsm_ee *mdee,
 	char *ex_info_temp = NULL;
 	int ret = 0;
 	int val = 0;
+
+#ifdef CONFIG_HELAEYE_BSP_MODEMCRASH_ON
+	char md_crash_info[256]={0};
+#endif
 
 	switch (debug_info->type) {
 	case MD_EX_CLASS_ASSET:
@@ -156,6 +198,19 @@ static void mdee_output_debug_info_to_buf(struct ccci_fsm_ee *mdee,
 			debug_info->dump_assert.parameters[0],
 			debug_info->dump_assert.parameters[1],
 			debug_info->dump_assert.parameters[2]);
+
+#ifdef CONFIG_HELAEYE_BSP_MODEMCRASH_ON
+		sprintf(md_crash_info,
+			"file:%s_line:%d_p1:0x%08x_p2:0x%08x_p3:0x%08x",
+			debug_info->dump_assert.file_name,
+			debug_info->dump_assert.line_num,
+			debug_info->dump_assert.parameters[0],
+			debug_info->dump_assert.parameters[1],
+			debug_info->dump_assert.parameters[2]);
+		md_ccci_lasterrcode=MD_EX_CLASS_ASSET;
+		heraeye_md_crash_error(md_crash_info);
+#endif
+
 		break;
 	case MD_EX_CLASS_FATAL:
 		/* fatal:  */
@@ -205,6 +260,12 @@ static void mdee_output_debug_info_to_buf(struct ccci_fsm_ee *mdee,
 			debug_info->dump_fatal.err_code3,
 			debug_info->dump_fatal.offender);
 		kfree(ex_info_temp);
+
+#ifdef CONFIG_HELAEYE_BSP_MODEMCRASH_ON
+		md_ccci_lasterrcode=MD_EX_CLASS_FATAL;
+		heraeye_md_crash_error(ex_info);
+#endif
+
 		break;
 	case MD_EX_CLASS_CUSTOM:
 		/* fatal:  */
@@ -262,6 +323,32 @@ static void mdee_info_dump_v3(struct ccci_fsm_ee *mdee)
 		ccci_get_per_md_data(mdee->md_id);
 	int md_dbg_dump_flag = per_md_data->md_dbg_dump_flag;
 	int ret = 0;
+#ifdef CCCI_PLATFORM_MT6781
+	struct ccci_modem *md = NULL;
+	struct md_sys1_info *md_info = NULL;
+	struct md_pll_reg *md_reg = NULL;
+
+	md = ccci_md_get_modem_by_id(md_id);
+	if (md)
+		md_info = (struct md_sys1_info *)md->private_data;
+	else {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md fail\n", __func__);
+		return;
+	}
+	if (md_info)
+		md_reg = md_info->md_pll_base;
+	else {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md private_data fail\n", __func__);
+		return;
+	}
+	if (!md_reg) {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md_reg fail\n", __func__);
+		return;
+	}
+#endif
 
 	ex_info = kmalloc(AED_STR_LEN, GFP_ATOMIC);
 	if (ex_info == NULL) {
@@ -332,6 +419,16 @@ static void mdee_info_dump_v3(struct ccci_fsm_ee *mdee)
 			mdccci_dbg->base_ap_view_vir, mdccci_dbg->size);
 		ccci_util_mem_dump(md_id, CCCI_DUMP_MEM_DUMP,
 			mdss_dbg->base_ap_view_vir, mdss_dbg->size);
+#ifdef CCCI_PLATFORM_MT6781
+		if (md_reg->md_l2sram_base) {
+			md_cd_lock_modem_clock_src(1);
+
+			ccci_util_mem_dump(md_id, CCCI_DUMP_MEM_DUMP,
+				md_reg->md_l2sram_base, MD_L2SRAM_SIZE);
+
+			md_cd_lock_modem_clock_src(0);
+		}
+#endif
 	}
 
 err_exit:
@@ -808,6 +905,36 @@ static void mdee_dumper_v3_dump_ee_info(struct ccci_fsm_ee *mdee,
 		ccci_get_per_md_data(mdee->md_id);
 	int md_dbg_dump_flag = per_md_data->md_dbg_dump_flag;
 	int ret = 0;
+#ifdef CCCI_PLATFORM_MT6781
+	struct ccci_modem *md = NULL;
+	struct md_sys1_info *md_info = NULL;
+	struct md_pll_reg *md_reg = NULL;
+
+	md = ccci_md_get_modem_by_id(md_id);
+	if (md)
+		md_info = (struct md_sys1_info *)md->private_data;
+	else {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md fail\n", __func__);
+		return;
+	}
+	if (md_info)
+		md_reg = md_info->md_pll_base;
+	else {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md private_data fail\n", __func__);
+		return;
+	}
+	if (!md_reg) {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md_reg fail\n", __func__);
+		return;
+	}
+	if (!md_reg->md_l2sram_base) {
+		CCCI_ERROR_LOG(md_id, FSM,
+			"%s: get md_l2sram_base fail\n", __func__);
+	}
+#endif
 
 	dumper->more_info = more_info;
 	if (level == MDEE_DUMP_LEVEL_BOOT_FAIL) {
@@ -834,6 +961,13 @@ static void mdee_dumper_v3_dump_ee_info(struct ccci_fsm_ee *mdee,
 				ccci_util_mem_dump(md_id, CCCI_DUMP_MEM_DUMP,
 					mdss_dbg->base_ap_view_vir,
 						mdss_dbg->size);
+#ifdef CCCI_PLATFORM_MT6781
+				md_cd_lock_modem_clock_src(1);
+				ccci_util_mem_dump(md_id, CCCI_DUMP_MEM_DUMP,
+					md_reg->md_l2sram_base, MD_L2SRAM_SIZE);
+				md_cd_lock_modem_clock_src(0);
+
+#endif
 			}
 
 			ccci_aed_v3(mdee,
@@ -847,6 +981,12 @@ static void mdee_dumper_v3_dump_ee_info(struct ccci_fsm_ee *mdee,
 				mdccci_dbg->base_ap_view_vir, mdccci_dbg->size);
 			ccci_util_mem_dump(md_id, CCCI_DUMP_MEM_DUMP,
 				mdss_dbg->base_ap_view_vir, mdss_dbg->size);
+#ifdef CCCI_PLATFORM_MT6781
+			md_cd_lock_modem_clock_src(1);
+			ccci_util_mem_dump(md_id, CCCI_DUMP_MEM_DUMP,
+				md_reg->md_l2sram_base, MD_L2SRAM_SIZE);
+			md_cd_lock_modem_clock_src(0);
+#endif
 		}
 		/*dump md register on no response EE*/
 		if (more_info == MD_EE_CASE_NO_RESPONSE)

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+
 #ifndef TMEM_PRIV_H
 #define TMEM_PRIV_H
 
@@ -38,10 +39,9 @@ struct profile_mgr_desc *create_profile_mgr_desc(void);
 void trusted_mem_core_profile_dump(struct trusted_mem_device *mem_device);
 #endif
 
-#if IS_ENABLED(CONFIG_MTK_SVP_DISABLE_SODI)
+#if defined(CONFIG_MTK_SVP_DISABLE_SODI)
 void spm_enable_sodi(bool en);
 #endif
-
 int memory_ssmr_debug_init(void);
 int trusted_mem_subsys_init(void);
 void trusted_mem_subsys_exit(void);

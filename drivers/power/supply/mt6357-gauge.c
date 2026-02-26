@@ -619,6 +619,15 @@ static int fgauge_get_info(struct mtk_gauge *gauge,
 			bm_err("[%s]:GAUGE_PROP_SHUTDOWN_CAR: sign:%d, tmp_val:%d\n",
 			__func__, sign_bit, tmp_val);
 		}
+//Begin modify by qiuguangliang for LUNA84G-1900 on 2021-12-27
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		else if (sign_bit == 0) {
+			*value = tmp_val;
+			bm_err("[%s]:GAUGE_PROP_SHUTDOWN_CAR: sign0:%d, tmp_val:%d\n",
+			__func__, sign_bit, tmp_val);
+		}
+#endif
+//End modify by qiuguangliang for LUNA84G-1900 on 2021-12-27
 	}
 
 	bm_debug("[%s]info:%d v:%d\n", __func__, ginfo, *value);
@@ -2265,9 +2274,9 @@ static int battery_exist_get(struct mtk_gauge *gauge,
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 /* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 static int bat_isense_get(struct mtk_gauge *gauge,
 	struct mtk_gauge_sysfs_field_info *attr, int *val)
 {
@@ -2285,6 +2294,7 @@ static int bat_isense_get(struct mtk_gauge *gauge,
 }
 #endif
 /* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+#endif
 
 static int bat_vol_get(struct mtk_gauge *gauge,
 	struct mtk_gauge_sysfs_field_info *attr, int *val)
@@ -2372,6 +2382,28 @@ static int ptim_resist_get(struct mtk_gauge *gauge,
 
 	return ret;
 }
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static int battery_id_get(struct mtk_gauge *gauge,
+	struct mtk_gauge_sysfs_field_info *attr, int *val)
+{
+	int ret;
+
+	if (!IS_ERR(gauge->chan_bat_id)) {
+		ret = iio_read_channel_processed(
+			gauge->chan_bat_id, val);
+		if (ret < 0)
+			bm_err("[%s]read fail,ret=%d\n", __func__, ret);
+	} else {
+		bm_err("[%s]chan error\n", __func__);
+		ret = -ENOTSUPP;
+	}
+
+	return ret;
+}
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 
 static int coulomb_interrupt_ht_set(struct mtk_gauge *gauge,
 	struct mtk_gauge_sysfs_field_info *attr, int val)
@@ -2594,13 +2626,36 @@ static int coulomb_interrupt_lt_set(struct mtk_gauge *gauge,
 static int en_h_vbat_set(struct mtk_gauge *gauge,
 	struct mtk_gauge_sysfs_field_info *attr, int val)
 {
+/*begin add by tangshan.bai for defect 11668102 low tracking on 2021-11-19*/
+//need co-work with ro.battery.disable.lowVolShut=true
+#if defined (CONFIG_TCT_CHARGER)
+       struct mtk_battery *gm;
+
+       gm = gauge->gm;
+
+       mutex_lock(&gm->sw_low_battery_mutex);
+       gm->sw_low_battery_ht_en = val;
+       mutex_unlock(&gm->sw_low_battery_mutex);
+#endif
+/*End add by tangshan.bai for defect 11668102 low tracking on 2021-11-19*/
 	return 0;
 }
 
 static int en_l_vbat_set(struct mtk_gauge *gauge,
 	struct mtk_gauge_sysfs_field_info *attr, int val)
 {
+/*begin add by tangshan.bai for defect 11668102 low tracking on 2021-11-19*/
+//need co-work with ro.battery.disable.lowVolShut=true
+#if defined (CONFIG_TCT_CHARGER)
+       struct mtk_battery *gm;
 
+       gm = gauge->gm;
+
+       mutex_lock(&gm->sw_low_battery_mutex);
+       gm->sw_low_battery_lt_en = val;
+       mutex_unlock(&gm->sw_low_battery_mutex);
+#endif
+/*End add by tangshan.bai for defect 11668102 low tracking on 2021-11-19*/
 	return 0;
 }
 
@@ -2772,6 +2827,12 @@ static struct mtk_gauge_sysfs_field_info mt6357_sysfs_field_tbl[] = {
 		GAUGE_PROP_GAUGE_INITIALIZED),
 	GAUGE_SYSFS_FIELD_RO(average_current_get,
 		GAUGE_PROP_AVERAGE_CURRENT),
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	GAUGE_SYSFS_FIELD_RO(battery_id_get,
+		GAUGE_PROP_BATTERY_ID),
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 	GAUGE_SYSFS_FIELD_WO(bat_plugout_en_set,
 		GAUGE_PROP_BAT_PLUGOUT_EN),
 	GAUGE_SYSFS_FIELD_WO(zcv_intr_threshold_set,
@@ -2828,13 +2889,14 @@ static struct mtk_gauge_sysfs_field_info mt6357_sysfs_field_tbl[] = {
 		vbat2_detect_counter, GAUGE_PROP_VBAT2_DETECT_COUNTER),
 	GAUGE_SYSFS_FIELD_WO(
 		bat_temp_froze_en_set, GAUGE_PROP_BAT_TEMP_FROZE_EN),
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+	#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 	GAUGE_SYSFS_FIELD_RO(bat_isense_get,
 		GAUGE_PROP_ISENSE_VOLTAGE),
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+	#endif
 };
 
 static struct attribute *
@@ -3178,34 +3240,6 @@ int bat_create_netlink(struct platform_device *pdev)
 	return 0;
 }
 
-/* Begin added by bitao.xiong for task-10016879 on 2020-12-03 */
-extern struct device* get_deviceinfo_dev(void);
-static ssize_t  battery_info_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	const char *default_batt_type = "Unknown Battery";
-	struct mtk_battery *gm = get_mtk_battery();
-
-	if (IS_ERR_OR_NULL(gm) || IS_ERR_OR_NULL(gm->battery_type))
-		return 0;
-	if (strcmp(default_batt_type, gm->battery_type))
-		return sprintf(buf, "%s\n", gm->battery_type);
-	else
-		return sprintf(buf, "NA:NA:NA:NA\n");
-}
-DEVICE_ATTR_RO(battery_info);
-
-static void create_battery_node_forMMI(void)
-{
-	struct device *battery_info = get_deviceinfo_dev();
-
-	if (device_create_file(battery_info, &dev_attr_battery_info) < 0) {
-		pr_err("Failed to create device file(%s)!\n", dev_attr_battery_info.attr.name);
-	}
-	return;
-}
-/* End added by bitao.xiong for task-10016879 on 2020-12-03 */
-
 static int mt6357_gauge_probe(struct platform_device *pdev)
 {
 	struct mtk_gauge *gauge;
@@ -3276,9 +3310,9 @@ static int mt6357_gauge_probe(struct platform_device *pdev)
 			ret);
 	}
 
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+	#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 	gauge->chan_isense = devm_iio_channel_get(
 		&pdev->dev, "pmic_isense_voltage");
 	if (IS_ERR(gauge->chan_isense)) {
@@ -3287,6 +3321,19 @@ static int mt6357_gauge_probe(struct platform_device *pdev)
 	}
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+	#endif
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	gauge->chan_bat_id = devm_iio_channel_get(
+		&pdev->dev, "battery_id");
+	if (IS_ERR(gauge->chan_bat_id)) {
+		ret = PTR_ERR(gauge->chan_bat_id);
+		bm_err("chan_bat_id auxadc get fail, ret=%d\n",
+			ret);
+	}
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+
 	gauge->hw_status.car_tune_value = 1000;
 	gauge->hw_status.r_fg_value = 50;
 	gauge->attr = mt6357_sysfs_field_tbl;
@@ -3308,10 +3355,6 @@ static int mt6357_gauge_probe(struct platform_device *pdev)
 	bat_create_netlink(pdev);
 	battery_init(pdev);
 	adc_cali_cdev_init(pdev);
-
-	/* Begin added by bitao.xiong for task-10016879 on 2020-12-03 */
-	create_battery_node_forMMI();
-	/* End added by bitao.xiong for task-10016879 on 2020-12-03 */
 	bm_err("%s: done\n", __func__);
 
 	return 0;

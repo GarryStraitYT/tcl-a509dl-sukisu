@@ -1939,7 +1939,7 @@ void btl_chip_reset(void)
 }
 
 
-extern char ctp_module_name[256];
+extern char ctp_module_name1[256];
 
 static int tpd_probe(struct i2c_client* client, const struct i2c_device_id* id)
 {
@@ -2031,7 +2031,7 @@ static int tpd_probe(struct i2c_client* client, const struct i2c_device_id* id)
     //bl_enable_irq();
     tpd_load_status = 1;
 
-    snprintf(ctp_module_name, 256, "A3133A0:TWS\n");
+    snprintf(ctp_module_name1, 256, "A3133A0:TWS\n");
 
 #ifdef BTL_APK_SUPPORT
     /* Create Proc Entry File */

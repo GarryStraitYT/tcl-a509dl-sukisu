@@ -1,0 +1,180 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+&mt6370_pmu {
+	mt6370,intr_gpio_num = <13>; /* direct defined GPIO num */
+	mt6370,intr_gpio = <&pio 13 0x0>;
+};
+
+&mt6370_chg {
+	bc12_sel = <1>;
+        disable_otg_wdt;
+};
+
+&mt6370_typec {
+	mt6370pd,intr_gpio_num = <41>; /* direct defined GPIO num */
+	mt6370pd,intr_gpio = <&pio 41 0x0>;
+};
+
+&pe {
+        status = "okay";
+	main_pct = <100>;
+        ta_9v_support;
+        pe_ichg_level_threshold = <1000000>; /* uA */
+        ta_ac_12v_input_current = <1500000>;
+        ta_ac_9v_input_current = <2000000>;
+        ta_ac_7v_input_current = <2000000>;
+        pe_charger_current = <3800000>;  // max 15W as PE ta support
+        ta_stop_battery_soc = <80>;
+};
+
+&pe2 {
+        status = "okay";
+        main_pct = <100>;
+        sc_input_current = <2000000>;
+        sc_charger_current = <3800000>;
+        /* dual charger in series */
+        // dcs_input_current = <2000000>;
+        // dcs_chg1_charger_current = <1860000>;
+        // dcs_chg2_charger_current = <1860000>;
+        ta_stop_battery_soc = <80>;
+        pe20_ichg_level_threshold = <1000000>; /* uA */
+        //dual_polling_ieoc = <250000>;
+};
+
+&pdc {
+        status = "okay";
+        main_pct = <100>;
+        sc_input_current = <2000000>;
+        sc_charger_current = <3800000>;
+        // dcs_input_current = <2000000>;
+        // dcs_chg1_charger_current = <1860000>;
+        // dcs_chg2_charger_current = <1860000>;
+        pd_vbus_low_bound = <5000000>;
+        pd_vbus_upper_bound = <10000000>;
+        pd_stop_battery_soc = <80>;
+        ibus_err = <14>;
+        vsys_watt = <5000000>;
+        //dual_polling_ieoc = <250000>;
+};
+
+&pe4 {
+        status = "disabled";
+        dcs_chg1_charger_current = <2000000>;
+        dcs_chg2_charger_current = <2000000>;
+};
+
+&mtk_charger_type {
+	bc12_active = <1>;
+};
+
+&usb {
+	charger = <&mt6370_chg>;
+};
+
+&u2port0 {
+	mediatek,eye-vrt = <4>;
+	mediatek,eye-term = <4>;
+	mediatek,eye-rev6 = <1>; /* 0~3 */
+	mediatek,host-eye-vrt = <6>; /* 0~7 */
+	mediatek,host-eye-term = <5>; /* 0~7 */
+	mediatek,host-eye-rev6 = <2>; /* 0~3 */
+};
+
+&lk_charger {
+        enable_anime;
+        power_path_support;
+        /* charging current */
+        usb_charger_current = <500000>;
+        ac_charger_current = <2000000>;
+        ac_charger_input_current = <2050000>;
+        non_std_ac_charger_current = <500000>;
+        charging_host_charger_current = <1300000>;
+        ta_ac_charger_current = <20500000>;
+        pd_charger_current = <2050000>;
+        max_charger_voltage = <10500000>;
+
+        /* battery temperature protection */
+        temp_t4_threshold = <54>;
+        temp_t3_threshold = <45>;
+        temp_t1_threshold = <6>;
+        temp_t0_threshold = <1>;
+};
+
+&charger {
+        charger = <&mt6370_chg>;
+        charger_configuration= <0>;
+        /* common */
+        power_path_support;
+        enable_dynamic_mivr;
+
+        battery_cv = <4400000>;
+
+        enable_pe_2;
+        enable_hv_charging;
+        max_charger_voltage = <10500000>;
+
+        /* charging current */
+        usb_charger_current_suspend = <0>;
+        usb_charger_current_unconfigured = <70000>;
+        usb_charger_current_configured = <500000>;
+        usb_charger_current = <500000>;
+        ac_charger_current = <2000000>;
+        ac_charger_input_current = <2100000>;
+        non_std_ac_charger_current = <500000>;
+        charging_host_charger_current = <1500000>;
+
+        /* sw jeita */
+        enable_sw_jeita;
+        jeita_temp_above_t4_cv = <4100000>;
+        jeita_temp_t3_to_t4_cv = <4100000>;
+        jeita_temp_t2_to_t3_cv = <4400000>;
+        jeita_temp_t1_to_t2_cv = <4400000>;
+        jeita_temp_t0_to_t1_cv = <4400000>;
+        jeita_temp_below_t0_cv = <4400000>;
+        temp_t4_thres = <55>;
+        temp_t4_thres_minus_x_degree = <51>;
+        temp_t3_thres = <43>;
+        temp_t3_thres_minus_x_degree = <41>;
+        temp_t2_thres = <11>;
+        temp_t2_thres_plus_x_degree = <12>;
+        temp_t1_thres = <6>;
+        temp_t1_thres_plus_x_degree = <7>;
+        temp_t0_thres = <0>;
+        temp_t0_thres_plus_x_degree = <1>;
+        temp_neg_10_thres = <2>;
+
+        jeita_temp_above_t4_current = <0>;
+        jeita_temp_t3_to_t4_current = <2000000>;
+        jeita_temp_t2_to_t3_current = <3500000>;
+        jeita_temp_t1_to_t2_current = <840000>;
+        jeita_temp_t0_to_t1_current = <840000>;
+        jeita_temp_below_t0_current = <0>;
+
+        /* battery temperature protection */
+        enable_min_charge_temp;
+        min_charge_temp = <1>;
+        min_charge_temp_plus_x_degree = <2>;
+        max_charge_temp = <55>;
+        max_charge_temp_minus_x_degree = <51>;
+
+        enable_step_chg;
+        step_chg_vbat = <4300000>;
+        step_chg_vbat_hysteresis = <100000>;
+        setp_chg_current = <2800000>;
+
+        vbat_cable_imp_threshold = <3300000>; /* uV */
+        car_tune_value_sy6970qcc = <1020>;
+};
+
+// &i2c4 {
+// 	sgm41513:sgm41513@1A {
+// 		compatible = "sgm,sgm41513_slave";
+// 		reg = <0x1A>;
+// 		status = "okay";
+// 		charger_name = "secondary_chg";
+// 		alias_name = "sgm41513_slave";
+// 		gpio_sgm41513_en = <&pio 159 0x0>;
+// 		gpio_sgm41513_intr = <&pio 24 0x0>;
+//         };
+// };
+

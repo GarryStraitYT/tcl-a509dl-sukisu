@@ -28,3 +28,6 @@ obj-y			+= test/
 
 ccflags-$(CONFIG_DEBUG_DRIVER) := -DDEBUG
 
+ifeq ($(CONFIG_TCT_DEVICEINFO),y)
+   ccflags-y += -DCONFIG_TCT_DEVICEINFO
+endif

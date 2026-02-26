@@ -391,5 +391,10 @@ static inline int devfreq_update_stats(struct devfreq *df)
 	return -EINVAL;
 }
 #endif /* CONFIG_PM_DEVFREQ */
-
+// #ifdef VENDOR_EDIT
+// shu.zhang@tcl.com 2021/06/24 add for GPU frep governor
+#ifdef CONFIG_GPU_DEVFREQ
+void mali_trace_clock_set_rate(char *s, int clk_val);
+#endif
+// #endif /* VENDOR_EDIT */
 #endif /* __LINUX_DEVFREQ_H__ */

@@ -43,6 +43,13 @@
 
 #include "internal.h"
 #include "mount.h"
+// #ifdef VENDOR_EDIT
+// wentaozhang@tcl.com, 2022/07/21 add for iop
+#ifdef CONFIG_TCL_IOPRE
+#define CREATE_TRACE_POINTS
+#include <trace/events/iopre_tcl.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/namei.h>
@@ -3549,6 +3556,14 @@ out:
 	}
 	if (got_write)
 		mnt_drop_write(nd->path.mnt);
+// #ifdef VENDOR_EDIT
+// wentaozhang@tcl.com, 2022/07/21 add for iop
+#ifdef CONFIG_TCL_IOPRE
+	if (!error && nd->path.dentry->d_inode->i_sb && nd->path.dentry->d_inode->i_sb->s_magic == EXT4_SUPER_MAGIC) {
+		trace_iopre_trace_filename(current, nd->name->name, strlen(nd->name->name), nd->path.dentry->d_inode);
+	}
+#endif
+// #endif /* VENDOR_EDIT */
 	return error;
 }
 

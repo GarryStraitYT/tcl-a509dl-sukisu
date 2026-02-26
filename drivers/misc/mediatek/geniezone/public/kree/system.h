@@ -13,8 +13,7 @@
 #include <tz_cross/trustzone.h>
 #include <gz-trusty/trusty.h>
 
-void KREE_SESSION_LOCK(int32_t handle);
-void KREE_SESSION_UNLOCK(int32_t handle);
+#define MAX_UUID_LEN (40)
 
 int gz_get_cpuinfo_thread(void *data);
 void set_gz_bind_cpu(int on);
@@ -39,14 +38,11 @@ int gz_do_m4u_umap(KREE_SHAREDMEM_HANDLE handle);
 /* Session Management */
 TZ_RESULT KREE_CreateSession(const char *ta_uuid, KREE_SESSION_HANDLE *pHandle);
 
-
-/*fix mtee sync*/
-TZ_RESULT KREE_CreateSessionWithTag(const char *ta_uuid,
-				    KREE_SESSION_HANDLE *pHandle,
-				    const char *tag);
-
 TZ_RESULT KREE_CloseSession(KREE_SESSION_HANDLE handle);
 
+TZ_RESULT KREE_TeeServiceCallPlus(KREE_SESSION_HANDLE handle, uint32_t command,
+				   uint32_t paramTypes, union MTEEC_PARAM param[4],
+				   int32_t cpumask);
 
 TZ_RESULT KREE_TeeServiceCall(KREE_SESSION_HANDLE handle, uint32_t command,
 			      uint32_t paramTypes, union MTEEC_PARAM param[4]);

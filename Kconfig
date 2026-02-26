@@ -5,6 +5,16 @@
 #
 mainmenu "Linux/$(ARCH) $(KERNELVERSION) Kernel Configuration"
 
+
+
+#Begin meng.zhang add for disable AAL in MINI task 11302756 on 20210709
+config TARGET_BUILD_MMITEST
+        string
+        option env="TARGET_BUILD_MMITEST"
+#End meng.zhang add for disable AAL in MINI task 11302756 on 20210709
+
+
+
 comment "Compiler: $(CC_VERSION_TEXT)"
 
 source "scripts/Kconfig.include"
@@ -30,3 +40,23 @@ source "crypto/Kconfig"
 source "lib/Kconfig"
 
 source "lib/Kconfig.debug"
+
+source "fs/exfat/Kconfig"
+
+# ifdef VENDOR_EDIT
+# cheng.chang@ARCH, 2020-11-5 add for kernel decoupling
+config VENDOR_EDIT
+	bool "TCL vendor files support"
+	default y
+		help
+		  Enables tcl vendor files for compile.
+
+		  If you select Y here, then make will import tcl vendor files
+# endif /*VENDOR_EDIT*/
+
+# ifdef VENDOR_EDIT
+# cheng.chang@ARCH, 2020-11-5 add for kernel decoupling
+if VENDOR_EDIT
+source "Kconfig.tcl"
+endif
+# endif /*VENDOR_EDIT*/

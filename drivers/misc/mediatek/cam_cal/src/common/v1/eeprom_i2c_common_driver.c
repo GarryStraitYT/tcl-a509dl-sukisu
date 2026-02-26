@@ -134,26 +134,9 @@ int iReadData_CAM_CAL(unsigned int ui4_offset,
 	return 0;
 }
 
-#if defined (CONFIG_TRAN_CAMERA_WESTALGO_DUALCAM)
-//#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_SLAVE_ADDR 0xA0
-#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR   0x8000
-#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE   0x06
-
-//#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_SLAVE_ADDR   0xA0
-#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR   0x8000
-#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE   0x0e
-
-#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_SLAVE_ADDR_S5K3L6 0x00
-#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR_S5K3L6   0x8000
-#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE_S5K3L6   0x06
-
-#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_SLAVE_ADDR_S5K3L6   0xFF
-#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR_S5K3L6   0x8000
-#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE_S5K3L6   0x0e
-
+/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
 static int Write_I2C_CAM_CAL(u16 a_u2Addr, u32 a_u4Bytes, u8 *puDataInBytes)
 {
-#if 1
 	u32 u4Index;
 	int i4RetValue;
 	char puSendCmd[8] = {
@@ -161,8 +144,9 @@ static int Write_I2C_CAM_CAL(u16 a_u2Addr, u32 a_u4Bytes, u8 *puDataInBytes)
 		(char)(a_u2Addr & 0xFF),
 		0, 0, 0, 0, 0, 0
 	};
+
 	if (a_u4Bytes + 2 > 8) {
-		pr_debug("exceed I2c-mt65xx.c 8 bytes limitation\n");
+		pr_err("exceed I2c-mt65xx.c 8 bytes limitation\n");
 		return -1;
 	}
 	pr_debug(" write a_u2Addr:0x%x\n", a_u2Addr);
@@ -171,129 +155,91 @@ static int Write_I2C_CAM_CAL(u16 a_u2Addr, u32 a_u4Bytes, u8 *puDataInBytes)
 		puSendCmd[(u4Index + 2)] = puDataInBytes[u4Index];
 
 	spin_lock(&g_spinLock);
-	g_pstI2CclientG->addr =
-		g_pstI2CclientG->addr & (I2C_MASK_FLAG | I2C_WR_FLAG);
+	g_pstI2CclientG->addr =g_pstI2CclientG->addr & (I2C_MASK_FLAG | I2C_WR_FLAG);
 	spin_unlock(&g_spinLock);
+
 	pr_debug("write i2c addr:0x%x, I2C_MASK_FLAG:0x%x, I2C_WR_FLAG:0x%x\n", g_pstI2CclientG->addr, I2C_MASK_FLAG, I2C_WR_FLAG);
 	i4RetValue = i2c_master_send(g_pstI2CclientG, puSendCmd, (a_u4Bytes + 2));
 	if (i4RetValue != (a_u4Bytes + 2)) {
-		pr_debug("I2C write  failed!!\n");
+		pr_err("I2C write  failed!!\n");
 		return -1;
 	}
 	mdelay(5); /* for tWR singnal --> write data form buffer to memory. */
-
-    pr_debug("[EEPROM] iWriteData done!!\n");
-
-	spin_lock(&g_spinLock);
-	g_pstI2CclientG->addr = g_pstI2CclientG->addr & I2C_MASK_FLAG;
-	spin_unlock(&g_spinLock);
-#endif
-	return 0;
-}
-#if 0
-static int Write_I2C_CAM_CAL_PROTECT(u16 a_slaveAddr, u16 a_u2Addr, u32 a_u4Bytes, u8 *puDataInBytes)
-{
-#if 1	
-	u16 oldSlaveAddr;
-	u32 u4Index;
-	int i4RetValue;
-	char puSendCmd[8] = {
-		(char)(a_u2Addr >> 8),
-		(char)(a_u2Addr & 0xFF),
-		0, 0, 0, 0, 0, 0
-	};
-	if (a_u4Bytes + 2 > 8) {
-		pr_debug("exceed I2c-mt65xx.c 8 bytes limitation\n");
-		return -1;
-	}
-	pr_debug(" write a_u2Addr:0x%x\n", a_u2Addr);
-
-	for (u4Index = 0; u4Index < a_u4Bytes; u4Index += 1)
-		puSendCmd[(u4Index + 2)] = puDataInBytes[u4Index];
-
 	
-	spin_lock(&g_spinLock);
-	oldSlaveAddr = g_pstI2CclientG->addr;
-	g_pstI2CclientG->addr =
-		a_slaveAddr & (I2C_MASK_FLAG | I2C_WR_FLAG);
-	spin_unlock(&g_spinLock);
-	pr_debug("write protect before i2c addr:0x%x, I2C_MASK_FLAG:0x%x, I2C_WR_FLAG:0x%x, a_slaveAddr:0x%x\n", g_pstI2CclientG->addr, I2C_MASK_FLAG, I2C_WR_FLAG,a_slaveAddr);
-	i4RetValue = i2c_master_send(g_pstI2CclientG, puSendCmd, (a_u4Bytes + 2));
-	if (i4RetValue != (a_u4Bytes + 2)) {
-		pr_debug("I2C write  failed!!\n");
-		//return -1;
-	}
-	mdelay(5); /* for tWR singnal --> write data form buffer to memory. */
-
-    	pr_debug("[EEPROM] iWriteData done!!\n");
+	pr_debug("[EEPROM] iWriteData done!!\n");
 
 	spin_lock(&g_spinLock);
-	g_pstI2CclientG->addr = oldSlaveAddr;
 	g_pstI2CclientG->addr = g_pstI2CclientG->addr & I2C_MASK_FLAG;
-	pr_debug("write protect after i2c addr:0x%x, I2C_MASK_FLAG:0x%x, I2C_WR_FLAG:0x%x, a_slaveAddr:0x%x\n", g_pstI2CclientG->addr, I2C_MASK_FLAG, I2C_WR_FLAG, a_slaveAddr);
 	spin_unlock(&g_spinLock);
-#endif
+
 	return 0;
 }
-#endif
-static bool disable_write_protect(void)
-{
-	u8 delay = 10;
-	u8 disable_value = EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE;
-	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR, 1, &disable_value) < 0)
-	{
-		pr_debug("disable eeprom write  protect error.\n");
-		return false;
-	}
-	mdelay(delay);
-	pr_debug("disable eeprom write  protect ok.\n");
-	return true;
-}
-static bool enable_write_protect(void)
-{
-	u8 delay = 10;
-	u8 enable_value = EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE;
-	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR, 1, &enable_value) < 0)
-	{
-		pr_debug("enable eeprom write  protect error.\n");
-		return false;
-	}
-	mdelay(delay);
-	pr_debug("enable eeprom write  protect ok.\n");
-	return true;
-}
 
-static bool disable_write_protect_s5k3l6(void)
-{
-	u8 delay = 10;
-	u8 disable_value = EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE_S5K3L6;
-	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR_S5K3L6, 1, &disable_value) < 0)
-	{
-		pr_debug("disable eeprom write  protect error.\n");
-		return false;
-	}
-	mdelay(delay);
-	pr_debug("disable eeprom write  protect ok.\n");
-	return true;
-}
-static bool enable_write_protect_s5k3l6(void)
-{
-	u8 delay = 10;
-	u8 enable_value = EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE_S5K3L6;
-	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR_S5K3L6, 1, &enable_value) < 0)
-	{
-		pr_debug("enable eeprom write  protect error.\n");
-		return false;
-	}
-	mdelay(delay);
-	pr_debug("enable eeprom write  protect ok.\n");
-	return true;
-}
+#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR_P24C128E        0x8000
+#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE_P24C128E       0x0006
+#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR_P24C128E         0x8000
+#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE_P24C128E        0x000e
 
+#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR_P24C64F        0x8000
+#define EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE_P24C64F       0x0000
+#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR_P24C64F         0x8000
+#define EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE_P24C64F        0x0001
 #define LENGTH_EEPROM_WRITE 1
-
-//#undef DEBUG_LOG_WA
 #define DEBUG_LOG_WA
+
+static bool disable_write_protect_p24c128e(void)
+{
+	u8 delay = 10;
+	u8 disable_value = EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE_P24C128E;
+	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR_P24C128E, 1, &disable_value) < 0)
+	{
+		pr_err("disable p24c128e eeprom write  protect error.\n");
+		return false;
+	}
+	mdelay(delay);
+	pr_debug("disable p24c128e eeprom write  protect ok.\n");
+	return true;
+}
+static bool enable_write_protect_p24c128e(void)
+{
+	u8 delay = 10;
+	u8 enable_value = EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE_P24C128E;
+	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR_P24C128E, 1, &enable_value) < 0)
+	{
+		pr_err("enable p24c128e eeprom write  protect error.\n");
+		return false;
+	}
+	mdelay(delay);
+	pr_debug("enable p24c128e eeprom write  protect ok.\n");
+	return true;
+}
+static bool disable_write_protect_p24c64f(void)
+{
+	u8 delay = 10;
+	u8 disable_value = EEPROM_WRITE_PROTECT_DISABLE_WRITE_VALUE_P24C64F;
+	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_DISABLE_WRITE_ADDR_P24C64F, 1, &disable_value) < 0)
+	{
+		pr_err("disable p24c64f eeprom write  protect error.\n");
+		return false;
+	}
+	mdelay(delay);
+	pr_debug("disable p24c64f eeprom write  protect ok.\n");
+	return true;
+}
+static bool enable_write_protect_p24c64f(void)
+{
+	u8 delay = 10;
+	u8 enable_value = EEPROM_WRITE_PROTECT_ENABLE_WRITE_VALUE_P24C64F;
+	if(Write_I2C_CAM_CAL(EEPROM_WRITE_PROTECT_ENABLE_WRITE_ADDR_P24C64F, 1, &enable_value) < 0)
+	{
+		pr_err("enable p24c64f eeprom write  protect error.\n");
+		return false;
+	}
+	mdelay(delay);
+	pr_debug("enable p24c64f eeprom write  protect ok.\n");
+	return true;
+}
+
 #ifdef DEBUG_LOG_WA
 static void logData(u16 len, u8* buf, const char * tagname) {
     u16 i = 0;
@@ -303,11 +249,87 @@ static void logData(u16 len, u8* buf, const char * tagname) {
 }
 #endif
 
-int iWriteData_CAM_CAL(unsigned int ui4_offset,
-	unsigned int ui4_length, unsigned char *pinputdata)
+int iWriteData_CAM_CAL_P24C128E(unsigned int ui4_offset,unsigned int ui4_length, unsigned char *pinputdata)
 {
+	int i4RetValue = 0;
+	int i4ResidueDataLength;
+	u32 u4IncOffset = 0;
+	u32 u4CurrentOffset;
+	u8 *pBuff;
 
-#if 1
+#ifdef DEBUG_LOG_WA
+    u8 pTmpBuf[LENGTH_EEPROM_WRITE];
+    u8 retry = 0, delay = 0;
+#endif
+
+	pr_err("[CAM_CAL] P24C128E iWriteData\n");
+	pr_err("[CAM_CAL] P24C128E ui4_offset:0x%x,ui4_length:%d", ui4_offset, ui4_length);
+
+	if (ui4_offset + ui4_length >= 0x4000) {
+		pr_err("[CAM_CAL] P24C128E Write Error!! P24C128E not supprt address >= 0x4000!!\n");
+		return -1;
+	}
+
+	logData(ui4_length, pinputdata, "write");
+	
+	disable_write_protect_p24c128e();
+	i4ResidueDataLength = (int)ui4_length;
+	u4CurrentOffset = ui4_offset;
+	pBuff = pinputdata;
+	do {
+		if (i4ResidueDataLength >= LENGTH_EEPROM_WRITE) {
+			i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
+			if (i4RetValue != 0) {
+				pr_err("[CAM_CAL]P24C128E I2C iWriteData failed!!\n");
+				return -1;
+			}
+
+#ifdef DEBUG_LOG_WA
+			do {
+				logData(LENGTH_EEPROM_WRITE, pBuff, "write");
+				i4RetValue = Read_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pTmpBuf);
+				if (i4RetValue != 0) {
+					pr_err("[CAM_CAL] P24C128E I2C iReadData failed!!\n");
+					return -1;
+				}
+
+				logData(LENGTH_EEPROM_WRITE, pTmpBuf, "read");
+				if (0 == strncmp(pBuff, pTmpBuf, LENGTH_EEPROM_WRITE)) {
+					//printk("write addr 0x%0x data 0x%0x",offset,(u32)*(data + i));
+					break;
+				} else {
+					pr_err("[CAM_CAL] P24C128E try to write offset(%x) retry: %d\n", u4CurrentOffset, retry);
+					i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
+					delay += 5;
+					mdelay(delay);
+				}
+			} while(retry != 0);
+#endif
+
+			u4IncOffset += LENGTH_EEPROM_WRITE;
+			i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
+			u4CurrentOffset = ui4_offset + u4IncOffset;
+			pBuff = pinputdata + u4IncOffset;
+		} else {
+			i4RetValue =Write_I2C_CAM_CAL((u16) u4CurrentOffset, i4ResidueDataLength, pBuff);
+			if (i4RetValue != 0) {
+				pr_err("[CAM_CAL] P24C128E I2C iReadData failed!!\n");
+				return -1;
+			}
+			u4IncOffset += LENGTH_EEPROM_WRITE;
+			i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
+			u4CurrentOffset = ui4_offset + u4IncOffset;
+			pBuff = pinputdata + u4IncOffset;
+			/* break; */
+		}
+	} while (i4ResidueDataLength > 0);
+	enable_write_protect_p24c128e();
+	pr_err("[CAM_CAL] P24C128E iWriteData done\n");
+	return 0;
+}
+
+int iWriteData_CAM_CAL_P24C64F(unsigned int ui4_offset,unsigned int ui4_length, unsigned char *pinputdata)
+{
 	int i4RetValue = 0;
 	int i4ResidueDataLength;
 	u32 u4IncOffset = 0;
@@ -317,158 +339,92 @@ int iWriteData_CAM_CAL(unsigned int ui4_offset,
     u8 pTmpBuf[LENGTH_EEPROM_WRITE];
     u8 retry = 0, delay = 0;
 #endif
-
-    pr_err("[CAM_CAL] iWriteData\n");
-    pr_err("ui4_offset:0x%x, ui4_length:%d", ui4_offset, ui4_length);
-    logData(ui4_length, pinputdata, "write");
-    disable_write_protect();
-    if (ui4_offset + ui4_length >= 0x2000) {
-        pr_debug("[CAM_CAL] Write Error!! S-24CS64A not supprt address >= 0x2000!!\n");
-        return -1;
-    }
-
+	pr_err("[CAM_CAL] P24C64F iWriteData\n");
+	pr_err("[CAM_CAL] P24C64F ui4_offset:0x%x,ui4_length:%d", ui4_offset, ui4_length);
+	if (ui4_offset + ui4_length >= 0x4000) {
+		pr_err("[CAM_CAL] P24C64F Write Error!! P24C64F not supprt address >= 0x4000!!\n");
+		return -1;
+	}
+	logData(ui4_length, pinputdata, "write");
+	disable_write_protect_p24c64f();
 	i4ResidueDataLength = (int)ui4_length;
 	u4CurrentOffset = ui4_offset;
 	pBuff = pinputdata;
 	do {
-        if (i4ResidueDataLength >= LENGTH_EEPROM_WRITE) {
-            i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
+		if (i4ResidueDataLength >= LENGTH_EEPROM_WRITE) {
+			i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
 			if (i4RetValue != 0) {
-				pr_debug("I2C iWriteData failed!!\n");
+				pr_err("[CAM_CAL]P24C64F I2C iWriteData failed!!\n");
 				return -1;
 			}
 #ifdef DEBUG_LOG_WA
-
-	do {
-            logData(LENGTH_EEPROM_WRITE, pBuff, "write");
-            i4RetValue = Read_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pTmpBuf);
-            if (i4RetValue != 0) {
-                pr_debug("[CAM_CAL] I2C iReadData failed!!\n");
-                return -1;
-            }
-            logData(LENGTH_EEPROM_WRITE, pTmpBuf, "read");
-                if (0 == strncmp(pBuff, pTmpBuf, LENGTH_EEPROM_WRITE)) {
-//                    printk("write addr 0x%0x data 0x%0x",offset,(u32)*(data + i));
-                    break;
-                } else {
-                    printk("try to write offset(%x) retry: %d\n", u4CurrentOffset, retry);
-                    i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
-                    delay += 5;
-                    mdelay(delay);
-                }
-	} while(retry != 0);
+			do {
+				logData(LENGTH_EEPROM_WRITE, pBuff, "write");
+				i4RetValue = Read_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pTmpBuf);
+				if (i4RetValue != 0) {
+					pr_err("[CAM_CAL] P24C64F I2C iReadData failed!!\n");
+					return -1;
+				}
+				logData(LENGTH_EEPROM_WRITE, pTmpBuf, "read");
+				if (0 == strncmp(pBuff, pTmpBuf, LENGTH_EEPROM_WRITE)) {
+					break;
+				} else {
+					pr_err("[CAM_CAL] P24C64F try to write offset(%x) retry: %d\n", u4CurrentOffset, retry);
+					i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
+					delay += 5;
+					mdelay(delay);
+				}
+			} while(retry != 0);
 #endif
-
-            u4IncOffset += LENGTH_EEPROM_WRITE;
-            i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
+			u4IncOffset += LENGTH_EEPROM_WRITE;
+			i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
 			u4CurrentOffset = ui4_offset + u4IncOffset;
 			pBuff = pinputdata + u4IncOffset;
 		} else {
-			i4RetValue =
-			    Write_I2C_CAM_CAL(
-			    (u16) u4CurrentOffset, i4ResidueDataLength, pBuff);
+			i4RetValue =Write_I2C_CAM_CAL((u16) u4CurrentOffset, i4ResidueDataLength, pBuff);
 			if (i4RetValue != 0) {
-				pr_debug("I2C iReadData failed!!\n");
+				pr_err("[CAM_CAL] P24C64F I2C iReadData failed!!\n");
 				return -1;
 			}
-            u4IncOffset += LENGTH_EEPROM_WRITE;
-            i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
+			u4IncOffset += LENGTH_EEPROM_WRITE;
+			i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
 			u4CurrentOffset = ui4_offset + u4IncOffset;
 			pBuff = pinputdata + u4IncOffset;
-			/* break; */
 		}
 	} while (i4ResidueDataLength > 0);
-	enable_write_protect();
-#endif
-    pr_err("[CAM_CAL] iWriteData done\n");
+	enable_write_protect_p24c64f();
+	pr_err("[CAM_CAL] P24C64F iWriteData done\n");
 	return 0;
 }
-
-
-
-int iWriteData_CAM_CAL_S5K3L6(unsigned int ui4_offset,
-	unsigned int ui4_length, unsigned char *pinputdata)
+unsigned int Common_write_region_p24c128e(struct i2c_client *client, unsigned int addr,
+				unsigned char *data, unsigned int size)
 {
-
-#if 1
-	int i4RetValue = 0;
-	int i4ResidueDataLength;
-	u32 u4IncOffset = 0;
-	u32 u4CurrentOffset;
-	u8 *pBuff;
-#ifdef DEBUG_LOG_WA
-    u8 pTmpBuf[LENGTH_EEPROM_WRITE];
-    u8 retry = 0, delay = 0;
-#endif
-
-    pr_err("[CAM_CAL] iWriteData\n");
-    pr_err("ui4_offset:0x%x, ui4_length:%d", ui4_offset, ui4_length);
-    logData(ui4_length, pinputdata, "write");
-    disable_write_protect_s5k3l6();
-    if (ui4_offset + ui4_length >= 0x2000) {
-        pr_debug("[CAM_CAL] Write Error!! S-24CS64A not supprt address >= 0x2000!!\n");
-        return -1;
-    }
-
-	i4ResidueDataLength = (int)ui4_length;
-	u4CurrentOffset = ui4_offset;
-	pBuff = pinputdata;
-	do {
-        if (i4ResidueDataLength >= LENGTH_EEPROM_WRITE) {
-            i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
-			if (i4RetValue != 0) {
-				pr_debug("I2C iWriteData failed!!\n");
-				return -1;
-			}
-#ifdef DEBUG_LOG_WA
-
-	do {
-            logData(LENGTH_EEPROM_WRITE, pBuff, "write");
-            i4RetValue = Read_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pTmpBuf);
-            if (i4RetValue != 0) {
-                pr_debug("[CAM_CAL] I2C iReadData failed!!\n");
-                return -1;
-            }
-            logData(LENGTH_EEPROM_WRITE, pTmpBuf, "read");
-                if (0 == strncmp(pBuff, pTmpBuf, LENGTH_EEPROM_WRITE)) {
-//                    printk("write addr 0x%0x data 0x%0x",offset,(u32)*(data + i));
-                    break;
-                } else {
-                    printk("try to write offset(%x) retry: %d\n", u4CurrentOffset, retry);
-                    i4RetValue = Write_I2C_CAM_CAL((u16)u4CurrentOffset, LENGTH_EEPROM_WRITE, pBuff);
-                    delay += 5;
-                    mdelay(delay);
-                }
-	} while(retry != 0);
-#endif
-
-            u4IncOffset += LENGTH_EEPROM_WRITE;
-            i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
-			u4CurrentOffset = ui4_offset + u4IncOffset;
-			pBuff = pinputdata + u4IncOffset;
-		} else {
-			i4RetValue =
-			    Write_I2C_CAM_CAL(
-			    (u16) u4CurrentOffset, i4ResidueDataLength, pBuff);
-			if (i4RetValue != 0) {
-				pr_debug("I2C iReadData failed!!\n");
-				return -1;
-			}
-            u4IncOffset += LENGTH_EEPROM_WRITE;
-            i4ResidueDataLength -= LENGTH_EEPROM_WRITE;
-			u4CurrentOffset = ui4_offset + u4IncOffset;
-			pBuff = pinputdata + u4IncOffset;
-			/* break; */
-		}
-	} while (i4ResidueDataLength > 0);
-	enable_write_protect_s5k3l6();
-#endif
-    pr_err("[CAM_CAL] iWriteData done\n");
-	return 0;
+	g_pstI2CclientG = client;
+	if (iWriteData_CAM_CAL_P24C128E(addr, size, data) == 0)
+		return size;
+	else
+		return 0;
 }
 
-#endif
-
+unsigned int Common_write_region_gt24p64b(struct i2c_client *client, unsigned int addr,
+				unsigned char *data, unsigned int size)
+{
+	g_pstI2CclientG = client;
+	if (iWriteData_CAM_CAL_P24C128E(addr, size, data) == 0)
+		return size;
+	else
+		return 0;
+}
+unsigned int Common_write_region_p24c64f(struct i2c_client *client, unsigned int addr,
+				unsigned char *data, unsigned int size)
+{
+	g_pstI2CclientG = client;
+	if (iWriteData_CAM_CAL_P24C64F(addr, size, data) == 0)
+		return size;
+	else
+		return 0;
+}
+/*End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
 
 unsigned int Common_read_region(struct i2c_client *client, unsigned int addr,
 				unsigned char *data, unsigned int size)

@@ -73,6 +73,11 @@ enum gauge_property {
 	GAUGE_PROP_RESET_FG_RTC,
 	GAUGE_PROP_GAUGE_INITIALIZED,
 	GAUGE_PROP_AVERAGE_CURRENT,
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if defined(CONFIG_TCT_CHARGER)
+	GAUGE_PROP_BATTERY_ID,
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 	GAUGE_PROP_BAT_PLUGOUT_EN,
 	GAUGE_PROP_ZCV_INTR_THRESHOLD,
 	GAUGE_PROP_ZCV_INTR_EN,
@@ -99,12 +104,13 @@ enum gauge_property {
 	GAUGE_PROP_VBAT2_DETECT_TIME,
 	GAUGE_PROP_VBAT2_DETECT_COUNTER,
 	GAUGE_PROP_BAT_TEMP_FROZE_EN,
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+	#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 	GAUGE_PROP_ISENSE_VOLTAGE,
 	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+	#endif
 };
 
 struct gauge_hw_status {
@@ -246,11 +252,17 @@ struct mtk_gauge {
 	struct iio_channel *chan_ptim_bat_voltage;
 	struct iio_channel *chan_ptim_r;
 	/* Begin added by bitao.xiong for defect-10090020 on 2020-11-19 */
-	#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-		|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
+	#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	#if IS_ENABLED(CONFIG_CHARGER_BQ24158_V1) || IS_ENABLED(CONFIG_CHARGER_BQ24158)
 	struct iio_channel *chan_isense;
 	#endif
+	#endif
 	/* End added by bitao.xiong for defect-10090020 on 2020-11-19 */
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if defined(CONFIG_TCT_CHARGER)
+	struct iio_channel *chan_bat_id;
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 
 	struct mtk_gauge_sysfs_field_info *attr;
 	struct zcv_data zcv_info;

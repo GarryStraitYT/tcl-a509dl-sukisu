@@ -94,6 +94,13 @@ static unsigned int extd_esd_check_mode;
 static unsigned int extd_esd_check_enable;
 #endif
 
+//Begin add by dingting.meng for XXXX on 2023.01.09
+#ifdef CONFIG_TCT_PROJECT_LUNA84GVZW
+extern int tct_lcm_pmu_bias_set(int min_uV, int max_uV);
+static bool tct_esd_check_flag = true;
+#endif
+//End add by dingting.meng for XXXX on 2023.01.09
+
 unsigned int get_esd_check_mode(void)
 {
 	return esd_check_mode;
@@ -585,6 +592,17 @@ static int primary_display_check_recovery_worker_kthread(void *data)
 
 	while (1) {
 		msleep(2000); /* 2s */
+//Begin add by dingting.meng for XXXX on 2023.01.09
+#ifdef CONFIG_TCT_PROJECT_LUNA84GVZW
+	if(tct_esd_check_flag)
+	{
+        	tct_lcm_pmu_bias_set(5500000,5500000);
+		tct_esd_check_flag = false;
+		continue;
+	}
+#endif
+//End add by dingting.meng for XXXX on 2023.01.09
+
 		ret = wait_event_interruptible(_check_task_wq,
 			atomic_read(&_check_task_wakeup));
 		if (ret < 0) {
@@ -823,6 +841,7 @@ void primary_display_check_recovery_init(void)
 		kthread_create(primary_display_check_recovery_worker_kthread,
 			       NULL, "disp_check");
 	init_waitqueue_head(&_check_task_wq);
+
 
 	if (disp_helper_get_option(DISP_OPT_ESD_CHECK_RECOVERY)) {
 		wake_up_process(primary_display_check_task);

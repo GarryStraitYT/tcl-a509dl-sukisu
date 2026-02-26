@@ -235,10 +235,25 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
 	POWER_SUPPLY_PROP_CALIBRATE,
 	/* Local extensions */
-	/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	POWER_SUPPLY_PROP_ISENSECURRENT,
+	POWER_SUPPLY_PROP_BATT_ID,
+	POWER_SUPPLY_PROP_COULOMB_COUNT,
 	POWER_SUPPLY_PROP_TCL_FIXTEMP,
-	/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
-        POWER_SUPPLY_PROP_BATT_ID, //Added by baiwei.peng for batt_id on 2020/12/02
+	POWER_SUPPLY_PROP_HV_FLAG,  // add by jin.wang for jira 2064
+	POWER_SUPPLY_PROP_OTHERS_IBUS_LIMIT, // add by jin.wang for jira 2064
+	POWER_SUPPLY_PROP_OTHERS_IBAT_LIMIT, // add by jin.wang for jira 2064
+	//add by tangshan.bai for LEVIN-6148
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	POWER_SUPPLY_PROP_PEAK_LEVEL,
+	POWER_SUPPLY_PROP_BATTERY_VERIFY,
+	POWER_SUPPLY_PROP_BATTERY_VSOC,
+	POWER_SUPPLY_PROP_BATTERYUSOC,
+#endif
+	//add by tangshan.bai for LEVIN-6148
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 	POWER_SUPPLY_PROP_USB_HC,
 	POWER_SUPPLY_PROP_USB_OTG,
 	POWER_SUPPLY_PROP_CHARGE_ENABLED,
@@ -270,8 +285,10 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_RESISTANCE,
 	POWER_SUPPLY_PROP_RESISTANCE_CAPACITIVE,
 	POWER_SUPPLY_PROP_RESISTANCE_ID, /* in Ohms */
-        POWER_SUPPLY_PROP_OCV_PL,//add by nana
-        POWER_SUPPLY_PROP_SOC_PL,
+	/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
+	POWER_SUPPLY_PROP_OCV_PL,
+	POWER_SUPPLY_PROP_SOC_PL,
+	/* end add by bing-zhang for getting ocv from preloader on 20210827 */
 	POWER_SUPPLY_PROP_RESISTANCE_NOW,
 	POWER_SUPPLY_PROP_FLASH_CURRENT_MAX,
 	POWER_SUPPLY_PROP_UPDATE_NOW,
@@ -396,12 +413,20 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_PARALLEL_OUTPUT_MODE,
 	POWER_SUPPLY_PROP_ALIGNMENT,
 	POWER_SUPPLY_PROP_MOISTURE_DETECTION_ENABLE,
+	POWER_SUPPLY_PROP_CC_TOGGLE_ENABLE,
 	POWER_SUPPLY_PROP_FG_TYPE,
+	POWER_SUPPLY_PROP_CHARGER_STATUS,
 	/* Local extensions of type int64_t */
 	POWER_SUPPLY_PROP_CHARGE_COUNTER_EXT,
 	POWER_SUPPLY_PROP_CHARGE_CHARGER_STATE,
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_PROP_MODEL_NAME,
+	//Begin add by tangshan for LEVIN-6148
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	POWER_SUPPLY_PROP_BATT_RESISTANCE,
+	POWER_SUPPLY_PROP_CHARGING_CYCLE_TABLE,
+#endif
+	//end add by tangshan for LEVIN-6148
 	POWER_SUPPLY_PROP_PTMC_ID,
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_BATTERY_TYPE,
@@ -450,9 +475,11 @@ enum power_supply_usb_type {
 	POWER_SUPPLY_USB_TYPE_PD_DRP,		/* PD Dual Role Port */
 	POWER_SUPPLY_USB_TYPE_PD_PPS,		/* PD Programmable Power Supply */
 	POWER_SUPPLY_USB_TYPE_APPLE_BRICK_ID,	/* Apple Charging Method */
-	/* Begin added by bitao.xiong for task-10075354 on 2020-10-21 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+/* Begin added by bitao.xiong for task-10075354 on 2020-10-21 */
 	POWER_SUPPLY_USB_TYPE_FLOAT,		/* Floating charger */
-	/* End added by bitao.xiong for task-10075354 on 2020-10-21 */
+/* End added by bitao.xiong for task-10075354 on 2020-10-21 */
+#endif
 };
 
 /* Indicates USB Type-C CC connection status */

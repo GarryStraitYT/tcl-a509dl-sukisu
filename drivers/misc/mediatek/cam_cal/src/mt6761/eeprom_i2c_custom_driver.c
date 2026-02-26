@@ -28,6 +28,43 @@
 static DEFINE_SPINLOCK(g_spinLock);
 static struct i2c_client *g_pstI2CclientG;
 
+struct gc08a3_otp_t {
+	u8  awb_flag;
+	u8  awb_param[12];
+        u8  awbChksum;
+	u8  lsc_flag;
+	u8  lsc_param[1868];
+        u8  lscChksum;
+	u8  af_flag;
+	u8  af_param[8];
+        u8  afChksum;
+};
+
+struct HI846_otp_struct 
+{
+	int Base_Info_Flag;
+	int module_integrator_id;
+	int prodyction_year;
+	int production_month;
+	int production_day;
+	int sensor_id;
+	int lens_id;
+	int vcm_id;
+	int Driver_ic_id;
+	int F_num_id;
+	int WB_FLAG;
+	int wb_data[30];
+	int AF_FLAG;
+	int af_data[5];
+	int LSC_FLAG;
+	int lsc_data[867];
+	int infocheck;
+	int checksum;
+};
+
+struct gc08a3_otp_t gc08a3_otp_info;
+struct HI846_otp_struct HI846_otp;
+//end 20210816 ljt add for jetta
  #define PAGE_SIZE_ 256
 static int iReadRegI2C(u8 *a_pSendData, u16 a_sizeSendData,
 		u8 *a_pRecvData, u16 a_sizeRecvData, u16 i2cId)
@@ -100,4 +137,102 @@ unsigned int Custom_read_region(struct i2c_client *client, unsigned int addr,
 		return 0;
 }
 
+//begin 20210816 ljt add for jetta
+unsigned int gc08a3_read_region(struct i2c_client *client, unsigned int addr,
+                                unsigned char *data, unsigned int size)
+{
+    int i=0;
+
+    pr_err("[ljt]addr =%x size %d\n", addr, size);
+    if (addr == 0x0)
+    {
+        *(u32 *)data = 0x010b00ff;
+    }
+    else if (addr == 0x1)
+    {
+        if ((gc08a3_otp_info.lsc_flag == 0x01) || (gc08a3_otp_info.lsc_flag == 0x04))
+        {
+            pr_err("[ljt]lsc_flag valid\n");
+            for(i=0; i<size; i++){
+                data[i] = gc08a3_otp_info.lsc_param[i];
+            }
+        }
+    }
+    else if (addr == 0x2)
+    {
+        if ((gc08a3_otp_info.awb_flag == 0x01) || (gc08a3_otp_info.awb_flag == 0x04))
+        {
+            *data = 1;
+        }
+    }
+    else if (addr == 0x3)
+    {
+        for(i=0; i<size; i++){
+            data[i] = gc08a3_otp_info.awb_param[i];
+            //pr_err("[ljt]awb data[%d] =%x \n", i, data[i]);
+        }
+    }
+    else if (addr == 0x4)
+    {
+        if ((gc08a3_otp_info.af_flag == 0x01) ||(gc08a3_otp_info.af_flag == 0x04))
+        {
+            *data = 1;
+        }
+    }
+    else if (addr == 0x5)
+    {
+        for(i=0; i<size; i++){
+            data[i] = gc08a3_otp_info.af_param[i];
+            //pr_err("[ljt]af data[%d] =%x \n", i, data[i]);
+        }
+    }
+    else
+    {
+        pr_err("[ljt]error addr\n", addr, size);
+    }
+
+    return size;
+}
+
+unsigned int hi846_read_region(struct i2c_client *client, unsigned int addr,
+                                unsigned char *data, unsigned int size)
+{
+    int i=0;
+
+    pr_err("[ljt][hi846]addr =%x size %d\n", addr, size);
+    if (addr == 0x0)
+    {
+        *(u32 *)data = 0x010b00ff;
+    }
+    else if (addr == 0x2)
+    {
+        *data = HI846_otp.WB_FLAG;
+    }
+    else if (addr == 0x3)
+    {
+        for(i=0; i<size; i++){
+            data[i] = HI846_otp.wb_data[i];
+            pr_err("[ljt][hi846]awb data[%d] =%x \n", i, data[i]);
+        }
+    }
+    else if (addr == 0x4)
+    {
+        *data = HI846_otp.AF_FLAG;
+    }
+    else if (addr == 0x5)
+    {
+        for(i=0; i<size; i++){
+            data[i] = HI846_otp.af_data[i];
+            pr_err("[ljt][hi846]af data[%d] =%x \n", i, data[i]);
+        }
+    }
+    else
+    {
+        pr_err("[ljt][hi846]error addr\n", addr, size);
+    }
+
+    return size;
+}
+
+//end 20210816 ljt add for jetta
 

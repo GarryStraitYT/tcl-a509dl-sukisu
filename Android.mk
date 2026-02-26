@@ -15,7 +15,19 @@ $(TARGET_KERNEL_CONFIG): PRIVATE_DIR := $(KERNEL_DIR)
 $(TARGET_KERNEL_CONFIG): $(KERNEL_CONFIG_FILE) $(LOCAL_PATH)/Android.mk
 $(TARGET_KERNEL_CONFIG): $(KERNEL_MAKE_DEPENDENCIES)
 	$(hide) mkdir -p $(dir $@)
-	$(PREBUILT_MAKE_PREFIX)$(MAKE) -C $(PRIVATE_DIR) $(KERNEL_MAKE_OPTION) $(KERNEL_DEFCONFIG)
+	# ifdef VENDOR_EDIT
+	# cheng.chang@ARCH, 2020-11-5 add for kernel decoupling
+	#$(info "Merge tcl vendor files")
+	$(shell $(PRIVATE_DIR)/tcl_compile.sh $(PRIVATE_DIR))
+	# endif /*VENDOR_EDIT*/
+	# [TCT-SAT][PERF]Begin modified by ziyuanzhao for perf XR11411798 20210906
+	## orig: $(PREBUILT_MAKE_PREFIX)$(MAKE) -C $(PRIVATE_DIR) $(KERNEL_MAKE_OPTION) $(KERNEL_DEFCONFIG)
+	$(warning TCT kconf files: $(KERNEL_DEFCONFIG))
+	cp $(PRIVATE_DIR)/arch/$(KERNEL_TARGET_ARCH)/configs/$(word 1, $(KERNEL_DEFCONFIG)) $(PRIVATE_DIR)/arch/$(KERNEL_TARGET_ARCH)/configs/tmp_defconfig
+	if [ ! -z "$(KERNEL_CONFIG_MERGE_SCRIPT)" ]; then $(KERNEL_CONFIG_MERGE_SCRIPT) $(KERNEL_CONFIG_REMOVE) $(KERNEL_CONFIG_ADD) $(PRIVATE_DIR)/arch/$(KERNEL_TARGET_ARCH)/configs/tmp_defconfig; fi
+	$(PREBUILT_MAKE_PREFIX)$(MAKE) -C $(PRIVATE_DIR) $(KERNEL_MAKE_OPTION) tmp_defconfig $(filter-out $(word 1, $(KERNEL_DEFCONFIG)),$(KERNEL_DEFCONFIG))
+	if [ -f $(PRIVATE_DIR)/arch/$(KERNEL_TARGET_ARCH)/configs/tmp_defconfig ]; then rm -rf $(PRIVATE_DIR)/arch/$(KERNEL_TARGET_ARCH)/configs/tmp_defconfig; fi
+	# [TCT-SAT][PERF]End modified by ziyuanzhao for perf XR11411798 20210906
 
 .KATI_RESTAT: $(KERNEL_ZIMAGE_OUT)
 $(KERNEL_ZIMAGE_OUT): PRIVATE_DIR := $(KERNEL_DIR)

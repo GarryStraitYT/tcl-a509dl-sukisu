@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: GPL-2.0
+
+&mtk_gauge {
+    ACTIVE_TABLE = <(5)>;
+    MULTI_BATTERY = <(0)>;
+    Q_MAX_SYS_VOLTAGE_BAT0 = <(3350)>;
+    Q_MAX_SYS_VOLTAGE_BAT1 = <(3350)>;
+    Q_MAX_SYS_VOLTAGE_BAT2 = <(3350)>;
+    Q_MAX_SYS_VOLTAGE_BAT3 = <(3350)>;
+    PSEUDO1_EN = <(1)>;
+    PSEUDO100_EN = <(1)>;
+    PSEUDO100_EN_DIS = <(1)>;
+    PMIC_SHUTDOWN_CURRENT = <(20)>;
+    DIFFERENCE_FULLOCV_ITH = <(300)>;
+    SHUTDOWN_1_TIME = <(30)>;
+    KEEP_100_PERCENT = <(1)>;
+    R_FG_VALUE = <(10)>;
+    EMBEDDED_SEL = <(1)>;
+    FG_METER_RESISTANCE = <(75)>;
+    CAR_TUNE_VALUE = <(100)>;
+    PMIC_MIN_VOL = <(33500)>;
+    POWERON_SYSTEM_IBOOT = <(500)>;
+    SHUTDOWN_GAUGE0_VOLTAGE = <(34000)>;
+    g_temperature =
+    <
+      50/*TEMPERATURE_T0*/
+      25/*TEMPERATURE_T1*/
+      10/*TEMPERATURE_T2*/
+      0/*TEMPERATURE_T3*/
+     (-10)/*TEMPERATURE_T4*/
+    >;
+    g_Q_MAX =
+    <
+    //BAT1  BAT2  BAT3  BAT4
+      3836 3949 3836 3949/*T0*/
+      3883 3928 3883 3928/*T1*/
+      3856 3937 3856 3937/*T2*/
+      3879 3987 3879 3987/*T3*/
+      3856 3957 3856 3957/*T4*/
+    >;
+    g_Q_MAX_H_CURRENT =
+    <
+    //BAT1 BAT2 BAT3 BAT4
+      3836 3944 3836 3944/*T0*/
+      3855 3908 3855 3908/*T1*/
+      3694 3844 3694 3844/*T2*/
+      3329 3449 3329 3449/*T3*/
+      2580 2472 2580 2472/*T4*/
+    >;
+    g_FG_PSEUDO1 =
+    <
+    //BAT1 BAT2 BAT3 BAT4
+      2    2    2    2/*T0*/
+      2    2    2    2/*T1*/
+      2    2    2    2/*T2*/
+      2    2    2    2/*T3*/
+      2    2    2    2/*T4*/
+    >;
+    g_FG_PSEUDO100 =
+    <
+    //BAT1 BAT2 BAT3 BAT4
+      97   97   97   97/*T0*/
+      97   97   97   97/*T1*/
+      97   97   97   97/*T2*/
+      92   92   92   92/*T3*/
+      90   90   90   90/*T4*/
+    >;
+    g_PMIC_MIN_VOL =
+    <
+    //BAT1  BAT2  BAT3  BAT4
+      33500 33500 33500 33500/*T0*/
+      33500 33500 33500 33500/*T1*/
+      33500 33500 33500 33500/*T2*/
+      33500 33500 33500 33500/*T3*/
+      33500 33500 33500 33500/*T4*/
+    >;
+    g_PON_SYS_IBOOT =
+    <
+    //BAT1 BAT2 BAT3 BAT4
+      5000 5000 5000 5000/*T0*/
+      5000 5000 5000 5000/*T1*/
+      5000 5000 5000 5000/*T2*/
+      5000 5000 5000 5000/*T3*/
+      5000 5000 5000 5000/*T4*/
+    >;
+    g_QMAX_SYS_VOL =
+    <
+    //BAT1  BAT2  BAT3  BAT4
+      33500 33500 33500 33500/*T0*/
+      33500 33500 33500 33500/*T1*/
+      33500 33500 33500 33500/*T2*/
+      33500 33500 33500 33500/*T3*/
+      33500 33500 33500 33500/*T4*/
+    >;
+    g_SHUTDOWN_HL_ZCV =
+    <
+    //BAT1 BAT2 BAT3 BAT4
+      3400 3400 3400 3400/*T0*/
+      3400 3400 3400 3400/*T1*/
+      3400 3400 3400 3400/*T2*/
+      3400 3400 3400 3400/*T3*/
+      3400 3400 3400 3400/*T4*/
+    >;
+    COM_R_FG_VALUE = <(0)>;
+    enable_tmp_intr_suspend = <(0)>;
+    MULTI_TEMP_GAUGE0 = <(1)>;
+    RBAT_PULL_UP_R = <(16900)>;
+    RBAT_PULL_UP_VOLT = <(1800)>;
+
+    battery-id-pullup-ohm = <(39000)>;
+    pmic = <&main_pmic>;
+#include "cruze_pro_BYD_5000mAh_table.dtsi"
+#include "cruze_pro_Veken_5000mAh_table.dtsi"
+};

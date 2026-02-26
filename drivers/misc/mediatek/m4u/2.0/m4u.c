@@ -1738,8 +1738,7 @@ static long MTK_M4U_ioctl(struct file *filp, unsigned int cmd,
 				ret);
 			return -EFAULT;
 		}
-		if (m4u_module.port < 0
-			|| m4u_module.port >= M4U_PORT_UNKNOWN) {
+		if (m4u_module.port >= M4U_PORT_UNKNOWN) {
 			m4u_err("MTK_M4U_T_ALLOC_MVA, port%d is invalid\n",
 			       m4u_module.port);
 			return -EFAULT;
@@ -1763,8 +1762,7 @@ static long MTK_M4U_ioctl(struct file *filp, unsigned int cmd,
 				ret);
 			return -EFAULT;
 		}
-		if (m4u_module.port < 0
-			|| m4u_module.port >= M4U_PORT_UNKNOWN) {
+		if (m4u_module.port >= M4U_PORT_UNKNOWN) {
 			m4u_err("MTK_M4U_T_DEALLOC_MVA, port%d is invalid\n",
 			       m4u_module.port);
 			return -EFAULT;
@@ -1850,7 +1848,7 @@ static long MTK_M4U_ioctl(struct file *filp, unsigned int cmd,
 				ret);
 			return -EFAULT;
 		}
-		if (rM4UTF.port < 0 || rM4UTF.port >= M4U_PORT_UNKNOWN) {
+		if (rM4UTF.port >= M4U_PORT_UNKNOWN) {
 			m4u_err("MTK_M4U_T_CONFIG_TF, port%d is invalid\n",
 				rM4UTF.port);
 			return -EFAULT;

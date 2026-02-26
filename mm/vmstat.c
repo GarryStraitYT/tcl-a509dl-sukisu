@@ -27,6 +27,12 @@
 #include <linux/mm_inline.h>
 #include <linux/page_ext.h>
 #include <linux/page_owner.h>
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+#include <tcl/defrag_helper.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 #include "internal.h"
 
@@ -1137,6 +1143,19 @@ const char * const vmstat_text[] = {
 #endif
 	"nr_free_cma",
 
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	"nr_free_defrag",
+#endif
+// #endif /* VENDOR_EDIT */
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	"nr_ioncache_pages",
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 	/* enum numa_stat_item counters */
 #ifdef CONFIG_NUMA
 	"numa_hit",
@@ -1157,9 +1176,22 @@ const char * const vmstat_text[] = {
 	"nr_slab_unreclaimable",
 	"nr_isolated_anon",
 	"nr_isolated_file",
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 	"workingset_refault",
 	"workingset_activate",
 	"workingset_restore",
+#else
+	"workingset_refault_anon",
+	"workingset_refault_file",
+	"workingset_activate_anon",
+	"workingset_activate_file",
+	"workingset_restore_anon",
+	"workingset_restore_file",
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	"workingset_anon_cost",
+	"workingset_file_cost",
+#endif
+#endif
 	"workingset_nodereclaim",
 	"nr_anon_pages",
 	"nr_mapped",
@@ -1182,6 +1214,7 @@ const char * const vmstat_text[] = {
 
 	"nr_ion_heap",
 	"nr_ion_heap_pool",
+	"nr_gpu_heap",
 	/* enum writeback_stat_item counters */
 	"nr_dirty_threshold",
 	"nr_dirty_background_threshold",
@@ -1308,6 +1341,33 @@ const char * const vmstat_text[] = {
 #endif
 #ifdef CONFIG_SPECULATIVE_PAGE_FAULT
 	"speculative_pgfault",
+#endif
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	"zswapd_running",
+	"zswapd_hit_refaults",
+	"zswapd_medium_press",
+	"zswapd_critical_press",
+	"zswapd_memcg_ratio_skip",
+	"zswapd_memcg_refault_skip",
+	"zswapd_swapout",
+	"zswapd_empty_round",
+	"zswapd_empty_round_skip_times",
+	"zswapd_snapshot_times",
+	"zswapd_reclaimed",
+	"zswapd_scanned",
+	"kswapd_reclaimed_anon",
+	"kswapd_reclaimed_file",
+	"kswapd_scan_anon",
+	"kswapd_scan_file",
+	"dr_reclaimed_anon",
+	"dr_reclaimed_file",
+	"dr_scan_anon",
+	"dr_scan_file",
+	"freeze_reclaimed",
+	"freeze_reclaim_count",
+#endif
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+	"zswapd_age_reclaimed",
 #endif
 #endif /* CONFIG_VM_EVENTS_COUNTERS */
 };
@@ -1740,6 +1800,9 @@ static void *vmstat_start(struct seq_file *m, loff_t *pos)
 static void *vmstat_next(struct seq_file *m, void *arg, loff_t *pos)
 {
 	(*pos)++;
+	//nr_gpu_heap is out-of-tree now so we don't want to export it.
+	if (*pos == NR_VM_ZONE_STAT_ITEMS + NR_VM_NUMA_STAT_ITEMS + NR_GPU_HEAP)
+		(*pos)++;
 	if (*pos >= ARRAY_SIZE(vmstat_text))
 		return NULL;
 	return (unsigned long *)m->private + *pos;
@@ -1987,12 +2050,18 @@ static int vmstat_cpu_dead(unsigned int cpu)
 #endif
 
 struct workqueue_struct *mm_percpu_wq;
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+struct workqueue_struct *mm_percpu_wq_highpri;
+#endif
 
 void __init init_mm_internals(void)
 {
 	int ret __maybe_unused;
 
 	mm_percpu_wq = alloc_workqueue("mm_percpu_wq", WQ_MEM_RECLAIM, 0);
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	mm_percpu_wq_highpri = alloc_workqueue("mm_percpu_wq_highpri", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+#endif
 
 #ifdef CONFIG_SMP
 	ret = cpuhp_setup_state_nocalls(CPUHP_MM_VMSTAT_DEAD, "mm/vmstat:dead",

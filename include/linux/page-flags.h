@@ -102,6 +102,16 @@ enum pageflags {
 	PG_young,
 	PG_idle,
 #endif
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	PG_protect,
+#endif
+#if defined(CONFIG_TCL_FINE_MM_ZRAM2DISK)
+	PG_hottest,
+#endif
+// #endif /* VENDOR_EDIT */
+	PG_iommu,
 	__NR_PAGEFLAGS,
 
 	/* Filesystems */
@@ -287,6 +297,10 @@ __PAGEFLAG(Slab, slab, PF_NO_TAIL)
 __PAGEFLAG(SlobFree, slob_free, PF_NO_TAIL)
 PAGEFLAG(Checked, checked, PF_NO_COMPOUND)	   /* Used by some filesystems */
 
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+PAGEFLAG(Hottest, hottest, PF_HEAD)
+#endif
+
 /* Xen */
 PAGEFLAG(Pinned, pinned, PF_NO_COMPOUND)
 	TESTSCFLAG(Pinned, pinned, PF_NO_COMPOUND)
@@ -382,6 +396,13 @@ static inline bool set_hwpoison_free_buddy_page(struct page *page)
 #define __PG_HWPOISON 0
 #endif
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+PAGEFLAG(Protect, protect, PF_ANY)
+#endif
+// #endif /* VENDOR_EDIT */
+
 #if defined(CONFIG_IDLE_PAGE_TRACKING) && defined(CONFIG_64BIT)
 TESTPAGEFLAG(Young, young, PF_ANY)
 SETPAGEFLAG(Young, young, PF_ANY)
@@ -389,6 +410,7 @@ TESTCLEARFLAG(Young, young, PF_ANY)
 PAGEFLAG(Idle, idle, PF_ANY)
 #endif
 
+PAGEFLAG(Iommu, iommu, PF_ANY)
 /*
  * On an anonymous page mapped into a user virtual memory area,
  * page->mapping points to its anon_vma, not to a struct address_space;

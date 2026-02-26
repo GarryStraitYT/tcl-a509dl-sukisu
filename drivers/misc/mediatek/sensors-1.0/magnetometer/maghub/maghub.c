@@ -248,6 +248,33 @@ static int maghub_delete_attr(struct device_driver *driver)
 	return err;
 }
 
+static ssize_t compass_show(struct device* dev,struct device_attribute *attr, char *buf)
+{
+	ssize_t res = 0;
+	//char name[16] ="0";
+	struct sensorInfo_t chipinfo;
+	res = sensor_set_cmd_to_hub(ID_MAGNETIC,
+		CUST_ACTION_GET_SENSOR_INFO, &chipinfo);
+
+	res = snprintf(buf, PAGE_SIZE, "%s\n", chipinfo.name);
+	return res;
+}
+extern struct device* get_deviceinfo_dev(void);
+static DEVICE_ATTR(compass, S_IWUSR | S_IRUGO,  compass_show, NULL);
+static int create_chipinfo_node(void)
+{
+	int err=0;
+    struct device * chipinfo;
+	chipinfo=get_deviceinfo_dev();
+	err=device_create_file(chipinfo, &dev_attr_compass);
+	if (err){
+			pr_err("Failed to create device file(%s)!\n", dev_attr_compass.attr.name);
+			return 0;
+	}
+	return err;
+}
+
+
 static void scp_init_work_done(struct work_struct *work)
 {
 	int32_t cfg_data[9] = {0};
@@ -610,6 +637,10 @@ static int maghub_probe(struct platform_device *pdev)
 		pr_err("register data control path err\n");
 		goto create_attr_failed;
 	}
+	if((err = create_chipinfo_node()))
+  	{
+  		pr_err("create chipinfo node %d\n", err);
+  	}
 	pr_debug("%s: OK\n", __func__);
 	maghub_init_flag = 1;
 	/*Mointor scp ready notify,

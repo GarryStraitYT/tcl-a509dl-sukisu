@@ -57,6 +57,8 @@
 #define EX_DEV_OFF_1 0x100	/* 5B8 */
 #define EX_DEV_OFF_2 0x104	/* 5BC */
 #define EX_DEV_OFF_3 0x214	/* 7AC */
+#define EX_DEV_OFF_FAB2 0x210	/* 7A8 */
+
 
 #define NR_HW_RES_FOR_BANK	(12) /* real eem banks for efuse */
 #define EEM_INIT01_FLAG (0x3) /* [3]:GPU, [2]:CCI, [1]:LL, [0]:L */
@@ -82,12 +84,13 @@
 
 /* common part: for cci, LL, L */
 #define VBOOT_VAL		(0x30)
-#define VMAX_VAL		(0x64)
+#define VMAX_VAL		(0x70) /* 1.2V */
 #define VMIN_VAL		(0x10)
 #define VCO_VAL			(0x10)
 #define DVTFIXED_VAL		(0x8)
 #define DVTFIXED_M_VAL		(0x4)
 
+#define BCPU_FREQ_BASE	1700000
 
 
 #define DTHI_VAL		(0x01) /* positive */

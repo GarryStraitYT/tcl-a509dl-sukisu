@@ -1191,8 +1191,6 @@ static inline void check_cable_type(void)
 {
 	u32 cur_AB = 0;
 
-	printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
-
 	cur_AB = accdet_read(ACCDET_MEM_IN_ADDR) >> ACCDET_STATE_MEM_IN_OFFSET;
 		cur_AB = cur_AB & ACCDET_STATE_AB_MASK;
 
@@ -1200,9 +1198,7 @@ static inline void check_cable_type(void)
 
 	switch (accdet->accdet_status) {
 	case PLUG_OUT:
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 		if (cur_AB == ACCDET_STATE_AB_00) {
-			printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 			mutex_lock(&accdet->res_lock);
 			if (accdet->eint_sync_flag) {
 				accdet->cable_type = HEADSET_NO_MIC;
@@ -1211,7 +1207,6 @@ static inline void check_cable_type(void)
 				pr_notice("accdet hp has been plug-out\n");
 			mutex_unlock(&accdet->res_lock);
 		} else if (cur_AB == ACCDET_STATE_AB_01) {
-			printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 			mutex_lock(&accdet->res_lock);
 			if (accdet->eint_sync_flag) {
 				accdet->accdet_status = MIC_BIAS;
@@ -1227,7 +1222,6 @@ static inline void check_cable_type(void)
 			accdet_set_debounce(accdet_state000,
 				button_press_debounce);
 		} else if (cur_AB == ACCDET_STATE_AB_11) {
-			printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 			/* accdet PLUG_OUT state not change */
 			if (HAS_CAP(accdet->data->caps,
 					ACCDET_PMIC_EINT_IRQ)) {
@@ -1240,13 +1234,11 @@ static inline void check_cable_type(void)
 				mutex_unlock(&accdet->res_lock);
 			}
 		} else {
-			printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 			pr_notice("accdet %s Invalid AB.Do nothing\n",
 					__func__);
 		}
 		break;
 	case MIC_BIAS:
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 		if (cur_AB == ACCDET_STATE_AB_00) {
 			mutex_lock(&accdet->res_lock);
 			if (accdet->eint_sync_flag) {
@@ -1315,20 +1307,14 @@ static void accdet_work_callback(struct work_struct *work)
 {
 	u32 pre_cable_type = accdet->cable_type;
 
-	printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
-
 	__pm_stay_awake(accdet->wake_lock);
 	check_cable_type();
 
 	mutex_lock(&accdet->res_lock);
 	if (accdet->eint_sync_flag) {
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
-		if (pre_cable_type != accdet->cable_type){
-			printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
+		if (pre_cable_type != accdet->cable_type)
 			send_status_event(accdet->cable_type, 1);
-		}
 	}
-	printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 	mutex_unlock(&accdet->res_lock);
 	__pm_relax(accdet->wake_lock);
 }
@@ -1336,18 +1322,13 @@ static void accdet_work_callback(struct work_struct *work)
 static void accdet_queue_work(void)
 {
 	int ret;
-	printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 
-	if (accdet->accdet_status == MIC_BIAS){
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
+	if (accdet->accdet_status == MIC_BIAS)
 		accdet->cali_voltage = accdet_get_auxadc();
-	}
 
 	ret = queue_work(accdet->accdet_workqueue, &accdet->accdet_work);
-	if (!ret){
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
+	if (!ret)
 		pr_notice("Error: %s (%d)\n", __func__, ret);
-	}
 }
 
 static int pmic_eint_queue_work(int eintID)
@@ -1509,15 +1490,11 @@ void accdet_irq_handle(void)
 	acc_sts = accdet_read(ACCDET_MEM_IN_ADDR);
 	eint_sts = accdet_read(ACCDET_EINT0_MEM_IN_ADDR);
 
-	printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
-
 	if ((irq_status & ACCDET_IRQ_MASK_SFT) && (eintID == 0)) {
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 		clear_accdet_int();
 		accdet_queue_work();
 		clear_accdet_int_check();
 	} else if (eintID != NO_PMIC_EINT) {
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 		pr_info("%s() IRQ:0x%x, eint-%s trig. cur_eint_state:%d\n",
 		__func__, irq_status,
 		(eintID == PMIC_EINT0)?"0":((eintID == PMIC_EINT1)?"1":"BI"),
@@ -1562,7 +1539,6 @@ void accdet_irq_handle(void)
 		clear_accdet_eint_check(eintID);
 		pmic_eint_queue_work(eintID);
 	} else {
-		printk("bo_liu_audio, func:%s, line:%d\n", __func__, __LINE__);
 		pr_notice("%s no interrupt detected!\n", __func__);
 	}
 }

@@ -57,6 +57,9 @@ static const char *const DAC_DL_SINEGEN_AMPLITUE[] = {
 	"1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1"};
 static const char *const spk_type_str[] = {"MTK_SPK_NOT_SMARTPA",
 					   "MTK_SPK_RICHTEK_RT5509",
+#if defined(CONFIG_SND_SOC_TAS5782M)
+					   "MTK_SPK_TI_TAS5782M",
+#endif
 					   "MTK_SPK_MTK_MT6660"};
 
 static bool mEnableSideToneFilter;
@@ -690,6 +693,35 @@ static const struct soc_enum spk_type_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spk_type_str), spk_type_str),
 };
 
+/*wanying.chen add for L/R swap 2022.10.17*/
+static bool hp_lr_swap_enable;
+static const char *const apply_hp_lr_swap_setting[] = { "Off", "On" };
+static int Audio_HP_LR_Swap_Get(struct snd_kcontrol *kcontrol,
+ struct snd_ctl_elem_value *ucontrol)
+{
+ ucontrol->value.integer.value[0] = hp_lr_swap_enable;
+ return 0;
+}
+static int Audio_HP_LR_Swap_Set(struct snd_kcontrol *kcontrol,
+ struct snd_ctl_elem_value *ucontrol)
+{
+ 
+ hp_lr_swap_enable = ucontrol->value.integer.value[0];
+ pr_info("cwying AFE_ADDA_DL_SDM_DCCOMP_CON 0x%lx hp_lr_swap_enable:%d\n",AFE_ADDA_DL_SDM_DCCOMP_CON,hp_lr_swap_enable);
+ 
+ pr_info("cwying AFE_ADDA_DL_SDM_DCCOMP_CON = 0x%x\n",Afe_Get_Reg(AFE_ADDA_DL_SDM_DCCOMP_CON));
+ 
+ AudDrv_Clk_On();
+
+ Afe_Set_Reg(AFE_ADDA_DL_SDM_DCCOMP_CON, hp_lr_swap_enable << 20, 0x1 << 20);
+ pr_info("cwying AFE_ADDA_DL_SDM_DCCOMP_CON = 0x%x\n",Afe_Get_Reg(AFE_ADDA_DL_SDM_DCCOMP_CON));
+ 
+ AudDrv_Clk_Off();
+ return 0;
+}
+/*end wanying.chen add for L/R swap 2022.10.17*/
+
+
 static const struct soc_enum Audio_Routing_Enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(DAC_DL_SINEGEN), DAC_DL_SINEGEN),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(DAC_DL_SINEGEN_SAMEPLRATE),
@@ -705,6 +737,8 @@ static const struct soc_enum Audio_Routing_Enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(Audio_IPOH_State), Audio_IPOH_State),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(Audio_I2S1_Setting), Audio_I2S1_Setting),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spk_type_str), spk_type_str),
+/*wanying.chen add L/R swap 2022.10.17*/
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(apply_hp_lr_swap_setting),apply_hp_lr_swap_setting),
 };
 
 static const struct snd_kcontrol_new Audio_snd_routing_controls[] = {
@@ -741,6 +775,11 @@ static const struct snd_kcontrol_new Audio_snd_routing_controls[] = {
 		       Audio_AssignDRAM_Get, Audio_AssignDRAM_Set),
 	SOC_ENUM_EXT("MTK_SPK_TYPE_GET",
 		     Audio_Routing_Enum[9], spk_type_get, NULL),
+/*wanying.chen add L/R swap 2022.10.17*/
+	SOC_ENUM_EXT("Audio_HP_LR_Swap", Audio_Routing_Enum[10],
+			Audio_HP_LR_Swap_Get,
+			Audio_HP_LR_Swap_Set),
+/*End wanying.chen add L/R swap 2022.10.17*/
 };
 
 void EnAble_Anc_Path(int state)
@@ -901,7 +940,7 @@ static int mtk_afe_routing_probe(struct platform_device *pdev)
 {
 	pr_debug("%s\n", __func__);
 
-	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(64);
+	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 	if (!pdev->dev.dma_mask)
 		pdev->dev.dma_mask = &pdev->dev.coherent_dma_mask;
 

@@ -60,6 +60,12 @@
 #include "mtk-cs35l35-machine-ops.h"
 #endif
 
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-7 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_AUDIO_ON
+#include <tcl/tkperf.h>
+#include <generated/utsrelease.h>
+#endif
+
 #ifdef CONFIG_DEBUG_FS
 #include <linux/debugfs.h>
 
@@ -69,7 +75,6 @@ static struct dentry *mt_sco_audio_debugfs;
 
 static int mt_soc_ana_debug_open(struct inode *inode, struct file *file)
 {
-	pr_debug("%s()\n", __func__);
 	return 0;
 }
 
@@ -92,8 +97,6 @@ static ssize_t mt_soc_ana_debug_read(struct file *file, char __user *buf,
 	audckbufEnable(true);
 
 	n = Ana_Debug_Read(buffer, size);
-
-	pr_debug("%s(), len = %d\n", __func__, n);
 
 	audckbufEnable(false);
 	AudDrv_Clk_Off();
@@ -126,7 +129,6 @@ static ssize_t mt_soc_debug_read(struct file *file, char __user *buf,
 	AudDrv_Clk_On();
 
 	n = AudDrv_Reg_Dump(buffer, size);
-	pr_debug("%s(), len = %d\n", __func__, n);
 
 	AudDrv_Clk_Off();
 
@@ -183,7 +185,7 @@ static ssize_t mt_soc_debug_write(struct file *f, const char __user *buf,
 	temp = str_begin;
 
 	pr_debug(
-		"copy_from_user, count = %zu, temp = %s, pointer = %p\n",
+		"copy_from_user count = %zu, temp = %s, pointer = %p\n",
 		count, str_begin, str_begin);
 	token1 = strsep(&temp, delim);
 	token2 = strsep(&temp, delim);
@@ -514,7 +516,7 @@ static struct snd_soc_dai_link mt_soc_dai_common[] = {
 		.codec_name = MT_SOC_CODEC_DUMMY_NAME,
 	},
 #endif
-#ifdef CONFIG_MTK_AUDIO_TUNNELING_SUPPORT
+#ifdef CONFIG_SND_SOC_MTK_AUDIO_DSP
 	{
 		.name = "OFFLOAD",
 		.stream_name = MT_SOC_OFFLOAD_STREAM_NAME,
@@ -623,6 +625,16 @@ static struct snd_soc_dai_link mt_soc_exthp_dai[] = {
 	},
 };
 
+//add begin by haimei.liu.aw88194 porting.aw88194 porting.20210622.task:11228686
+struct snd_soc_dai_link_component awinic_codecs[] = {
+	{
+	.of_node = NULL,
+	.dai_name = "aw881xx-aif-3-35",
+	.name = "aw881xx_smartpa.3-0035",
+	},
+};
+
+//add end by haimei.liu.aw88194 porting.aw88194 porting.20210622.task:11228686
 static struct snd_soc_dai_link mt_soc_extspk_dai[] = {
 	{
 		.name = "ext_Speaker_Multimedia",
@@ -640,9 +652,14 @@ static struct snd_soc_dai_link mt_soc_extspk_dai[] = {
 		.dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_CBS_CFS |
 			   SND_SOC_DAIFMT_NB_NF,
 		.ops = &cs35l35_ops,
+//begin modify by haimei.liu.20210609.task:11228686.aw88194 smartpa porting
+#elif defined(CONFIG_SND_SMARTPA_AW881XX)
+		.num_codecs = ARRAY_SIZE(awinic_codecs),
+		.codecs = awinic_codecs,
 #else
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
+//end modify by haimei.liu.20210609.task:11228686.aw88194 smartpa porting
 #endif
 	},
 	{
@@ -670,6 +687,39 @@ static struct snd_soc_card mt_snd_soc_card_mt = {
 	.num_links = ARRAY_SIZE(mt_soc_dai_common),
 };
 
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-6 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_AUDIO_ON
+
+extern int audio_driver_lasterrcode;
+void heraeye_audio_soc_registerfail(int ret,int errtype){
+  char heraeye_cur_chipinfo[64] = {0};
+  char heraeye_cur_time[32] = {0};
+  char kernel_version[16]={0};
+
+  const char *strval = UTS_RELEASE;
+  strncpy(kernel_version,strval,8);
+
+  heraeye_curtime_to_str(heraeye_cur_time);
+  sprintf(heraeye_cur_chipinfo, "%s_%s_%s",heraeye_get_arch_str(),heraeye_get_project_str(),kernel_version);
+  audio_driver_lasterrcode|=errtype;
+
+//  pr_debug("hela_debug %s %s %s %d 0x%x 0x%x",TKPERF_PERF_AUDIO_INFO,
+//            heraeye_cur_time,
+//            heraeye_cur_chipinfo,
+//            errtype,
+//            audio_driver_lasterrcode,
+//            TKPERF_AUDIO_EVENTID);
+
+  heraeye_driver_log(TKPERF_DRIVER_AUDIO,"%s %s %s %d %d 0x%x",
+            TKPERF_PERF_AUDIO_INFO,
+            heraeye_cur_time,
+            heraeye_cur_chipinfo,
+            errtype,
+            ret,
+            TKPERF_AUDIO_EVENTID);  
+}
+#endif
+
 static int mt_soc_snd_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = &mt_snd_soc_card_mt;
@@ -678,14 +728,23 @@ static int mt_soc_snd_probe(struct platform_device *pdev)
 #endif
 	int ret;
 	int daiLinkNum = 0;
-
+//wanying.chen add for aw881xx bring up 
+#ifndef CONFIG_SND_SMARTPA_AW881XX
 	ret = mtk_spk_update_dai_link(mt_soc_extspk_dai, pdev);
 	if (ret) {
 		dev_err(&pdev->dev, "%s(), mtk_spk_update_dai_link error\n",
 			__func__);
+
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-7 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_AUDIO_ON
+	  heraeye_audio_soc_registerfail(ret,AUDIO_DRV_PA_ERROR);
+		dev_err(&pdev->dev, "%s(), helaeye mtk_spk_update_dai_link error\n",
+			__func__);
+#endif
+
 		return -EINVAL;
 	}
-
+#endif
 	/* get_ext_dai_codec_name(); */
 	pr_debug("%s(), dai_link = %p\n",
 		 __func__, mt_snd_soc_card_mt.dai_link);
@@ -729,6 +788,13 @@ static int mt_soc_snd_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s snd_soc_register_card fail %d\n",
 			__func__, ret);
 
+//#[SYSD DRIVER][tct_hela][driver] Begin added by jinggao.zhou for  Online Quality OLQ-7 on  2022-06-29
+#ifdef CONFIG_HELAEYE_BSP_AUDIO_ON
+   if (ret){
+	  heraeye_audio_soc_registerfail(ret,AUDIO_DRV_INIT_ERROR);
+	  dev_err(&pdev->dev, "%s(), helaeye snd_soc_register_card error\n",
+		__func__);}
+#endif
 #ifdef CONFIG_DEBUG_FS
 	/* create debug file */
 	mt_sco_audio_debugfs =
@@ -740,8 +806,6 @@ static int mt_soc_snd_probe(struct platform_device *pdev)
 		DEBUG_ANA_FS_NAME, S_IFREG | 0444, NULL,
 		(void *)DEBUG_ANA_FS_NAME, &mtaudio_ana_debug_ops);
 #endif
-
-	dev_info(&pdev->dev, "%s(), done\n", __func__);
 	return ret;
 }
 

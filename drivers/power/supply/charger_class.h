@@ -145,6 +145,12 @@ struct charger_ops {
 		int *tchg_max);
 	int (*get_zcv)(struct charger_device *dev, u32 *uV);
 
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	int (*get_chg_status)(struct charger_device *dev, int *status);
+#endif
+/* End add by jin.wang */
+
 	/* TypeC */
 	int (*enable_usbid)(struct charger_device *dev, bool en);
 	int (*set_usbid_rup)(struct charger_device *dev, u32 rup);
@@ -313,5 +319,11 @@ extern int unregister_charger_device_notifier(
 extern int charger_dev_notify(
 	struct charger_device *charger_dev, int event);
 
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+extern int charger_dev_get_charging_status(
+	struct charger_device *charger_dev, int *status);
+#endif
+/* End add by jin.wang */
 
 #endif /*LINUX_POWER_CHARGER_CLASS_H*/

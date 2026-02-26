@@ -72,6 +72,9 @@
 #include <linux/uaccess.h>
 #include <asm/io.h>
 #include <asm/unistd.h>
+#ifdef CONFIG_MTK_TASK_TURBO
+#include <mt-plat/turbo_common.h>
+#endif
 
 #include "uid16.h"
 
@@ -626,6 +629,10 @@ SYSCALL_DEFINE1(setuid, uid_t, uid)
 	return __sys_setuid(uid);
 }
 
+#ifdef CONFIG_TCL_IPEL
+extern void get_vip_thread(int *pid, int *uid, int count);
+extern atomic_t fg_uid;
+#endif
 
 /*
  * This function implements a generic ability to update ruid, euid,
@@ -638,6 +645,11 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 	struct cred *new;
 	int retval;
 	kuid_t kruid, keuid, ksuid;
+#ifdef CONFIG_TCL_IPEL
+	int vip_uid = -1;
+	int vip_pids[2] = {0};
+	int leader_pid = -1;
+#endif
 
 	kruid = make_kuid(ns, ruid);
 	keuid = make_kuid(ns, euid);
@@ -688,6 +700,15 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 	retval = security_task_fix_setuid(new, old, LSM_SETID_RES);
 	if (retval < 0)
 		goto error;
+
+#ifdef CONFIG_TCL_IPEL
+	if (current->group_leader)
+		leader_pid = current->group_leader->pid;
+	get_vip_thread(vip_pids, &vip_uid, 2);
+
+	if (vip_uid == 0 && leader_pid == vip_pids[0])
+		atomic_set(&fg_uid, ruid);
+#endif
 
 	return commit_creds(new);
 
@@ -1291,10 +1312,12 @@ SYSCALL_DEFINE1(uname, struct old_utsname __user *, name)
 
 SYSCALL_DEFINE1(olduname, struct oldold_utsname __user *, name)
 {
-	struct oldold_utsname tmp = {};
+	struct oldold_utsname tmp;
 
 	if (!name)
 		return -EFAULT;
+
+	memset(&tmp, 0, sizeof(tmp));
 
 	down_read(&uts_sem);
 	memcpy(&tmp.sysname, &utsname()->sysname, __OLD_UTS_LEN);
@@ -2487,6 +2510,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 			return -EFAULT;
 		set_task_comm(me, comm);
 		proc_comm_connector(me);
+#ifdef CONFIG_MTK_TASK_TURBO
+		sys_set_turbo_task(me);
+#endif
 		break;
 	case PR_GET_NAME:
 		get_task_comm(comm, me);

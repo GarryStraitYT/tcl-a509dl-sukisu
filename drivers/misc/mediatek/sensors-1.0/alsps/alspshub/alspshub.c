@@ -147,6 +147,32 @@ static ssize_t trace_store(struct device_driver *ddri,
 	return count;
 }
 
+static ssize_t psensor_show(struct device* dev,struct device_attribute *attr, char *buf)
+{
+	ssize_t res = 0;
+	//char name[16] ="0";
+	struct sensorInfo_t chipinfo;
+	res = sensor_set_cmd_to_hub(ID_PROXIMITY,
+		CUST_ACTION_GET_SENSOR_INFO, &chipinfo);
+
+	res = snprintf(buf, PAGE_SIZE, "%s\n", chipinfo.name);
+	return res;
+}
+extern struct device* get_deviceinfo_dev(void);
+static DEVICE_ATTR(psensor, S_IWUSR | S_IRUGO, psensor_show, NULL);
+static int create_chipinfo_node(void)
+{
+       int err=0;
+     struct device * chipinfo;
+	chipinfo=get_deviceinfo_dev();
+	err=device_create_file(chipinfo, &dev_attr_psensor);
+	if (err){
+			pr_err("Failed to create device file(%s)!\n", dev_attr_psensor.attr.name);
+			return 0;
+	}
+	return err;
+}
+
 static ssize_t als_show(struct device_driver *ddri, char *buf)
 {
 	int res = 0;
@@ -160,7 +186,7 @@ static ssize_t als_show(struct device_driver *ddri, char *buf)
 	if (res)
 		return snprintf(buf, PAGE_SIZE, "ERROR: %d\n", res);
 	else
-		return snprintf(buf, PAGE_SIZE, "0x%04X\n", obj->als);
+		return snprintf(buf, PAGE_SIZE, "%d\n", obj->als);
 }
 
 static ssize_t ps_show(struct device_driver *ddri, char *buf)
@@ -221,12 +247,32 @@ static ssize_t alsval_show(struct device_driver *ddri, char *buf)
 	return res;
 }
 
+//Begin add by yan.gong for FR 9987226 on 2020-09-21
+static ssize_t ps_noise_show(struct device_driver *ddri, char *buf)
+{
+       ssize_t res = 0;
+       struct data_unit_t data_t;
+
+       res = sensor_get_data_from_hub(ID_PROXIMITY, &data_t);
+       if (res < 0) {
+               pr_err("sensor_get_data_from_hub fail, (ID: %d)\n",
+                       ID_PROXIMITY);
+               return 0;
+       }
+
+       return snprintf(buf, PAGE_SIZE, "%d\n", data_t.proximity_t.steps);
+}
+static DRIVER_ATTR_RO(ps_noise);
+//End add by yan.gong for FR 9987226 on 2020-09-21
+
 static DRIVER_ATTR_RO(als);
 static DRIVER_ATTR_RO(ps);
 static DRIVER_ATTR_RO(alslv);
 static DRIVER_ATTR_RO(alsval);
 static DRIVER_ATTR_RW(trace);
 static DRIVER_ATTR_RO(reg);
+//static DRIVER_ATTR_RO(chipinfo);
+
 static struct driver_attribute *alspshub_attr_list[] = {
 	&driver_attr_als,
 	&driver_attr_ps,
@@ -234,6 +280,9 @@ static struct driver_attribute *alspshub_attr_list[] = {
 	&driver_attr_alslv,
 	&driver_attr_alsval,
 	&driver_attr_reg,
+//Begin add by yan.gong for FR 9987226 on 2020-09-21
+	&driver_attr_ps_noise,
+//End add by yan.gong for FR 9987226 on 2020-09-21
 };
 
 static int alspshub_create_attr(struct device_driver *driver)
@@ -312,7 +361,7 @@ static int ps_recv_data(struct data_unit_t *event, void *reserved)
 {
 	int err = 0;
 	struct alspshub_ipi_data *obj = obj_ipi_data;
-
+    int value[2]={0,0};
 	if (!obj)
 		return 0;
 
@@ -321,7 +370,11 @@ static int ps_recv_data(struct data_unit_t *event, void *reserved)
 	else if (event->flush_action == DATA_ACTION &&
 			READ_ONCE(obj->ps_android_enable) == true) {
 		__pm_wakeup_event(obj->ps_wake_lock, msecs_to_jiffies(100));
-		err = ps_data_report_t(event->proximity_t.oneshot,
+        value[0]=event->proximity_t.oneshot;
+		// rawdata  = steps qiuyang.duan end
+		value[1]=event->proximity_t.steps;
+		pr_err("qiuyang int ps_recv_data value[1] = %d\n",value[1]);
+		err = ps_data_report_t(value,
 			SENSOR_STATUS_ACCURACY_HIGH,
 			(int64_t)event->time_stamp);
 	} else if (event->flush_action == CALI_ACTION) {
@@ -811,8 +864,10 @@ static int ps_get_data(int *value, int *status)
 		err = -1;
 	} else {
 		time_stamp = data.time_stamp;
-		*value = data.proximity_t.oneshot;
+		value[0] = data.proximity_t.oneshot;
+        value[1] = data.proximity_t.steps;
 		*status = SENSOR_STATUS_ACCURACY_MEDIUM;
+        pr_err("qiuyang44 *value = %d\n",*value);
 	}
 
 	if (atomic_read(&obj_ipi_data->trace) & CMC_TRC_PS_DATA)
@@ -982,7 +1037,10 @@ static int alspshub_probe(struct platform_device *pdev)
 		err = -ENOMEM;
 		goto exit_create_attr_failed;
 	}
-
+  	if((err = create_chipinfo_node()))
+  	{
+  		pr_err("create chipinfo node %d\n", err);
+  	}
 	alspshub_init_flag = 0;
 	pr_debug("%s: OK\n", __func__);
 	return 0;

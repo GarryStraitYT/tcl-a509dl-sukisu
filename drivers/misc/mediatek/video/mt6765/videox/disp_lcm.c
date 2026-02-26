@@ -14,19 +14,33 @@
 #include <linux/of.h>
 #endif
 
-/* Begin add by lingchen for LCM info */
-static struct device *deviceinfo_lcm = NULL;
-static struct disp_lcm_handle *explcm = NULL;
-extern struct device* get_deviceinfo_dev(void);
-/* End add by lingchen for LCM info */
-//begin add by kun.zheng for task 8998289 on 2020/03/24
-struct LCM_DRIVER *drv_to_distingish_tp = NULL;
-//end add by kun.zheng for task 8998289 on 2020/03/24
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+#undef DISPMSG
+#define DISPMSG(fmt, ...)		printk(KERN_EMERG fmt, ##__VA_ARGS__)
+#else
+#define DISPMSG(fmt, ...)
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 
+/* Begin add for LCM device info */
+#ifdef CONFIG_TCT_DEVICEINFO
+extern char LCM_module_name[256];
+//beging add by wenhaodeng for task LOGANS-2237 on 20220811
+extern int tct_use_lcm_devinfo_list;
+//end add by wenhaodeng for task LOGANS-2237 on 20220811
+#endif
 /* This macro and arrya is designed for multiple LCM support */
 /* for multiple LCM, we should assign I/F Port id in lcm driver, */
 /* such as DPI0, DSI0/1 */
 /* static struct disp_lcm_handle _disp_lcm_driver[MAX_LCM_NUMBER]; */
+
+
+#ifdef CONFIG_HELAEYE_BSP_LCD_ON
+extern int lcd_driver_lasterrcode;
+extern char mtkfb_hera_lcm_name[128];
+extern unsigned int islcmconnected;
+#endif
 
 int _lcm_count(void)
 {
@@ -626,7 +640,12 @@ void parse_lcm_ops_dt_node(struct device_node *np,
 				return;
 			}
 			break;
-
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+		case LCM_FUNC_TP:
+			break;
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 		default:
 			pr_info("%s/%d: %d\n",
 				__FILE__, __LINE__, lcm_data[i].func);
@@ -647,6 +666,688 @@ void parse_lcm_ops_dt_node(struct device_node *np,
 			__FILE__, __LINE__, len);
 		return;
 	}
+
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	/* parse LCM pre_suspend table */
+	len = disp_of_getprop_u8(np, "pre_suspend", dts);
+	if (len <= 0) {
+		pr_info("%s:%d: Cannot find LCM pre_suspend table, cannot skip it!\n",
+			__FILE__, __LINE__);
+		return;
+	}
+	if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+		pr_info("%s:%d: LCM pre suspend table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+	DISPMSG("pre_suspend %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+	tmp = dts;
+	lcm_data = lcm_dts->pre_suspend;
+	for (i = 0; i < ADDITIONAL_SIZE; i++) {
+		lcm_data[i].func = (*tmp) & 0xFF;
+		lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+		lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+		tmp_len = 3;
+
+		DISPMSG("pre_suspend %s:%d: dts: %d, %d, %d\n",
+			__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+		switch (lcm_data[i].func) {
+		case LCM_FUNC_GPIO:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_I2C:
+			memcpy(&(lcm_data[i].data_t2), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_UTIL:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_CMD:
+			switch (lcm_data[i].type) {
+			case LCM_UTIL_WRITE_CMD_V1:
+				memcpy(&(lcm_data[i].data_t5), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_WRITE_CMD_V2:
+				memcpy(&(lcm_data[i].data_t3), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_SET_CMDQ:
+				memcpy(&(lcm_data[i].data_t6), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			default:
+				pr_info("pre_suspend %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].type);
+				return;
+			}
+			break;
+
+		default:
+			pr_info("pre_suspend %s/%d: %d\n",
+				__FILE__, __LINE__, lcm_data[i].func);
+			return;
+		}
+		tmp_len = tmp_len + lcm_data[i].size;
+
+		if (tmp_len < len) {
+			tmp = tmp + tmp_len;
+			len = len - tmp_len;
+		} else {
+			break;
+		}
+	}
+	lcm_dts->pre_suspend_size = i + 1;
+	if (lcm_dts->pre_suspend_size > ADDITIONAL_SIZE) {
+		pr_info("pre_suspend %s:%d: LCM pre suspend table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+
+	/* parse LCM post_suspend table */
+	len = disp_of_getprop_u8(np, "post_suspend", dts);
+	if (len <= 0) {
+		pr_info("post_suspend %s:%d: Cannot find LCM post_suspend table, cannot skip it!\n",
+			__FILE__, __LINE__);
+		return;
+	}
+	if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+		pr_info("post_suspend %s:%d: LCM post suspend table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+	DISPMSG("post_suspend %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+	tmp = dts;
+	lcm_data = lcm_dts->post_suspend;
+	for (i = 0; i < ADDITIONAL_SIZE; i++) {
+		lcm_data[i].func = (*tmp) & 0xFF;
+		lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+		lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+		tmp_len = 3;
+
+		DISPMSG("post_suspend %s:%d: dts: %d, %d, %d\n",
+			__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+		switch (lcm_data[i].func) {
+		case LCM_FUNC_GPIO:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_I2C:
+			memcpy(&(lcm_data[i].data_t2), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_UTIL:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_CMD:
+			switch (lcm_data[i].type) {
+			case LCM_UTIL_WRITE_CMD_V1:
+				memcpy(&(lcm_data[i].data_t5), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_WRITE_CMD_V2:
+				memcpy(&(lcm_data[i].data_t3), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_SET_CMDQ:
+				memcpy(&(lcm_data[i].data_t6), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			default:
+				pr_info("post_suspend %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].type);
+				return;
+			}
+			break;
+
+		default:
+			pr_info("post_suspend %s/%d: %d\n",
+				__FILE__, __LINE__, lcm_data[i].func);
+			return;
+		}
+		tmp_len = tmp_len + lcm_data[i].size;
+
+		if (tmp_len < len) {
+			tmp = tmp + tmp_len;
+			len = len - tmp_len;
+		} else {
+			break;
+		}
+	}
+	lcm_dts->post_suspend_size = i + 1;
+	if (lcm_dts->post_suspend_size > ADDITIONAL_SIZE) {
+		pr_info("post_suspend %s:%d: LCM post suspend table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+
+	/* parse LCM pre_resume table */
+	len = disp_of_getprop_u8(np, "pre_resume", dts);
+	if (len <= 0) {
+		pr_info("pre_resume %s:%d: Cannot find LCM pre_resume table, cannot skip it!\n",
+			__FILE__, __LINE__);
+		return;
+	}
+	if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+		pr_info("pre_resume %s:%d: LCM pre resume table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+	DISPMSG("pre_resume %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+	tmp = dts;
+	lcm_data = lcm_dts->pre_resume;
+	for (i = 0; i < ADDITIONAL_SIZE; i++) {
+		lcm_data[i].func = (*tmp) & 0xFF;
+		lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+		lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+		tmp_len = 3;
+
+		DISPMSG("pre_resume %s:%d: dts: %d, %d, %d\n",
+			__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+		switch (lcm_data[i].func) {
+		case LCM_FUNC_GPIO:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_I2C:
+			memcpy(&(lcm_data[i].data_t2), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_UTIL:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_CMD:
+			switch (lcm_data[i].type) {
+			case LCM_UTIL_WRITE_CMD_V1:
+				memcpy(&(lcm_data[i].data_t5), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_WRITE_CMD_V2:
+				memcpy(&(lcm_data[i].data_t3), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_SET_CMDQ:
+				memcpy(&(lcm_data[i].data_t6), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			default:
+				pr_info("pre_resume %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].type);
+				return;
+			}
+			break;
+
+		default:
+			pr_info("pre_resume %s/%d: %d\n",
+				__FILE__, __LINE__, lcm_data[i].func);
+			return;
+		}
+		tmp_len = tmp_len + lcm_data[i].size;
+
+		if (tmp_len < len) {
+			tmp = tmp + tmp_len;
+			len = len - tmp_len;
+		} else {
+			break;
+		}
+	}
+	lcm_dts->pre_resume_size = i + 1;
+	if (lcm_dts->pre_resume_size > ADDITIONAL_SIZE) {
+		pr_info("pre_resume %s:%d: LCM pre resume table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+
+	/* parse LCM post_resume table */
+	len = disp_of_getprop_u8(np, "post_resume", dts);
+	if (len <= 0) {
+		pr_info("post_resume %s:%d: Cannot find LCM post_resume table, cannot skip it!\n",
+			__FILE__, __LINE__);
+		return;
+	}
+	if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+		pr_info("post_resume %s:%d: LCM post resume table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+	DISPMSG("post_resume %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+	tmp = dts;
+	lcm_data = lcm_dts->post_resume;
+	for (i = 0; i < ADDITIONAL_SIZE; i++) {
+		lcm_data[i].func = (*tmp) & 0xFF;
+		lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+		lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+		tmp_len = 3;
+
+		DISPMSG("post_resume %s:%d: dts: %d, %d, %d\n",
+			__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+		switch (lcm_data[i].func) {
+		case LCM_FUNC_GPIO:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_I2C:
+			memcpy(&(lcm_data[i].data_t2), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_UTIL:
+			memcpy(&(lcm_data[i].data_t1), tmp + 3,
+				lcm_data[i].size);
+			break;
+
+		case LCM_FUNC_CMD:
+			switch (lcm_data[i].type) {
+			case LCM_UTIL_WRITE_CMD_V1:
+				memcpy(&(lcm_data[i].data_t5), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_WRITE_CMD_V2:
+				memcpy(&(lcm_data[i].data_t3), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_UTIL_SET_CMDQ:
+				memcpy(&(lcm_data[i].data_t6), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			default:
+				pr_info("%s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].type);
+				return;
+			}
+			break;
+
+		default:
+			pr_info("post_resume %s/%d: %d\n",
+				__FILE__, __LINE__, lcm_data[i].func);
+			return;
+		}
+		tmp_len = tmp_len + lcm_data[i].size;
+
+		if (tmp_len < len) {
+			tmp = tmp + tmp_len;
+			len = len - tmp_len;
+		} else {
+			break;
+		}
+	}
+	lcm_dts->post_resume_size = i + 1;
+	if (lcm_dts->post_resume_size > ADDITIONAL_SIZE) {
+		pr_info("post_resume %s:%d: LCM post resume table overflow: %d\n",
+			__FILE__, __LINE__, len);
+		return;
+	}
+
+	/* parse LCM aod_enter table */
+	len = disp_of_getprop_u8(np, "aod_enter", dts);
+	if (len <= 0) {
+		pr_info("%s:%d: Not find LCM aod_enter table\n", __FILE__, __LINE__);
+	} else {
+		if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+			pr_info("aod_enter %s:%d: LCM aod_enter table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+		DISPMSG("aod_enter %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+		tmp = dts;
+		lcm_data = lcm_dts->aod_enter;
+		for (i = 0; i < ADDITIONAL_SIZE; i++) {
+			lcm_data[i].func = (*tmp) & 0xFF;
+			lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+			lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+			tmp_len = 3;
+
+			DISPMSG("aod_enter %s:%d: dts: %d, %d, %d\n",
+				__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+			switch (lcm_data[i].func) {
+			case LCM_FUNC_GPIO:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_I2C:
+				memcpy(&(lcm_data[i].data_t2), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_UTIL:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_CMD:
+				switch (lcm_data[i].type) {
+				case LCM_UTIL_WRITE_CMD_V1:
+					memcpy(&(lcm_data[i].data_t5), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_WRITE_CMD_V2:
+				case LCM_UTIL_WRITE_CMD_V22:
+					memcpy(&(lcm_data[i].data_t3), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_SET_CMDQ:
+					memcpy(&(lcm_data[i].data_t6), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				default:
+					pr_info("%s/%d: %d\n",
+						__FILE__, __LINE__, lcm_data[i].type);
+					return;
+				}
+				break;
+
+			default:
+				pr_info("aod_enter %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].func);
+				return;
+			}
+			tmp_len = tmp_len + lcm_data[i].size;
+
+			if (tmp_len < len) {
+				tmp = tmp + tmp_len;
+				len = len - tmp_len;
+			} else {
+				break;
+			}
+		}
+		lcm_dts->aod_enter_size = i + 1;
+		if (lcm_dts->aod_enter_size > ADDITIONAL_SIZE) {
+			pr_info("aod_enter %s:%d: LCM aod_enter table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+	}
+	/* parse LCM aod_exit table */
+	len = disp_of_getprop_u8(np, "aod_exit", dts);
+	if (len <= 0) {
+		pr_info("%s:%d: Not find LCM aod_exit table\n", __FILE__, __LINE__);
+	} else {
+		if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+			pr_info("aod_exit %s:%d: LCM aod_exit table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+		DISPMSG("aod_exit %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+		tmp = dts;
+		lcm_data = lcm_dts->aod_exit;
+		for (i = 0; i < ADDITIONAL_SIZE; i++) {
+			lcm_data[i].func = (*tmp) & 0xFF;
+			lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+			lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+			tmp_len = 3;
+
+			DISPMSG("aod_exit %s:%d: dts: %d, %d, %d\n",
+				__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+			switch (lcm_data[i].func) {
+			case LCM_FUNC_GPIO:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_I2C:
+				memcpy(&(lcm_data[i].data_t2), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_UTIL:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_CMD:
+				switch (lcm_data[i].type) {
+				case LCM_UTIL_WRITE_CMD_V1:
+					memcpy(&(lcm_data[i].data_t5), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_WRITE_CMD_V2:
+				case LCM_UTIL_WRITE_CMD_V22:
+					memcpy(&(lcm_data[i].data_t3), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_SET_CMDQ:
+					memcpy(&(lcm_data[i].data_t6), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				default:
+					pr_info("%s/%d: %d\n",
+						__FILE__, __LINE__, lcm_data[i].type);
+					return;
+				}
+				break;
+
+			default:
+				pr_info("aod_enter %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].func);
+				return;
+			}
+			tmp_len = tmp_len + lcm_data[i].size;
+
+			if (tmp_len < len) {
+				tmp = tmp + tmp_len;
+				len = len - tmp_len;
+			} else {
+				break;
+			}
+		}
+		lcm_dts->aod_exit_size = i + 1;
+		if (lcm_dts->aod_exit_size > ADDITIONAL_SIZE) {
+			pr_info("aod_exit %s:%d: LCM aod_exit table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+	}
+
+	/* parse LCM hbm enable table */
+	len = disp_of_getprop_u8(np, "hbm_enable", dts);
+	if (len <= 0) {
+		pr_info("%s:%d: Not find LCM enable table\n", __FILE__, __LINE__);
+	} else {
+		if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+			pr_info("hbm_enable %s:%d: LCM enable table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+		DISPMSG("hbm_enable %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+		tmp = dts;
+		lcm_data = lcm_dts->hbm_enable;
+		for (i = 0; i < ADDITIONAL_SIZE; i++) {
+			lcm_data[i].func = (*tmp) & 0xFF;
+			lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+			lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+			tmp_len = 3;
+
+			DISPMSG("hbm_enable %s:%d: dts: %d, %d, %d\n",
+				__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+			switch (lcm_data[i].func) {
+			case LCM_FUNC_GPIO:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_I2C:
+				memcpy(&(lcm_data[i].data_t2), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_UTIL:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_CMD:
+				switch (lcm_data[i].type) {
+				case LCM_UTIL_WRITE_CMD_V1:
+					memcpy(&(lcm_data[i].data_t5), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_WRITE_CMD_V2:
+				case LCM_UTIL_WRITE_CMD_V22:
+					memcpy(&(lcm_data[i].data_t3), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_SET_CMDQ:
+					memcpy(&(lcm_data[i].data_t6), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				default:
+					pr_info("%s/%d: %d\n",
+						__FILE__, __LINE__, lcm_data[i].type);
+					return;
+				}
+				break;
+
+			default:
+				pr_info("hbm_enable %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].func);
+				return;
+			}
+			tmp_len = tmp_len + lcm_data[i].size;
+
+			if (tmp_len < len) {
+				tmp = tmp + tmp_len;
+				len = len - tmp_len;
+			} else {
+				break;
+			}
+		}
+		lcm_dts->hbm_enable_size = i + 1;
+		if (lcm_dts->hbm_enable_size > ADDITIONAL_SIZE) {
+			pr_info("hbm_enable %s:%d: LCM hbm_enable table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+	}
+	/* parse LCM hbm_disable table */
+	len = disp_of_getprop_u8(np, "hbm_disable", dts);
+	if (len <= 0) {
+		pr_info("%s:%d: Not find LCM hbm_disable table\n", __FILE__, __LINE__);
+	} else {
+		if (len > (sizeof(struct LCM_DATA)*ADDITIONAL_SIZE)) {
+			pr_info("hbm_disable %s:%d: LCM hbm_disable table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+		DISPMSG("hbm_disable %s:%d: len: %d\n", __FILE__, __LINE__, len);
+
+		tmp = dts;
+		lcm_data = lcm_dts->hbm_disable;
+		for (i = 0; i < ADDITIONAL_SIZE; i++) {
+			lcm_data[i].func = (*tmp) & 0xFF;
+			lcm_data[i].type = (*(tmp + 1)) & 0xFF;
+			lcm_data[i].size = (*(tmp + 2)) & 0xFF;
+			tmp_len = 3;
+
+			DISPMSG("hbm_disable %s:%d: dts: %d, %d, %d\n",
+				__FILE__, __LINE__, *tmp, *(tmp + 1), i);
+			switch (lcm_data[i].func) {
+			case LCM_FUNC_GPIO:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_I2C:
+				memcpy(&(lcm_data[i].data_t2), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_UTIL:
+				memcpy(&(lcm_data[i].data_t1), tmp + 3,
+					lcm_data[i].size);
+				break;
+
+			case LCM_FUNC_CMD:
+				switch (lcm_data[i].type) {
+				case LCM_UTIL_WRITE_CMD_V1:
+					memcpy(&(lcm_data[i].data_t5), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_WRITE_CMD_V2:
+				case LCM_UTIL_WRITE_CMD_V22:
+					memcpy(&(lcm_data[i].data_t3), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				case LCM_UTIL_SET_CMDQ:
+					memcpy(&(lcm_data[i].data_t6), tmp + 3,
+						lcm_data[i].size);
+					break;
+
+				default:
+					pr_info("%s/%d: %d\n",
+						__FILE__, __LINE__, lcm_data[i].type);
+					return;
+				}
+				break;
+
+			default:
+				pr_info("hbm_disable %s/%d: %d\n",
+					__FILE__, __LINE__, lcm_data[i].func);
+				return;
+			}
+			tmp_len = tmp_len + lcm_data[i].size;
+
+			if (tmp_len < len) {
+				tmp = tmp + tmp_len;
+				len = len - tmp_len;
+			} else {
+				break;
+			}
+		}
+		lcm_dts->hbm_disable_size = i + 1;
+		if (lcm_dts->hbm_disable_size > ADDITIONAL_SIZE) {
+			pr_info("hbm_disable %s:%d: LCM hbm_disable table overflow: %d\n",
+				__FILE__, __LINE__, len);
+			return;
+		}
+	}
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 
 	/* parse LCM compare_id table */
 	len = disp_of_getprop_u8(np, "compare_id", dts);
@@ -700,6 +1401,15 @@ void parse_lcm_ops_dt_node(struct device_node *np,
 					memcpy(&(lcm_data[i].data_t4), tmp + 3,
 					       lcm_data[i].size);
 					break;
+
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+				case LCM_UTIL_SET_CMDQ:
+					memcpy(&(lcm_data[i].data_t6), tmp + 3,
+						lcm_data[i].size);
+				break;
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 
 				default:
 					pr_info("%s:%d: %d\n",
@@ -1024,110 +1734,68 @@ void load_lcm_resources_from_DT(struct LCM_DRIVER *lcm_drv)
 	else
 		pr_info("LCM set_params not implemented!!!\n");
 }
+
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+int tct_load_lcm_parameter_from_DT(struct LCM_DRIVER *lcm_drv, const char *already_init_name)
+{
+	int lcm_pos;
+	static char lcm_name[128] = { 0 };
+	char lcm_parent_compatible[128] = { 0 };
+	struct device_node *parent_node;
+	struct device_node *lcm_node;
+	unsigned char *tmp_dts = dts;
+	const char *device_info_str[1];
+
+    if (!lcm_drv || !already_init_name) {
+		DISPERR("%s:%d: Error access to LCM_DRIVER(NULL)\n", __FILE__,
+				__LINE__);
+		return -EINVAL;
+    }
+
+	sprintf(lcm_parent_compatible, "tct,lcm_module_list");
+	DISPMSG("%s() LCM PARAMS DT compatible: %s\n", __func__, lcm_parent_compatible);
+
+	/* Load LCM parameters from DT */
+	parent_node = of_find_compatible_node(NULL, NULL, lcm_parent_compatible);
+	if (parent_node == NULL) {
+			DISPMSG("LCM PARAMS DT node: Not found\n");
+			return -ENOENT;
+	}
+
+	lcm_pos = of_property_match_string(parent_node, "lcm-names", already_init_name);
+	if (lcm_pos >= 0) {
+		DISPMSG("%s found %d lcm parameters\n", __func__, lcm_pos);
+		sprintf(lcm_name, "lcd_%d", lcm_pos);
+		lcm_node = of_find_compatible_node(NULL, NULL, lcm_name);
+		memset((unsigned char*)(&lcm_dts), 0x0, sizeof(struct LCM_DTS));
+		parse_lcm_params_dt_node(lcm_node, &(lcm_dts.params));
+		parse_lcm_ops_dt_node(lcm_node, &lcm_dts, tmp_dts);
+		lcm_drv->parse_dts(&lcm_dts, 1);
+		sprintf(lcm_name, "%s", already_init_name);
+		lcm_drv->name = lcm_name;
+#ifdef CONFIG_TCT_DEVICEINFO
+		if (of_property_read_string_helper(parent_node, "lcm-device-info", device_info_str, 1, lcm_pos) >= 0){
+			snprintf(LCM_module_name, sizeof(LCM_module_name), "%s", device_info_str[0]);
+		}
 #endif
 
-/* Begin add by lingchen for LCM info */
-#if defined(__arm64__) || defined(__aarch64__)
-static ssize_t LCM_info_show(struct device *dev,struct device_attribute *attr, char *buf)
-{
-	char lcm_name[64]="bangkok_tdt_ili9881d_hd_dsi_vdo";
-	char retstr[64]="NA:NA:NA";
-	//char *ret=NULL;
-	int ret;
-
-	struct disp_lcm_handle *plcm ;
-
-	plcm = kzalloc(sizeof(uint8_t*) *sizeof(struct disp_lcm_handle), GFP_KERNEL);
-	if(explcm!=NULL){
-		memcpy(plcm,explcm,sizeof(struct disp_lcm_handle));
-	}else{
-		printk("[min.luo] the plcm is NULL!!!!!\n");
+		return 0;
 	}
 
-       if(plcm)
-	    ret=strlcpy(lcm_name,plcm->drv->name,sizeof(lcm_name));
-
-	//sprintf(lcm_name,"%s",plcm->drv->name);
-	printk("[min.luo]ictype :-------lcm_name:%s ----------\n",lcm_name);
-
-	if (!strncmp(lcm_name, "tokyo_tf_ft8006_hd_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"FT8006P:TDT:720x1520",sizeof(retstr));			
-	}else if (!strncmp(lcm_name, "tokyo_tf_ili9881h_txd_hd_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"ILI9881H:TXD:720x1520",sizeof(retstr));
-	}else if (!strncmp(lcm_name, "seoul_st7701s_coe_480_960_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"ST7701S:COE:480x960",sizeof(retstr));			
-	}else if (!strncmp(lcm_name, "seoul_gc9503p_ykl_480_960_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"GC9503P:YKL:480x960",sizeof(retstr));
-	}else if (!strncmp(lcm_name, "bangkok_tdt_ili9881d_hd_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"ILI9881D:TDT:720x1440",sizeof(retstr));
-	}else if (!strncmp(lcm_name, "bangkok_coe_gc9702p_hd_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"GC9702P:COE:720x1440",sizeof(retstr));
-	}else if (!strncmp(lcm_name, "bangkok_ykl_xm96120_hd_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"XM96120:YKL:720x1440",sizeof(retstr));
-	}else if (!strncmp(lcm_name, "bangkok_coe_gh1001_hd_dsi_vdo",sizeof(lcm_name))) {
-		ret=strlcpy(retstr,"GH1001:COE:720x1440",sizeof(retstr));
-	}else{
-		ret=strlcpy(retstr,"NA:NA:NA",sizeof(retstr));
-	}
-
-	if(plcm) {
-		kfree(plcm);
-	}
-
-	printk("[min.luo]LCM_info_show retstr:%s ----------\n",retstr);
-
-       return sprintf(buf, "%s", retstr);
-}
-#else
-static ssize_t LCM_info_show(struct device *dev,struct device_attribute *attr, char *buf)
-{
-	char lcm_name[32]="bangkok_tdt_ili9881d_hd_dsi_vdo";
-	char retstr[32]="NA:NA:NA";
-	char *ret=NULL;
-
-	struct disp_lcm_handle *plcm ;
-
-	plcm = kzalloc(sizeof(uint8_t*) *sizeof(struct disp_lcm_handle), GFP_KERNEL);
-	if(explcm!=NULL){
-		memcpy(plcm,explcm,sizeof(struct disp_lcm_handle));
-	}else{
-		printk("[min.luo] the plcm is NULL!!!!!\n");
-	}
-
-	ret=strcpy(lcm_name,plcm->drv->name);
-
-	//sprintf(lcm_name,"%s",plcm->drv->name);
-	printk("[min.luo]ictype :-------lcm_name:%s ----------\n",lcm_name);
-	//bangkok tf start
-	if (!strcmp(lcm_name, "bangkok_tdt_ili9881d_hd_dsi_vdo")) {
-		ret=strcpy(retstr,"ILI9881D:TDT:720x1440");
-	}else if (!strcmp(lcm_name, "bangkok_coe_gc9702p_hd_dsi_vdo")) {
-		ret=strcpy(retstr,"GC9702P:COE:720x1440");
-	}else if (!strcmp(lcm_name, "bangkok_ykl_xm96120_hd_dsi_vdo")) {
-		ret=strcpy(retstr,"XM96120:YKL:720x1440");
-	//bangkok tf end
-     //begin add by yusen.ke.sz for show lcm information on 2020/12/24
-     }else if (!strcmp(lcm_name, "tokyolitetmo_nt36525bh_hd_dsi_vdo")) {
-	 	ret=strcpy(retstr,"NT36525BH:TDT:720x1520");
-     }else if (!strcmp(lcm_name, "tokyolitetmo_ft8006s_hd_dsi_vdo")) {
-		ret=strcpy(retstr,"FT8006S:TDT:720x1520");
-     }else if (!strcmp(lcm_name, "tokyolitetmo_ft8006s_3th_hd_dsi_vdo")) {
-		ret=strcpy(retstr,"FT8006S_NEW:TDT:720x1520");
-        //end add by yusen.ke.sz for show lcm information on 2020/12/24
-	}else{
-		ret=strcpy(retstr,"NA:NA:NA");
-	}
-	printk("[min.luo]retstr : %s\n",retstr);
-
-	if(plcm) {
-		kfree(plcm);
-	}
-	return sprintf(buf,"%s\n",retstr);
+    return -ENOENT;
 }
 #endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
+#endif
 
-static DEVICE_ATTR(LCM, 0444, LCM_info_show, NULL);
-/* End add by lingchen for LCM info */
+
+
+#if defined(CONFIG_BACKLIGHT_2047LEVEL_TO_1024PWM_MAPPING_JETTA)
+int is_1st_lcd = 0;
+#endif
+
+
 
 struct disp_lcm_handle *disp_lcm_probe(char *plcm_name,
 	enum LCM_INTERFACE_ID lcm_id, int is_lcm_inited)
@@ -1148,6 +1816,24 @@ struct disp_lcm_handle *disp_lcm_probe(char *plcm_name,
 	DISPCHECK("plcm_name=%s is_lcm_inited %d\n", plcm_name, is_lcm_inited);
 
 #if defined(MTK_LCM_DEVICE_TREE_SUPPORT)
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)	
+	if (tct_load_lcm_parameter_from_DT(&lcm_common_drv, plcm_name) == 0) {
+		lcm_drv = &lcm_common_drv;
+		isLCMInited = true;
+		isLCMFound = true;
+		pr_info("[LCM][INFO]%s(), lcm_drv->name=%s, plcm_name=%s", 
+			__func__, lcm_drv->name, plcm_name);
+/*Begin added by peisong.cao for task 11692038 on 2021-12-17*/
+#if defined(CONFIG_TCT_LCM_NL9911_VERF)
+		if(!strcmp(lcm_drv->name,"cruze_nl9911c_truly_hd_dsi_vdo")){
+			lcm_name_flag = 1;
+		}
+#endif
+/*End added by peisong.cao for task 11692038 on 2021-12-17*/
+	} else
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 	if (check_lcm_node_from_DT() == 0) {
 		lcm_drv = &lcm_common_drv;
 		lcm_drv->name = lcm_name_list[0];
@@ -1233,9 +1919,31 @@ struct disp_lcm_handle *disp_lcm_probe(char *plcm_name,
 		return NULL;
 	}
 
-        //begin add by kun.zheng for task 8998289 on 2020/03/24
-        drv_to_distingish_tp = lcm_drv;
-        //end add by kun.zheng for task 8998289 on 2020/03/24
+/* Begin add for LCM device info */
+#ifdef CONFIG_TCT_DEVICEINFO
+	if(!strcmp(lcm_drv->name,"cruzepro_ft8756_tdt_hd_dsi_vdo")){
+		sprintf(LCM_module_name, "FT8756:TDT:720*1600:AUC0650127C1");
+}else if(!strcmp(lcm_drv->name,"cruze_nt36525b_tdt_hd_dsi_vdo")){
+		sprintf(LCM_module_name, "NT36525B:NOVATEK:720*1600:AUC0650136C1");
+ }else if(!strcmp(lcm_drv->name,"cruze_nl9911c_truly_hd_dsi_vdo")){
+                sprintf(LCM_module_name, "NL9911C:Truly:720*1600:AUC0650134C1");
+}else{
+	//beging add by wenhaodeng for task LOGANS-2237 on 20220811	 
+		//goto devinfo_lcm.c, dont add device info in this file
+		tct_use_lcm_devinfo_list=1;  
+	//end add by wenhaodeng for task LOGANS-2237 on 20220811		
+		sprintf(LCM_module_name, "NA:NA:NA:720*1600");
+	}
+	printk("[LCD] LCM_module_name = %s\n",LCM_module_name);
+#endif
+/* End add for LCM device info */
+
+#if defined(CONFIG_BACKLIGHT_2047LEVEL_TO_1024PWM_MAPPING_JETTA)
+	if (!strcmp(lcm_drv->name,"bangkok_tdt_gh1001_hd_dsi_vdo")){
+		is_1st_lcd =  1;
+	}
+#endif
+
 
 	plcm = kzalloc(sizeof(uint8_t *) *
 		sizeof(struct disp_lcm_handle), GFP_KERNEL);
@@ -1274,30 +1982,33 @@ struct disp_lcm_handle *disp_lcm_probe(char *plcm_name,
 		plcm->lcm_original_width = plcm->params->width;
 		plcm->lcm_original_height = plcm->params->height;
 		_dump_lcm_info(plcm);
-		/* Begin add by lingchen for LCM info */
-		explcm = kzalloc(sizeof(uint8_t*) *sizeof(struct disp_lcm_handle), GFP_KERNEL);
-		if (explcm) {
-		    memcpy(explcm,plcm,sizeof(struct disp_lcm_handle));
-		    deviceinfo_lcm = get_deviceinfo_dev();
-		    // LCM  /sys/class/deviceinfo/device_info/LCM
-		    if(deviceinfo_lcm){
-			if(device_create_file(deviceinfo_lcm, &dev_attr_LCM) < 0){
-				pr_err("Failed to create device file(%s)!\n", dev_attr_LCM.attr.name);
-			}
-			printk("[min.luo] create the lcm device info node!\n");
-		    }
-	       } else {
-		    DISPERR("min.luo DEVICEINFO ERROR!!!kzalloc plcm and plcm->params failed\n");
-	       }
 
-		printk("disp lcm_drv->name is %s!\n",lcm_drv->name);
-		/* End add by lingchen for LCM info */
+#ifdef CONFIG_HELAEYE_BSP_LCD_ON
+if (lcm_drv) {
+	printk("disp lcm_drv->name is %s! islcmconnected=%d \n",lcm_drv->name,islcmconnected);
+    memset(mtkfb_hera_lcm_name,0,sizeof(mtkfb_hera_lcm_name));
+    strcpy(mtkfb_hera_lcm_name,lcm_drv->name);
+    
+	if ( islcmconnected==0 ){
+    lcd_driver_lasterrcode=0x01;//LCD_DRV_INIT_ERROR
+    printk("disp lcm_drv->name is %s! islcmconnected=%d lcd_driver_lasterrcode =%d\n",
+    lcm_drv->name,islcmconnected,lcd_driver_lasterrcode);
+    }
+}
+#endif
 		return plcm;
 	}
 
 	DISPERR(
 		"the specific LCM Interface [%d] didn't define any lcm driver\n",
 		lcm_id);
+
+#ifdef CONFIG_HELAEYE_BSP_LCD_ON
+		memset(mtkfb_hera_lcm_name,0,sizeof(mtkfb_hera_lcm_name));
+		sprintf(mtkfb_hera_lcm_name,"NOTFOUND_lcm_id[%d]",lcm_id);
+		lcd_driver_lasterrcode=0x01;//LCD_DRV_INIT_ERROR
+#endif
+
 FAIL:
 
 	kfree(plcm);
@@ -1552,6 +2263,98 @@ int disp_lcm_suspend(struct disp_lcm_handle *plcm)
 	return -1;
 }
 
+/* Begin add for particular timing control */
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+// splite the suspend flow: pre_suspend -->dpmgr_path_stop(HS stop) --> lcm suspend --> dpmgr_path_power_off(LP off) --> post suspend
+//typical usage: send 28 10 in HS before MIPI data off.
+int disp_lcm_pre_suspend(struct disp_lcm_handle *plcm)
+{
+	struct LCM_DRIVER *lcm_drv = NULL;
+
+	DISPFUNC();
+	if (_is_lcm_inited(plcm)) {
+		lcm_drv = plcm->drv;
+		if (lcm_drv->pre_suspend) {
+			lcm_drv->pre_suspend();
+		} else {
+			DISPERR("TCT_Notice, lcm_drv->pre_suspend is null\n");
+			return -1;
+		}
+
+		return 0;
+	}
+	DISPERR("lcm_drv is null\n");
+	return -1;
+}
+
+//this function act after dpmgr_path_power_off(), this time the AP DSI controller is power off.
+int disp_lcm_post_suspend(struct disp_lcm_handle *plcm)
+{
+	struct LCM_DRIVER *lcm_drv = NULL;
+
+	DISPFUNC();
+	if (_is_lcm_inited(plcm)) {
+		lcm_drv = plcm->drv;
+		if (lcm_drv->post_suspend) {
+			lcm_drv->post_suspend();
+		} else {
+			DISPERR("TCT_Notice, lcm_drv->post_suspend is null\n");
+			return -1;
+		}
+
+		return 0;
+	}
+	DISPERR("lcm_drv is null\n");
+	return -1;
+}
+
+//split resume flow:pre resume -->dpmgr_path_power_on(LP) --> lcm resume --> dpmgr_path_start(trigger2HS) --> post resume
+//this function help to power LCD before AP controller power on.
+int disp_lcm_pre_resume(struct disp_lcm_handle *plcm)
+{
+	struct LCM_DRIVER *lcm_drv = NULL;
+
+	DISPFUNC();
+	if (_is_lcm_inited(plcm)) {
+		lcm_drv = plcm->drv;
+
+		if (lcm_drv->pre_resume) {
+			lcm_drv->pre_resume();
+		} else {
+			DISPERR("TCT_Notice, lcm_drv->pre_resume is null\n");
+			return -1;
+		}
+
+		return 0;
+	}
+	DISPERR("lcm_drv is null\n");
+	return -1;
+}
+
+//typical usage: add delay to flush more HS data for LCM.
+int disp_lcm_post_resume(struct disp_lcm_handle *plcm)
+{
+	struct LCM_DRIVER *lcm_drv = NULL;
+
+	DISPFUNC();
+	if (_is_lcm_inited(plcm)) {
+		lcm_drv = plcm->drv;
+
+		if (lcm_drv->post_resume) {
+			lcm_drv->post_resume();
+		} else {
+			DISPERR("TCT_Notice, lcm_drv->post_resume is null\n");
+			return -1;
+		}
+
+		return 0;
+	}
+	DISPERR("lcm_drv is null\n");
+	return -1;
+}
+#endif
+/* End add for particular timing control */
+
 int disp_lcm_resume(struct disp_lcm_handle *plcm)
 {
 	struct LCM_DRIVER *lcm_drv = NULL;
@@ -1577,6 +2380,30 @@ int disp_lcm_resume(struct disp_lcm_handle *plcm)
 	return -1;
 }
 
+
+//begin add by jingqing.yan for passat aod mode 2021.12.06
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+int disp_lcm_aod(int enter, struct disp_lcm_handle *plcm, void *qhandle)
+{
+	struct LCM_DRIVER *lcm_drv = NULL;
+
+	DISPMSG("%s, enter:%d\n", __func__, enter);
+	if (_is_lcm_inited(plcm)) {
+		lcm_drv = plcm->drv;
+		if (lcm_drv->aod) {
+			lcm_drv->aod(enter, qhandle);
+		} else {
+			DISPERR("FATAL ERROR, lcm_drv->aod is null\n");
+			return -1;
+		}
+
+		return 0;
+	}
+
+	DISPERR("lcm_drv is null\n");
+	return -1;
+}
+#else
 int disp_lcm_aod(struct disp_lcm_handle *plcm, int enter)
 {
 	struct LCM_DRIVER *lcm_drv = NULL;
@@ -1596,6 +2423,8 @@ int disp_lcm_aod(struct disp_lcm_handle *plcm, int enter)
 	DISPERR("lcm_drv is null\n");
 	return -1;
 }
+#endif
+//end add by jingqing.yan for passat aod mode 2021.12.06
 
 int disp_lcm_is_support_adjust_fps(struct disp_lcm_handle *plcm)
 {
@@ -1961,7 +2790,7 @@ bool disp_lcm_need_send_cmd(
 	if (from_level < 0 ||
 		to_level < 0)
 		return false;
-	return	lcm_drv->dfps_need_send_cmd(from_level, to_level);
+	return	lcm_drv->dfps_need_send_cmd(from_level, to_level, lcm_param);
 }
 
 void disp_lcm_dynfps_send_cmd(
@@ -1999,7 +2828,7 @@ void disp_lcm_dynfps_send_cmd(
 			to_level = (dfps_params[j]).level;
 	}
 	lcm_drv->dfps_send_lcm_cmd(cmdq_handle,
-		from_level, to_level);
+		from_level, to_level, lcm_param);
 done:
 	DISPCHECK("%s,add done\n", __func__);
 }

@@ -20,7 +20,7 @@
 #endif /* CONFIG_RECV_BAT_ABSENT_NOTIFY */
 #endif /* CONFIG_USB_POWER_DELIVERY */
 
-#define TCPC_CORE_VERSION		"2.0.12_MTK"
+#define TCPC_CORE_VERSION		"2.0.17_MTK"
 
 static ssize_t tcpc_show_property(struct device *dev,
 				  struct device_attribute *attr, char *buf);
@@ -48,6 +48,9 @@ static struct device_attribute tcpc_device_attributes[] = {
 	TCPC_DEVICE_ATTR(timer, 0664),
 	TCPC_DEVICE_ATTR(caps_info, 0444),
 	TCPC_DEVICE_ATTR(pe_ready, 0444),
+/* Add-start by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
+	TCPC_DEVICE_ATTR(role_ctrl, 0664),
+/* Add-end by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
 };
 
 enum {
@@ -58,6 +61,9 @@ enum {
 	TCPC_DESC_TIMER,
 	TCPC_DESC_CAP_INFO,
 	TCPC_DESC_PE_READY,
+/* Add-start by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
+	TCPC_DESC_ROLE_CTRL,
+/* Add-end by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
 };
 
 static struct attribute *__tcpc_attrs[ARRAY_SIZE(tcpc_device_attributes) + 1];
@@ -71,6 +77,7 @@ static const struct attribute_group *tcpc_attr_groups[] = {
 };
 
 static const char * const role_text[] = {
+	"Unknown",
 	"SNK Only",
 	"SRC Only",
 	"DRP",
@@ -161,16 +168,23 @@ static ssize_t tcpc_show_property(struct device *dev,
 		if (ret < 0)
 			break;
 		break;
+	/* Add-start by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
+	case TCPC_DESC_ROLE_CTRL:
+                ret = snprintf(buf, 256, "%s\n", role_text[tcpc->typec_role_new]);
+                if (ret < 0)
+                        break;
+                break;
+	/* Add-end by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
 	case TCPC_DESC_RP_LEVEL:
-		if (tcpc->typec_local_rp_level == TYPEC_CC_RP_DFT) {
+		if (tcpc->typec_local_rp_level == TYPEC_RP_DFT) {
 			ret = snprintf(buf, 256, "%s\n", "Default");
 			if (ret < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_1_5) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_RP_1_5) {
 			ret = snprintf(buf, 256, "%s\n", "1.5");
 			if (ret < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_3_0) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_RP_3_0) {
 			ret = snprintf(buf, 256, "%s\n", "3.0");
 			if (ret < 0)
 				break;
@@ -183,7 +197,7 @@ static ssize_t tcpc_show_property(struct device *dev,
 				"6: get_src_cap", "7: get_sink_cap",
 				"8: discover_id", "9: discover_cable");
 		if (ret < 0)
-			break;
+			dev_dbg(dev, "%s: ret=%d\n", __func__, ret);
 		break;
 	case TCPC_DESC_INFO:
 		i += snprintf(buf + i,
@@ -194,15 +208,15 @@ static ssize_t tcpc_show_property(struct device *dev,
 			256, "role = %s\n", role_text[tcpc->desc.role_def]);
 		if (i < 0)
 			break;
-		if (tcpc->typec_local_rp_level == TYPEC_CC_RP_DFT) {
+		if (tcpc->typec_local_rp_level == TYPEC_RP_DFT) {
 			i += snprintf(buf + i, 256, "rplvl = %s\n", "Default");
 			if (i < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_1_5) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_RP_1_5) {
 			i += snprintf(buf + i, 256, "rplvl = %s\n", "1.5");
 			if (i < 0)
 				break;
-		} else if (tcpc->typec_local_rp_level == TYPEC_CC_RP_3_0) {
+		} else if (tcpc->typec_local_rp_level == TYPEC_RP_3_0) {
 			i += snprintf(buf + i, 256, "rplvl = %s\n", "3.0");
 			if (i < 0)
 				break;
@@ -228,28 +242,21 @@ static ssize_t tcpc_show_property(struct device *dev,
 	return strlen(buf);
 }
 
-static int get_parameters(char *buf, long *param1, int num_of_par)
+static int get_parameters(char *buf, unsigned long *param, int num_of_par)
 {
-	char *token;
-	int base, cnt;
-
-	token = strsep(&buf, " ");
+	int cnt = 0;
+	char *token = strsep(&buf, " ");
 
 	for (cnt = 0; cnt < num_of_par; cnt++) {
-		if (token != NULL) {
-			if ((token[1] == 'x') || (token[1] == 'X'))
-				base = 16;
-			else
-				base = 10;
-
-			if (kstrtoul(token, base, &param1[cnt]) != 0)
+		if (token) {
+			if (kstrtoul(token, 0, &param[cnt]) != 0)
 				return -EINVAL;
 
 			token = strsep(&buf, " ");
-			}
-		else
+		} else
 			return -EINVAL;
 	}
+
 	return 0;
 }
 
@@ -273,9 +280,19 @@ static ssize_t tcpc_store_property(struct device *dev,
 			dev_err(dev, "get parameters fail\n");
 			return -EINVAL;
 		}
-
 		tcpm_typec_change_role(tcpc, val);
 		break;
+	/* Add-start by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
+	case TCPC_DESC_ROLE_CTRL:
+                ret = get_parameters((char *)buf, &val, 1);
+                if (ret < 0) {
+                        dev_err(dev, "get parameters fail\n");
+                        return -EINVAL;
+                }
+                dev_err(dev, "tcpc set role_ctrl = %ld\n", val);
+                tcpm_typec_change_role_postpone(tcpc, val, true);
+                break;
+	/* Add-end by baiwei.peng for LUNA84GVZW-3578 on 2022/12/07 */
 	case TCPC_DESC_TIMER:
 		ret = get_parameters((char *)buf, &val, 1);
 		if (ret < 0) {
@@ -367,19 +384,20 @@ struct tcpc_device *tcpc_dev_get_by_name(const char *name)
 			NULL, (const void *)name, tcpc_match_device_by_name);
 	return dev ? dev_get_drvdata(dev) : NULL;
 }
+EXPORT_SYMBOL(tcpc_dev_get_by_name);
 
 static void tcpc_device_release(struct device *dev)
 {
-	struct tcpc_device *tcpc_dev = to_tcpc_device(dev);
+	struct tcpc_device *tcpc = to_tcpc_device(dev);
 
 	pr_info("%s : %s device release\n", __func__, dev_name(dev));
-	PD_BUG_ON(tcpc_dev == NULL);
+	PD_BUG_ON(tcpc == NULL);
 	/* Un-init pe thread */
 #ifdef CONFIG_USB_POWER_DELIVERY
-	tcpci_event_deinit(tcpc_dev);
+	tcpci_event_deinit(tcpc);
 #endif /* CONFIG_USB_POWER_DELIVERY */
 	/* Un-init timer thread */
-	tcpci_timer_deinit(tcpc_dev);
+	tcpci_timer_deinit(tcpc);
 	/* Un-init Mutex */
 	/* Do initialization */
 }
@@ -441,18 +459,14 @@ struct tcpc_device *tcpc_device_register(struct device *parent,
 	 * please use it instead of "WAKE_LOCK_SUSPEND"
 	 */
 	tcpc->attach_wake_lock =
-		wakeup_source_register(&tcpc->dev, "tcpc_attach_wakelock");
-	tcpc->dettach_temp_wake_lock =
-		wakeup_source_register(&tcpc->dev, "tcpc_detach_wakelock");
+		wakeup_source_register(NULL, "tcpc_attach_wake_lock");
+	tcpc->detach_wake_lock =
+		wakeup_source_register(NULL, "tcpc_detach_wake_lock");
 
 	tcpci_timer_init(tcpc);
 #ifdef CONFIG_USB_POWER_DELIVERY
 	pd_core_init(tcpc);
 #endif /* CONFIG_USB_POWER_DELIVERY */
-
-	ret = tcpc_dual_role_phy_init(tcpc);
-	if (ret < 0)
-		dev_err(&tcpc->dev, "dual role usb init fail\n");
 
 	return tcpc;
 }
@@ -476,7 +490,7 @@ static int tcpc_device_irq_enable(struct tcpc_device *tcpc)
 		return ret;
 	}
 
-	ret = tcpc_typec_init(tcpc, tcpc->desc.role_def + 1);
+	ret = tcpc_typec_init(tcpc, tcpc->desc.role_def);
 	tcpci_unlock_typec(tcpc);
 	if (ret < 0) {
 		pr_err("%s : tcpc typec init fail\n", __func__);
@@ -557,14 +571,19 @@ static void tcpc_event_init_work(struct work_struct *work)
 
 	tcpci_lock_typec(tcpc);
 	tcpci_event_init(tcpc);
-#ifdef CONFIG_TYPEC_WAIT_BC12
+#ifdef CONFIG_USB_PD_WAIT_BC12
+#ifdef ADAPT_CHARGER_V1
+	tcpc->chg_psy = power_supply_get_by_name("charger");
+#else
 	tcpc->chg_psy = devm_power_supply_get_by_phandle(
 		tcpc->dev.parent, "charger");
-	if (IS_ERR_OR_NULL(tcpc->chg_psy)) {
+#endif
+	if (!tcpc->chg_psy) {
+		tcpci_unlock_typec(tcpc);
 		TCPC_ERR("%s get charger psy fail\n", __func__);
 		return;
 	}
-#endif /* CONFIG_TYPEC_WAIT_BC12 */
+#endif /* CONFIG_USB_PD_WAIT_BC12 */
 	tcpc->pd_inited_flag = 1; /* MTK Only */
 	pr_info("%s typec attach new = %d\n",
 			__func__, tcpc->typec_attach_new);
@@ -824,7 +843,7 @@ void tcpc_device_unregister(struct device *dev, struct tcpc_device *tcpc)
 #ifdef CONFIG_USB_PD_REV30
 	wakeup_source_unregister(tcpc->pd_port.pps_request_wake_lock);
 #endif /* CONFIG_USB_PD_REV30 */
-	wakeup_source_unregister(tcpc->dettach_temp_wake_lock);
+	wakeup_source_unregister(tcpc->detach_wake_lock);
 	wakeup_source_unregister(tcpc->attach_wake_lock);
 
 	device_unregister(&tcpc->dev);
@@ -894,11 +913,11 @@ static int fg_bat_notifier_call(struct notifier_block *nb,
 				unsigned long event, void *data)
 {
 	struct pd_port *pd_port = container_of(nb, struct pd_port, fg_bat_nb);
-	struct tcpc_device *tcpc_dev = pd_port->tcpc_dev;
+	struct tcpc_device *tcpc = pd_port->tcpc;
 
 	switch (event) {
 	case EVENT_BATTERY_PLUG_OUT:
-		dev_info(&tcpc_dev->dev, "%s: fg battery absent\n", __func__);
+		dev_info(&tcpc->dev, "%s: fg battery absent\n", __func__);
 		schedule_work(&pd_port->fg_bat_work);
 		break;
 	default:

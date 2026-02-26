@@ -76,6 +76,13 @@
 #include "blk-mq-tag.h"
 #include "blk-mq-sched.h"
 
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+#include <trace/events/fgio.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 /* PREFLUSH/FUA sequences */
 enum {
 	REQ_FSEQ_PREFLUSH	= (1 << 0), /* pre-flushing in progress */
@@ -135,6 +142,12 @@ static void blk_flush_restore_request(struct request *rq)
 static bool blk_flush_queue_rq(struct request *rq, bool add_front)
 {
 	if (rq->q->mq_ops) {
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+		trace_blk_flush_queue_rq(rq, add_front);
+#endif
+// #endif /* VENDOR_EDIT */
 		blk_mq_add_to_requeue_list(rq, add_front, true);
 		return false;
 	} else {
@@ -179,6 +192,13 @@ static bool blk_flush_complete_seq(struct request *rq,
 		seq = blk_flush_cur_seq(rq);
 	else
 		seq = REQ_FSEQ_DONE;
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+	trace_blk_flush_complete_seq(rq, seq);
+#endif
+// #endif /* VENDOR_EDIT */
 
 	switch (seq) {
 	case REQ_FSEQ_PREFLUSH:
@@ -486,6 +506,13 @@ void blk_insert_flush(struct request *rq)
 	}
 
 	BUG_ON(rq->bio != rq->biotail); /*assumes zero or single bio rq */
+
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+	trace_blk_insert_flush(rq, policy);
+#endif
+// #endif /* VENDOR_EDIT */
 
 	/*
 	 * If there's data but flush is not necessary, the request can be

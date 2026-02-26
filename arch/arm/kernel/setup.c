@@ -1081,6 +1081,12 @@ void __init hyp_mode_check(void)
 		pr_info("CPU: All CPU(s) started in SVC mode.\n");
 #endif
 }
+/*Begin add by peisong.cao for 11669097*/
+#ifdef CONFIG_TCT_DEVICEINFO
+extern void set_cpu_devinfo(const char *name);
+extern char CPU_module_name[256];
+#endif
+/*End add by peisong.cao for 11669097*/
 
 void __init setup_arch(char **cmdline_p)
 {
@@ -1106,6 +1112,12 @@ void __init setup_arch(char **cmdline_p)
 #else
 	machine_name = mdesc->name;
 #endif
+/*Begin add by peisong.cao for 11669097*/
+#ifdef CONFIG_TCT_DEVICEINFO
+	sprintf(CPU_module_name, machine_name);
+        set_cpu_devinfo(CPU_module_name);
+#endif
+/*End add by peisong.cao for 11669097*/	
 	dump_stack_set_arch_desc("%s", mdesc->name);
 
 	if (mdesc->reboot_mode != REBOOT_HARD)

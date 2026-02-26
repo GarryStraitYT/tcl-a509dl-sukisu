@@ -105,7 +105,7 @@ static inline int getAFInfo(__user struct stAF_MotorInfo *pstMotorInfo)
 
 	return 0;
 }
-
+extern char CamNameB_module_name[256];
 /* initAF include driver initialization and standby mode */
 static int initAF(void)
 {
@@ -118,6 +118,16 @@ static int initAF(void)
 		char puSendCmd[2] = {0x00, 0x00}; /* soft power on */
 		char puSendCmd2[2] = {0x01, 0x39};
 		char puSendCmd3[2] = {0x05, 0x79};
+
+		/*Begin ersen.shang for [T11708665][update bad17b ov13b10 driver ic init code]*/
+		char DACCodeHigh[2] = {0x02, 0x01};
+		char DACCodeLow[2]  = {0x03, 0x84};
+		if(strcmp(CamNameB_module_name, "ov13b10:SHINE:13M:ASA1300096C1") == 0)
+		{
+			puSendCmd3[0] = 0x05;
+			puSendCmd3[1] = 0x07;
+		}
+		/*End   ersen.shang for [T11708665][update bad17b ov13b10 driver ic init code]*/
 
 		g_pstAF_I2Cclient->addr = AF_I2C_SLAVE_ADDR;
 		g_pstAF_I2Cclient->addr = g_pstAF_I2Cclient->addr >> 1;
@@ -147,6 +157,23 @@ static int initAF(void)
 			LOG_INF("I2C send 0x05 failed!!\n");
 			return -1;
 		}
+
+		/*Begin ersen.shang for [T11708665][update bad17b ov13b10 driver ic init code]*/
+		if(strcmp(CamNameB_module_name, "ov13b10:SHINE:13M:ASA1300096C1") == 0)
+		{
+			i4RetValue = i2c_master_send(g_pstAF_I2Cclient, DACCodeHigh, 2);
+			if (i4RetValue < 0) {
+				LOG_INF("I2C send 0x02 failed!!\n");
+				return -1;
+			}
+
+			i4RetValue = i2c_master_send(g_pstAF_I2Cclient, DACCodeLow, 2);
+			if (i4RetValue < 0) {
+				LOG_INF("I2C send 0x03 failed!!\n");
+				return -1;
+			}
+		}
+		/*End   ersen.shang for [T11708665][update bad17b ov13b10 driver ic init code]*/
 
 		LOG_INF("driver init success!!\n");
 
@@ -238,6 +265,26 @@ int DW9718TAF_Release(struct inode *a_pstInode, struct file *a_pstFile)
 		int i4RetValue = 0;
 		u8 data = 0x0;
 		char puSendCmd[2] = {0x00, 0x01};
+
+        //Begin modified by xiaoming-zhong for [Task][11699913][reduce af release delay time] on 2022/01/11
+        unsigned long step=25;
+        if (g_u4CurrPosition > g_u4AF_INF && g_u4CurrPosition <= g_u4AF_MACRO) {
+            while (g_u4CurrPosition > 50) {
+                if (g_u4CurrPosition > 400)
+                    step = 100;
+                else if (g_u4CurrPosition > 180)
+                    step = 40;
+                else
+                    step = 20;
+				
+            g_u4CurrPosition = g_u4CurrPosition - step;
+            s4AF_WriteReg((unsigned short)g_u4CurrPosition);
+            mdelay(2);
+            if (g_u4CurrPosition <= 0 || g_u4CurrPosition > 1023)
+                break;
+            }
+ 		}
+        //End modified by xiaoming-zhong for [Task][11699913][reduce af release delay time] on 2022/01/11
 
 		LOG_INF("apply\n");
 

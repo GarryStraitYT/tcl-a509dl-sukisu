@@ -938,7 +938,7 @@ unsigned int mtkfb_fm_auto_test(void)
 	}
 
 	if (idle_state_backup) {
-		primary_display_idlemgr_kick(__func__, 0);
+		primary_display_idlemgr_kick(__func__, 1);
 		enable_idlemgr(0);
 	}
 
@@ -992,12 +992,11 @@ int mtkfb_aod_mode_switch(enum mtkfb_aod_power_mode aod_pm)
 	int ret = 0;
 	enum mtkfb_power_mode prev_pm = primary_display_get_power_mode();
 
-	DISPCHECK("AOD: ioctl: %s\n",
-		aod_pm ? "AOD_DOZE_SUSPEND" : "AOD_DOZE");
 	if (!primary_is_aod_supported()) {
 		DISPCHECK("AOD: feature not support\n");
 		return ret;
 	}
+	DISPCHECK("%s: AOD ioctl: %d in\n", __func__, aod_pm);
 
 	if (aod_pm == MTKFB_AOD_DOZE_SUSPEND) {
 		/*
@@ -1025,8 +1024,7 @@ int mtkfb_aod_mode_switch(enum mtkfb_aod_power_mode aod_pm)
 		DISP_PR_ERR("AOD: error: unknown AOD power mode %d\n", aod_pm);
 	}
 	if (ret < 0)
-		DISP_PR_ERR("AOD: set %s failed\n",
-			aod_pm ? "AOD_SUSPEND" : "AOD_RESUME");
+		DISP_PR_INFO("%s: AOD set %d failed\n", __func__, aod_pm);
 	return ret;
 }
 

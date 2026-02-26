@@ -25,6 +25,11 @@ enum {
 	PMIC_AUXOUT_DRV_CURR,
 	PMIC_AUXOUT_BBLPM_EN,
 	PMIC_AUXOUT_BBLPM_O,
+	PMIC_COFST_FPM,
+	PMIC_CDAC_FPM,
+	PMIC_CORE_IDAC_FPM,
+	PMIC_AAC_FPM_SWEN,
+	PMIC_HEATER_SEL,
 	PMIC_HW_DTS_NUM, /* Number of HW dependent PMIC properties */
 };
 
@@ -52,6 +57,12 @@ struct pmic_clkbuf_op {
 	void (*pmic_clk_buf_get_xo_en)(u32 *stat);
 	void (*pmic_clk_buf_get_bblpm_en)(u32 *stat);
 	int (*pmic_clk_buf_dump_misc_log)(char *buf);
+	void (*pmic_clk_buf_set_cap_id)(u32 capid);
+	void (*pmic_clk_buf_get_cap_id)(u32 *capid);
+	void (*pmic_clk_buf_set_heater)(bool on);
+	void (*pmic_clk_buf_get_heater)(bool *on);
+	void (*pmic_clk_buf_set_cap_id_pre)(void);
+	void (*pmic_clk_buf_set_cap_id_new)(u32 capid);
 };
 
 int get_pmic_clkbuf(struct device_node *node, struct pmic_clkbuf_op **pmic_op);

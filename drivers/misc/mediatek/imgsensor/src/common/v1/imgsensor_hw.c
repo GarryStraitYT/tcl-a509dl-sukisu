@@ -80,11 +80,12 @@ enum IMGSENSOR_RETURN imgsensor_hw_init(struct IMGSENSOR_HW *phw)
 	return IMGSENSOR_RETURN_SUCCESS;
 }
 
-static enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
+enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
 	struct IMGSENSOR_HW             *phw,
 	enum   IMGSENSOR_SENSOR_IDX      sensor_idx,
 	enum   IMGSENSOR_HW_POWER_STATUS pwr_status,
 	struct IMGSENSOR_HW_POWER_SEQ   *ppower_sequence,
+    int power_size,
 	char *pcurr_idx)
 {
 	struct IMGSENSOR_HW_SENSOR_POWER *psensor_pwr =
@@ -95,7 +96,7 @@ static enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
 	struct IMGSENSOR_HW_DEVICE       *pdev;
 	int                               pin_cnt = 0;
 
-	while (ppwr_seq < ppower_sequence + IMGSENSOR_HW_SENSOR_MAX_NUM &&
+	while (ppwr_seq < ppower_sequence + power_size/*IMGSENSOR_HW_SENSOR_MAX_NUM */&&
 		ppwr_seq->name != NULL) {
 		if (!strcmp(ppwr_seq->name, PLATFORM_POWER_SEQ_NAME)) {
 			if (sensor_idx == ppwr_seq->_idx)
@@ -111,7 +112,10 @@ static enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
 		return IMGSENSOR_RETURN_ERROR;
 
 	ppwr_info = ppwr_seq->pwr_info;
-
+    if(ppwr_info==NULL){
+     pr_info("ppwr_info not defined ,info is NULL\n");
+     return IMGSENSOR_RETURN_ERROR;
+    }
 	while (ppwr_info->pin != IMGSENSOR_HW_PIN_NONE &&
 		ppwr_info < ppwr_seq->pwr_info + IMGSENSOR_HW_POWER_INFO_MAX) {
 
@@ -201,6 +205,7 @@ enum IMGSENSOR_RETURN imgsensor_hw_power(
 	    sensor_idx,
 	    pwr_status,
 	    platform_power_sequence,
+        platform_power_sequence_size,
 	    str_index);
 
 	imgsensor_hw_power_sequence(
@@ -208,8 +213,57 @@ enum IMGSENSOR_RETURN imgsensor_hw_power(
 	    sensor_idx,
 	    pwr_status,
 	    sensor_power_sequence,
+        sensor_power_sequence_size,
 	    curr_sensor_name);
 
 	return IMGSENSOR_RETURN_SUCCESS;
 }
+#ifdef TCT_CAM_DRIVER_SUPPORT
 
+enum IMGSENSOR_RETURN imgsensor_hw_myPowers(
+	struct IMGSENSOR_HW *phw,
+	struct IMGSENSOR_SENSOR *psensor,
+	enum IMGSENSOR_HW_POWER_STATUS pwr_status,
+    struct IMGSENSOR_HW_MYPOWER_INFO *pwr_infos)
+{
+	enum IMGSENSOR_SENSOR_IDX sensor_idx = psensor->inst.sensor_idx;
+	char str_index[LENGTH_FOR_SNPRINTF];
+	int ret = 0;
+    char *curr_sensor_name= psensor->inst.psensor_name;
+    struct IMGSENSOR_HW_POWER_SEQ   ppower_sequence[1];
+	pr_info(
+		"heaven sensor_idx %d, power %d curr_sensor_name %s\n",
+		sensor_idx,
+		pwr_status,
+		curr_sensor_name);
+
+	ret = snprintf(str_index, sizeof(str_index), "%d", sensor_idx);
+	if (ret == 0) {
+		pr_info("Error! snprintf allocate 0");
+		ret = IMGSENSOR_RETURN_ERROR;
+		return ret;
+	}
+	imgsensor_hw_power_sequence(
+	    phw,
+	    sensor_idx,
+	    pwr_status,
+	    platform_power_sequence,
+        platform_power_sequence_size,
+	    str_index);
+
+//ppower_sequence[0]={psensor->inst.psensor_name,pwr_info,sensor_idx};
+ppower_sequence[0].name=psensor->inst.psensor_name;
+memcpy(ppower_sequence[0].pwr_info,pwr_infos,sizeof(struct IMGSENSOR_HW_MYPOWER_INFO)*IMGSENSOR_HW_POWER_INFO_MAX);
+ppower_sequence[0]._idx=sensor_idx;
+
+	imgsensor_hw_power_sequence(
+	    phw,
+	    sensor_idx,
+	    pwr_status,
+	    ppower_sequence,
+        1,
+	    curr_sensor_name);
+
+	return IMGSENSOR_RETURN_SUCCESS;
+}
+#endif

@@ -854,6 +854,8 @@ int elv_register_queue(struct request_queue *q)
 		e->registered = 1;
 		if (!e->uses_mq && e->type->ops.sq.elevator_registered_fn)
 			e->type->ops.sq.elevator_registered_fn(q);
+		else if (e->uses_mq && e->type->ops.mq.elevator_registered_fn)
+			e->type->ops.mq.elevator_registered_fn(q);
 	}
 	return error;
 }
@@ -980,23 +982,36 @@ int elevator_init_mq(struct request_queue *q)
 	if (q->nr_hw_queues != 1)
 		return 0;
 
-	/*
-	 * q->sysfs_lock must be held to provide mutual exclusion between
-	 * elevator_switch() and here.
-	 */
-	mutex_lock(&q->sysfs_lock);
-	if (unlikely(q->elevator))
-		goto out_unlock;
+	WARN_ON_ONCE(test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags));
 
-	e = elevator_get(q, "mq-deadline", false);
-	if (!e)
-		goto out_unlock;
+	if (unlikely(q->elevator))
+		goto out;
+// #ifdef VENDOR_EDIT
+// cheng.chang@arch 2022/01/20 add for fgio
+#ifdef CONFIG_TCL_FGIO
+	e = elevator_get(q, "tcl-deadline", false);
+        if (!e)
+		goto out;
+#else
+
+        //[TCT-ROM][performance]Begin added by yingbao,wang for 10589971 perf cgroup on 20210111
+	if (IS_ENABLED(CONFIG_IOSCHED_BFQ)) {
+		e = elevator_get(q, "bfq", false);
+		if (!e)
+			goto out;
+	} else {
+		e = elevator_get(q, "mq-deadline", false);
+		if (!e)
+			goto out;
+	}
+	//[TCT-ROM][performance]End added by yingbao,wang for 10589971 perf cgroup on 20210111
+#endif
+// #endif /* VENDOR_EDIT */
 
 	err = blk_mq_init_sched(q, e);
 	if (err)
 		elevator_put(e);
-out_unlock:
-	mutex_unlock(&q->sysfs_lock);
+out:
 	return err;
 }
 
@@ -1087,7 +1102,7 @@ static int __elevator_change(struct request_queue *q, const char *name)
 	struct elevator_type *e;
 
 	/* Make sure queue is not in the middle of being removed */
-	if (!test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags))
+	if (!blk_queue_registered(q))
 		return -ENOENT;
 
 	/*

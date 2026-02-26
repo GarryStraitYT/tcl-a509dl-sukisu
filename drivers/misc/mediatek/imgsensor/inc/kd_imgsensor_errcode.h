@@ -2,7 +2,7 @@
 
 #ifndef _KD_IMGSENSOR_ERRCODE_H_
 #define _KD_IMGSENSOR_ERRCODE_H_
-
+#include "imgsensor_cfg_table.h"
 /* @ the same as camera_custom_errocode.h */
 enum CUSTOM_CAMERA_ERROR_CODE_ENUM {
 	ERROR_NONE = 0,

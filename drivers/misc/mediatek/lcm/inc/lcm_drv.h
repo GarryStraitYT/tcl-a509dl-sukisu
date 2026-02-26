@@ -83,6 +83,11 @@ enum LCM_IOCTL {
 	LCM_IOCTL_NULL = 0,
 };
 
+enum LCM_Send_Cmd_Mode {
+	LCM_SEND_IN_CMD = 0,
+	LCM_SEND_IN_VDO
+};
+
 /* DBI related enumerations */
 
 enum LCM_DBI_CLOCK_FREQ {
@@ -189,8 +194,10 @@ enum LCM_LANE_NUM {
 
 enum LCM_DSI_FORMAT {
 	LCM_DSI_FORMAT_RGB565 = 0,
-	LCM_DSI_FORMAT_RGB666 = 1,
-	LCM_DSI_FORMAT_RGB888 = 2
+	LCM_DSI_FORMAT_RGB666_LOOSELY = 1,
+	LCM_DSI_FORMAT_RGB666 = 2,
+	LCM_DSI_FORMAT_RGB888 = 3,
+	LCM_DSI_FORMAT_RGB101010 = 4,
 };
 
 
@@ -350,6 +357,42 @@ struct LCM_UFOE_CONFIG_PARAMS {
 };
 /* ------------------------------------------------------------------------- */
 
+#ifdef CONFIG_MTK_MT6382_BDG
+struct LCM_DSC_CONFIG_PARAMS {
+	unsigned int ver; /* [7:4] major [3:0] minor */
+	unsigned int slice_width;
+	unsigned int bit_per_pixel;
+	unsigned int slice_mode;
+	unsigned int rgb_swap;
+	unsigned int dsc_cfg;
+	unsigned int dsc_line_buf_depth;
+	unsigned int bit_per_channel;
+	unsigned int rct_on;
+	unsigned int bp_enable;
+	unsigned int pic_height; /* need to check */
+	unsigned int pic_width;  /* need to check */
+	unsigned int slice_height;
+	unsigned int chunk_size;
+	unsigned int dec_delay;
+	unsigned int xmit_delay;
+	unsigned int scale_value;
+	unsigned int increment_interval;
+	unsigned int line_bpg_offset;
+	unsigned int decrement_interval;
+	unsigned int nfl_bpg_offset;
+	unsigned int slice_bpg_offset;
+	unsigned int initial_offset;
+	unsigned int final_offset;
+	unsigned int flatness_minqp;
+	unsigned int flatness_maxqp;
+	unsigned int rc_model_size;
+	unsigned int rc_edge_factor;
+	unsigned int rc_quant_incr_limit0;
+	unsigned int rc_quant_incr_limit1;
+	unsigned int rc_tgt_offset_hi;
+	unsigned int rc_tgt_offset_lo;
+};
+#else
 struct LCM_DSC_CONFIG_PARAMS {
 	unsigned int slice_width;
 	unsigned int slice_hight;
@@ -378,6 +421,7 @@ struct LCM_DSC_CONFIG_PARAMS {
 	unsigned int flatness_maxqp;
 	unsigned int rc_mode1_size;
 };
+#endif
 
 
 struct LCM_DBI_PARAMS {
@@ -503,15 +547,21 @@ struct dynamic_fps_info {
 	/*unsigned int idle_check_interval;*//*ms*/
 };
 
+struct vsync_trigger_time {
+	unsigned int fps;
+	unsigned int trigger_after_te;
+	unsigned int config_expense_time;
+};
 
 /*DynFPS*/
 enum DynFPS_LEVEL {
 	DFPS_LEVEL0 = 0,
 	DFPS_LEVEL1,
+	DFPS_LEVEL2,
 	DFPS_LEVELNUM,
 };
 
-#define DFPS_LEVELS 2
+#define DFPS_LEVELS 3
 enum FPS_CHANGE_INDEX {
 	DYNFPS_NOT_DEFINED = 0,
 	DYNFPS_DSI_VFP = 1,
@@ -636,6 +686,7 @@ struct LCM_DSI_PARAMS {
 	/* PLL_CLOCK = (int) PLL_CLOCK */
 	unsigned int PLL_CLOCK;
 	/* data_rate = PLL_CLOCK x 2 */
+	unsigned int ap_data_rate;
 	unsigned int data_rate;
 	unsigned int PLL_CK_VDO;
 	unsigned int PLL_CK_CMD;
@@ -646,6 +697,8 @@ struct LCM_DSI_PARAMS {
 	unsigned int cont_clock;
 	unsigned int ufoe_enable;
 	unsigned int dsc_enable;
+	unsigned int bdg_dsc_enable;
+	unsigned int bdg_ssc_disable;
 	struct LCM_UFOE_CONFIG_PARAMS ufoe_params;
 	struct LCM_DSC_CONFIG_PARAMS dsc_params;
 	unsigned int edp_panel;
@@ -707,6 +760,7 @@ struct LCM_DSI_PARAMS {
 	/*for ARR*/
 	unsigned int dynamic_fps_levels;
 	struct dynamic_fps_info dynamic_fps_table[DYNAMIC_FPS_LEVELS];
+	struct vsync_trigger_time vsync_after_te[DFPS_LEVELS];
 
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	/****DynFPS start****/
@@ -764,6 +818,10 @@ struct LCM_PARAMS {
 	unsigned int average_luminance;
 	unsigned int max_luminance;
 
+#ifdef CONFIG_MTK_HIGH_FRAME_RATE
+	enum LCM_Send_Cmd_Mode sendmode;
+#endif
+
 	unsigned int hbm_en_time;
 	unsigned int hbm_dis_time;
 };
@@ -780,6 +838,11 @@ struct LCM_PARAMS {
 #define INIT_SIZE			(640)
 #define COMPARE_ID_SIZE	(32)
 #define SUSPEND_SIZE		(32)
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+#define ADDITIONAL_SIZE	(32) //additional lcm timing control
+#endif
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
 #define BACKLIGHT_SIZE		(32)
 #define BACKLIGHT_CMDQ_SIZE		(32)
 #define MAX_SIZE (MAX(MAX(MAX(MAX(INIT_SIZE, COMPARE_ID_SIZE), \
@@ -821,6 +884,16 @@ struct LCM_DATA_T5 {
 	char padding[3];
 };
 
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+struct LCM_DATA_T6 {
+	char cmd[4];
+	char queue_size;
+	char force_update;
+	char padding[126];
+};
+#endif
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
 
 struct LCM_DATA {
 	char func;
@@ -834,6 +907,11 @@ struct LCM_DATA {
 		struct LCM_DATA_T3 data_t3;
 		struct LCM_DATA_T4 data_t4;
 		struct LCM_DATA_T5 data_t5;
+/*begin add by zhiquan.wen.hz for xr11451676 on 20210903*/
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+		struct LCM_DATA_T6 data_t6;
+#endif
+/*end add by zhiquan.wen.hz for xr11451676 on 20210903*/
 	};
 };
 
@@ -844,6 +922,18 @@ struct LCM_DTS {
 	unsigned int init_size;
 	unsigned int compare_id_size;
 	unsigned int suspend_size;
+/* Begin add for paticular timing */
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+	unsigned int pre_suspend_size;
+	unsigned int post_suspend_size;
+	unsigned int pre_resume_size;
+	unsigned int post_resume_size;
+	unsigned int aod_enter_size;
+	unsigned int aod_exit_size;
+	unsigned int hbm_enable_size;
+	unsigned int hbm_disable_size;
+#endif
+/* End add for paticular timing */
 	unsigned int backlight_size;
 	unsigned int backlight_cmdq_size;
 
@@ -851,6 +941,18 @@ struct LCM_DTS {
 	struct LCM_DATA init[INIT_SIZE];
 	struct LCM_DATA compare_id[COMPARE_ID_SIZE];
 	struct LCM_DATA suspend[SUSPEND_SIZE];
+/* Begin add for paticular timing */
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+	struct LCM_DATA pre_suspend[ADDITIONAL_SIZE];
+	struct LCM_DATA post_suspend[ADDITIONAL_SIZE];
+	struct LCM_DATA pre_resume[ADDITIONAL_SIZE];
+	struct LCM_DATA post_resume[ADDITIONAL_SIZE];
+	struct LCM_DATA aod_enter[ADDITIONAL_SIZE];
+	struct LCM_DATA aod_exit[ADDITIONAL_SIZE];
+	struct LCM_DATA hbm_enable[ADDITIONAL_SIZE];
+	struct LCM_DATA hbm_disable[ADDITIONAL_SIZE];
+#endif
+/* End add for paticular timing */
 	struct LCM_DATA backlight[BACKLIGHT_SIZE];
 	struct LCM_DATA backlight_cmdq[BACKLIGHT_CMDQ_SIZE];
 };
@@ -916,6 +1018,7 @@ struct LCM_UTIL_FUNCS {
 	long (*set_gpio_lcd_enp_bias)(unsigned int value);
 //begin add by xiongbo.huang for android r on 20200601
     long (*set_gpio_lcd_enn_bias)(unsigned int value);
+	long (*set_gpio_lcd_vdd3v3)(unsigned int value);
 //end add by xiongbo.huang for android r on 20200601
 	void (*dsi_set_cmdq_V11)(void *cmdq, unsigned int *pdata,
 			unsigned int queue_size, unsigned char force_update);
@@ -933,7 +1036,7 @@ struct LCM_UTIL_FUNCS {
 	void (*dsi_dynfps_send_cmd)(
 		void *cmdq, unsigned int cmd,
 		unsigned char count, unsigned char *para_list,
-		unsigned char force_update);
+		unsigned char force_update, enum LCM_Send_Cmd_Mode sendmode);
 
 };
 enum LCM_DRV_IOCTL_CMD {
@@ -948,6 +1051,15 @@ struct LCM_DRIVER {
 	void (*init)(void);
 	void (*suspend)(void);
 	void (*resume)(void);
+
+/* Begin add for paticular timing */
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+	void (*pre_suspend)(void);
+	void (*post_suspend)(void);
+	void (*pre_resume)(void);
+	void (*post_resume)(void);
+#endif
+/* End add for paticular timing */
 
 	/* for power-on sequence refinement */
 	void (*init_power)(void);
@@ -998,13 +1110,17 @@ struct LCM_DRIVER {
 	/* /////////////PWM///////////////////////////// */
 	void (*set_pwm_for_mix)(int enable);
 
-	void (*aod)(int enter);
 
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+	void (*aod)(int enter,void *qhandle);
+#else
+    void (*aod)(int enter);
+#endif
 	/* /////////////DynFPS///////////////////////////// */
 	void (*dfps_send_lcm_cmd)(void *cmdq_handle,
-		unsigned int from_level, unsigned int to_level);
+		unsigned int from_level, unsigned int to_level, struct LCM_PARAMS *params);
 	bool (*dfps_need_send_cmd)(
-	unsigned int from_level, unsigned int to_level);
+	unsigned int from_level, unsigned int to_level, struct LCM_PARAMS *params);
 };
 
 /* LCM Driver Functions */

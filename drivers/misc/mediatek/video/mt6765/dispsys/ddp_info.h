@@ -553,4 +553,9 @@ const char *ddp_get_ioctl_name(enum DDP_IOCTL_NAME ioctl);
 extern int display_bias_enable(void);
 extern int display_bias_regulator_init(void);
 
+#ifdef CONFIG_TCT_PROJECT_SONATA
+extern int display_bias_vsp_setting(void);
+extern int display_bias_vsn_setting(void);
+#endif
+
 #endif

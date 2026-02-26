@@ -35,6 +35,10 @@
 #include "primary_display.h"
 
 #include <asm/arch_timer.h>
+
+//Begin add by bing-zhang for 11552162
+const char *panel_name = NULL;
+//End add by bing-zhang for 11552162
 /*****************************************************************************/
 enum MIPITX_PAD_VALUE {
 	PAD_D2P_V = 0,
@@ -570,6 +574,22 @@ static enum DSI_STATUS DSI_Reset(enum DISP_MODULE_ENUM module,
 	return DSI_STATUS_OK;
 }
 
+static enum DSI_STATUS DPHY_Reset(enum DISP_MODULE_ENUM module,
+				 struct cmdqRecStruct *cmdq)
+{
+	int i = 0;
+
+	/* do reset */
+	for (i = DSI_MODULE_BEGIN(module); i <= DSI_MODULE_END(module); i++) {
+		DSI_OUTREGBIT(cmdq, struct DSI_COM_CTRL_REG,
+				  DSI_REG[i]->DSI_COM_CTRL, DPHY_RESET, 1);
+		DSI_OUTREGBIT(cmdq, struct DSI_COM_CTRL_REG,
+				  DSI_REG[i]->DSI_COM_CTRL, DPHY_RESET, 0);
+	}
+
+	return DSI_STATUS_OK;
+}
+
 static enum DSI_STATUS DSI_SetMode(enum DISP_MODULE_ENUM module,
 	struct cmdqRecStruct *cmdq, unsigned int mode)
 {
@@ -643,10 +663,11 @@ void DSI_enter_ULPS(enum DISP_MODULE_ENUM module)
 
 		DSI_OUTREGBIT(NULL, struct DSI_PHY_LD0CON_REG,
 			DSI_REG[i]->DSI_PHY_LD0CON, Lx_ULPM_AS_L0, 1);
-		DSI_OUTREGBIT(NULL, struct DSI_PHY_LD0CON_REG,
-			DSI_REG[i]->DSI_PHY_LD0CON, L0_ULPM_EN, 1);
 		DSI_OUTREGBIT(NULL, struct DSI_PHY_LCCON_REG,
 			DSI_REG[i]->DSI_PHY_LCCON, LC_ULPM_EN, 1);
+		udelay(1);
+		DSI_OUTREGBIT(NULL, struct DSI_PHY_LD0CON_REG,
+			DSI_REG[i]->DSI_PHY_LD0CON, L0_ULPM_EN, 1);
 
 		waitq = &(_dsi_context[i].sleep_in_done_wq);
 		ret = wait_event_timeout(waitq->wq,
@@ -661,8 +682,6 @@ void DSI_enter_ULPS(enum DISP_MODULE_ENUM module)
 		DSI_OUTREGBIT(NULL, struct DSI_INT_ENABLE_REG,
 			DSI_REG[i]->DSI_INTEN, SLEEPIN_ULPS_INT_EN, 0);
 		/* clear lane_num when enter ulps */
-		DSI_OUTREGBIT(NULL, struct DSI_TXRX_CTRL_REG,
-			DSI_REG[i]->DSI_TXRX_CTRL, LANE_NUM, 0);
 	}
 }
 
@@ -710,11 +729,6 @@ void DSI_exit_ULPS(enum DISP_MODULE_ENUM module)
 			DSI_REG[i]->DSI_PHY_LD0CON, Lx_ULPM_AS_L0, 1);
 		DSI_OUTREGBIT(NULL, struct DSI_INT_ENABLE_REG,
 			DSI_REG[i]->DSI_INTEN, SLEEPOUT_DONE, 1);
-		DSI_OUTREGBIT(NULL, struct DSI_MODE_CTRL_REG,
-			DSI_REG[i]->DSI_MODE_CTRL, SLEEP_MODE, 1);
-		DSI_OUTREGBIT(NULL, struct DSI_TIME_CON0_REG,
-			DSI_REG[i]->DSI_TIME_CON0, UPLS_WAKEUP_PRD,
-			wake_up_prd);
 
 		switch (_dsi_context[i].dsi_params.LANE_NUM) {
 		case LCM_ONE_LANE:
@@ -736,6 +750,11 @@ void DSI_exit_ULPS(enum DISP_MODULE_ENUM module)
 		DSI_OUTREGBIT(NULL, struct DSI_TXRX_CTRL_REG,
 			DSI_REG[i]->DSI_TXRX_CTRL, LANE_NUM, lane_num_bitvalue);
 
+		DSI_OUTREGBIT(NULL, struct DSI_MODE_CTRL_REG,
+			DSI_REG[i]->DSI_MODE_CTRL, SLEEP_MODE, 1);
+		DSI_OUTREGBIT(NULL, struct DSI_TIME_CON0_REG,
+			DSI_REG[i]->DSI_TIME_CON0, UPLS_WAKEUP_PRD,
+			wake_up_prd);
 		DSI_OUTREGBIT(NULL, struct DSI_START_REG,
 			DSI_REG[i]->DSI_START, SLEEPOUT_START, 0);
 		DSI_OUTREGBIT(NULL, struct DSI_START_REG,
@@ -2487,6 +2506,11 @@ void DSI_DPHY_clk_switch(enum DISP_MODULE_ENUM module,
 				 FLD_MIPI_TX_SW_ANA_CK_EN, 0);
 
 		/* step 1: SDM_RWR_ON / SDM_ISO_EN */
+//Begin add by dingting.meng for LUNA84GVZW-4040 on 2023.01.06
+#ifdef CONFIG_TCT_PROJECT_LUNA84GVZW
+		MIPITX_OUTREGBIT(DSI_PHY_REG[i]+MIPITX_VOLTAGE_SEL,  REG_FLD(4, 6), 12);
+#endif
+//End add by dingting.meng for LUNA84GVZW-4040 on 2023.01.06
 		MIPITX_OUTREGBIT(DSI_PHY_REG[i] + MIPITX_PLL_PWR,
 				 FLD_AD_DSI_PLL_SDM_ISO_EN, 1);
 		MIPITX_OUTREGBIT(DSI_PHY_REG[i] + MIPITX_PLL_PWR,
@@ -2689,6 +2713,11 @@ void DSI_CPHY_TIMCONFIG(enum DISP_MODULE_ENUM module, struct cmdqRecStruct *cmdq
 		ASSERT(0);
 	}
 
+	if (cycle_time == 0) {
+		DISPCHECK("[dsi_dsi.c] cycle_time should not be 0!\n");
+		return;
+	}
+
 
 #define NS_TO_CYCLE(n, c)	((n) / (c))
 
@@ -2814,6 +2843,7 @@ void DSI_DPHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 	unsigned int ui = 0;
 	unsigned int hs_trail_m, hs_trail_n;
 	unsigned char timcon_temp;
+	unsigned int temp_data_rate = 0;
 
 #ifdef CONFIG_FPGA_EARLY_PORTING
 	/* sync from cmm */
@@ -2858,14 +2888,20 @@ void DSI_DPHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 	} else {
 		DISPERR("[dsi_dsi.c] PLL clock should not be 0!\n");
 		ASSERT(0);
+		return;
 	}
 
 #define NS_TO_CYCLE(n, c)	((n) / (c))
 
+	if (dsi_params->data_rate != 0)
+		temp_data_rate = dsi_params->data_rate;
+	else
+		temp_data_rate = dsi_params->PLL_CLOCK * 2;
+
 	hs_trail_m = 1;
 	hs_trail_n = (dsi_params->HS_TRAIL == 0) ?
 				(NS_TO_CYCLE(((hs_trail_m * 0x4 * ui) + 0x50)
-				* dsi_params->PLL_CLOCK * 2, 0x1F40) + 0x1) :
+				* temp_data_rate, 0x1F40) + 0x1) :
 				dsi_params->HS_TRAIL;
 	/* +3 is recommended from designer becauase of HW latency */
 	timcon0.HS_TRAIL = (hs_trail_m > hs_trail_n) ? hs_trail_m : hs_trail_n;
@@ -2885,8 +2921,16 @@ void DSI_DPHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 		timcon0.HS_ZERO -= timcon0.HS_PRPR;
 
 	timcon0.LPX = (dsi_params->LPX == 0) ?
-		(NS_TO_CYCLE(dsi_params->PLL_CLOCK * 2 * 0x4B, 0x1F40)  + 0x1) :
+		(NS_TO_CYCLE(temp_data_rate * 0x4B, 0x1F40)  + 0x1) :
 								dsi_params->LPX;
+
+	//Begin add by bing-zhang for 11552162
+	if (!strcmp(CONFIG_ARCH_MTK_PROJECT, "cruzelitetf_61") &&
+		!strcmp(panel_name, "cruzelitetf_truly_nl9911c_hd_dsi_vdo")) {
+			timcon0.LPX = 5;
+	}
+	//End add by bing-zhang for 11552162
+
 	if (timcon0.LPX < 1)
 		timcon0.LPX = 1;
 
@@ -2906,7 +2950,7 @@ void DSI_DPHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 				(0x2 * timcon0.LPX) : dsi_params->DA_HS_EXIT;
 
 	timcon2.CLK_TRAIL = ((dsi_params->CLK_TRAIL == 0) ?
-				NS_TO_CYCLE(0x64 * dsi_params->PLL_CLOCK * 2,
+				NS_TO_CYCLE(0x64 * temp_data_rate,
 				0x1F40) : dsi_params->CLK_TRAIL) + 0x01;
 	/* CLK_TRAIL can't be 1. */
 	if (timcon2.CLK_TRAIL < 2)
@@ -2918,7 +2962,7 @@ void DSI_DPHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 						dsi_params->CLK_ZERO;
 
 	timcon3.CLK_HS_PRPR = (dsi_params->CLK_HS_PRPR == 0) ?
-				NS_TO_CYCLE(0x50 * dsi_params->PLL_CLOCK * 2,
+				NS_TO_CYCLE(0x50 * temp_data_rate,
 				0x1F40) : dsi_params->CLK_HS_PRPR;
 
 	if (timcon3.CLK_HS_PRPR < 1)
@@ -4525,14 +4569,14 @@ int DSI_Send_ROI(enum DISP_MODULE_ENUM module, void *handle, unsigned int x,
 
 static void lcm_set_reset_pin(UINT32 value)
 {
-	//if (!_is_lcm_cmd_mode(DISP_MODULE_DSI0)) {
-	//	DSI_OUTREG32(NULL, DISP_REG_CONFIG_MMSYS_LCM_RST_B, value);
-	//} else {
+	if (!_is_lcm_cmd_mode(DISP_MODULE_DSI0)) {
+		DSI_OUTREG32(NULL, DISP_REG_CONFIG_MMSYS_LCM_RST_B, value);
+	} else {
 		if (value)
 			disp_dts_gpio_select_state(DTS_GPIO_STATE_LCM_RST_OUT1);
 		else
 			disp_dts_gpio_select_state(DTS_GPIO_STATE_LCM_RST_OUT0);
-	//}
+	}
 }
 
 static void lcm1_set_reset_pin(UINT32 value)
@@ -4557,6 +4601,8 @@ static void lcm_mdelay(UINT32 ms)
 {
 	if (ms < 10)
 		udelay(ms * 1000);
+	else if (ms <= 20)
+		usleep_range(ms*1000, (ms+1)*1000);
 	else
 		usleep_range(ms * 1000 - 100, ms * 1000);
 }
@@ -4745,6 +4791,17 @@ static void tct_lcm_set_reset_pin(unsigned int value)
 	else
 		disp_dts_gpio_select_state(DTS_GPIO_STATE_LCM_RST_OUT0);
 }
+long lcd_vdd3v3_en_pin_setting(unsigned int value)
+{
+	long ret = 0;
+
+	if (value)
+		disp_dts_gpio_select_state(DTS_GPIO_STATE_LCD_VDD3V3_EN1);
+	else
+		disp_dts_gpio_select_state(DTS_GPIO_STATE_LCD_VDD3V3_EN0);
+
+	return ret;
+}
 //end add by xiongbo.huang for android r on 20200601
 int ddp_dsi_set_lcm_utils(enum DISP_MODULE_ENUM module,
 	struct LCM_DRIVER *lcm_drv)
@@ -4880,9 +4937,16 @@ int ddp_dsi_set_lcm_utils(enum DISP_MODULE_ENUM module,
 	utils->set_gpio_lcd_enp_bias = lcd_enp_bias_setting;
 	utils->set_gpio_lcd_enn_bias = lcd_enn_bias_setting;
 	utils->set_reset_pin = tct_lcm_set_reset_pin;
+	utils->set_gpio_lcd_vdd3v3 = lcd_vdd3v3_en_pin_setting;
 //end add by xiongbo.huang for android r porting on 20200601
 #endif
 #endif
+
+	//Begin add by bing-zhang for 11552162
+	if (!strcmp(CONFIG_ARCH_MTK_PROJECT, "cruzelitetf_61")) {
+		panel_name = lcm_drv->name;
+	}
+	//End add by bing-zhang for 11552162
 
 	lcm_drv->set_util_funcs(utils);
 
@@ -6020,6 +6084,7 @@ int ddp_dsi_power_on(enum DISP_MODULE_ENUM module, void *cmdq_handle)
 		ddp_clk_prepare_enable(CLK_DSI0_IF_CLK);
 	}
 
+	DPHY_Reset(module, cmdq_handle);
 	/* DSI_RestoreRegisters(module, NULL); */
 	if (atomic_read(&dsi_idle_flg) == 0)
 		DSI_exit_ULPS(module);
@@ -6044,6 +6109,7 @@ int ddp_dsi_power_off(enum DISP_MODULE_ENUM module, void *cmdq_handle)
 
 #ifdef ENABLE_CLK_MGR
 	if (module == DISP_MODULE_DSI0 || module == DISP_MODULE_DSIDUAL) {
+		DISPCHECK("%s power_off\n", ddp_get_module_name(module));
 		ddp_clk_disable_unprepare(CLK_DSI0_MM_CLK);
 		ddp_clk_disable_unprepare(CLK_DSI0_IF_CLK);
 	}
@@ -6218,6 +6284,7 @@ int ddp_dsi_build_cmdq(enum DISP_MODULE_ENUM module,
 	struct DSI_RX_DATA_REG read_data3;
 	unsigned char packet_type;
 	unsigned char buffer[30];
+	memset((void *)buffer, 0, 30);
 	int recv_data_cnt = 0;
 
 	static cmdqBackupSlotHandle hSlot[4] = {0, 0, 0, 0};

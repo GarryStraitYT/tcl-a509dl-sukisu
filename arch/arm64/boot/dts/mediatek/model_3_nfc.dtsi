@@ -1,0 +1,11 @@
+/***start, yliu7@tcl.com for model_3-T NFC***/
+
+&i2c3 {
+	nfc_mtk:nfc@08 {
+		compatible = "mediatek,nfc";
+		reg = <0x08>;
+		status = "okay";
+	};
+};
+
+/*end, fps, fingerprint config*/

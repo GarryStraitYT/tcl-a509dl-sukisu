@@ -84,6 +84,8 @@ config MTK_FB_SUPPORT_ASSERTION_LAYER
 	  If you want to enable AEE assertion layer support, say Y here.
 	  If unsure, say N.
 
+#Begin meng.zhang add for disable AAL in MINI task 11302756 on 20210709
+if TARGET_BUILD_MMITEST != "true"
 config MTK_AAL_SUPPORT
 	bool "support AAL"
 	default n
@@ -92,6 +94,10 @@ config MTK_AAL_SUPPORT
 	  display visual enhancement.
 	  This feature requires the cowork of AAL user-space algorithm process.
 	  Please also turn on MTK_AAL_SUPPORT in ProjectConfig.mk.
+endif
+#End meng.zhang add for disable AAL in MINI task 11302756 on 20210709
+
+
 
 config MTK_OD_SUPPORT
 	bool "support od"
@@ -158,3 +164,29 @@ config MTK_DISPLAY_LOW_MEMORY_DEBUG_SUPPORT
 	  If enable this option, display some debug buffer will be reduced or closed.
 	  If you want to use Meditek display low memory debug, please make sure it is Y in xxx_defconfig.mk.
 	  If unsure, set N.
+
+config MTK_DX_HDCP_DDP_SUPPORT
+	bool "enable display driver support HDCP"
+	default n
+	help
+	  define CONFIG_MTK_DX_HDCP_DDP_SUPPORT to enable display driver support HDCP.
+	  If you want to use HDCP feature, first should make sure MTK_DX_HDCP_DDP_SUPPORT set as "yes".
+	  Then please make sure CONFIG_MTK_DX_HDCP_DDP_SUPPORT set as Y in xxx_defconfig.mk.
+	  If unsure, set N.
+
+config MTK_MT6382_VDO_MODE
+	bool "VDO LCM Support Bridge IC 6382"
+	help
+	  This config decide if Display is VDO mode with BridgeIC 6382.
+	  BridgeIC 6382 can support VESA-1.2 DSC, compressing display framedata
+	  Normal project will disable it first
+	  If you are not sure about this, do not set it to y
+
+config MTK_MT6382_CMD_MODE
+	bool "CMD LCM Support Bridge IC 6382"
+	help
+	  This config decide if Display is CMD device with BridgeIC 6382.
+	  BridgeIC 6382 can support VESA-1.2 DSC, compressing display framedata
+	  Normal project will disable it first
+	  If you are not sure about this, do not set it to y
+

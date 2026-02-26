@@ -29,7 +29,7 @@
 #define TIMESYNC_FLAG_FREEZE   (1 << 2)
 #define TIMESYNC_FLAG_UNFREEZE (1 << 3)
 
-#define TIMESYNC_WRAP_TIME (4000*NSEC_PER_SEC)
+#define TIMESYNC_WRAP_TIME (4000ULL * NSEC_PER_SEC)
 
 struct timesync_context_t {
 	spinlock_t lock;

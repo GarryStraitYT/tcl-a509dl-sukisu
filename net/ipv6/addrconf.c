@@ -95,6 +95,7 @@
 #include <linux/export.h>
 
 #define	INFINITY_LIFE_TIME	0xFFFFFFFF
+#define	RTR_SOLICITS_MAX	3
 
 #define IPV6_MAX_STRLEN \
 	sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")
@@ -205,6 +206,7 @@ static struct ipv6_devconf ipv6_devconf __read_mostly = {
 	.forwarding		= 0,
 	.hop_limit		= IPV6_DEFAULT_HOPLIMIT,
 	.mtu6			= IPV6_MIN_MTU,
+	.ra_mtu			= 0,
 	.accept_ra		= 1,
 	.accept_redirects	= 1,
 	.autoconf		= 1,
@@ -260,6 +262,7 @@ static struct ipv6_devconf ipv6_devconf_dflt __read_mostly = {
 	.forwarding		= 0,
 	.hop_limit		= IPV6_DEFAULT_HOPLIMIT,
 	.mtu6			= IPV6_MIN_MTU,
+	.ra_mtu			= 0,
 	.accept_ra		= 1,
 	.accept_redirects	= 1,
 	.autoconf		= 1,
@@ -323,8 +326,9 @@ static int inet6_fill_nora(struct sk_buff *skb, struct inet6_dev *idev,
 	unsigned int flag = 1;
 	struct in6_addr addr;
 
-	if (sysctl_optr == MTK_IPV6_VZW_ALL ||
-	    sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) {
+	if ((sysctl_optr == MTK_IPV6_VZW_ALL ||
+	     sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) &&
+	    (strncmp(idev->dev->name, "ccmni", 2) == 0)) {
 		/*This ifi_flags refers to the dev flag in kernel,
 		 *but hereI use it as a valid flag. When ifi_flags
 		 *is zero , it means RA refesh Fail, And When
@@ -2330,6 +2334,9 @@ static int addrconf_ifid_ip6tnl(u8 *eui, struct net_device *dev)
 
 static int ipv6_generate_eui64(u8 *eui, struct net_device *dev)
 {
+	/* MTK_NET_CHANGES */
+	if (strncmp(dev->name, "ccmni", 2) == 0)
+		return -1;
 	switch (dev->type) {
 	case ARPHRD_ETHER:
 	case ARPHRD_FDDI:
@@ -2512,8 +2519,9 @@ static void addrconf_add_mroute(struct net_device *dev)
 		.fc_ifindex = dev->ifindex,
 		.fc_dst_len = 8,
 		.fc_flags = RTF_UP,
-		.fc_type = RTN_UNICAST,
+		.fc_type = RTN_MULTICAST,
 		.fc_nlinfo.nl_net = dev_net(dev),
+		.fc_protocol = RTPROT_KERNEL,
 	};
 
 	ipv6_addr_set(&cfg.fc_dst, htonl(0xFF000000), 0, 0, 0);
@@ -3406,7 +3414,6 @@ static void addrconf_dev_config(struct net_device *dev)
 	    (dev->type != ARPHRD_INFINIBAND) &&
 	    (dev->type != ARPHRD_IEEE1394) &&
 	    (dev->type != ARPHRD_TUNNEL6) &&
-	    (dev->type != ARPHRD_PUREIP) &&
 	    (dev->type != ARPHRD_6LOWPAN) &&
 	    (dev->type != ARPHRD_IP6GRE) &&
 	    (dev->type != ARPHRD_IPGRE) &&
@@ -3425,8 +3432,8 @@ static void addrconf_dev_config(struct net_device *dev)
 	if (IS_ERR(idev))
 		return;
 
-	/*mobile device  doesn't  need  auto-linklocal addr  */
-	if (dev->type == ARPHRD_PUREIP)
+	/*mobile device doesn't need auto-linklocal addr  */
+	if (dev->type == ARPHRD_RAWIP)
 		return;
 
 	/* this device type has no EUI support */
@@ -3950,6 +3957,12 @@ static void addrconf_rs_timer(struct timer_list *t)
 	if (idev->if_flags & IF_RA_RCVD)
 		goto out;
 
+	if (idev->rs_probes == RTR_SOLICITS_MAX && (idev->if_flags & IF_RS_VZW_SENT)) {
+		inet6_no_ra_notify(RTM_DELADDR, idev);
+		idev->if_flags &= ~IF_RS_VZW_SENT;
+		goto out;
+	}
+
 	if (idev->rs_probes++ < idev->cnf.rtr_solicits || idev->cnf.rtr_solicits < 0) {
 		write_unlock(&idev->lock);
 		if (!ipv6_get_lladdr(dev, &lladdr, IFA_F_TENTATIVE))
@@ -3974,13 +3987,6 @@ static void addrconf_rs_timer(struct timer_list *t)
 				      idev->cnf.rtr_solicit_delay :
 				      idev->rs_interval);
 	} else {
-		inet6_no_ra_notify(RTM_DELADDR, idev);
-		if (sysctl_optr == MTK_IPV6_VZW_ALL ||
-		    sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) {
-			/*add for VzW feature : remove IF_RS_VZW_SENT flag*/
-			if (idev->if_flags & IF_RS_VZW_SENT)
-				idev->if_flags &= ~IF_RS_VZW_SENT;
-		}
 		/*
 		 * Note: we do not support deprecated "all on-link"
 		 * assumption any longer.
@@ -4496,14 +4502,14 @@ static void inet6_send_rs_vzw(struct inet6_ifaddr *ifp)
 	struct net_device *dev = ifp->idev->dev;
 
 	/*struct inet6_ifaddr *linklocal_ifp = NULL;*/
-    pr_info("[mtk_net][IPv6][vzw][%s] dev name:%s，accept:%d, rtr_solicits: %d, dev->flag:%d\n", __func__,dev->name,ipv6_accept_ra(ifp->idev), ifp->idev->cnf.rtr_solicits, dev->flags); 
+	pr_info("[mtk_net][IPv6][%s] dev name:%s\n", __func__, dev->name);
 
 	/*because of using link local address will triger KE
 	 *so this first using global address
 	 */
 	if (ipv6_accept_ra(ifp->idev) &&
 	    (dev->flags & IFF_LOOPBACK) == 0) {
-		pr_info("[mtk_net][IPv6][vzw][%s] send refresh rs: dev name:%s\n",
+		pr_info("[mtk_net][IPv6][%s] send refresh rs: dev name:%s\n",
 			__func__, dev->name);
 		ndisc_send_rs(ifp->idev->dev, &ifp->addr,
 			      &in6addr_linklocal_allrouters);
@@ -4595,8 +4601,9 @@ restart:
 			u32 min_lft;
 			struct fib6_info *rt = NULL;
 
-			if (sysctl_optr == MTK_IPV6_VZW_ALL ||
-			    sysctl_optr == MTK_IPV6_EX_RS_INTERVAL)
+			if ((sysctl_optr == MTK_IPV6_VZW_ALL ||
+			     sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) &&
+			    (strncmp(ifp->idev->dev->name, "ccmni", 2) == 0))
 				rt = calc_lft_vzw(ifp, &min_lft);
 			/* When setting preferred_lft to a value not zero or
 			 * infinity, while valid_lft is infinity
@@ -4617,8 +4624,9 @@ restart:
 				ipv6_del_addr(ifp);
 				goto restart;
 			} else if (ifp->prefered_lft == INFINITY_LIFE_TIME) {
-				if (sysctl_optr == MTK_IPV6_VZW_ALL ||
-				    sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) {
+				if ((sysctl_optr == MTK_IPV6_VZW_ALL ||
+				     sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) &&
+				    (strncmp(ifp->idev->dev->name, "ccmni", 2) == 0)) {
 					/*Patch for VzW
 					 *prefered_lft is INFINITY scenario
 					 *ccmni interface will send RS when
@@ -4684,8 +4692,9 @@ restart:
 				/* ifp->prefered_lft <= ifp->valid_lft */
 				if (time_before(ifp->tstamp + ifp->prefered_lft * HZ, next))
 					next = ifp->tstamp + ifp->prefered_lft * HZ;
-				if (sysctl_optr == MTK_IPV6_VZW_ALL ||
-				    sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) {
+				if ((sysctl_optr == MTK_IPV6_VZW_ALL ||
+				     sysctl_optr == MTK_IPV6_EX_RS_INTERVAL) &&
+				    (strncmp(ifp->idev->dev->name, "ccmni", 2) == 0)) {
 					/*patch for VzW
 					 *prefered_lft is NOT INFINITY scenario
 					 *ccmni interface will send RS when time
@@ -5423,6 +5432,7 @@ static inline void ipv6_store_devconf(struct ipv6_devconf *cnf,
 	array[DEVCONF_FORWARDING] = cnf->forwarding;
 	array[DEVCONF_HOPLIMIT] = cnf->hop_limit;
 	array[DEVCONF_MTU6] = cnf->mtu6;
+	array[DEVCONF_RA_MTU] = cnf->ra_mtu;
 	array[DEVCONF_ACCEPT_RA] = cnf->accept_ra;
 	array[DEVCONF_ACCEPT_REDIRECTS] = cnf->accept_redirects;
 	array[DEVCONF_AUTOCONF] = cnf->autoconf;
@@ -6470,6 +6480,13 @@ static const struct ctl_table addrconf_sysctl[] = {
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= addrconf_sysctl_mtu,
+	},
+	{
+		.procname	= "ra_mtu",
+		.data		= &ipv6_devconf.ra_mtu,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec,
 	},
 	{
 		.procname	= "accept_ra",

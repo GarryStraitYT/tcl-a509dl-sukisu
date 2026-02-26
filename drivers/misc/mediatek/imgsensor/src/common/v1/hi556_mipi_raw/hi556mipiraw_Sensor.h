@@ -32,7 +32,6 @@ struct imgsensor_mode_struct {
 
 	kal_uint16 grabwindow_width;
 	kal_uint16 grabwindow_height;
-	kal_uint32 mipi_pixel_rate;
 
 	kal_uint8 mipi_data_lp2hs_settle_dc;
 

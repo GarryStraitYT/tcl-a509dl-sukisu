@@ -339,7 +339,7 @@ static struct LCM_setting_table init_setting_vdo[] = {
 
 	{REGFLAG_DELAY, 20, {} },
 
-#endif
+
 };
 
 static struct LCM_setting_table

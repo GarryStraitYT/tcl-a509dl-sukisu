@@ -13,6 +13,7 @@
 #include <linux/delay.h>
 #include <mt-plat/mtk_boot.h>
 #include <mt-plat/upmu_common.h>
+#include <linux/regulator/driver.h>
 #include "bq24158.h"
 #include <mtk_charger.h>
 #include <charger_class.h>
@@ -38,6 +39,7 @@ struct bq24158_INFO {
 	struct power_supply_desc charger_desc;
 	struct delayed_work work;
 	struct semaphore suspend_lock;
+	struct regulator_dev *otg_rdev;	//otg_vbus
 #if 0
 	struct gtimer otg_kthread_gtimer;
 	struct workqueue_struct *otg_boost_workq;
@@ -55,6 +57,7 @@ static const struct i2c_device_id bq24158_i2c_id[] = { {"bq24158", 0}, {} };
 
 /*-Begin added by dapeng.qiao for XR-8325735 on 20190917*/	
 static int g_bq24158_hw_exist;
+static int g_eta6937_hw_exist;
 int g_bq24158_hw_ver = 0;
 /*-End added by dapeng.qiao for XR-8325735 on 20190917*/	
 
@@ -739,12 +742,18 @@ static u32 bq24158_charging_hw_init(void)
 	
 	// Modified init parameters by bin.song.hz for 5301378 at 2017.8.30 begin
    // bq24158_reg_config_interface(0x06, 0x8A);       /* B[7:4].I_max=1350mA,  B[3:0].V_max=4.4V *///Modified by hailong.chen for task 6948976 on 2018-09-04
-    bq24158_reg_config_interface(0x06, 0xFA);		//I_MAX = 1550Ma  V_MAX = 4.4
+    bq24158_reg_config_interface(0x06, 0xFC);		//I_MAX = 1550Ma  V_MAX = 4.44
     bq24158_reg_config_interface(0x02, 0xB6);       /* B[7:2].Voreg=4.4V, B[1].OTG_PL=1, B[0].OTG_EN=0 */
     bq24158_reg_config_interface(0x00, 0xC0);       /* B[7].TMR_RST=1, B[6].EN_STAT=1 */
     bq24158_reg_config_interface(0x01, 0xC8);       /* B[7:6].Iin_Limit=unlimit, B[5:4].Vlow=3.4V, B[3].TE=1, B[2].CE=0, B[1].HZ_MODE=0, B[0].OPA_MODE=0 */
-    bq24158_reg_config_interface(0x05, 0x06);       /* B[5].LOW_CHG=0, B[2:0].Vsp = 4.68V */
-    bq24158_reg_config_interface(0x04, 0x73);       /* B[6:4].I_chrg=1250mA, B[2:0].I_term.200mA*/
+    bq24158_reg_config_interface(0x05, 0x04);       /* B[5].LOW_CHG=0, B[2:0].Vsp = 4.52V */
+	/* fixed eta6937 has a bug when iterm >=200mA begin*/
+	if (g_eta6937_hw_exist)
+		bq24158_reg_config_interface(0x04, 0x62);       /* B[6:4].I_chrg=1150mA, B[2:0].I_term.150mA*/
+	else
+		bq24158_reg_config_interface(0x04, 0x73);       /* B[6:4].I_chrg=1250mA, B[2:0].I_term.200mA*/
+	/* fixed eta6937 has a bug when iterm >=200mA end*/
+
 	// Modified init parameters by bin.song.hz for 5301378 at 2017.8.30 end
 
 	return status;
@@ -783,7 +792,10 @@ static int bq24158_charger_get_ichg(struct charger_device *chg_dev, u32 *uA)
 	u8 reg_value;
 	/* Begin modified by bitao.xiong for defect-9031140 on 2020-03-21 */
 	if (bq24158_get_io_level()) {
-		*(u32 *) uA =  (22100 / 68) * 1000;//Actual charging current
+		if (g_eta6937_hw_exist)
+			*(u32 *) uA = 550 * 1000;//uA
+		else
+			*(u32 *) uA =  (22100 / 68) * 1000;//Actual charging current
 	} else {
 		/* Get current level */
 		array_size = GETARRAYNUM(CS_VTH_bq24158);
@@ -802,6 +814,11 @@ static int bq24158_charger_set_ichg(struct charger_device *chg_dev, u32 uA)
 	u32 set_chr_current = 0;
 	u32 array_size;
 	u32 register_value = 0;
+
+	if (g_eta6937_hw_exist) {
+		if (uA >=1150000)
+			uA = 1050000;
+	}
 
 	if (uA <= 325000) { //325 = (22100 / 68) * 1000
 		bq24158_set_io_level(1);
@@ -833,6 +850,10 @@ static int bq24158_charger_set_cv(struct charger_device *chg_dev, u32 uV)
 	u32 set_cv_voltage;	
 	u32 array_size;
 
+	/* Begin add by bitao.xiong for RACKT-871 on 2022-03-10 */
+	if (g_eta6937_hw_exist)
+		uV += 20000;
+	/* End  add by bitao.xiong for RACKT-871 on 2022-03-10 */
 	array_size = GETARRAYNUM(VBAT_CV_VTH_bq24158);
 	set_cv_voltage = bmt_find_closest_level(VBAT_CV_VTH_bq24158, array_size, uV);
 	register_value = charging_parameter_to_value_bq24158(VBAT_CV_VTH_bq24158, array_size, set_cv_voltage);
@@ -1070,6 +1091,18 @@ void bq24158_hw_component_detect(void)
 
     g_bq24158_hw_ver = val & IC_VER_MASK;
 
+	if (g_bq24158_hw_ver == 0x04) {
+		ret = bq24158_read_interface((unsigned char) (bq24158_CON5),
+				       &val,
+				       (unsigned char) (CON7_VINDPM_MASK),
+				       (unsigned char) (CON7_VINDPM_SHIFT)
+	    		);
+		if (ret) {
+			g_eta6937_hw_exist = 1;
+			g_bq24158_hw_exist = 0;
+		}
+	}
+
 	pr_info("[bq24158_hw_component_detect] exist=%d, Reg[03]=0x%x\n", g_bq24158_hw_exist, val);
 }
 
@@ -1169,12 +1202,15 @@ static int bq24158_charger_plug_in(struct charger_device *chg_dev)
 		//modify by zihaogu for 33mΩ I_term = 206mA
 		bq24158_set_iterm(0x1);//I_term=150mA
 #endif
-                bq24158_reg_config_interface(0x06, 0xFA);
-                bq24158_reg_config_interface(0x02, 0xB6);
-                bq24158_reg_config_interface(0x01, 0xC8);
-                bq24158_reg_config_interface(0x05, 0x06);
-                bq24158_set_iterm(0x3);
-                bq24158_reg_config_interface(0x00, 0xC0);
+		bq24158_reg_config_interface(0x06, 0xFC);
+		bq24158_reg_config_interface(0x02, 0xB6);
+		bq24158_reg_config_interface(0x01, 0xC8);
+		bq24158_reg_config_interface(0x05, 0x04);
+		if (g_eta6937_hw_exist)
+			bq24158_set_iterm(0x2); // eta6937 has a bug when iterm >=200mA
+		else
+			bq24158_set_iterm(0x3);
+		bq24158_reg_config_interface(0x00, 0xC0);
 	}
 /* End modified by zihaogu for defect 8634748 on 2019-12-13 */
 	return 0;
@@ -1378,6 +1414,47 @@ static void bq24158_timer_work(struct work_struct *work)
 	
 }
 
+static int bq24158_enable_vbus(struct regulator_dev *rdev)
+{
+	bq24158_set_hz_mode(0);
+	bq24158_set_opa_mode(1);
+	bq24158_set_otg_pl(1);
+	bq24158_set_otg_en(1);
+
+	return 0;
+}
+
+static int bq24158_disable_vbus(struct regulator_dev *rdev)
+{
+	bq24158_set_otg_pl(0);
+	bq24158_set_otg_en(0);
+	bq24158_set_opa_mode(0);
+	bq24158_set_hz_mode(1);
+
+	return 0;
+}
+
+static int bq24158_is_enabled_vbus(struct regulator_dev *rdev)
+{
+	return bq24158_get_otg_status();
+}
+
+static const struct regulator_ops bq24158_vbus_ops = {
+	.enable = bq24158_enable_vbus,
+	.disable = bq24158_disable_vbus,
+	.is_enabled = bq24158_is_enabled_vbus,
+};
+
+static const struct regulator_desc bq24158_otg_rdesc = {
+	.of_match = "usb-otg-vbus",
+	.name = "usb-otg-vbus",
+	.ops = &bq24158_vbus_ops,
+	.owner = THIS_MODULE,
+	.type = REGULATOR_VOLTAGE,
+	.fixed_uV = 5000000,
+	.n_voltages = 1,
+};
+
 static const struct charger_ops bq24158_chg_ops = {
 	/* enable */
 	.enable = bq24158_charger_enable,
@@ -1418,12 +1495,39 @@ static const struct charger_properties bq24158_chg_props = {
 	.alias_name = "bq24158",
 };
 
+#if IS_ENABLED(CONFIG_TCT_DEVICEINFO)
+extern char charger_module_name[256];
+#else
 char charger_module_name[256];//Modified by hailong.chen for task 5662647 cancel the annotation to adding charge ic deviceinfo on 2017/11/28
+#endif
+#if !IS_ENABLED(CONFIG_TCT_DEVICEINFO)
+extern struct device* get_deviceinfo_dev(void);
+static ssize_t  charger_info_show(struct device *dev,
+					struct device_attribute *attr, char *buf)
+{
+	if (g_bq24158_hw_exist)
+		return sprintf(buf, "TI:BQ24158:0x%x\n", g_bq24158_hw_ver);
+	else if (g_eta6937_hw_exist)
+		return sprintf(buf, "ETA:ETA6937:0x%x\n", g_bq24158_hw_ver);
+	else
+		return sprintf(buf, "NA:NA:NA:NA\n");
+}
+DEVICE_ATTR_RO(charger_info);
+
+static void create_charger_node_forMMI(void)
+{
+	struct device *charger_info = get_deviceinfo_dev();
+	if (device_create_file(charger_info, &dev_attr_charger_info) < 0) {
+		pr_err("Failed to create device file(%s)!\n", dev_attr_charger_info.attr.name);
+	}
+}
+#endif
 
 static int bq24158_driver_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 {
 	union power_supply_propval prop;
 	struct power_supply *chg_psy;
+	struct regulator_config config = { };
 
 	pr_info("******** bq24158_driver_probe!! ********\n");
 	chg_psy = power_supply_get_by_name("mtk_charger_type");
@@ -1443,10 +1547,10 @@ static int bq24158_driver_probe(struct i2c_client *i2c, const struct i2c_device_
 	//mutex_init(&bq24158_i2c_access);
 	sema_init(&bq24158_info->suspend_lock, 1);
 
-	bq24158_reg_config_interface(0x06, 0xFA);
+	bq24158_reg_config_interface(0x06, 0xFC);
 	bq24158_hw_component_detect();
 	
-	if(g_bq24158_hw_exist == 0)
+	if(g_bq24158_hw_exist == 0 && g_eta6937_hw_exist == 0)
 	    return -ENODEV;
 	    
 	bq24158_charging_hw_init();
@@ -1469,6 +1573,17 @@ static int bq24158_driver_probe(struct i2c_client *i2c, const struct i2c_device_
 		schedule_delayed_work(&bq24158_info->work, msecs_to_jiffies(2000));
 
 	device_init_wakeup(bq24158_info->dev, true);
+
+	/* otg regulator */
+	config.dev = &i2c->dev;
+	config.driver_data = bq24158_info;
+	bq24158_info->otg_rdev = devm_regulator_register(bq24158_info->dev,
+					&bq24158_otg_rdesc, &config);
+	if (IS_ERR(bq24158_info->otg_rdev)) {
+		pr_info("%s: register otg regulator failed (%d)\n", __func__, PTR_ERR(bq24158_info->otg_rdev));
+		return PTR_ERR(bq24158_info->otg_rdev);
+	}
+
 	bq24158_dump_register();
 	#if 0
 //Begin added by hailong.chen for task 6439451 on 2018/06/30
@@ -1484,6 +1599,14 @@ static int bq24158_driver_probe(struct i2c_client *i2c, const struct i2c_device_
     	//Begin Modified by hailong.chen for task 5662647 cancel the annotation to adding charge ic deviceinfo on 2017/11/28
     	sprintf(charger_module_name,"bq24158:TI:0x%x", g_bq24158_hw_ver);
     	//End Modified by hailong.chen for task 5662647 cancel the annotation to adding charge ic deviceinfo on 2017/11/28
+#if IS_ENABLED(CONFIG_TCT_DEVICEINFO)
+	if (g_bq24158_hw_exist)
+		sprintf(charger_module_name, "TI:BQ24158:0x%x\n", g_bq24158_hw_ver);
+	else if (g_eta6937_hw_exist)
+		sprintf(charger_module_name, "ETA:ETA6937:0x%x\n", g_bq24158_hw_ver);
+#else
+	create_charger_node_forMMI();
+#endif
 	return 0;
 }
 

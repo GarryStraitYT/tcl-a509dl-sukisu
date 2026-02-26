@@ -1,0 +1,11 @@
+&i2c5 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+	mediatek,use-open-drain;
+	cap_touch@2e {
+		compatible = "mediatek,chsc_cap_touch";
+		reg = <0x2e>;
+		status = "okay";
+	};
+};

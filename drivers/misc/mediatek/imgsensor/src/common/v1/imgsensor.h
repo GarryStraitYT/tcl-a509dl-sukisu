@@ -13,6 +13,15 @@ struct IMGSENSOR_STATUS {
 	u32 reserved:31;
 	u32 oc:1;
 };
+#ifdef TCT_CAM_DRIVER_SUPPORT
+typedef struct
+{
+    MUINT32 SensorId;
+    char drvname[80];
+    char macroName[80];
+}DRIVER_INFO;
+#endif
+
 struct IMGSENSOR {
 	struct IMGSENSOR_STATUS status;
 	struct IMGSENSOR_HW     hw;

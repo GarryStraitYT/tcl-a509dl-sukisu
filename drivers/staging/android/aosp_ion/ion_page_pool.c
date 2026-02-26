@@ -108,10 +108,8 @@ static int ion_page_pool_total(struct ion_page_pool *pool, bool high)
 
 long ion_page_pool_nr_pages(void)
 {
-	/* Correct possible overflow caused by racing writes */
-	if (nr_total_pages < 0)
-		nr_total_pages = 0;
-	return nr_total_pages;
+	//Modified by Tao.Jiang for PASSAT-5151 on 2021/12/23
+	return max(nr_total_pages, 0L);
 }
 
 int ion_page_pool_shrink(struct ion_page_pool *pool, gfp_t gfp_mask,

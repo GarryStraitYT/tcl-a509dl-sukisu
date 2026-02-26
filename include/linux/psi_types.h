@@ -100,6 +100,12 @@ struct psi_trigger {
 	/* User-spacified threshold in ns */
 	u64 threshold;
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix pxi report rule
+	u32 min_cache;
+	u32 max_cache;
+// #endif /* VENDER_EDIT */
+
 	/* List node inside triggers list */
 	struct list_head node;
 

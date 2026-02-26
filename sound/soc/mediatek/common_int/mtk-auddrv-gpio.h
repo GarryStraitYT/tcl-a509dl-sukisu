@@ -20,14 +20,26 @@ int AudDrv_GPIO_SMARTPA_Select(int mode);
 int AudDrv_GPIO_TDM_Select(int mode);
 
 int AudDrv_GPIO_I2S_Select(int bEnable);
+
+//Begin added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+#ifdef CONFIG_EXTPA_AW8737
+void down_speaker_gpio_extamp_select(int bEnable);
+#endif
+
+#ifdef CONFIG_EXTPA_OCA72317
+void up_speaker_gpio_extamp_select(int bEnable);
+void up_voice_gpio_extamp_select(int bEnable);
+#endif
+
+//End added by liangjiaqiang for CIVIC-3069 on 2022-07-13
+
 int AudDrv_GPIO_EXTAMP_Select(int bEnable, int mode);
 int AudDrv_GPIO_EXTAMP2_Select(int bEnable, int mode);
 int AudDrv_GPIO_RCVSPK_Select(int bEnable);
 int AudDrv_GPIO_HPDEPOP_Select(int bEnable);
 
 int audio_drv_gpio_aud_clk_pull(bool high);
-
-#ifdef CONFIG_JRD_HAC_EXTERNAL_PA_SUPPORT
-int hac_hw_ctrl(bool bEnable, int mode);
-#endif
+/* Begin meng.zhang HAC control for task 10014578 on 2020/09/28 */
+int AudDrv_GPIO_HAC_PA_Select(int bEnable);
+/* End meng.zhang HAC control for task 10014578 on 2020/09/28 */
 #endif

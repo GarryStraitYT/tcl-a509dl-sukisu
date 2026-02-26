@@ -12,7 +12,7 @@
 #include <linux/netlink.h>	/* netlink */
 #include <linux/of_fdt.h>	/*of_dt API*/
 #include <linux/of.h>
-#include <linux/of_address.h>
+#include <linux/of_address.h>	/* Add by bing-zhang for getting ocv from preloader on 20210827 */
 #include <linux/platform_device.h>	/* platform device */
 #include <linux/proc_fs.h>
 #include <linux/reboot.h>	/*kernel_power_off*/
@@ -22,26 +22,50 @@
 #include <linux/time.h>
 #include <linux/vmalloc.h>
 #include <linux/wait.h>		/* For wait queue*/
+#include <net/sock.h>		/* netlink */
+#include "mtk_battery.h"
+#include "mtk_battery_table.h"
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 /* Begin added by bitao.xiong for task-9796564 on 2020-08-20 */
 #include <linux/iio/consumer.h>
 #include <linux/iio/types.h>
 #include <linux/of_device.h>
+#include "mtk_charger.h"
 /* End added by bitao.xiong for task-9796564 on 2020-08-20 */
-#include <net/sock.h>		/* netlink */
-#include "mtk_battery.h"
-#include "mtk_battery_table.h"
-
-/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
-#if defined(TARGET_BUILD_MMITEST)
-static int fixtemp = 1;
-#else
-static int fixtemp = 0;
 #endif
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+#include <linux/mfd/mt6357/registers.h>
+#include <linux/mfd/mt6397/core.h>
+#include <linux/regmap.h>
+#include <linux/of_platform.h>
+static int battery_resistance_id = 0;
+static int fixtemp = 0;
 static int fixtemp_val = 250;
-/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
-static int chg_disable = false;
-/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
-/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+
+//Begin Modified by qiuguangliang for 11043275 on 2021-04-23
+#include <mtk_charger.h>
+//End Modified by qiuguangliang for 11043275 on 2021-04-23
+
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+signed int g_chr_vol;
+int g_fg_current, g_bat_vol;
+int g_bat_status, g_bat_capacity, g_tbat_precise;
+int g_chr_type = POWER_SUPPLY_TYPE_UNKNOWN;
+extern bool bms_sw_support;
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
+
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+extern void uisoc_tracking_to_zero_work(struct work_struct *work);
+int fg_max_monotone;
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 
 struct tag_bootmode {
 	u32 size;
@@ -85,6 +109,13 @@ void __attribute__ ((weak))
 	fg_drv_update_daemon(struct mtk_battery *gm)
 {
 }
+
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+//#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+#if 0
+static void battery_update_chg_status(struct mtk_battery *gm);
+#endif
+/* End add by jin.wang */
 
 void enable_gauge_irq(struct mtk_gauge *gauge,
 	enum gauge_irq irq)
@@ -163,148 +194,206 @@ bool is_algo_active(struct mtk_battery *gm)
 	return gm->algo.active;
 }
 
-/* Begin modified by bitao.xiong for task-9820878 on 2020-08-27 */
-static const char *default_batt_type = "Unknown Battery";
-#if defined(MTK_GET_BATTERY_ID_BY_AUXADC)
-static struct iio_channel *channel;
-int fgauge_get_profile_id(void)
+/* Begin modified by hailong.chen for task 9785237 on 2020-10-31 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+/* Begin mod by jin.wang for androidT on 2022-4-18 */
+static const char *default_batt_type = "NA:NA:NA:NA";  // "Unknown Battery";
+/* End mod by jin.wang */
+
+static int64_t convert_battery_id_ohm(int batt_id_mv, int rpull_up_ohm, int vpull_up_mv)
 {
-	int id_volt = 0;
-	int id = 0;
-	int ret = 0;
-	int auxadc_voltage = 0;
-	struct device_node *batterty_node;
-	struct platform_device *battery_dev;
-	struct mtk_battery *gm;
-	char node_name[128];
-	int batid_max = 0;
-	int batid_min = 0;
+	int64_t resistor_value_ohm, denom;
 
-	gm = get_mtk_battery();
-
-	batterty_node = of_find_node_by_name(NULL, "mtk_gauge");
-	if (!batterty_node) {
-		bm_err("[%s] of_find_node_by_name fail\n", __func__);
+	if (batt_id_mv == 0) {
+		/* vadc not correct or batt id line grounded, report 0 kohms */
 		return 0;
 	}
+	/* calculate the battery id resistance reported via ADC */
+	denom = div64_s64(vpull_up_mv * 1000LL, batt_id_mv) - 1000LL;
 
-	battery_dev = of_find_device_by_node(batterty_node);
-	if (!battery_dev) {
-		bm_err("[%s] of_find_device_by_node fail\n", __func__);
+	if (denom == 0) {
+		/* batt id connector might be open, return 0 kohms */
 		return 0;
 	}
+	resistor_value_ohm = div64_s64(rpull_up_ohm * 1000LL + denom/2, denom);
 
-	channel = iio_channel_get(&(battery_dev->dev), "batteryID-channel");
-	if (IS_ERR(channel)) {
-		ret = PTR_ERR(channel);
-		bm_err("[%s] iio channel not found %d\n",
-		__func__, ret);
-		return 0;
-	}
+	pr_debug("batt id voltage = %d, resistor value = %lld\n", batt_id_mv, resistor_value_ohm);
 
-	if (channel)
-		ret = iio_read_channel_processed(channel, &auxadc_voltage);
-
-
-	if (ret <= 0) {
-		bm_err("[%s] iio_read_channel_processed failed\n", __func__);
-		return 0;
-	}
-
-	bm_err("[%s]auxadc_voltage is %d\n", __func__, auxadc_voltage);
-        gm->battery_id_voltage = auxadc_voltage; //Added by baiwei.peng for batt_id on 2020/12/02
-	id_volt = auxadc_voltage * 1000; //unit:uV
-	bm_err("[%s]battery_id_voltage is %d\n", __func__, id_volt);
-	if (strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_TF") || strcmp(CONFIG_ARCH_MTK_PROJECT, "bangkok_NA_OM")) {
-		if ((sizeof(g_battery_id_voltage) /
-			sizeof(int)) != TOTAL_BATTERY_NUMBER) {
-			bm_debug("[%s]error! voltage range incorrect!\n",
-				__func__);
-			return 0;
-		}
-
-		for (id = 0; id < TOTAL_BATTERY_NUMBER; id++) {
-			if (id_volt < g_battery_id_voltage[id]) {
-				gm->battery_id = id;
-				break;
-			} else if (g_battery_id_voltage[id] == -1) {
-				gm->battery_id = 0;
-			}
-		}
-	} else {
-		for (id = 0; id < TOTAL_BATTERY_NUMBER; id++) {
-			batid_max = 0;
-			batid_min = 0;
-			sprintf(node_name, "battery%d_id_max", id);
-			if (of_property_read_u32(batterty_node, node_name, &batid_max)) {
-				bm_err("[%s]%s property is required\n", __func__, node_name);
-				continue;
-			}
-			sprintf(node_name, "battery%d_id_min", id);
-			if (of_property_read_u32(batterty_node, node_name, &batid_min)) {
-				bm_err("[%s]%s property is required\n", __func__, node_name);
-				continue;
-			}
-
-			if (id_volt > batid_min && id_volt < batid_max) {
-				bm_err("[%s][battery%d]id_volt(%d) is between %d and %d\n", __func__, id, id_volt, batid_min, batid_max);
-				gm->battery_id = id;
-				break;
-			}
-		}
-		if (id == 4) {
-			gm->battery_id = 0;
-			bm_err("not found compatible battery id,bat_id use default 0\n");
-		}
-	}
-
-	sprintf(node_name, "battery%d_type", gm->battery_id);
-	ret = of_property_read_string(batterty_node, node_name, &gm->battery_type);
-	if (ret)
-		gm->battery_type = default_batt_type;
-	bm_err("[%s]battery%d_type %s\n", __func__, gm->battery_id, gm->battery_type);
-	return gm->battery_id;
+	return resistor_value_ohm;
 }
 
-int battery_get_bat_resistance_id(void)
+static unsigned int pmic_get_register_value(struct regmap *map,
+	unsigned int addr,
+	unsigned int mask,
+	unsigned int shift)
 {
-	int auxadc_voltage = 0;
-	int resistance_id = 0;
-	int ret = 0;
+	unsigned int value = 0;
 
-        // add begin by TCT-cuiping.shi
-        if (IS_ERR(channel)) {
-                ret = PTR_ERR(channel);
-                bm_err("[%s] iio channel not found %d\n",__func__, ret);
-                return 0;
-        }
-        // add end by TCT-cuiping.shi
+	regmap_read(map, addr, &value);
+	value =
+		(value &
+		(mask << shift))
+		>> shift;
+	return value;
+}
 
-	if (channel) {
-		ret =iio_read_channel_processed(channel, &auxadc_voltage);
-		if (ret <= 0) {
-			bm_err("[%s] iio_read_channel_processed failed\n", __func__);
-			return 0;
-		}
+static int get_vpull_up(struct device_node *np)
+{
+	struct device_node *pmic_node;
+	struct platform_device *pmic_pdev;
+	struct mt6397_chip *chip;
+	struct regmap *regmap;
+	unsigned int vio18_vocal = 0;
+	unsigned int vio18_votrim = 0;
 
-		resistance_id = 24 * 1000 * auxadc_voltage / (1800 -auxadc_voltage);
-		bm_err("[%s]resistance_id is %d\n", __func__, resistance_id);
+	pmic_node = of_parse_phandle(np, "pmic", 0);
+	if (!pmic_node) {
+		bm_err("get pmic_node fail\n");
+		goto err;
 	}
 
-	return resistance_id;
+	pmic_pdev = of_find_device_by_node(pmic_node);
+	if (!pmic_pdev) {
+		bm_err("get pmic_pdev fail\n");
+		goto err;
+	}
+	chip = dev_get_drvdata(&(pmic_pdev->dev));
+
+	if (!chip) {
+		bm_err("get chip fail\n");
+		goto err;
+	}
+
+	regmap = chip->regmap;
+
+	switch (chip->chip_id) {
+	case MT6357_CHIP_ID:
+		vio18_vocal = pmic_get_register_value(regmap, MT6357_VIO18_ANA_CON0, 0xF, 0x0);
+		vio18_votrim = pmic_get_register_value(regmap, MT6357_VIO18_ELR_0, 0xF, 0x0);
+		break;
+	default:
+		bm_err("unsupported chip: 0x%x,if need, add code\n", chip->chip_id);
+		goto err;
+	}
+err:
+	return ((180 + vio18_vocal + (vio18_votrim & 0x8) - (vio18_votrim & 0x7)) * 10);
+}
+
+#if IS_ENABLED(CONFIG_OF)
+static int fg_read_dts_val(const struct device_node *np,
+		const char *node_srting,
+		int *param, int unit);
+#endif
+
+#if IS_ENABLED(CONFIG_TCT_DEVICEINFO)
+extern char battery_info_module_name[256];
+#endif
+
+int fgauge_get_profile_id(void)
+{
+	struct mtk_battery *gm = NULL;
+	struct mtk_gauge *gauge = NULL;
+	struct device_node *np = NULL;
+	char node_name[128];
+	//static bool first_run = true; /* Del by bitao.xiong for RACKT-1448(IEEE1725) on 2022-05-17 */
+	bool found_battery = false;
+	int batt_id_mv = 0, rpull_up_ohm = 0, vpull_up_mv = 0, dts_battery_id_ohm = 0;
+	int rc = 0, id = 0, batt_id_pct = 15;
+/* Begin added by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+#if IS_ENABLED(CONFIG_TCT_CHG_AUSTINTF)
+	int rpull_up_ohm_v1 = 0, battery_resistance_id_v1 = 0;
+#endif
+/* End added by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+
+	gm = get_mtk_battery();
+	gauge = gm->gauge;
+	np = gauge->pdev->dev.of_node;
+
+	/* Begin del by bitao.xiong for RACKT-1448(IEEE1725) on 2022-05-17 */
+	/*
+	if (!first_run)
+		return gm->battery_id;
+
+	first_run = false;
+	*/
+	/* End del by bitao.xiong for RACKT-1448(IEEE1725) on 2022-05-17 */
+	batt_id_mv = gauge_get_int_property(GAUGE_PROP_BATTERY_ID);
+/* Begin modified by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+#if IS_ENABLED(CONFIG_TCT_CHG_AUSTINTF)
+	rc = fg_read_dts_val(np, "battery-id-pullup-ohm-v1", &rpull_up_ohm_v1, 1);
+	rc = fg_read_dts_val(np, "battery-id-pullup-ohm", &rpull_up_ohm, 1);
+#else
+	rc = fg_read_dts_val(np, "battery-id-pullup-ohm", &rpull_up_ohm, 1);
+#endif
+/* End modified by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+	if (rc)
+		rpull_up_ohm = 200000;//default 200K
+	vpull_up_mv = get_vpull_up(np);
+/* Begin modified by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+#if IS_ENABLED(CONFIG_TCT_CHG_AUSTINTF)
+	battery_resistance_id = convert_battery_id_ohm(batt_id_mv, rpull_up_ohm, vpull_up_mv);
+	battery_resistance_id_v1 = convert_battery_id_ohm(batt_id_mv, rpull_up_ohm_v1, vpull_up_mv);
+	bm_err("batt id=%dmV %dohm,rpull_up=%dohm %dmV\n", batt_id_mv, battery_resistance_id, rpull_up_ohm, vpull_up_mv);
+	bm_err("batt id_v1=%dmV %dohm,rpull_up=%dohm %dmV\n", batt_id_mv, battery_resistance_id_v1, rpull_up_ohm_v1, vpull_up_mv);
+#else
+	battery_resistance_id = convert_battery_id_ohm(batt_id_mv, rpull_up_ohm, vpull_up_mv);
+	bm_err("batt id=%dmV %dohm,rpull_up=%dohm %dmV\n", batt_id_mv, battery_resistance_id, rpull_up_ohm, vpull_up_mv);
+#endif
+/* End modified by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+
+	for (id = 0; id < TOTAL_BATTERY_NUMBER; id++) {
+		sprintf(node_name, "battery%d-id-ohm", id);
+		rc = fg_read_dts_val(np, node_name, &dts_battery_id_ohm, 1);
+		if (rc)
+			continue;
+		sprintf(node_name, "battery%d-id-range-pct", id);
+		fg_read_dts_val(np, node_name, &batt_id_pct, 1);
+/* Begin modified by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+#if IS_ENABLED(CONFIG_TCT_CHG_AUSTINTF)
+		if ((abs(dts_battery_id_ohm - battery_resistance_id) * 100) < (batt_id_pct * dts_battery_id_ohm)
+			|| (abs(dts_battery_id_ohm - battery_resistance_id_v1) * 100) < (batt_id_pct * dts_battery_id_ohm)) {
+#else
+		if ((abs(dts_battery_id_ohm - battery_resistance_id) * 100) <= (batt_id_pct * dts_battery_id_ohm)) {/*modify by zhangkun for MODEL3-2115*/
+#endif
+/* End modified by bitao.xiong for battery-id pull-up resistor task-11599163 on 2021-12-29 */
+			found_battery = true;
+			gm->is_debug_battery = false; /* Add by bitao.xiong for RACKT-1448(IEEE1725) on 2022-05-17 */
+			gm->battery_id = id;
+			sprintf(node_name, "battery%d-type", id);
+			rc = of_property_read_string(np, node_name, &gm->battery_type);
+
+/* Begin mod by jin.wang for androidT on 2022-4-12 */
+#if IS_ENABLED(CONFIG_TCT_DEVICEINFO)
+			if (rc < 0) {
+				gm->battery_type = default_batt_type;
+			} else {
+				sprintf(battery_info_module_name, "%s", gm->battery_type);
+			}
+#else
+			if (rc < 0)
+				gm->battery_type = default_batt_type;
+#endif
+/* End mod by jin.wang */
+
+			bm_err("found battery%d %s\n", id, gm->battery_type);
+			break;
+		}
+	}
+
+	if (!found_battery) {
+		gm->battery_id = 0;
+		gm->is_debug_battery = true;
+		gm->battery_type = default_batt_type;
+	}
+	return gm->battery_id;
 }
 #else
 int fgauge_get_profile_id(void)
 {
 	return 0;
 }
-
-int battery_get_bat_resistance_id(void)
-{
-	return 0;
-}
 #endif
-/* End modified by bitao.xiong for task-9820878 on 2020-08-27 */
+/* End modified by hailong.chen for task 9785237 on 2020-10-31 */
 
 int wakeup_fg_algo_cmd(
 	struct mtk_battery *gm, unsigned int flow_state, int cmd, int para1)
@@ -391,26 +480,592 @@ static enum power_supply_property battery_props[] = {
 	POWER_SUPPLY_PROP_CAPACITY_LEVEL,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
-	/* Begin added by bitao.xiong for task-9820878 on 2020-08-27 */
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED,
+	POWER_SUPPLY_PROP_ISENSECURRENT,
+	POWER_SUPPLY_PROP_BATT_ID,
 	POWER_SUPPLY_PROP_RESISTANCE_ID,
-        POWER_SUPPLY_PROP_OCV_PL,//add by nana.su for read ocv from pl
-        POWER_SUPPLY_PROP_SOC_PL,
-	POWER_SUPPLY_PROP_BATTERY_TYPE,
-	/* End added by bitao.xiong for task-9820878 on 2020-08-27 */
-	/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
+	/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
+	POWER_SUPPLY_PROP_OCV_PL,
+	POWER_SUPPLY_PROP_SOC_PL,
+	/* end add by bing-zhang for getting ocv from preloader on 20210827 */
+	POWER_SUPPLY_PROP_COULOMB_COUNT,
 	POWER_SUPPLY_PROP_TCL_FIXTEMP,
-	/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
-	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
 	POWER_SUPPLY_PROP_CHARGING_ENABLED,
-	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
-        POWER_SUPPLY_PROP_BATT_ID, //Added by baiwei.peng for batt_id on 2020/12/02
+	POWER_SUPPLY_PROP_BATTERY_TYPE,
+	POWER_SUPPLY_PROP_DEBUG_BATTERY,
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+    POWER_SUPPLY_PROP_PEAK_LEVEL,
+    POWER_SUPPLY_PROP_BATTERY_VERIFY,
+    POWER_SUPPLY_PROP_BATTERY_VSOC,
+    POWER_SUPPLY_PROP_BATT_RESISTANCE,
+    POWER_SUPPLY_PROP_CHARGING_CYCLE_TABLE,
+    POWER_SUPPLY_PROP_BATTERYUSOC,
+#endif
+/* End Added by tangshan.bai for LEVIN-6148*/
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+
 };
+
+/* Begin added by jin.wang for jira 2064 at 2021-10-25 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+struct charger_device *primary_chg = NULL;
+struct charger_device *slave_chg = NULL;
+static int battery_get_icl_settled(void)
+{
+	unsigned int main_icl = 0, sub_icl = 0;
+	int ret = 0;
+
+	if(!primary_chg) {
+		primary_chg = get_charger_by_name("primary_chg");
+		if (!primary_chg) {
+			pr_err("Error: can't find primary chg\n");
+			return -ENODEV;
+		}
+	}
+
+	ret = charger_dev_get_input_current(primary_chg, &main_icl);
+	if (ret < 0) {
+		pr_err("Error: can't read primary icl\n");
+		return -EIO;
+	}
+
+	if(!slave_chg)
+		slave_chg = get_charger_by_name("secondary_chg");
+
+	if (slave_chg) {
+		ret = charger_dev_get_input_current(slave_chg, &sub_icl);
+		if (ret < 0) {
+			pr_err("Error: can't read slave icl\n");
+			return -EIO;
+		}
+	}
+
+	return (int)(main_icl + sub_icl);
+}
+#endif
+/* End added by jin.wang */
+
+
+#if defined(CONFIG_TCT_FEATURE_SLEEP_CHARGE) || defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+/* Begin added by dapeng.qiao for task 11603976 on 2021-10-12 */
+//#if IS_ENABLED(CONFIG_TCT_CHARGER)
+//#if defined(CONFIG_TCT_FEATURE_SLEEP_CHARGE)
+static int bserachFirstOverVlaue_sleepcharge_current(struct remain_guage *nums, unsigned int length, unsigned int value) {
+    int low = 0;
+    int high = length - 1;
+
+    if(high <= 0) return 0;
+    if(value >= nums[high].current_now) return length-1;
+    while (low <= high) {
+        int mid = low + ((high - low) >> 1);
+        if(low == high) return mid;
+        if (nums[mid].current_now <= value) {
+            if ((mid == 0) || nums[mid-1].current_now > value){
+                if(mid){
+                    return mid-1;
+                }
+            }
+            else high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return length-1;
+}
+
+static int bserachFirstOverVlaue_sleepcharge_guage(struct remain_guage *nums, unsigned int length, unsigned int value) {
+    int low = 0;
+    int high = length - 1;
+
+    if(high <= 0) return 0;
+    if(value >= nums[high].charged_guage) return length-1;
+    while (low <= high) {
+        int mid = low + ((high - low) >> 1);
+        if(low == high) return mid;
+        if (nums[mid].charged_guage > value) {
+            if ((mid == 0) || nums[mid-1].charged_guage <= value){
+                if(mid){
+                    return mid-1;
+                }
+            }
+            else high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return length-1;
+}
+//#endif
+//#endif
+#ifdef CONFIG_TCT_FEATURE_PEAK_MANAGMENT
+#define ENABLE_CALCULATE_PEAK_TAIL_TIME
+#endif
+
+//#define MAX_CHARGE_CURRENT remain_zcv[0].current_now
+//#define MAX_CHARGE_CURRENT_CHANGE 1987
+//#define MAX_CHARGE_CURRENT_CHANGE_POINT 120
+//#define MAX_CHARGE_REMAIN_GAUGE remain_zcv[120].charged_guage
+//if peak hide 8,now sleep charge need stop at 80,so we need calculate time of 12% instead of 20%
+struct smart_sleep_chrging_data remain_data;
+struct smart_peak_management_data peak_data;
+static int remain_guage_charge_time(int current_now, int remain_mAh){
+    unsigned int remain_mAh_CurvedSlope;
+    unsigned int remain_mAh_horizontal;
+    unsigned int remain_second;
+    unsigned int remain_second_horizontal;
+    unsigned int remain_second_CurvedSlope;
+    int Cnow;
+    unsigned int current_lookup;
+    unsigned int qmax;
+    int l_remain_mAh;
+#ifdef ENABLE_CALCULATE_PEAK_TAIL_TIME
+    unsigned int q_max_now;
+    unsigned int qmax_hidden;
+    unsigned int BAT_peak_level;
+//    struct mtk_gauge *gauge;
+//    struct power_supply *psy;
+    static struct mtk_battery *gm;
+#endif
+    unsigned int count_1;
+    unsigned int count_2;
+    unsigned int count_3;
+   struct remain_guage *remain_zcv;
+    int array_count ;
+    int max_charge_current;
+    int current_change_value;
+    int current_change_point;
+    int MaxCurvedSlopeSecond;
+
+    remain_zcv = &remain_data.remain_zcv[0];
+    array_count = remain_data.remain_array_count;
+    max_charge_current = remain_data.max_charge_current;
+    current_change_value = remain_data.max_charge_current_change;
+    current_change_point = remain_data.max_charge_current_change_point;
+    MaxCurvedSlopeSecond = remain_data.max_charge_current_change_point_RemainSecond;
+    count_1 = 0;
+    count_2 = 0;
+    count_3 = 0;
+    remain_mAh_CurvedSlope = 0;
+    remain_mAh_horizontal = 0;
+    remain_second = 0;
+    remain_second_horizontal = 0;
+    remain_second_CurvedSlope = 0;
+    qmax = remain_zcv[array_count-1].charged_guage;
+    l_remain_mAh = remain_mAh;
+    if(l_remain_mAh < 0) {l_remain_mAh = 0; }
+    if(l_remain_mAh > qmax){ l_remain_mAh = qmax;}
+    bm_err("[%s] charge_current: %d, change_value: %d, change_point:%d, RemainSecond:%d\n", \
+        __func__, max_charge_current, current_change_value, current_change_point, MaxCurvedSlopeSecond);
+#ifdef ENABLE_CALCULATE_PEAK_TAIL_TIME
+    gm = get_mtk_battery();
+    q_max_now = gm->fg_table_cust_data.fg_profile[gm->battery_id].q_max;
+    bm_err("[%s] q_max_now:%d, qmax:%d, line:%d\n", __func__, q_max_now, qmax, __LINE__);
+    if(q_max_now > qmax){
+        qmax = q_max_now;
+    }
+    BAT_peak_level = gm->BAT_peak_level;
+    if(gm->BatteryVerify & BIT(3)){
+        qmax_hidden = qmax*(100 - BAT_peak_level)/100;
+        if(qmax >= l_remain_mAh){
+            if(qmax_hidden >= l_remain_mAh){
+                remain_second = (100 - BAT_peak_level)*10;
+                bm_err("[%s] qmax_hidden:%d, remain_mAh:%d, remain_second:%d\n", __func__, qmax_hidden, l_remain_mAh, remain_second);
+                return remain_second;
+            }else{
+                bm_err("[%s] need deal qmax_hidden:%d, remain_mAh:%d, remain_second:%d\n", __func__, qmax_hidden, l_remain_mAh, remain_second);
+            }
+        }else{
+            l_remain_mAh = qmax;
+            bm_err("[%s] qmax:%d is too small, remain_mAh:%d, qmax_hidden:%d\n", __func__,qmax, l_remain_mAh, qmax_hidden);
+        }
+    }
+#endif
+    Cnow = abs(current_now);
+    if(Cnow < 1) Cnow = 1;
+    if(current_now <= 0)
+    {//discharging
+        if(l_remain_mAh >= remain_zcv[current_change_point].charged_guage){
+            remain_mAh_CurvedSlope = remain_zcv[current_change_point].charged_guage;
+            remain_second_CurvedSlope = remain_zcv[current_change_point].remain_second;
+            current_lookup = current_now;
+            if(l_remain_mAh > remain_mAh_CurvedSlope){
+                remain_mAh_horizontal = l_remain_mAh - remain_mAh_CurvedSlope;
+            }else{
+                remain_mAh_horizontal = 0;
+            }
+            remain_second_horizontal = (remain_mAh_horizontal * 3600)/Cnow;
+            remain_second = remain_second_CurvedSlope + remain_second_horizontal + Cnow;
+        }else{
+            count_1 = bserachFirstOverVlaue_sleepcharge_guage(remain_zcv, array_count, qmax - l_remain_mAh);
+            current_lookup = current_now;
+            remain_second = remain_zcv[count_1].remain_second + Cnow;
+        }
+        bm_err("[%s] current_now:%d, line:%d\n", __func__,current_now,__LINE__);
+    }else{      //charging
+        if(Cnow < max_charge_current-5){//not max current charging
+            count_2 = bserachFirstOverVlaue_sleepcharge_current(remain_zcv, array_count, Cnow);
+            remain_mAh_CurvedSlope = qmax - remain_zcv[count_2].charged_guage;
+            remain_second_CurvedSlope = remain_zcv[count_2].remain_second;
+            current_lookup = remain_zcv[count_2].current_now;        //verify, need equal to current_now
+            bm_err("[%s] current_now:%d,max_charge_current:%d line:%d\n", __func__,current_now,max_charge_current,__LINE__);
+            if(l_remain_mAh > remain_mAh_CurvedSlope){
+                remain_mAh_horizontal = l_remain_mAh - remain_mAh_CurvedSlope;
+            }else{
+                remain_mAh_horizontal = 0;
+            }
+            remain_second_horizontal = (remain_mAh_horizontal * 3600)/Cnow;
+            remain_second = remain_second_CurvedSlope + remain_second_horizontal;
+        }else{  //max current charging
+            remain_mAh_CurvedSlope = remain_zcv[current_change_point].charged_guage;//
+            count_1 = bserachFirstOverVlaue_sleepcharge_guage(remain_zcv, array_count, qmax - l_remain_mAh);//already charged mAh
+            remain_second = remain_zcv[count_1].remain_second;
+            current_lookup = remain_zcv[count_1].current_now;        //verify, need equal to current_now
+            if(l_remain_mAh > remain_mAh_CurvedSlope){
+                remain_mAh_horizontal = l_remain_mAh - remain_mAh_CurvedSlope;
+            }else{
+                remain_mAh_horizontal = 0;
+            }
+            remain_second_CurvedSlope = remain_zcv[current_change_point].remain_second;
+            remain_second_horizontal = (remain_mAh_horizontal * 3600)/Cnow;
+            bm_err("[%s] current_now:%d,max_charge_current:%d line:%d\n", __func__,current_now,max_charge_current,__LINE__);
+        }
+#ifdef ENABLE_CALCULATE_PEAK_TAIL_TIME
+        if(l_remain_mAh >= qmax_hidden){
+            if(qmax_hidden >= remain_mAh_CurvedSlope){
+                remain_mAh_horizontal = l_remain_mAh - qmax_hidden;
+                remain_second_horizontal = (remain_mAh_horizontal * 3600)/Cnow;
+                remain_second = remain_second_horizontal;
+                    bm_err("[%s] qmax_hidden:%d, line:%d,Rsec:%d\n", __func__,qmax_hidden,__LINE__,remain_second);
+            }else{    //first calculate normal remain time, then sub hidden time
+                remain_mAh_CurvedSlope -= qmax_hidden;
+                if(qmax_hidden){    //hide gauge < remain tail gauge
+                    count_3 = bserachFirstOverVlaue_sleepcharge_guage(remain_zcv, array_count, qmax - qmax_hidden);
+                    bm_err("[%s] qmax_hidden:%d, line:%d,Rsec:%d\n", __func__,qmax_hidden,__LINE__,remain_second);
+                    remain_second_CurvedSlope -= remain_zcv[count_3].remain_second;
+                    remain_second = remain_second_horizontal + remain_second_horizontal;
+                }
+            }
+        }else{
+            remain_second = 0;
+            bm_err("[%s] remain_mAh is too small, line:%d\n", __func__, __LINE__);
+        }
+#endif
+    }
+
+    bm_err("[%s] cnt1:%d,cnt2:%d,cnt3:%d,Cpoint:%d,Cnow:%d,Ccal:%d,RmAh:%d,RmAhH:%d,RmAhCS:%d,Rsec:%d,RsecH:%d,RsecCS:%d\n",
+        __func__,count_1,count_2,count_3,current_change_point,current_now,current_lookup,l_remain_mAh,remain_mAh_horizontal,
+        remain_mAh_CurvedSlope,remain_second,remain_second_horizontal,remain_second_CurvedSlope);
+
+    return remain_second;
+}
+/* End added by dapeng.qiao for task 11603976 on 2021-10-12 */
+
+#else
+/* Begin added by dapeng.qiao for task 11603976 on 2021-10-12 */
+struct remain_guage {
+	unsigned int current_now;
+	unsigned int charge_soc;
+	unsigned int vbat;
+	unsigned int remain_guage;
+	unsigned int remain_second;
+	unsigned int charged_second;
+};
+
+static struct remain_guage remain_zcv[] = {
+    {2001,     0,     3750,     0,     11599,     0 },
+    {2001,     71,     3839,     33,     11539,     60 },
+    {2001,     142,     3882,     67,     11479,     120 },
+    {2001,     213,     3913,     100,     11419,     180 },
+    {2001,     284,     3930,     133,     11359,     240 },
+    {2001,     355,     3937,     167,     11299,     300 },
+    {2001,     425,     3941,     200,     11239,     360 },
+    {2001,     496,     3944,     234,     11179,     420 },
+    {2001,     567,     3948,     267,     11119,     480 },
+    {2001,     638,     3952,     300,     11059,     540 },
+    {2001,     709,     3956,     334,     10999,     600 },
+    {2001,     780,     3960,     367,     10939,     660 },
+    {2001,     851,     3965,     400,     10879,     720 },
+    {2001,     922,     3970,     434,     10819,     780 },
+    {2001,     993,     3975,     467,     10759,     840 },
+    {2001,     1063,     3981,     500,     10699,     900 },
+    {2001,     1134,     3986,     534,     10639,     960 },
+    {2001,     1205,     3992,     567,     10579,     1020 },
+    {2001,     1276,     3997,     600,     10519,     1080 },
+    {2001,     1347,     4002,     634,     10459,     1140 },
+    {2001,     1418,     4006,     667,     10399,     1200 },
+    {2001,     1489,     4011,     701,     10339,     1260 },
+    {2001,     1560,     4015,     734,     10279,     1320 },
+    {2001,     1631,     4019,     767,     10219,     1380 },
+    {2001,     1702,     4023,     801,     10159,     1440 },
+    {2001,     1772,     4027,     834,     10099,     1500 },
+    {2001,     1843,     4030,     867,     10039,     1560 },
+    {2001,     1914,     4034,     901,     9979,     1620 },
+    {2001,     1985,     4037,     934,     9919,     1680 },
+    {2001,     2056,     4040,     967,     9859,     1740 },
+    {2001,     2127,     4043,     1001,     9799,     1800 },
+    {2001,     2198,     4045,     1034,     9739,     1860 },
+    {2002,     2269,     4047,     1067,     9679,     1920 },
+    {2001,     2340,     4049,     1101,     9619,     1980 },
+    {2001,     2411,     4051,     1134,     9559,     2040 },
+    {2001,     2482,     4053,     1168,     9499,     2100 },
+    {2001,     2552,     4054,     1201,     9439,     2160 },
+    {2001,     2623,     4056,     1234,     9379,     2220 },
+    {2001,     2694,     4057,     1268,     9319,     2280 },
+    {2001,     2765,     4059,     1301,     9259,     2340 },
+    {2001,     2836,     4060,     1334,     9199,     2400 },
+    {2001,     2907,     4062,     1368,     9139,     2460 },
+    {2001,     2978,     4063,     1401,     9079,     2520 },
+    {2001,     3049,     4065,     1434,     9019,     2580 },
+    {2001,     3120,     4067,     1468,     8959,     2640 },
+    {2001,     3190,     4069,     1501,     8899,     2700 },
+    {2001,     3261,     4071,     1534,     8839,     2760 },
+    {2001,     3332,     4073,     1568,     8779,     2820 },
+    {2001,     3403,     4075,     1601,     8719,     2880 },
+    {2001,     3474,     4076,     1635,     8659,     2940 },
+    {2001,     3545,     4078,     1668,     8599,     3000 },
+    {2001,     3616,     4081,     1701,     8539,     3060 },
+    {2001,     3687,     4083,     1735,     8479,     3120 },
+    {2001,     3758,     4085,     1768,     8419,     3180 },
+    {2001,     3829,     4089,     1801,     8359,     3240 },
+    {2001,     3900,     4091,     1835,     8299,     3300 },
+    {2001,     3970,     4094,     1868,     8239,     3360 },
+    {2001,     4041,     4097,     1901,     8179,     3420 },
+    {2001,     4112,     4100,     1935,     8119,     3480 },
+    {2001,     4183,     4103,     1968,     8059,     3540 },
+    {2001,     4254,     4106,     2001,     7999,     3600 },
+    {2001,     4325,     4109,     2035,     7939,     3660 },
+    {2001,     4396,     4113,     2068,     7879,     3720 },
+    {2001,     4467,     4116,     2101,     7819,     3780 },
+    {2001,     4538,     4120,     2135,     7759,     3840 },
+    {2001,     4609,     4123,     2168,     7699,     3900 },
+    {2001,     4679,     4127,     2202,     7639,     3960 },
+    {2001,     4750,     4130,     2235,     7579,     4020 },
+    {2001,     4821,     4134,     2268,     7519,     4080 },
+    {2001,     4892,     4138,     2302,     7459,     4140 },
+    {2001,     4963,     4141,     2335,     7399,     4200 },
+    {2001,     5034,     4146,     2368,     7339,     4260 },
+    {2001,     5105,     4151,     2402,     7279,     4320 },
+    {2001,     5176,     4155,     2435,     7219,     4380 },
+    {2001,     5247,     4160,     2468,     7159,     4440 },
+    {2001,     5317,     4164,     2502,     7099,     4500 },
+    {2001,     5388,     4169,     2535,     7039,     4560 },
+    {2001,     5459,     4173,     2568,     6979,     4620 },
+    {2001,     5530,     4178,     2602,     6919,     4680 },
+    {2001,     5601,     4182,     2635,     6859,     4740 },
+    {2001,     5672,     4187,     2669,     6799,     4800 },
+    {2001,     5743,     4191,     2702,     6739,     4860 },
+    {2001,     5814,     4196,     2735,     6679,     4920 },
+    {2001,     5885,     4201,     2769,     6619,     4980 },
+    {2001,     5956,     4206,     2802,     6559,     5040 },
+    {2001,     6027,     4211,     2835,     6499,     5100 },
+    {2001,     6097,     4216,     2869,     6439,     5160 },
+    {2001,     6168,     4221,     2902,     6379,     5220 },
+    {2001,     6239,     4227,     2935,     6319,     5280 },
+    {2001,     6310,     4232,     2969,     6259,     5340 },
+    {2001,     6381,     4238,     3002,     6199,     5400 },
+    {2001,     6452,     4244,     3035,     6139,     5460 },
+    {2001,     6523,     4250,     3069,     6079,     5520 },
+    {2001,     6594,     4256,     3102,     6019,     5580 },
+    {2001,     6665,     4263,     3136,     5959,     5640 },
+    {2001,     6735,     4269,     3169,     5899,     5700 },
+    {2001,     6806,     4276,     3202,     5839,     5760 },
+    {2001,     6877,     4283,     3236,     5779,     5820 },
+    {2001,     6948,     4290,     3269,     5719,     5880 },
+    {2001,     7019,     4298,     3302,     5659,     5940 },
+    {2001,     7090,     4307,     3336,     5599,     6000 },
+    {2001,     7161,     4315,     3369,     5539,     6060 },
+    {2001,     7232,     4323,     3402,     5479,     6120 },
+    {2001,     7303,     4332,     3436,     5419,     6180 },
+    {2001,     7373,     4340,     3469,     5359,     6240 },
+    {2001,     7444,     4348,     3502,     5299,     6300 },
+    {2001,     7515,     4356,     3536,     5239,     6360 },
+    {2001,     7586,     4364,     3569,     5179,     6420 },
+    {2001,     7657,     4371,     3603,     5119,     6480 },
+    {2001,     7728,     4379,     3636,     5059,     6540 },
+    {2001,     7799,     4386,     3669,     4999,     6600 },
+    {2001,     7870,     4394,     3703,     4939,     6660 },
+    {1987,     7941,     4400,     3736,     4879,     6720 },      //change here
+    {1920,     8010,     4400,     3768,     4819,     6780 },
+    {1860,     8077,     4400,     3800,     4759,     6840 },
+    {1803,     8142,     4400,     3830,     4699,     6900 },
+    {1749,     8205,     4400,     3860,     4639,     6960 },
+    {1695,     8266,     4400,     3889,     4579,     7020 },
+    {1643,     8325,     4400,     3917,     4519,     7080 },
+    {1592,     8382,     4400,     3943,     4459,     7140 },
+    {1542,     8437,     4400,     3970,     4399,     7200 },
+    {1493,     8491,     4400,     3995,     4339,     7260 },
+    {1445,     8543,     4400,     4019,     4279,     7320 },
+    {1398,     8594,     4400,     4043,     4219,     7380 },
+    {1353,     8642,     4400,     4066,     4159,     7440 },
+    {1310,     8689,     4400,     4088,     4099,     7500 },
+    {1269,     8735,     4400,     4110,     4039,     7560 },
+    {1228,     8779,     4400,     4130,     3979,     7620 },
+    {1190,     8822,     4400,     4151,     3919,     7680 },
+    {1152,     8863,     4400,     4170,     3859,     7740 },
+    {1115,     8904,     4400,     4189,     3799,     7800 },
+    {1080,     8943,     4400,     4207,     3739,     7860 },
+    {1046,     8980,     4400,     4225,     3679,     7920 },
+    {1014,     9017,     4400,     4242,     3619,     7980 },
+    {983,     9052,     4400,     4259,     3559,     8040 },
+    {951,     9086,     4400,     4275,     3499,     8100 },
+    {918,     9119,     4400,     4290,     3439,     8160 },
+    {887,     9151,     4400,     4305,     3379,     8220 },
+    {857,     9182,     4400,     4320,     3319,     8280 },
+    {830,     9212,     4400,     4334,     3259,     8340 },
+    {802,     9241,     4400,     4348,     3199,     8400 },
+    {777,     9269,     4400,     4361,     3139,     8460 },
+    {753,     9296,     4400,     4374,     3079,     8520 },
+    {729,     9322,     4400,     4386,     3019,     8580 },
+    {706,     9348,     4400,     4398,     2959,     8640 },
+    {684,     9372,     4400,     4409,     2899,     8700 },
+    {664,     9396,     4400,     4421,     2839,     8760 },
+    {644,     9419,     4400,     4432,     2779,     8820 },
+    {624,     9442,     4400,     4442,     2719,     8880 },
+    {606,     9464,     4400,     4452,     2659,     8940 },
+    {588,     9485,     4400,     4462,     2599,     9000 },
+    {571,     9505,     4400,     4472,     2539,     9060 },
+    {553,     9525,     4400,     4481,     2479,     9120 },
+    {537,     9544,     4400,     4490,     2419,     9180 },
+    {520,     9563,     4400,     4499,     2359,     9240 },
+    {505,     9581,     4400,     4508,     2299,     9300 },
+    {490,     9599,     4400,     4516,     2239,     9360 },
+    {475,     9616,     4400,     4524,     2179,     9420 },
+    {461,     9632,     4400,     4532,     2119,     9480 },
+    {448,     9649,     4400,     4539,     2059,     9540 },
+    {436,     9664,     4400,     4547,     1999,     9600 },
+    {423,     9679,     4400,     4554,     1939,     9660 },
+    {411,     9694,     4400,     4561,     1879,     9720 },
+    {400,     9709,     4400,     4568,     1819,     9780 },
+    {389,     9723,     4400,     4574,     1759,     9840 },
+    {378,     9736,     4400,     4581,     1699,     9900 },
+    {368,     9749,     4400,     4587,     1639,     9960 },
+    {357,     9762,     4400,     4593,     1579,     10020 },
+    {346,     9775,     4400,     4599,     1519,     10080 },
+    {336,     9787,     4400,     4604,     1459,     10140 },
+    {327,     9798,     4400,     4610,     1399,     10200 },
+    {317,     9810,     4400,     4615,     1339,     10260 },
+    {309,     9821,     4400,     4620,     1279,     10320 },
+    {300,     9832,     4400,     4626,     1219,     10380 },
+    {292,     9842,     4400,     4630,     1159,     10440 },
+    {285,     9852,     4400,     4635,     1099,     10500 },
+    {277,     9862,     4400,     4640,     1039,     10560 },
+    {270,     9872,     4400,     4645,     979,     10620 },
+    {263,     9881,     4400,     4649,     919,     10680 },
+    {256,     9891,     4400,     4653,     859,     10740 },
+    {250,     9900,     4400,     4658,     799,     10800 },
+    {244,     9908,     4400,     4662,     739,     10860 },
+    {238,     9917,     4400,     4666,     679,     10920 },
+    {232,     9925,     4400,     4670,     619,     10980 },
+    {226,     9933,     4400,     4673,     559,     11040 },
+    {221,     9941,     4400,     4677,     499,     11100 },
+    {215,     9949,     4400,     4681,     439,     11160 },
+    {210,     9957,     4400,     4684,     379,     11220 },
+    {205,     9964,     4400,     4688,     319,     11280 },
+    {200,     9971,     4400,     4691,     259,     11340 },
+    {195,     9978,     4400,     4694,     199,     11400 },
+    {190,     9985,     4400,     4698,     139,     11460 },
+    {186,     9991,     4400,     4701,     79,     11520 },
+    {181,     9998,     4400,     4704,     19,     11580 },
+    {180,     10000,     4400,     4705,     0,     11599 },
+};
+#define REMAIN_ARRAY_COUNT (sizeof(remain_zcv)/sizeof(struct remain_guage))
+
+static int remain_guage_cal(unsigned int current_now, unsigned int remain_mAh){
+    unsigned char count;
+    unsigned int remain_mAh_cal;
+    unsigned int remain_second;
+    unsigned int charge_soc;
+    unsigned int current_t;
+    unsigned int remain_mAh_1;
+    unsigned int remain_second_1;
+    unsigned int qmax;
+
+	count = 0;
+	charge_soc = 0;
+	remain_mAh_cal = 0;
+	remain_second = 0;
+    remain_mAh_1 = 0;
+
+    if(current_now == 0) current_now = 1;
+
+    qmax = remain_zcv[REMAIN_ARRAY_COUNT-1].remain_guage;
+	do{
+		if((current_now >= remain_zcv[count].current_now)&&(remain_mAh >= qmax - remain_zcv[count].remain_guage)){
+			charge_soc = remain_zcv[count].charge_soc;
+			remain_mAh_cal = qmax - remain_zcv[count].remain_guage;
+			remain_second = remain_zcv[count].remain_second;
+			current_t = remain_zcv[count].current_now;
+	        bm_err("[%s] count:%d ,current_t:%d ,charge_soc:%d ,remain_guage_t:%d ,remain_second_t:%d\n", __func__, \
+		         count, current_t, charge_soc, remain_mAh_cal, remain_second);
+			break;
+		}
+	}while(++count < REMAIN_ARRAY_COUNT);
+    if(count == REMAIN_ARRAY_COUNT){
+        charge_soc = remain_zcv[count-1].charge_soc;
+        remain_mAh_cal = qmax - remain_zcv[count-1].remain_guage;
+        remain_second = remain_zcv[count-1].remain_second;
+        bm_err("[%s] count:%d, current_t: %d ,charge_soc_remain: %d ,remain_guage_t: %d ,remain_second_t: %d\n", __func__, \
+	         REMAIN_ARRAY_COUNT, current_t, charge_soc, remain_mAh_cal, remain_second);
+    }
+    if(remain_mAh > remain_mAh_cal){
+        remain_mAh_1 = remain_mAh - remain_mAh_cal;
+        remain_second_1 = (remain_mAh_1 * 3600)/current_now;
+        remain_second += remain_second_1;
+        bm_err("[%s] remain_mAh_1: %d, remain_mAh: %d, remain_second_1:%d\n", __func__, remain_mAh_1, remain_mAh, remain_second_1);
+    }else{
+        bm_err("[%s] remain_mAh is too small, remain_mAh: %d, remain_mAh_cal:%d\n", __func__,  remain_mAh, remain_mAh_cal);
+    }
+	msleep(1);
+	bm_err("[%s] current_now: %d, remain_mAh: %d, current_t: %d ,charge_soc: %d ,remain_guage_t: %d ,remain_second_t: %d\n", __func__, \
+		current_now, remain_mAh, current_t, charge_soc, remain_mAh_cal, remain_second);
+
+	return remain_second;
+}
+/* End added by dapeng.qiao for task 11603976 on 2021-10-12 */
+#endif
+
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+struct mtk_charger *get_mtk_charger(void)
+{
+	struct mtk_charger *info = NULL;
+	struct power_supply *chg_psy = NULL;
+
+	chg_psy = power_supply_get_by_name("mtk-master-charger");
+	if (chg_psy == NULL || IS_ERR(chg_psy)) {
+		pr_notice("%s Couldn't get chg_psy\n", __func__);
+		return 0;
+	} else {
+		info = (struct mtk_charger *)power_supply_get_drvdata(chg_psy);
+	}
+	return info;
+}
+
+static void wake_up_charger(struct mtk_charger *info)
+{
+	unsigned long flags;
+
+	if (info == NULL)
+		return;
+
+	spin_lock_irqsave(&info->slock, flags);
+	if (!info->charger_wakelock->active)
+		__pm_stay_awake(info->charger_wakelock);
+	spin_unlock_irqrestore(&info->slock, flags);
+	info->charger_thread_timeout = true;
+	wake_up(&info->wait_que);
+}
+#endif
 
 static int battery_psy_get_property(struct power_supply *psy,
 	enum power_supply_property psp,
 	union power_supply_propval *val)
 {
 	int ret = 0;
+
 	struct mtk_battery *gm;
 	struct battery_data *bs_data;
 
@@ -422,7 +1077,20 @@ static int battery_psy_get_property(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:
+		//battery_update_chg_status(gm);
+// Begin modified by zhangkun for MODEL3-6558 on 2022-12.05
+#ifdef CONFIG_TCT_PROJECT_MODEL_3
+	if ((bs_data->bat_health == POWER_SUPPLY_HEALTH_COLD)||(bs_data->bat_health == POWER_SUPPLY_HEALTH_OVERHEAT)){
+		bs_data->bat_status = POWER_SUPPLY_STATUS_DISCHARGING;
+	}
+#endif
+// End modified by zhangkun for MODEL3-6558 on 2022-12.05
 		val->intval = bs_data->bat_status;
+       /* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+        #ifdef TCT_BMS_SW_SUPPORT
+            g_bat_status = bs_data->bat_status;
+        #endif
+        /* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
 		break;
 	case POWER_SUPPLY_PROP_HEALTH:
 		val->intval = bs_data->bat_health;
@@ -451,6 +1119,19 @@ static int battery_psy_get_property(struct power_supply *psy,
 			val->intval = gm->fixed_uisoc;
 		else
 			val->intval = bs_data->bat_capacity;
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+		if(gm->display_soc != -1){
+			val->intval = (gm->display_soc +50) / 100;
+			pr_err("peak soc capacity:%d\n",val->intval);
+		}
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+		g_bat_capacity = bs_data->bat_capacity;
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		val->intval =
@@ -480,16 +1161,63 @@ static int battery_psy_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_TEMP:
 		force_get_tbat(gm, true);
 		val->intval = gm->tbat_precise;
-		/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 		if(fixtemp == 1)
 			val->intval = fixtemp_val;
-		/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
+
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+		g_tbat_precise = gm->tbat_precise;
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
 		val->intval = check_cap_level(bs_data->bat_capacity);
 		break;
 	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
 		/* full or unknown must return 0 */
+
+/* Begin modified by dapeng.qiao for task SOCAOSP13-9123 on 2022-09-12 */
+#if defined(CONFIG_TCT_FEATURE_SLEEP_CHARGE) || defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+//#if defined(CONFIG_TCT_PROJECT_RIO_GO) || defined(CONFIG_TCT_PROJECT_PASSAT)
+		ret = check_cap_level(bs_data->bat_capacity);
+		if ((ret == POWER_SUPPLY_CAPACITY_LEVEL_FULL) ||
+			(ret == POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN))
+			val->intval = 0;
+		else {
+			int q_max_now = gm->fg_table_cust_data.fg_profile[
+						gm->battery_id].q_max;
+
+            int uisoc = bs_data->bat_capacity;
+			int remain_ui = 100 - bs_data->bat_capacity;
+			int remain_mah = remain_ui * q_max_now / 10;
+            int gm_soc = gm->soc;
+            int gm_v_soc = gm->fg_cust_data.v_soc;
+            int gm_c_soc = gm->fg_cust_data.c_soc;
+            int fg_coulomb = 0;
+            int time_to_full = 0;
+            int current_avg = gm->sw_iavg;
+            int current_now = gauge_get_int_property(GAUGE_PROP_BATTERY_CURRENT);
+            if (remain_data.enable_smart_slp_chg)
+            {
+                remain_mah = (10000 - gm->fg_cust_data.v_soc) * q_max_now / 1000;
+                fg_coulomb = gauge_get_int_property(GAUGE_PROP_COULOMB);
+                time_to_full = remain_guage_charge_time(current_now/10, remain_mah/10);
+                bm_err("TimeToFull:%d,Cavg:%d,Cnow:%d,Rmah:%d,qmax:%d,Car:%d,uisoc:%d,GmSoc:%d,Vsoc:%d,Csoc:%d\n",\
+                    time_to_full, current_avg/10, current_now/10, remain_mah/10,\
+                    q_max_now, fg_coulomb, uisoc,gm_soc, gm_v_soc, gm_c_soc);
+            }else{
+                if (current_now != 0)
+                    time_to_full = remain_mah * 3600 / current_now;
+                bm_debug("time_to_full:%d, remain:ui:%d mah:%d, fgcurrent:%d, qmax:%d\n",
+                    time_to_full, remain_ui, remain_mah,
+                    current_now, q_max_now);
+            }
+            val->intval = abs(time_to_full);
+#else
 		ret = check_cap_level(bs_data->bat_capacity);
 		if ((ret == POWER_SUPPLY_CAPACITY_LEVEL_FULL) ||
 			(ret == POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN))
@@ -499,18 +1227,57 @@ static int battery_psy_get_property(struct power_supply *psy,
 						gm->battery_id].q_max;
 			int remain_ui = 100 - bs_data->bat_capacity;
 			int remain_mah = remain_ui * q_max_now / 10;
+            int gm_soc = gm->soc;
+			int remain_mah_c = gm_soc * q_max_now / 10;
+            int fg_coulomb = 0;
 			int current_now =
 			gauge_get_int_property(GAUGE_PROP_BATTERY_CURRENT);
-
+			int current_avg = gm->sw_iavg;
+            int int_temp = 0;
 			int time_to_full = 0;
+			int time_to_full2 = 0;
+			int time_to_full3 = 0;
+			int time_to_full4 = 0;
+            bool avg_flag = false;
+            bool soc_flag = false;
 
-			if (current_now != 0)
-				time_to_full = remain_mah * 3600 / current_now;
+            fg_coulomb = gauge_get_int_property(GAUGE_PROP_COULOMB);
+            int_temp = current_now - current_avg;
+            bm_err("%s %d int_temp:%d\n",__func__, __LINE__, int_temp);
+            if(current_avg/abs(int_temp) >10)
+                avg_flag = true;
+            int_temp = remain_ui*100 - gm_soc;
+            bm_err("%s %d int_temp:%d\n",__func__, __LINE__, int_temp);
+            if(gm_soc/abs(int_temp) >10)
+                soc_flag = true;
 
-				bm_debug("time_to_full:%d, remain:ui:%d mah:%d, current_now:%d, qmax:%d\n",
-					time_to_full, remain_ui, remain_mah,
-					current_now, q_max_now);
-			val->intval = abs(time_to_full);
+            if (current_now > 0){
+                if(current_now < 100){
+                    time_to_full = remain_guage_cal(100, remain_mah/10);
+                    time_to_full2 = remain_mah * 3600 / 100;
+                    time_to_full3 = remain_guage_cal(100, remain_mah/10);
+                    time_to_full4 = remain_guage_cal(100, remain_mah_c/10);
+                }else{
+                    time_to_full = remain_guage_cal(current_now/10, remain_mah/10);
+                    time_to_full2 = remain_mah * 3600 / current_now;
+                    if(avg_flag){
+                        time_to_full3 = remain_guage_cal(current_now/10, remain_mah/10);
+                    }else{
+                        time_to_full3 = remain_guage_cal(current_avg/10, remain_mah/10);
+                    }
+                    if(soc_flag){
+                        time_to_full4 = remain_guage_cal(current_avg/10, remain_mah/10);
+                    }else{
+                        time_to_full4 = remain_guage_cal(current_avg/10, remain_mah_c/10);
+                    }
+                }
+            }
+            bm_err("time_to_full:%d,full2:%d,full3:%d,full4:%d,c_avg:%d,f_avg:%d,f_soc:%d,r_ui:%d,gm_ui:%d,remain_mah:%d,gm_mah:%d,c_now:%d,qmax:%d,car:%d\n",
+                time_to_full, time_to_full2, time_to_full3, time_to_full4, current_avg/10, avg_flag, soc_flag, remain_ui,\
+                100-gm_soc, remain_mah/10, remain_mah_c/10, current_now/10, q_max_now,fg_coulomb);
+            val->intval = abs(time_to_full);
+#endif
+/* End modified by dapeng.qiao for task SOCAOSP13-9123 on 2022-09-12 */
 		}
 		ret = 0;
 		break;
@@ -535,35 +1302,70 @@ static int battery_psy_get_property(struct power_supply *psy,
 			val->intval = q_max_uah;
 		}
 		break;
-	/* Begin added by bitao.xiong for task-9820878 on 2020-08-27 */
-	case POWER_SUPPLY_PROP_RESISTANCE_ID:
-		val->intval = battery_get_bat_resistance_id();
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
+		val->intval = battery_get_icl_settled();
 		break;
+	case POWER_SUPPLY_PROP_ISENSECURRENT:
+		val->intval =
+			gauge_get_int_property(GAUGE_PROP_BATTERY_CURRENT) * 100;
+		break;
+	case POWER_SUPPLY_PROP_BATT_ID:
+		val->intval = gauge_get_int_property(GAUGE_PROP_BATTERY_ID);
+		break;
+	case POWER_SUPPLY_PROP_RESISTANCE_ID:
+		val->intval = battery_resistance_id;
+		break;
+	/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
 	case POWER_SUPPLY_PROP_OCV_PL:
 		val->intval = gm->pl_bat_vol;
 		break;
 	case POWER_SUPPLY_PROP_SOC_PL:
 		val->intval = gm->soc_pl;
 		break;
-	case POWER_SUPPLY_PROP_BATTERY_TYPE:
-		val->strval = gm->battery_type? gm->battery_type : default_batt_type;
+	/* end add by bing-zhang for getting ocv from preloader on 20210827 */
+	case POWER_SUPPLY_PROP_COULOMB_COUNT:
+		val->intval = gauge_get_int_property(GAUGE_PROP_COULOMB);
 		break;
-	/* End added by bitao.xiong for task-9820878 on 2020-08-27 */
-	/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
 	case POWER_SUPPLY_PROP_TCL_FIXTEMP:
 		val->intval = fixtemp;
 		break;
-	/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
-	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
 	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
-		val->intval = !chg_disable;
+		val->intval = !gm->chg_disable;
 		break;
-	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
-        /* Add-start by baiwei.peng for batt_id on 2020/12/02 */
-        case POWER_SUPPLY_PROP_BATT_ID:
-                val->intval = gm->battery_id_voltage;
-                break;
-        /* Add-end by baiwei.peng for batt_id on 2020/12/02 */
+	case POWER_SUPPLY_PROP_BATTERY_TYPE:
+		val->strval =  gm->battery_type;
+		break;
+	case POWER_SUPPLY_PROP_DEBUG_BATTERY:
+		val->intval = gm->is_debug_battery;
+		break;
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	case POWER_SUPPLY_PROP_PEAK_LEVEL:
+		val->intval = gm->BAT_peak_level;
+		break;
+	case POWER_SUPPLY_PROP_BATTERY_VERIFY:
+		val->intval = gm->BatteryVerify;
+		break;
+	case POWER_SUPPLY_PROP_BATTERY_VSOC:
+		val->intval = gm->fg_cust_data.v_soc;
+		break;
+	case POWER_SUPPLY_PROP_BATT_RESISTANCE:
+		val->strval = gm->batt_resistance;
+		break;
+	case POWER_SUPPLY_PROP_CHARGING_CYCLE_TABLE:
+		val->strval = gm->charge_cycle_table;
+		break;
+	case POWER_SUPPLY_PROP_BATTERYUSOC:
+		// val->intval = (gm->display_soc +50)/100;
+		val->intval = gm->display_soc;
+		break;
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 	default:
 		ret = -EINVAL;
 		break;
@@ -575,21 +1377,98 @@ static int battery_psy_get_property(struct power_supply *psy,
 	return ret;
 }
 
-/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
+#if 0
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+struct mtk_charger *get_mtk_charger(void)
+{
+	struct mtk_charger *info = NULL;
+	struct power_supply *chg_psy = NULL;
+
+	chg_psy = power_supply_get_by_name("mtk-master-charger");
+	if (chg_psy == NULL || IS_ERR(chg_psy)) {
+		pr_notice("%s Couldn't get chg_psy\n", __func__);
+		return 0;
+	} else {
+		info = (struct mtk_charger *)power_supply_get_drvdata(chg_psy);
+	}
+	return info;
+}
+
+static void wake_up_charger(struct mtk_charger *info)
+{
+	unsigned long flags;
+
+	if (info == NULL)
+		return;
+
+	spin_lock_irqsave(&info->slock, flags);
+	if (!info->charger_wakelock->active)
+		__pm_stay_awake(info->charger_wakelock);
+	spin_unlock_irqrestore(&info->slock, flags);
+	info->charger_thread_timeout = true;
+	wake_up(&info->wait_que);
+}
+#endif
+#endif
+
+/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 static int battery_psy_set_property(struct power_supply *psy,
 	enum power_supply_property psp,
 	const union power_supply_propval *val)
 {
+	struct mtk_charger *info = get_mtk_charger();
+	struct mtk_battery *gm;
 	int ret = 0;
 
+	gm = psy->drv_data;
 	switch (psp) {
 	case POWER_SUPPLY_PROP_TCL_FIXTEMP:
+/* Begin mod by jin.wang to split fixtemp and fixtemp_val */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		fixtemp = val->intval >> 16;
+		fixtemp_val = val->intval & 0xFFFF;
+#else
 		fixtemp = val->intval;
+#endif
+/* End mod by jin.wang */
 		break;
 	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
 	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
-		chg_disable = !val->intval;
+		gm->chg_disable = !val->intval;
+		wake_up_charger(info);
 		break;
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	case POWER_SUPPLY_PROP_PEAK_LEVEL:
+		gm->BAT_peak_level = val->intval;
+		bm_err("%s: userspace write decimal peak_level:%d\n", __func__,val->intval);
+        break;
+	case POWER_SUPPLY_PROP_BATTERY_VERIFY:
+        gm->BatteryVerify &= 0x000000F0;    //here clear BIT(3)
+        fg_max_monotone = 0;
+        if(val->intval & BIT(3)){
+            gm->BatteryVerify |= BIT(3);
+//            if (gm->bs_data.bat_status == POWER_SUPPLY_STATUS_CHARGING){
+                gm->BatteryVerify |= BIT(1);
+//            }
+        }else{
+            gm->BatteryVerify |= BIT(0);
+        }
+        bm_err("%s: userspace write Hexadecimal,only 0x0008 will be accept, not care other bit, BatteryVerify:%x,charging:%d\n",\
+            __func__,gm->BatteryVerify,gm->bs_data.bat_status);
+        break;
+    case POWER_SUPPLY_PROP_BATTERYUSOC:
+    		if(!gm->gauge->hw_status.rtc_invalid){
+				// gm->display_soc = val->intval*100;
+				gm->display_soc = val->intval;
+				bm_err("%s: userspace write usoc:%d\n", __func__,val->intval);
+    		}
+    		else
+				bm_err("%s: userspace rtc_invalid:%d, usoc:%d\n", __func__,gm->gauge->hw_status.rtc_invalid,val->intval);
+    	break;
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
 	default:
 		ret = -EINVAL;
@@ -604,17 +1483,404 @@ static int battery_psy_property_is_writeable(struct power_supply *psy,
 {
 	switch (psp) {
 	case POWER_SUPPLY_PROP_TCL_FIXTEMP:
-	/* Begin added by bitao.xiong for task-9895401 on 2020-09-11 */
 	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
-	/* End added by bitao.xiong for task-9895401 on 2020-09-11 */
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	case POWER_SUPPLY_PROP_PEAK_LEVEL:
+	case POWER_SUPPLY_PROP_BATTERY_VERIFY:
+	case POWER_SUPPLY_PROP_BATTERYUSOC:
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
 		return 1;
 	default:
 		break;
 	}
 	return 0;
 }
-/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
+#endif
+/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 
+/* Begin Added by tangshan.bai for LEVIN-6148 */
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+static int bserachFirstOverVlaue(struct peak_guage *nums, unsigned int length, unsigned int value) {
+    int low = 0;
+    int high = length - 1;
+
+    if(high <= 0) return 0;
+    if(value >= nums[high].fg_v_soc) return length-1;
+    while (low <= high) {
+        int mid = low + ((high - low) >> 1);
+        if(low == high) return mid;
+        if (nums[mid].fg_v_soc > value) {
+            if ((mid == 0) || nums[mid-1].fg_v_soc <= value){
+                if(mid){
+                    return mid-1;
+                }
+            }
+            else high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return length-1;
+}
+
+enum BSEARCH_TYPE{
+    BEGIN_V_SOC,
+    STOP_V_SOC,
+};
+static int bserach_begin_log_coulomb(enum BSEARCH_TYPE type)
+{
+    unsigned int count_1;
+    unsigned int array_count;
+    int log_coulomb;
+    int v_soc;
+    struct peak_guage *peak_zcv;
+    struct mtk_battery *gm;
+
+    gm = get_mtk_battery();
+    peak_zcv = &peak_data.peak_zcv[0];
+    array_count = peak_data.peak_array_count;
+    log_coulomb = 0;
+    switch(type){
+    case BEGIN_V_SOC:
+        v_soc = gm->g_begin_v_soc;
+        break;
+    case STOP_V_SOC:
+        v_soc = gm->g_stop_v_soc;
+        break;
+    defalut:
+        break;
+    }
+
+    count_1 = bserachFirstOverVlaue(peak_zcv, array_count, v_soc);
+    log_coulomb = peak_zcv[count_1].fg_coulomb;
+
+    return log_coulomb;
+}
+
+int record_fg_maxvalue_batteryverify(void){
+    int fg_stop;
+    int fg_max;
+    struct mtk_battery *gm;
+
+    gm = get_mtk_battery();
+    fg_stop = 0;
+    fg_max = 0;
+    fg_stop = gauge_get_int_property(GAUGE_PROP_COULOMB);
+    if(gm->BatteryVerify & BIT(3)) {
+        fg_max = fg_max_monotone;
+        if(fg_max < fg_stop){
+            fg_max = fg_stop;
+            fg_max_monotone = fg_max;
+        }
+        if(gm->BatteryVerify & BIT(2)) {
+            return fg_max;
+        }
+        if((10000 == gm->fg_cust_data.v_soc) && (fg_stop <= 0)){
+            return fg_max;
+        }
+    }else{
+        fg_max = fg_stop;
+        fg_max_monotone = fg_max;
+    }
+    if(fg_stop != fg_max_monotone){
+        bm_err("%s %d, fg_max_monotone:%d,fg_max:%d\n",__func__, __LINE__,fg_max_monotone,fg_stop);
+    }
+    return fg_max;
+}
+#define LIFE_ARRAY_LENGTH 10
+unsigned int life_array[LIFE_ARRAY_LENGTH];
+unsigned int life_array_avg;
+unsigned int life_cnt;
+unsigned long cal_batt_life(unsigned int log_vsoc_start,unsigned int log_vsoc_stop,int fg_start,int fg_stop){
+
+    static unsigned long cal_life;
+    int coulomb_diff;
+    int cal_coulomb_diff;
+    int l_begin_log_coulomb;
+    int l_stop_log_coulomb;
+    unsigned int count_1;
+    unsigned int count_2;
+    unsigned int count_life;
+    unsigned int array_count;
+    struct peak_guage *peak_zcv;
+    struct mtk_battery *gm;
+
+    gm = get_mtk_battery();
+    peak_zcv = &peak_data.peak_zcv[0];
+    array_count = peak_data.peak_array_count;
+    count_1 = 0;
+    count_2 = 0;
+    count_life = 0;
+    if(gm->BatteryVerify & BIT(2)) {
+        return cal_life;
+    }
+    if((10000 == gm->fg_cust_data.v_soc) && (fg_stop <= 0)){
+        return cal_life;
+    }
+    cal_life = 0;
+    coulomb_diff = abs(fg_stop - fg_start);
+    cal_coulomb_diff = 0;
+    count_1 = bserachFirstOverVlaue(peak_zcv, array_count, log_vsoc_start);
+    count_2 = bserachFirstOverVlaue(peak_zcv, array_count, log_vsoc_stop);
+    l_begin_log_coulomb = peak_zcv[count_1].fg_coulomb;
+    l_stop_log_coulomb = peak_zcv[count_2].fg_coulomb;
+    cal_coulomb_diff = abs(l_stop_log_coulomb - l_begin_log_coulomb);
+    if((cal_coulomb_diff >= 1) || (cal_coulomb_diff <= -1)){
+        cal_life = (100*coulomb_diff/cal_coulomb_diff);
+    }
+    if(cal_life >= 0xFF){
+        cal_life = 0xFF;
+    }
+    count_life = life_cnt % LIFE_ARRAY_LENGTH;
+    life_array[count_life] = cal_life;
+    life_cnt++;
+    count_life = 0;
+    life_array_avg = 0;
+    for(count_life = 0; count_life < LIFE_ARRAY_LENGTH; count_life++){
+        life_array_avg +=  life_array[count_life];
+    }
+    bm_err("life_array,1:%d,2:%d,3:%d,4:%d,5:%d,6:%d,7:%d,8:%d,9:%d,10:%d,life_cnt:%d\n",life_array[0],life_array[1],\
+    life_array[2],life_array[3],life_array[4],life_array[5],life_array[6],life_array[7],life_array[8],life_array[9],life_cnt);
+    life_array_avg /=  LIFE_ARRAY_LENGTH;
+
+    cal_life = life_array_avg;
+    if(gm->BatteryVerify & BIT(1)) {
+        gm->BatteryVerify &= 0x00FF;
+        gm->BatteryVerify |= (cal_life << 8);
+    }
+
+    bm_err("[%s] life:%ld cnt1:%d,cnt2:%d,bvsoc:%d,svsoc:%d,BlCar:%d,SlCar:%d,LFgDiff:%d,BCar:%d,SCar:%d,FgDiff:%d,Verify:0x%x,life_array_avg:%d\n", \
+        __func__, cal_life, count_1, count_2, log_vsoc_start, log_vsoc_stop,
+        l_begin_log_coulomb, l_stop_log_coulomb, cal_coulomb_diff, fg_start, fg_stop, coulomb_diff,gm->BatteryVerify,life_array_avg);
+
+    return cal_life;
+}
+
+void calculate_coulomb_charged(enum chg_alg_notifier_events plug_state){
+    int v_soc_diff;
+    int coulomb_diff;
+    long cal_coulomb_diff;
+    unsigned int q_max;
+    int cal_life;
+    struct mtk_battery *gm;
+    struct peak_guage *peak_zcv;
+    int array_count ;
+    unsigned int count_1;
+    unsigned int count_2;
+
+    peak_zcv = &peak_data.peak_zcv[0];
+    array_count = peak_data.peak_array_count;
+    count_1 = 0;
+    count_2 = 0;
+    v_soc_diff = 0;
+    coulomb_diff = 0;
+    cal_coulomb_diff = 0;
+    cal_life = 0;
+    gm = get_mtk_battery();
+
+    if(gm->BatteryVerify & BIT(3)) {
+        if(gm->BatteryVerify & BIT(2)) {
+             bm_err("%s,Already full, if recaculate, reclear BatteryVerify 0x%x\n",__func__, gm->BatteryVerify);
+             return;
+        }else{
+            bm_err("%s, Allow start BatteryVerify:0x%x\n",__func__, gm->BatteryVerify);
+            gm->BatteryVerify &= 0x000000F8;
+        }
+    }
+
+    switch (plug_state) {
+    case EVT_PLUG_OUT:
+    case EVT_FULL:
+        gm->g_stop_fg_coulomb = record_fg_maxvalue_batteryverify();
+        gm->g_stop_v_soc = gm->fg_cust_data.v_soc;
+        gm->g_stop_c_soc = gm->fg_cust_data.c_soc;
+        v_soc_diff = gm->g_stop_v_soc - gm->g_begin_v_soc;
+        coulomb_diff = abs(gm->g_stop_fg_coulomb - gm->g_begin_fg_coulomb);
+        q_max = gm->fg_table_cust_data.fg_profile[gm->battery_id].q_max;
+    	gm->k_daemon = gm->daemon_uisoc;
+    	gm->k_display = gm->display_soc;
+
+        if(gm->BatteryVerify & BIT(3)) {
+            bm_err("%s: Bvsoc=%d,Svsoc=%d,Bfg=%d,Sfg=%d,q_max=%d,fgdiff=%d,QmaxTab:%d\n", \
+            __func__,gm->g_begin_v_soc,gm->g_stop_v_soc,gm->g_begin_fg_coulomb,gm->g_stop_fg_coulomb,q_max,coulomb_diff,peak_zcv[array_count-1].fg_coulomb);
+            count_2 = bserachFirstOverVlaue(peak_zcv, array_count, gm->g_stop_v_soc);
+            gm->g_stop_log_coulomb = peak_zcv[count_2].fg_coulomb;
+            cal_coulomb_diff = abs(gm->g_stop_log_coulomb - gm->g_begin_log_coulomb);
+            if((cal_coulomb_diff >= 1) || (cal_coulomb_diff <= -1)){
+                cal_life = (int)(100*coulomb_diff/cal_coulomb_diff);//5000*40/2000
+            }
+            if(cal_life >= 0xFF){
+                cal_life = 0xFF;
+            }
+            bm_err("%s %d,life_array_avg 0x%x\n",__func__, __LINE__,life_array_avg);
+            if(0 < life_array_avg){
+                cal_life = life_array_avg;
+            }
+            bm_err("%s line:%d, BatteryVerify:0x%x,life:%ld,life_array_avg:%d\n",__func__, __LINE__,gm->BatteryVerify,cal_life,life_array_avg);
+            gm->BatteryVerify |= (cal_life << 8);
+            bm_err("%s line:%d, verify stop, BatteryVerify:0x%x,v_soc_diff:%d\n",__func__, __LINE__,gm->BatteryVerify,v_soc_diff);
+
+            if(EVT_FULL == plug_state){
+                gm->BatteryVerify |= BIT(2);       //calculate state and hide 0% life
+            }else{
+                if(v_soc_diff >= 7000){
+                    gm->BatteryVerify |= BIT(2);
+                }else{
+                    gm->BatteryVerify |= BIT(0);       //END
+                }
+            }
+        }
+        bm_err("%s %d,plug out, BatteryVerify 0x%x\n",__func__, __LINE__,gm->BatteryVerify);
+        break;
+    case EVT_PLUG_IN:
+    case EVT_RECHARGE:
+        gm->g_begin_fg_coulomb = gauge_get_int_property(GAUGE_PROP_COULOMB);
+        fg_max_monotone = gm->g_begin_fg_coulomb;
+        gm->g_begin_v_soc = gm->fg_cust_data.v_soc;
+        gm->g_begin_c_soc = gm->fg_cust_data.c_soc;
+        gm->g_stop_fg_coulomb = gauge_get_int_property(GAUGE_PROP_COULOMB);
+        gm->g_stop_v_soc = gm->fg_cust_data.v_soc;
+        gm->g_stop_c_soc = gm->fg_cust_data.c_soc;
+    	gm->k_daemon = 10000 - gm->daemon_uisoc;
+    	gm->k_display = 10000 - gm->display_soc;
+    	if (work_busy(&gm->tracking_to_zero_work.work))//cancel battery tracking to zero work
+    		cancel_delayed_work_sync(&gm->tracking_to_zero_work);
+
+        if(gm->BatteryVerify & BIT(3)) {
+            bm_err("%s, Allow start BatteryVerify:0x%x\n",__func__, gm->BatteryVerify);
+            gm->BatteryVerify |= BIT(1);       //calculate state and hide 0% life
+        }
+        count_1 = bserachFirstOverVlaue(peak_zcv, array_count, gm->g_begin_v_soc);
+        gm->g_begin_log_coulomb = peak_zcv[count_1].fg_coulomb;
+        gm->g_stop_log_coulomb = gm->g_begin_log_coulomb;
+        cal_coulomb_diff = 0;
+        cal_life = 0;
+        memset(&life_array, 0, sizeof(life_array));
+        life_array_avg = 0;
+        life_cnt = 0;
+
+        if(EVT_PLUG_IN == plug_state)
+            bm_err("%s,plug in, BatteryVerify 0x%x\n",__func__, gm->BatteryVerify);
+        else
+            bm_err("%s,recharge, BatteryVerify 0x%x\n",__func__, gm->BatteryVerify);
+        break;
+    defalut:
+        break;
+    }
+    bm_err("[%s] life:%ld,cnt1:%d,cnt2:%d,1vsoc:%d,2vsoc:%d,1lcar:%d,2lcar:%d,lfgdiff:%d,1car:%d,2car:%d,fgdiff:%d,Verify:0x%x\n", \
+    __func__, cal_life, count_1, count_2, gm->g_begin_v_soc, gm->g_stop_v_soc, gm->g_begin_log_coulomb, \
+    gm->g_stop_log_coulomb, cal_coulomb_diff, gm->g_begin_fg_coulomb,gm->g_stop_fg_coulomb,coulomb_diff,gm->BatteryVerify);
+}
+#endif
+/* End Added by tangshan.bai for LEVIN-6148 */
+
+/* Begin add by jin.wang for jira 2064 on 2021-11-30 */
+//#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+#if 0
+static void battery_update_chg_status(struct mtk_battery *gm)
+{
+	struct battery_data *bs_data = NULL;
+	struct charger_device *primary_chg = NULL;
+	union power_supply_propval online = {0,};
+	union power_supply_propval status = {POWER_SUPPLY_STATUS_UNKNOWN,};
+	int ret = 0;
+
+	bs_data = &gm->bs_data;
+	bs_data->bat_status = POWER_SUPPLY_STATUS_UNKNOWN;
+
+	if (IS_ERR_OR_NULL(bs_data->chg_psy)) {
+		bm_err("%s retry to get chg_psy\n", __func__);
+		bs_data->chg_psy =
+			devm_power_supply_get_by_phandle(
+				&gm->gauge->pdev->dev, "charger");
+	}
+	if (IS_ERR_OR_NULL(bs_data->chg_psy)) {
+		bm_err("%s can't find chg_psy\n", __func__);
+		return;
+	}
+
+	ret = power_supply_get_property(bs_data->chg_psy,
+		POWER_SUPPLY_PROP_ONLINE, &online);
+	if (!ret) {
+		if (!online.intval) {
+			bs_data->bat_status = POWER_SUPPLY_STATUS_DISCHARGING;
+		} else {
+			ret = power_supply_get_property(bs_data->chg_psy,
+				POWER_SUPPLY_PROP_STATUS, &status);
+			if(ret) {
+				pr_err("V0: Get status from %s failed use primary_chg\n",
+						bs_data->chg_psy->desc->name);
+				primary_chg = get_charger_by_name("primary_chg");
+				charger_dev_get_charging_status(primary_chg,
+							&status.intval);
+			}
+			bs_data->bat_status = status.intval;
+		}
+	}
+}
+
+static void mtk_battery_external_power_changed(struct power_supply *psy)
+{
+	struct mtk_battery *gm;
+	struct battery_data *bs_data;
+	union power_supply_propval online = {0,};
+	union power_supply_propval prop_type = {POWER_SUPPLY_USB_TYPE_UNKNOWN,};
+	int cur_chr_type;
+
+	struct power_supply *chg_psy = NULL;
+	int ret;
+
+	gm = psy->drv_data;
+	bs_data = &gm->bs_data;
+	chg_psy = bs_data->chg_psy;
+
+	if (IS_ERR_OR_NULL(chg_psy)) {
+		chg_psy = devm_power_supply_get_by_phandle(&gm->gauge->pdev->dev,
+							   "charger");
+		bm_err("%s retry to get chg_psy\n", __func__);
+		bs_data->chg_psy = chg_psy;
+	} else {
+		ret = power_supply_get_property(chg_psy,
+			POWER_SUPPLY_PROP_ONLINE, &online);
+		if (!ret && online.intval) {
+			fg_sw_bat_cycle_accu(gm);
+		}
+
+		battery_update_chg_status(gm);
+		if (bs_data->bat_status == POWER_SUPPLY_STATUS_FULL
+			&& gm->b_EOC != true) {
+			bm_err("POWER_SUPPLY_STATUS_FULL\n");
+			gm->b_EOC = true;
+			notify_fg_chr_full(gm);
+		} else
+			gm->b_EOC = false;
+
+		battery_update(gm);
+
+		/* check charger type */
+		ret = power_supply_get_property(chg_psy,
+			POWER_SUPPLY_PROP_USB_TYPE, &prop_type);
+
+		/* plug in out */
+		cur_chr_type = prop_type.intval;
+		if (cur_chr_type == POWER_SUPPLY_USB_TYPE_UNKNOWN) {
+			if (gm->chr_type != POWER_SUPPLY_USB_TYPE_UNKNOWN)
+				wakeup_fg_algo(gm, FG_INTR_CHARGER_OUT);
+		} else {
+			if (gm->chr_type == POWER_SUPPLY_USB_TYPE_UNKNOWN)
+				wakeup_fg_algo(gm, FG_INTR_CHARGER_IN);
+		}
+	}
+
+	bm_err("%s: V3: name:%s online:%d, status:%d, EOC:%d, cur_chr_type:%d old:%d\n",
+		__func__, psy->desc->name, online.intval, bs_data->bat_status,
+		gm->b_EOC, cur_chr_type, gm->chr_type);
+
+	gm->chr_type = cur_chr_type;
+}
+#else
 static void mtk_battery_external_power_changed(struct power_supply *psy)
 {
 	struct mtk_battery *gm;
@@ -626,12 +1892,27 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 	struct power_supply *chg_psy = NULL;
 	int ret;
 
+//Begin Modified by qiuguangliang for 10941217 on 2021-04-23
+	struct charger_device *primary_chg = NULL;
+	bool charge_done = 0;
+//End Modified by qiuguangliang for 10941217 on 2021-04-23
+
 	gm = psy->drv_data;
 	bs_data = &gm->bs_data;
-	chg_psy = devm_power_supply_get_by_phandle(&gm->gauge->pdev->dev,
-						       "charger");
+	chg_psy = bs_data->chg_psy;
+
 	if (IS_ERR_OR_NULL(chg_psy)) {
-		bm_err("%s Couldn't get chg_psy\n", __func__);
+		chg_psy = devm_power_supply_get_by_phandle(&gm->gauge->pdev->dev,
+							   "charger");
+		bm_err("%s retry to get chg_psy\n", __func__);
+		/* Begin added by bitao.xiong for alm-11715746 on 2022-03-19 */
+		if (IS_ERR_OR_NULL(chg_psy)) {
+			primary_chg = get_charger_by_name("primary_chg");
+			if (!IS_ERR_OR_NULL(primary_chg) && strlen(primary_chg->props.alias_name) != 0)
+				chg_psy = power_supply_get_by_name(primary_chg->props.alias_name);
+		}
+		/* End added by bitao.xiong for alm-11715746 on 2022-03-19 */
+		bs_data->chg_psy = chg_psy;
 	} else {
 		ret = power_supply_get_property(chg_psy,
 			POWER_SUPPLY_PROP_ONLINE, &online);
@@ -642,27 +1923,40 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 		if (!online.intval)
 			bs_data->bat_status = POWER_SUPPLY_STATUS_DISCHARGING;
 		else {
-			if (status.intval == POWER_SUPPLY_STATUS_NOT_CHARGING)
+			/* Begin added by bitao.xiong for RAUSC-1032 on 2022-05-25 */
+			if ((bs_data->bat_health == POWER_SUPPLY_HEALTH_WARM)
+				&& status.intval == POWER_SUPPLY_STATUS_FULL) {
+				pr_err("soc %d, force bat_status\n", bs_data->bat_capacity);
+				status.intval = POWER_SUPPLY_STATUS_CHARGING;
+			}
+			/* End added by bitao.xiong for RAUSC-1032 on 2022-05-25 */
+
+            /*modify begin by weijun for fully charged showing on 2022.2.10*/
+			if (status.intval == POWER_SUPPLY_STATUS_NOT_CHARGING) {
 				bs_data->bat_status =
 					POWER_SUPPLY_STATUS_NOT_CHARGING;
-			else
+			} else if (status.intval == POWER_SUPPLY_STATUS_FULL) {
+				bs_data->bat_status =
+					POWER_SUPPLY_STATUS_FULL;
+            } else {
 				bs_data->bat_status =
 					POWER_SUPPLY_STATUS_CHARGING;
+            }
+            /*modify end by weijun for fully charged showing on 2022.2.10*/
 			fg_sw_bat_cycle_accu(gm);
-			/* Begin added by bitao.xiong for defect-10124663 on 2020-11-09 */
-			#if defined(JRD_PROJECT_FULL_BANGKOK_TF)  || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-				|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
-			if (gm->fixed_uisoc != 0xffff) {
-				if (gm->fixed_uisoc >= 100)
-					bs_data->bat_status = POWER_SUPPLY_STATUS_FULL;
-			} else {
-				if (bs_data->bat_capacity >= 100)
-					bs_data->bat_status = POWER_SUPPLY_STATUS_FULL;
-			}
-			#endif
-			/* End added by bitao.xiong for defect-10124663 on 2020-11-09 */
 		}
 
+//Begin Modified by qiuguangliang for 11043275 on 2021-04-23
+		if(ret) {
+			printk("Get status from %s failed use primary_chg \n", chg_psy->desc->name);
+			primary_chg = get_charger_by_name("primary_chg");
+			charger_dev_is_charging_done(primary_chg, &charge_done);
+			if(charge_done) {
+				status.intval = POWER_SUPPLY_STATUS_FULL;
+				bs_data->bat_status = POWER_SUPPLY_STATUS_FULL;
+			}
+		}
+//End Modified by qiuguangliang for 11043275 on 2021-04-23
 		if (status.intval == POWER_SUPPLY_STATUS_FULL
 			&& gm->b_EOC != true) {
 			bm_err("POWER_SUPPLY_STATUS_FULL\n");
@@ -680,6 +1974,16 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 		/* plug in out */
 		cur_chr_type = prop_type.intval;
 
+/* Begin modified by jin.wang for task 11395446 on 2021-08-06 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		if (cur_chr_type == POWER_SUPPLY_USB_TYPE_UNKNOWN) {
+			if (gm->chr_type != POWER_SUPPLY_USB_TYPE_UNKNOWN)
+				wakeup_fg_algo(gm, FG_INTR_CHARGER_OUT);
+		} else {
+			if (gm->chr_type == POWER_SUPPLY_USB_TYPE_UNKNOWN)
+				wakeup_fg_algo(gm, FG_INTR_CHARGER_IN);
+		}
+#else
 		if (cur_chr_type == POWER_SUPPLY_TYPE_UNKNOWN) {
 			if (gm->chr_type != POWER_SUPPLY_TYPE_UNKNOWN)
 				wakeup_fg_algo(gm, FG_INTR_CHARGER_OUT);
@@ -687,16 +1991,20 @@ static void mtk_battery_external_power_changed(struct power_supply *psy)
 			if (gm->chr_type == POWER_SUPPLY_TYPE_UNKNOWN)
 				wakeup_fg_algo(gm, FG_INTR_CHARGER_IN);
 		}
-
+#endif
+/* End modified by jin.wang for task 11395446 on 2021-08-06 */
 	}
 
-	bm_err("%s event, name:%s online:%d, status:%d,%d, EOC:%d, cur_chr_type:%d old:%d\n",
-		__func__, psy->desc->name, online.intval, status.intval, bs_data->bat_status,
+	bm_err("%s event, name:%s online:%d, status:%d, EOC:%d, cur_chr_type:%d old:%d\n",
+		__func__, psy->desc->name, online.intval, status.intval,
 		gm->b_EOC, cur_chr_type, gm->chr_type);
 
 	gm->chr_type = cur_chr_type;
 
 }
+#endif
+/* End mod by jin.wang */
+
 void battery_service_data_init(struct mtk_battery *gm)
 {
 	struct battery_data *bs_data;
@@ -707,10 +2015,12 @@ void battery_service_data_init(struct mtk_battery *gm)
 	bs_data->psd.properties = battery_props;
 	bs_data->psd.num_properties = ARRAY_SIZE(battery_props);
 	bs_data->psd.get_property = battery_psy_get_property;
-	/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 	bs_data->psd.set_property = battery_psy_set_property;
 	bs_data->psd.property_is_writeable = battery_psy_property_is_writeable;
-	/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 	bs_data->psd.external_power_changed =
 		mtk_battery_external_power_changed;
 	bs_data->psy_cfg.drv_data = gm;
@@ -821,10 +2131,20 @@ int BattVoltToTemp(struct mtk_battery *gm, int dwVolt, int volt_cali)
 
 	sBaTTMP = BattThermistorConverTemp(gm, (int)TRes);
 
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	pr_err("[%s]-v2: %d %d %d %d %lld %d\n",
+		__func__,
+		dwVolt, gm->rbat.rbat_pull_up_r,
+		vbif28, volt_cali, TRes, sBaTTMP);
+#else
 	bm_debug("[%s] %d %d %d %d\n",
 		__func__,
 		dwVolt, gm->rbat.rbat_pull_up_r,
 		vbif28, volt_cali);
+#endif
+/* End mod by jin.wang */
+
 	return sBaTTMP;
 }
 
@@ -897,8 +2217,34 @@ int force_get_tbat_internal(struct mtk_battery *gm, bool update)
 				BattVoltToTemp(gm,
 				bat_temperature_volt,
 				vol_cali);
+
+/* Begin mod by jin.wang for btemp compensation on 2021-11-23 */
+//#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+#if 0
+			if ((fg_current_state == true)
+				&& (fg_current_temp >= 1000)) {
+				if (bat_temperature_val >= 450) {
+					bat_temperature_val += 40;
+				} else if (bat_temperature_val >= 250) {
+					bat_temperature_val += 30;
+				} else if (bat_temperature_val >= 0) {
+					bat_temperature_val += 20;
+				}
+			}
+#endif
+/* End mod by jin.wang */
 		}
 
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		pr_err("[%s] %d,%d,%d,%d,%d,%d r:%d %d %d\n",
+			__func__,
+			bat_temperature_volt_temp, bat_temperature_volt,
+			fg_current_state, fg_current_temp,
+			fg_r_value, bat_temperature_val,
+			fg_meter_res_value, fg_r_value,
+			gm->no_bat_temp_compensate);
+#else
 		bm_notice("[%s] %d,%d,%d,%d,%d,%d r:%d %d %d\n",
 			__func__,
 			bat_temperature_volt_temp, bat_temperature_volt,
@@ -906,6 +2252,8 @@ int force_get_tbat_internal(struct mtk_battery *gm, bool update)
 			fg_r_value, bat_temperature_val,
 			fg_meter_res_value, fg_r_value,
 			gm->no_bat_temp_compensate);
+#endif
+/* End mod by jin.wang */
 
 		if (pre_bat_temperature_val2 == 0) {
 			pre_bat_temperature_volt_temp =
@@ -965,6 +2313,14 @@ int force_get_tbat_internal(struct mtk_battery *gm, bool update)
 	} else {
 		bat_temperature_val = pre_bat_temperature_val;
 	}
+
+/* Begin added by bin.song.hz for task 10480451 on 2020-12-18 */
+#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY) \
+	|| defined(TARGET_BUILD_MMITEST)
+    bm_err("[%s] force 25C,actual temp is %d\n", __func__, bat_temperature_val);
+    bat_temperature_val = 250;
+#endif
+/* End added by bin.song.hz for task 10480451 on 2020-12-18 */
 
 	gm->tbat_precise = bat_temperature_val;
 
@@ -1425,56 +2781,6 @@ void fg_custom_init_from_header(struct mtk_battery *gm)
 }
 
 #if IS_ENABLED(CONFIG_OF)
-/* Begin added by bitao.xiong for defect-10110602 on 2020-10-26 */
-int fg_parse_atags(struct mtk_battery *gm)
-{
-	void *prop;
-	struct device_node *chosen_node;
-        unsigned long size = 0;
-	char atag_value[10] = { 0 };
-	chosen_node = of_find_node_by_path("/chosen");
-	if (!chosen_node) {
-		chosen_node = of_find_node_by_path("/chosen@0");
-		if (!chosen_node) {
-			pr_warn("chosen node is not found!!\n");
-			return -ENXIO;
-		}
-	}
-
-	prop = (void *)of_get_property(chosen_node, "atag,fg_swocv_v",  (int *)&size);
-	if (prop) {
-		if (size <= sizeof(atag_value)) {
-			memset((void *)atag_value, 0, sizeof(atag_value));
-			strncpy((char *)atag_value, prop, sizeof(atag_value));
-			atag_value[size] = '\0';
-			kstrtoint(atag_value, 10, &(gm->ptim_lk_v));
-		}
-	}
-
-	prop = (void *)of_get_property(chosen_node, "atag,fg_swocv_i",  (int *)&size);
-	if (prop) {
-		if (size <= sizeof(atag_value)) {
-			memset((void *)atag_value, 0, sizeof(atag_value));
-			strncpy((char *)atag_value, prop, sizeof(atag_value));
-			atag_value[size] = '\0';
-			kstrtoint(atag_value, 10, &(gm->ptim_lk_i));
-		}
-	}
-
-	prop = (void *)of_get_property(chosen_node, "atag,shutdown_time",  (int *)&size);
-	if (prop) {
-		if (size <= sizeof(atag_value)) {
-			memset((void *)atag_value, 0, sizeof(atag_value));
-			strncpy((char *)atag_value, prop, sizeof(atag_value));
-			atag_value[size] = '\0';
-			kstrtoint(atag_value, 10, &(gm->pl_shutdown_time));
-		}
-	}
-
-        return 0;
-}
-/* End added by bitao.xiong for defect-10110602 on 2020-10-26 */
-
 static int fg_read_dts_val(const struct device_node *np,
 		const char *node_srting,
 		int *param, int unit)
@@ -1573,6 +2879,100 @@ static void fg_custom_parse_table(struct mtk_battery *gm,
 		idx = idx + column;
 	}
 }
+
+/*begin modify by tangshan.bai for LEVIN-4508 on 20220719--base on ODIN5G-7905*/
+#if defined(CONFIG_TCT_FEATURE_SLEEP_CHARGE) || defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+static void smart_slp_chg_table(const struct device_node *np,
+		const char *node_srting,
+		struct smart_sleep_chrging_data *remain_data)
+{
+	unsigned int current_now;
+	unsigned int charge_soc;
+	unsigned int vbat;
+	unsigned int charged_guage;
+	unsigned int remain_second;
+	unsigned int charged_second;
+	//unsigned int fg_v_soc;
+	//unsigned int fg_coulomb;
+	int idx = 0;
+
+	struct remain_guage *remain_p = &remain_data->remain_zcv[0];
+
+	bm_err("%s begin\n",__func__);
+	while (!of_property_read_u32_index(np, node_srting, idx, &current_now)) {
+		idx++;
+		if (!of_property_read_u32_index(
+			np, node_srting, idx, &charge_soc)) {
+		}
+		idx++;
+		if (!of_property_read_u32_index(
+				np, node_srting, idx, &vbat)) {
+		}
+		idx++;
+		if (!of_property_read_u32_index(
+			np, node_srting, idx, &charged_guage)) {
+		}
+		idx++;
+		if (!of_property_read_u32_index(
+				np, node_srting, idx, &remain_second)) {
+		}
+		idx++;
+		if (!of_property_read_u32_index(
+			np, node_srting, idx, &charged_second)) {
+		}
+		idx++;
+		bm_trace("[c_now:%d c_soc:%d vbat:%d r_fg:%d r_sec:%d c_sec:%d]\n",current_now,
+			charge_soc, vbat, charged_guage, remain_second, charged_second);
+
+		remain_p->current_now = current_now;
+		remain_p->charge_soc = charge_soc;
+		remain_p->vbat = vbat;
+		remain_p->charged_guage =charged_guage;
+		remain_p->remain_second = remain_second;
+		remain_p->charged_second = charged_second;
+
+		remain_p++;
+		if (idx >= MAX_DATA_NUMBER*6){
+			bm_err("%s:some data are abandoned!!!!\n",__func__);
+			break;
+		}
+	}
+	remain_data->remain_array_count = (int)idx/6;
+    bm_err("%s stop remain_array_count:%d\n",__func__,remain_data->remain_array_count);
+}
+
+static void smart_peak_chg_table(const struct device_node *np,
+        const char *node_srting,
+        struct smart_peak_management_data *peak_data)
+{
+    unsigned int fg_v_soc;
+    unsigned int fg_coulomb;
+    int idx = 0;
+
+    struct peak_guage *peak_p = &peak_data->peak_zcv[0];
+
+    bm_err("%s begin\n",__func__);
+    while (!of_property_read_u32_index(np, node_srting, idx, &fg_v_soc)) {
+        idx++;
+        if (!of_property_read_u32_index(np, node_srting, idx, &fg_coulomb)) {
+        }
+        idx++;
+        bm_err("[vsoc:%d car:%d]\n",fg_v_soc,fg_coulomb);
+
+        peak_p->fg_v_soc = fg_v_soc;
+        peak_p->fg_coulomb = fg_coulomb;
+
+        peak_p++;
+        if (idx >= MAX_FG_DATA_NUMBER*2){
+            bm_err("%s:some data are abandoned!!!!\n",__func__);
+            break;
+        }
+    }
+    peak_data->peak_array_count = (int)idx/2;
+    bm_err("%s peak_array_count:%d\n",__func__,peak_data->peak_array_count);
+}
+#endif
+/*End modify by tangshan.bai for LEVIN-4508 on 20220719--base on ODIN5G-7905*/
 
 void fg_custom_init_from_dts(struct platform_device *dev,
 	struct mtk_battery *gm)
@@ -1786,6 +3186,9 @@ void fg_custom_init_from_dts(struct platform_device *dev,
 
 	fg_read_dts_val(np, "PMIC_SHUTDOWN_TIME",
 		&(fg_cust_data->pmic_shutdown_time), UNIT_TRANS_60);
+	/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
+	fg_read_dts_val(np, "boot_voltage", &gm->pl_bat_vol, 1);
+	/* end add by bing-zhang for getting ocv from preloader on 20210827 */
 	fg_read_dts_val(np, "TNEW_TOLD_PON_DIFF",
 		&(fg_cust_data->tnew_told_pon_diff), 1);
 	fg_read_dts_val(np, "TNEW_TOLD_PON_DIFF2",
@@ -1918,6 +3321,11 @@ void fg_custom_init_from_dts(struct platform_device *dev,
 	fg_read_dts_val(np, "ACTIVE_TABLE",
 		&(fg_table_cust_data->active_table_number), 1);
 
+/* Begin modified by hailong.chen for task 9785237 on 2020-10-31 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (fg_table_cust_data->active_table_number == 0)
+		fg_table_cust_data->active_table_number = 5;
+#else
 #if IS_ENABLED(CONFIG_MTK_ADDITIONAL_BATTERY_TABLE)
 	if (fg_table_cust_data->active_table_number == 0)
 		fg_table_cust_data->active_table_number = 5;
@@ -1925,6 +3333,8 @@ void fg_custom_init_from_dts(struct platform_device *dev,
 	if (fg_table_cust_data->active_table_number == 0)
 		fg_table_cust_data->active_table_number = 4;
 #endif
+#endif
+/* End modified by hailong.chen for task 9785237 on 2020-10-31 */
 
 	bm_err("fg active table:%d\n",
 		fg_table_cust_data->active_table_number);
@@ -2041,6 +3451,25 @@ void fg_custom_init_from_dts(struct platform_device *dev,
 		fg_read_dts_val(np, "g_FG_PSEUDO100_T4",
 			&(fg_table_cust_data->fg_profile[4].pseudo100),
 			UNIT_TRANS_100);
+/* Begin added by hailong.chen for task 9785237 on 2020-10-31 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+		fg_read_dts_val(np, "g_FG_PSEUDO1_T0",
+			&(fg_table_cust_data->fg_profile[0].pseudo1),
+			UNIT_TRANS_100);
+		fg_read_dts_val(np, "g_FG_PSEUDO1_T1",
+			&(fg_table_cust_data->fg_profile[1].pseudo1),
+			UNIT_TRANS_100);
+		fg_read_dts_val(np, "g_FG_PSEUDO1_T2",
+			&(fg_table_cust_data->fg_profile[2].pseudo1),
+			UNIT_TRANS_100);
+		fg_read_dts_val(np, "g_FG_PSEUDO1_T3",
+			&(fg_table_cust_data->fg_profile[3].pseudo1),
+			UNIT_TRANS_100);
+		fg_read_dts_val(np, "g_FG_PSEUDO1_T4",
+			&(fg_table_cust_data->fg_profile[4].pseudo1),
+			UNIT_TRANS_100);
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-31 */
 	}
 
 	/* compatiable with old dtsi*/
@@ -2075,13 +3504,85 @@ void fg_custom_init_from_dts(struct platform_device *dev,
 			column = 3;
 	}
 
+/* Begin added by hailong.chen for task 9785237 on 2020-10-31 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	sprintf(node_name, "g_Q_MAX_T%d_%d", i, bat_id);
+	fg_read_dts_val(np, node_name,
+		&(fg_table_cust_data->fg_profile[i].q_max), 1);
+	sprintf(node_name, "g_Q_MAX_T%d_H_CURRENT_%d", i, bat_id);
+	fg_read_dts_val(np, node_name,
+		&(fg_table_cust_data->fg_profile[i].q_max_h_current), 1);
+	sprintf(node_name, "g_SHUTDOWN_HL_ZCV_T%d_%d", i, bat_id);
+	fg_read_dts_val(np, node_name,
+		&(fg_table_cust_data->fg_profile[i].shutdown_hl_zcv), 1);
+#endif
+/* End added by hailong.chen for task 9785237 on 2020-10-31 */
+
 		sprintf(node_name, "battery%d_profile_t%d", bat_id, i);
 		fg_custom_parse_table(gm, np, node_name,
 			fg_table_cust_data->fg_profile[i].fg_profile, column);
 	}
-		}
+/*begin modify by tangshan.bai for LEVIN-4508 on 20220719--base on ODIN5G-7905*/
+#if defined(CONFIG_TCT_FEATURE_SLEEP_CHARGE) || defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	/*smart sleep chrging*/
+	remain_data.enable_smart_slp_chg = of_property_read_bool(np, "enable_smart_slp_chg");
+	fg_read_dts_val(np, "smart_slp_chg_max_charge_current",\
+        &(remain_data.max_charge_current), 1);
+	fg_read_dts_val(np, "smart_slp_chg_max_charge_current_change",\
+        &(remain_data.max_charge_current_change), 1);
+	fg_read_dts_val(np, "smart_slp_chg_max_charge_current_change_point",\
+        &(remain_data.max_charge_current_change_point), 1);
+	fg_read_dts_val(np, "smart_slp_chg_max_charge_current_change_point_RemainSecond",\
+        &(remain_data.max_charge_current_change_point_RemainSecond), 1);
+
+	if(remain_data.enable_smart_slp_chg){
+		smart_slp_chg_table(np, "remain_zcv",&remain_data);
+	}else{
+		bm_err("%s, disable smart sleep charging\n",__func__);
+    }
+
+    peak_data.enable_smart_peak_chg = of_property_read_bool(np, "enable_smart_peak_chg");
+    if(peak_data.enable_smart_peak_chg){
+        smart_peak_chg_table(np, "peak_zcv",&peak_data);
+    }else{
+        bm_err("%s, disable smart peak charging\n",__func__);
+    }
+#endif
+/*End modify by tangshan.bai for LEVIN-4508 on 20220719--base on ODIN5G-7905*/
+}
 
 #endif	/* end of CONFIG_OF */
+
+/* Begin modified dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+struct alarm print_fg_log_alarm;
+
+static enum alarmtimer_restart print_fg_log_callback(struct alarm *alarm, ktime_t now)
+{
+    struct timespec ts;
+    struct rtc_time tm;
+
+    getnstimeofday(&ts);
+    rtc_time_to_tm(ts.tv_sec, &tm);
+    bm_err("print_log_for_fg:%d-%02d-%02d %02d:%02d:%02d.%09lu \
+status:%d,type:%d,vbat:%d,capacity:%d,current:%d,temperature:%d,Vbus:%d\n",
+            tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+            tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec,
+            g_bat_status, g_chr_type, g_bat_vol,
+            g_bat_capacity, g_fg_current, g_tbat_precise, g_chr_vol);
+
+    alarm_forward_now(&print_fg_log_alarm, ns_to_ktime(10LL * NSEC_PER_SEC));
+    return ALARMTIMER_RESTART;
+}
+
+void print_fg_log_init(void)
+{
+    alarm_init(&print_fg_log_alarm, ALARM_BOOTTIME, print_fg_log_callback);
+    alarm_start_relative(&print_fg_log_alarm, ns_to_ktime(10LL * NSEC_PER_SEC));
+	bm_err("print_log_for_fg init");
+}
+#endif
+/* End modified dapeng.qiao for task 11038299 on 2021-05-1 */
 
 /* ============================================================ */
 /* power supply battery */
@@ -2093,10 +3594,17 @@ void battery_update_psd(struct mtk_battery *gm)
 	gauge_get_property(GAUGE_PROP_BATTERY_VOLTAGE, &bat_data->bat_batt_vol);
 	bat_data->bat_batt_temp = force_get_tbat(gm, true);
 }
+
 void battery_update(struct mtk_battery *gm)
 {
 	struct battery_data *bat_data = &gm->bs_data;
 	struct power_supply *bat_psy = bat_data->psy;
+
+/* Begin added by bitao.xiong for AOSP13TMO-4085 on 2022-07-21 */
+#if defined(CONFIG_TCT_CHARGER)
+	struct mtk_charger *info = get_mtk_charger();
+#endif
+/* End added by bitao.xiong for AOSP13TMO-4085 on 2022-07-21 */
 
 	if (gm->is_probe_done == false || bat_psy == NULL) {
 		bm_err("[%s]battery is not rdy:probe:%d\n",
@@ -2104,9 +3612,25 @@ void battery_update(struct mtk_battery *gm)
 		return;
 	}
 
+/* Begin mod by jin.wang for jira 2064 on 2021-11-23 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	gm->log_level = BMLOG_INFO_LEVEL;
+#endif
+/* End mod by jin.wang */
+
 	battery_update_psd(gm);
 	bat_data->bat_technology = POWER_SUPPLY_TECHNOLOGY_LION;
+
+/* Begin modified by bitao.xiong for AOSP13TMO-4085 on 2022-07-21 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	bat_data->bat_health = POWER_SUPPLY_HEALTH_GOOD;
+#else
+	if (info != NULL) {
+		battery_do_health_update(info);
+	}
+#endif
+/* End modified by bitao.xiong for AOSP13TMO-4085 on 2022-07-21 */
+
 	bat_data->bat_present =
 		gauge_get_int_property(GAUGE_PROP_BATTERY_EXIST);
 
@@ -2116,15 +3640,16 @@ void battery_update(struct mtk_battery *gm)
 	if (gm->algo.active == true)
 		bat_data->bat_capacity = gm->ui_soc;
 
-	/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
-	#ifdef DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY
-	if ((gm->ui_soc <=4) && (bat_data->bat_batt_vol >= 3700)) {
-		gm->ui_soc = 4;
-		bat_data->bat_capacity = 4;
-		printk("Is DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY ,hold soc = 4 \n");
+/* Begin modified by hailong.chen for task 9777037 on 2020-10-09 */
+#if IS_ENABLED(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY) \
+	|| IS_ENABLED(TARGET_BUILD_CERTIFICATION)
+	if ((bat_data->bat_capacity <= 3) && (bat_data->bat_batt_vol >= 3250)) {
+		bm_err("[%s] batt_vol > 3250mV, hold soc to 3%\n", __func__);
+		bat_data->bat_capacity = 3;
+		gm->ui_soc = 3;
 	}
-	#endif
-	/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
+#endif
+/* End modified by hailong.chen for task 9777037 on 2020-10-09 */
 
 	power_supply_changed(bat_psy);
 
@@ -2350,6 +3875,17 @@ static int en_uisoc_lt_int_set(struct mtk_battery *gm,
 
 	return 0;
 }
+//Begin add by tangshan.bai for LEVIN-4508 on 2022-03-03
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+static int uisoc_get(struct mtk_battery *gm,
+	struct mtk_battery_sysfs_field_info *attr,
+	int *val)
+{
+	*val = gm->ui_soc * 100;
+	return 0;
+}
+#endif
+//end add by tangshan.bai for LEVIN-4508 on 2022-03-03
 
 static int uisoc_set(struct mtk_battery *gm,
 	struct mtk_battery_sysfs_field_info *attr,
@@ -2473,16 +4009,6 @@ static int reset_set(struct mtk_battery *gm,
 	return 0;
 }
 
-/* Begin added by bitao.xiong for task-9919816 on 2020-09-14 */
-static int coulomb_count_get(struct mtk_battery *gm,
-	struct mtk_battery_sysfs_field_info *attr,
-	int *val)
-{
-	*val =  gauge_get_int_property(GAUGE_PROP_COULOMB);
-	return 0;
-}
-/* End added by bitao.xiong for task-9919816 on 2020-09-14 */
-
 static ssize_t bat_sysfs_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
@@ -2536,14 +4062,17 @@ static struct mtk_battery_sysfs_field_info battery_sysfs_field_tbl[] = {
 	BAT_SYSFS_FIELD_WO(uisoc_lt_int_gap, BAT_PROP_UISOC_LT_INT_GAP),
 	BAT_SYSFS_FIELD_WO(en_uisoc_ht_int, BAT_PROP_ENABLE_UISOC_HT_INT),
 	BAT_SYSFS_FIELD_WO(en_uisoc_lt_int, BAT_PROP_ENABLE_UISOC_LT_INT),
+//Begin add by tangshan.bai for LEVIN-4508 on 2022-03-03
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	BAT_SYSFS_FIELD_RW(uisoc, BAT_PROP_UISOC),
+#else
 	BAT_SYSFS_FIELD_WO(uisoc, BAT_PROP_UISOC),
+#endif
+//End add by tangshan.bai for LEVIN-4508 on 2022-03-03
 	BAT_SYSFS_FIELD_RW(disable, BAT_PROP_DISABLE),
 	BAT_SYSFS_FIELD_RW(init_done, BAT_PROP_INIT_DONE),
 	BAT_SYSFS_FIELD_WO(reset, BAT_PROP_FG_RESET),
 	BAT_SYSFS_FIELD_RW(log_level, BAT_PROP_LOG_LEVEL),
-	/* Begin added by bitao.xiong for task-9919816 on 2020-09-14 */
-	BAT_SYSFS_FIELD_RO(coulomb_count, BAT_PROP_COULOMB_COUNT),
-	/* End added by bitao.xiong for task-9919816 on 2020-09-14 */
 };
 
 int battery_get_property(enum battery_property bp,
@@ -2672,6 +4201,23 @@ void fg_drv_update_hw_status(struct mtk_battery *gm)
 {
 	ktime_t ktime;
 
+/* Begin modified by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+    g_bat_vol = gauge_get_int_property(GAUGE_PROP_BATTERY_VOLTAGE);
+    g_fg_current = gauge_get_int_property(GAUGE_PROP_BATTERY_CURRENT);
+
+	bm_err("car[%d,%ld,%ld,%ld,%ld] tmp:%d soc:%d uisoc:%d vbat:%d ibat:%d algo:%d gm3:%d %d %d %d,boot:%d\n",
+		gauge_get_int_property(GAUGE_PROP_COULOMB),
+		gm->coulomb_plus.end, gm->coulomb_minus.end,
+		gm->uisoc_plus.end, gm->uisoc_minus.end,
+		force_get_tbat_internal(gm, true),
+		gm->soc, gm->ui_soc,
+		g_bat_vol, g_fg_current,
+		gm->algo.active,
+		gm->disableGM30, gm->fg_cust_data.disable_nafg,
+		gm->ntc_disable_nafg, gm->cmd_disable_nafg,
+		gm->bootmode);
+#else
 	bm_err("car[%d,%ld,%ld,%ld,%ld] tmp:%d soc:%d uisoc:%d vbat:%d ibat:%d algo:%d gm3:%d %d %d %d,boot:%d\n",
 		gauge_get_int_property(GAUGE_PROP_COULOMB),
 		gm->coulomb_plus.end, gm->coulomb_minus.end,
@@ -2684,6 +4230,8 @@ void fg_drv_update_hw_status(struct mtk_battery *gm)
 		gm->disableGM30, gm->fg_cust_data.disable_nafg,
 		gm->ntc_disable_nafg, gm->cmd_disable_nafg,
 		gm->bootmode);
+#endif
+/* End modified by dapeng.qiao for task 11038299 on 2021-05-1 */
 
 	fg_drv_update_daemon(gm);
 
@@ -2708,7 +4256,14 @@ int battery_update_routine(void *arg)
 		bm_err("%s\n", __func__);
 		wait_event(gm->wait_que, (gm->fg_update_flag > 0));
 		gm->fg_update_flag = 0;
-
+//Begin add by tangshan.bai for LEVIN-4508 on 2022-03-03
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+        if ((gm->soc < gm->BAT_peak_level) && (gm->ui_soc < gm->BAT_peak_level))
+        	gm->peak_enforce_full = false;
+        else
+        	gm->peak_enforce_full = true;
+#endif
+//End add by tangshan.bai for LEVIN-4508 on 2022-03-03
 		fg_drv_update_hw_status(gm);
 	}
 }
@@ -2829,6 +4384,7 @@ static void wake_up_overheat(struct shutdown_controller *sdd)
 	wake_up(&sdd->wait_que);
 }
 
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
 /* Begin added by bitao.xiong for task-10031392 on 2020-10-10 */
 static void wake_up_overcold(struct shutdown_controller *sdd)
 {
@@ -2836,6 +4392,7 @@ static void wake_up_overcold(struct shutdown_controller *sdd)
 	wake_up(&sdd->wait_que);
 }
 /* End added by bitao.xiong for task-10031392 on 2020-10-10 */
+#endif
 
 void set_shutdown_vbat_lt(struct mtk_battery *gm, int vbat_lt, int vbat_lt_lv1)
 {
@@ -2939,11 +4496,21 @@ int set_shutdown_cond(struct mtk_battery *gm, int shutdown_cond)
 	if (now_current >= 0)
 		now_is_charging = 1;
 
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+	bm_err("%s %d %d kpoc %d curr %d is_charging %d flag:%d lb:%d\n",
+		__func__,
+		shutdown_cond, enable_lbat_shutdown,
+		now_is_kpoc, now_current, now_is_charging,
+		sdc->shutdown_cond_flag, vbat);
+#else
 	bm_debug("%s %d %d kpoc %d curr %d is_charging %d flag:%d lb:%d\n",
 		__func__,
 		shutdown_cond, enable_lbat_shutdown,
 		now_is_kpoc, now_current, now_is_charging,
 		sdc->shutdown_cond_flag, vbat);
+#endif
+/* End mod by jin.wang */
 
 	if (sdc->shutdown_cond_flag == 1)
 		return 0;
@@ -2959,7 +4526,14 @@ int set_shutdown_cond(struct mtk_battery *gm, int shutdown_cond)
 		mutex_lock(&sdc->lock);
 		sdc->shutdown_status.is_overheat = true;
 		mutex_unlock(&sdc->lock);
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+		bm_err("[%s]OVERHEAT shutdown!\n", __func__);
+#else
 		bm_debug("[%s]OVERHEAT shutdown!\n", __func__);
+#endif
+/* End mod by jin.wang */
+
 		kernel_power_off();
 		break;
 	case SOC_ZERO_PERCENT:
@@ -2972,8 +4546,15 @@ int set_shutdown_cond(struct mtk_battery *gm, int shutdown_cond)
 					get_monotonic_boottime(
 						&sdc->pre_time[
 						SOC_ZERO_PERCENT]);
+/* Begin mod by jin.wang task 2064 on 2021.11.25 */
+#if IS_ENABLED(CONFIG_TCT_NB_CHG_PATCH)
+					bm_err("[%s]soc_zero_percent shutdown\n",
+						__func__);
+#else
 					bm_debug("[%s]soc_zero_percent shutdown\n",
 						__func__);
+#endif
+/* End mod by jin.wang */
 					wakeup_fg_algo(gm, FG_INTR_SHUTDOWN);
 				}
 			}
@@ -3263,9 +4844,14 @@ static int power_misc_routine_thread(void *arg)
 	struct shutdown_controller *sdd = &gm->sdc;
 
 	while (1) {
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
 		wait_event(sdd->wait_que, (sdd->timeout == true)
 			|| (sdd->overheat == true)
 			|| (sdd->overcold == true));
+		#else
+		wait_event(sdd->wait_que, (sdd->timeout == true)
+			|| (sdd->overheat == true));
+		#endif
 		if (sdd->timeout == true) {
 			sdd->timeout = false;
 			power_misc_handler(gm);
@@ -3277,6 +4863,7 @@ static int power_misc_routine_thread(void *arg)
 			kernel_power_off();
 			return 1;
 		}
+		#if IS_ENABLED(CONFIG_TCT_CHARGER)
 		/* Begin added by bitao.xiong for task-10031392 on 2020-10-10 */
 		if (sdd->overcold == true) {
 			sdd->overcold = false;
@@ -3286,6 +4873,7 @@ static int power_misc_routine_thread(void *arg)
 			return 1;
 		}
 		/* End added by bitao.xiong for task-10031392 on 2020-10-10 */
+		#endif
 	}
 
 	return 0;
@@ -3312,6 +4900,7 @@ static int mtk_power_misc_psy_event(
 
 				wake_up_overheat(sdc);
 			}
+			#if IS_ENABLED(CONFIG_TCT_CHARGER)
 			/* Begin added by bitao.xiong for task-10031392 on 2020-10-10 */
 			if (gm->cur_bat_temp <= BATTERY_SHUTDOWN_TEMPERATURE_COLD) {
 				bm_debug(
@@ -3321,6 +4910,7 @@ static int mtk_power_misc_psy_event(
 				wake_up_overcold(sdc);
 			}
 			/* End added by bitao.xiong for task-10031392 on 2020-10-10 */
+			#endif
 		}
 	}
 
@@ -3355,6 +4945,11 @@ int battery_psy_init(struct platform_device *pdev)
 	gauge->gm = gm;
 	gm->gauge = gauge;
 	mutex_init(&gm->ops_lock);
+
+	gm->bs_data.chg_psy = devm_power_supply_get_by_phandle(&pdev->dev,
+							 "charger");
+	if (IS_ERR_OR_NULL(gm->bs_data.chg_psy))
+		bm_err("[BAT_probe] %s: fail to get chg_psy !!\n", __func__);
 
 	battery_service_data_init(gm);
 	gm->bs_data.psy =
@@ -3393,41 +4988,12 @@ void fg_check_bootmode(struct device *dev,
 	}
 }
 
-int fg_check_pl_boot_voltage(struct device *dev,
-	struct mtk_battery *gm)
-{
-	struct device_node *boot_voltage_node = NULL;
-        void *prop;
-        char boot_voltage_tmp[10] = { 0 };
-        int ret;
-        unsigned long size = 0;
-
-	boot_voltage_node = of_parse_phandle(dev->of_node, "bootvoltage", 0);
-	if (!boot_voltage_node)
-		bm_err("%s: failed to get boot voltage mode phandle\n", __func__);
-	else {
-
-	prop = (void *)of_get_property(boot_voltage_node, "atag,boot_voltage", (int *)&size);
-	if (!prop)
-		return -1;
-	if (size >= sizeof(boot_voltage_tmp)) {
-		pr_info("%s: error to get lcmname size=%ld\n", __func__, size);
-		return -1;
-	}
-	memset((void *)boot_voltage_tmp, 0, sizeof(boot_voltage_tmp));
-	strncpy((char *)boot_voltage_tmp, prop, sizeof(boot_voltage_tmp));
-	boot_voltage_tmp[size] = '\0';
-        ret = kstrtoint(boot_voltage_tmp, 10, &(gm->pl_bat_vol));
-	}
-        return 0;
-}
-
 void fg_check_lk_swocv(struct device *dev,
 	struct mtk_battery *gm)
 {
 	struct device_node *boot_node = NULL;
 	int len = 0;
-	char temp[10];
+	char temp[12];
 	int *prop;
 
 	boot_node = of_parse_phandle(dev->of_node, "bootmode", 0);
@@ -3474,12 +5040,46 @@ void fg_check_lk_swocv(struct device *dev,
 		gm->ptim_lk_v, gm->ptim_lk_i, gm->pl_shutdown_time);
 }
 
+/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
+int fg_check_pl_boot_voltage(struct device *dev,
+       struct mtk_battery *gm)
+{
+	struct device_node *boot_voltage_node = NULL;
+	void *prop;
+	char boot_voltage_tmp[10] = { 0 };
+	int ret;
+	unsigned long size = 0;
+
+	boot_voltage_node = of_parse_phandle(dev->of_node, "bootvoltage", 0);
+	if (!boot_voltage_node)
+		bm_err("%s: failed to get boot voltage mode phandle\n", __func__);
+	else {
+
+		prop = (void *)of_get_property(boot_voltage_node, "atag,boot_voltage", (int *)&size);
+		if (!prop)
+			return -1;
+		if (size >= sizeof(boot_voltage_tmp)) {
+			pr_info("%s: error to get lcmname size=%ld\n", __func__, size);
+			return -1;
+		}
+		memset((void *)boot_voltage_tmp, 0, sizeof(boot_voltage_tmp));
+		strncpy((char *)boot_voltage_tmp, prop, sizeof(boot_voltage_tmp));
+		boot_voltage_tmp[size] = '\0';
+		ret = kstrtoint(boot_voltage_tmp, 10, &(gm->pl_bat_vol));
+	}
+	return 0;
+}
+/* end add by bing-zhang for getting ocv from preloader on 20210827 */
+
 int battery_init(struct platform_device *pdev)
 {
 	int ret = 0;
 	bool b_recovery_mode = 0;
 	struct mtk_battery *gm;
 	struct mtk_gauge *gauge;
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	struct device_node *np = pdev->dev.of_node; //Added by tangshan.bai for LEVIN-6148
+#endif
 
 	gauge = dev_get_drvdata(&pdev->dev);
 	gm = gauge->gm;
@@ -3531,9 +5131,11 @@ int battery_init(struct platform_device *pdev)
 
 	ret = mtk_battery_daemon_init(pdev);
 	b_recovery_mode = is_recovery_mode();
-        ret = fg_check_pl_boot_voltage(&pdev->dev, gm);
-//fg_check_pl_boot_voltage(gm);
-        battery_ocv_to_soc(gm);//add by nana.su,should afer probe done for temp always 25
+
+	/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
+	ret = fg_check_pl_boot_voltage(&pdev->dev, gm);
+	battery_ocv_to_soc(gm);
+	/* end add by bing-zhang for getting ocv from preloader on 20210827 */
 	if (ret == 0 && b_recovery_mode == 0)
 		bm_err("[%s]: daemon mode DONE\n", __func__);
 	else {
@@ -3541,6 +5143,55 @@ int battery_init(struct platform_device *pdev)
 		battery_algo_init(gm);
 		bm_err("[%s]: kernel mode DONE\n", __func__);
 	}
+
+/* Begin added by dapeng.qiao for task 11038299 on 2021-05-1 */
+#ifdef TCT_BMS_SW_SUPPORT
+	if (bms_sw_support)
+		print_fg_log_init();
+#endif
+/* End added by dapeng.qiao for task 11038299 on 2021-05-1 */
+
+//Begin Added by tangshan.bai for LEVIN-6148
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	gm->BAT_peak_level = 100;
+	//sprintf(gm->batt_resistance, "%d:%d", force_get_tbat_internal(gm, true), get_rac()); /*temp:R*/
+	sprintf(gm->batt_resistance, "%d:%d", force_get_tbat_internal(gm, true), 110); /*temp:R*/
+	if (of_property_read_string(np, "CHARGE_CYCLE_TABLE",
+				    &gm->charge_cycle_table) < 0) {
+		gm->charge_cycle_table = "00,0;00,0;00,0;00,0;00,0";
+		pr_info("%s: cannot get charge_cycle_table\n", __func__);
+	}
+/* Begin added by dapeng.qiao for task SOCAOSP13-9123 on 2022-09-5 */
+    memset(&life_array, 0, sizeof(life_array));
+    life_array_avg = 0;
+    life_cnt = 0;
+    pr_err("%s: record PEAK_MANAGMENT g_begin_fg_coulomb init!\n", __func__);
+    gm->BatteryVerify = 0x01;       //default not verify state and hide 0% life
+    gm->g_begin_fg_coulomb = gauge_get_int_property(GAUGE_PROP_COULOMB);
+    fg_max_monotone = gm->g_begin_fg_coulomb;
+    gm->g_begin_v_soc = gm->fg_cust_data.v_soc;
+    gm->g_begin_c_soc = gm->fg_cust_data.c_soc;
+    gm->g_stop_fg_coulomb = 0x00;
+    gm->g_stop_v_soc = 0x00;
+    gm->g_stop_c_soc = 0x00;
+    gm->g_begin_log_coulomb = bserach_begin_log_coulomb(BEGIN_V_SOC);
+    gm->g_stop_log_coulomb = gm->g_begin_log_coulomb;
+    if(gm->gauge->hw_status.is_bat_plugout){
+        gm->BatteryVerify |= 0x0080;
+    }else{
+        gm->BatteryVerify &= ~0x0080;
+    }
+    gm->display_soc = -1;
+    gm->peak_enforce_full = 0;
+    gm->daemon_uisoc = -1;
+    gm->bat_state = BAT_DISCHARGING;
+	INIT_DELAYED_WORK(&gm->tracking_to_zero_work, uisoc_tracking_to_zero_work);
+
+    pr_info("%s: record boot if battery plugout? gm->gauge->hw_status.is_bat_plugout:%d,gm->BatteryVerify:0x%x\n",\
+        __func__,gm->gauge->hw_status.is_bat_plugout, gm->BatteryVerify);
+/* End added by dapeng.qiao for task SOCAOSP13-9123 on 2022-09-5 */
+#endif
+//End Added by tangshan.bai for LEVIN-6148
 
 	return 0;
 }

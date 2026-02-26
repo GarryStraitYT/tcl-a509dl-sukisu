@@ -70,7 +70,14 @@ enum IMGSENSOR_RETURN imgsensor_i2c_write(
 	u16 write_per_cycle,
 	u16 id,
 	int speed);
-
+//zhongzhu add for tctcamera development start,2022/06/08
+enum IMGSENSOR_RETURN eeprom_i2c_write(
+	struct IMGSENSOR_I2C_CFG *pi2c_cfg,
+	u8 *pwrite_data,
+	u16 write_length,
+	u16 id,
+	int speed);
+//zhongzhu add for tctcamera development end,2022/06/08
 void imgsensor_i2c_filter_msg(struct IMGSENSOR_I2C_CFG *pi2c_cfg, bool en);
 
 #ifdef IMGSENSOR_LEGACY_COMPAT

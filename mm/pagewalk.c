@@ -15,9 +15,9 @@ static int walk_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
 		err = walk->pte_entry(pte, addr, addr + PAGE_SIZE, walk);
 		if (err)
 		       break;
-		addr += PAGE_SIZE;
-		if (addr == end)
+		if (addr >= end - PAGE_SIZE)
 			break;
+		addr += PAGE_SIZE;
 		pte++;
 	}
 
@@ -338,7 +338,12 @@ int walk_page_range(unsigned long start, unsigned long end,
 	} while (start = next, start < end);
 	return err;
 }
-
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@tcl.com, 2021.10.8, add for process reclaim
+#ifdef CONFIG_TCL_PROCESS_RECLAIM
+EXPORT_SYMBOL(walk_page_range);
+#endif
+// #endif
 int walk_page_vma(struct vm_area_struct *vma, struct mm_walk *walk)
 {
 	int err;

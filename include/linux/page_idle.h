@@ -106,6 +106,10 @@ static inline void clear_page_idle(struct page *page)
 }
 #endif /* CONFIG_64BIT */
 
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+void page_idle_clear_pte_refs(struct page *page);
+#endif
+
 #else /* !CONFIG_IDLE_PAGE_TRACKING */
 
 static inline bool page_is_young(struct page *page)

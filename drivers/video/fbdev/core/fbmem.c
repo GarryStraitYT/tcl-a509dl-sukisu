@@ -44,6 +44,19 @@
 
 #define FBPIXMAPSIZE	(1024 * 8)
 
+/* Begin for Apollo_er88577a_qunchuang_kmylar suspend timing: MIPI -> RESET -> VSP/VSN -> IOVCOO */
+#ifdef CONFIG_TCT_APOLLO84GBOOSTREFRESH
+#include "linux/delay.h"
+extern void lcm_power_down(void);
+//extern long lcd_enp_bias_setting(unsigned int value);
+//extern long lcd_enn_bias_setting(unsigned int value);
+int Apollo2_er88577a_qunchuang_kmylar = 0;
+extern void lcm_4nd_power_down(void);
+int Apollo2_er88577a_qunchuang_kmylar_4nd = 0;
+#endif
+/* End for Apollo2_er88577a_qunchuang_kmylar suspend timing: MIPI -> RESET -> VSP/VSN -> IOVCOO */
+
+
 static DEFINE_MUTEX(registration_lock);
 
 struct fb_info *registered_fb[FB_MAX] __read_mostly;
@@ -750,6 +763,9 @@ fb_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 	int c, cnt = 0, err = 0;
 	unsigned long total_size;
 
+	if (p % 8 != 0)
+		p = (p + 7) / 8;
+
 	if (!info || ! info->screen_base)
 		return -ENODEV;
 
@@ -814,6 +830,9 @@ fb_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 	u8 __iomem *dst;
 	int c, cnt = 0, err = 0;
 	unsigned long total_size;
+
+	if (p % 8 != 0)
+		p = (p + 7) / 8;
 
 	if (!info || !info->screen_base)
 		return -ENODEV;
@@ -1205,7 +1224,17 @@ static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		info->flags |= FBINFO_MISC_USEREVENT;
 		ret = fb_blank(info, arg);
 		info->flags &= ~FBINFO_MISC_USEREVENT;
-		unlock_fb_info(info);
+                unlock_fb_info(info);
+        /* Begin for Apollo2_er88577a_qunchuang_kmylar suspend timing: MIPI -> RESET -> VSP/VSN -> IOVCOO */
+#ifdef CONFIG_TCT_APOLLO84GBOOSTREFRESH
+                if(1 == Apollo2_er88577a_qunchuang_kmylar){
+                        lcm_power_down();
+                }
+                if(1 == Apollo2_er88577a_qunchuang_kmylar_4nd){
+                        lcm_4nd_power_down();
+                }
+#endif
+/* End for Apollo2_er88577a_qunchuang_kmylar suspend timing: MIPI -> RESET -> VSP/VSN -> IOVCOO */
 		console_unlock();
 		break;
 	default:

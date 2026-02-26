@@ -21,6 +21,26 @@
 #include <asm/pgtable.h>
 #include "internal.h"
 
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+#include <tcl/defrag_helper.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru start
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+#include <linux/protect_lru.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru end
+// #endif /* VENDOR_EDIT */
+
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+#include <tcl/tcl_healthinfo.h>
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
+
 void __attribute__((weak)) arch_report_meminfo(struct seq_file *m)
 {
 }
@@ -148,6 +168,27 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 		    global_zone_page_state(NR_FREE_CMA_PAGES));
 #endif
 
+// #ifdef VENDOR_EDIT
+// Jiajun.xu@ARCH 2020/6/20 add for defrag feature
+#ifdef CONFIG_TCL_DEFRAG
+	show_defrag_free(m);
+	show_real_freemem(m, i.freeram);
+#endif
+// #endif /* VENDOR_EDIT */
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+	show_val_kb(m, "IonTotalCache:  ", global_zone_page_state(NR_IONCACHE_PAGES));
+	show_val_kb(m, "IonTotalUsed:   ", atomic_long_read(&ion_total_size) >> PAGE_SHIFT);
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+	show_val_kb(m, "Protected:      ", get_protected_pages());
+#endif
+// #endif /* VENDOR_EDIT */
 	hugetlb_report_meminfo(m);
 
 	arch_report_meminfo(m);
@@ -161,3 +202,26 @@ static int __init proc_meminfo_init(void)
 	return 0;
 }
 fs_initcall(proc_meminfo_init);
+
+//Begin add by dingting.meng for T-9615384 on 10/7/2020
+#ifdef CONFIG_TCT_DEVICEINFO
+unsigned int get_ddr_sz_GB(void)
+{
+    struct sysinfo i;
+    unsigned long sz_KB = 0;
+    unsigned int  sz_GB = 0;
+
+    si_meminfo(&i);
+
+    sz_KB = i.totalram << (PAGE_SHIFT - 10);
+
+    sz_GB = sz_KB>>20;
+
+/*For example,the Physics DDR size is 3GB,it will less than 3G since the KERNEL USED,sz_GB is UINT type,will be 2,need to +1.
+So,under 1G or over 10G,maybe a problem to fix!!!
+*/
+    return (sz_GB + 1);
+}
+EXPORT_SYMBOL(get_ddr_sz_GB);
+#endif
+//End add by dingting.meng for T-9615384 on 10/7/2020

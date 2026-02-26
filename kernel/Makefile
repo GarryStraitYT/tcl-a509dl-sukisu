@@ -99,7 +99,6 @@ obj-$(CONFIG_TASK_DELAY_ACCT) += delayacct.o
 obj-$(CONFIG_TASKSTATS) += taskstats.o tsacct.o
 obj-$(CONFIG_TRACEPOINTS) += tracepoint.o
 obj-$(CONFIG_LATENCYTOP) += latencytop.o
-obj-$(CONFIG_ELFCORE) += elfcore.o
 obj-$(CONFIG_FUNCTION_TRACER) += trace/
 obj-$(CONFIG_TRACING) += trace/
 obj-$(CONFIG_TRACE_CLOCK) += trace/
@@ -123,6 +122,11 @@ obj-$(CONFIG_TORTURE_TEST) += torture.o
 obj-$(CONFIG_HAS_IOMEM) += iomem.o
 obj-$(CONFIG_ZONE_DEVICE) += memremap.o
 obj-$(CONFIG_RSEQ) += rseq.o
+
+#//[TCT-ROM]Begin added by xizheng.mo for 9572106 blkio type on 20200716
+#obj-y += cgroup_io_limit.o
+obj-$(CONFIG_TCT_IOLIMIT) += cgroup_io_limit.o
+#//[TCT-ROM]End added by xizheng.mo for 9572106 blkio type on 20200716
 
 $(obj)/configs.o: $(obj)/config_data.h
 

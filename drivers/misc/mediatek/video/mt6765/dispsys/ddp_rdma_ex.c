@@ -527,7 +527,9 @@ void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 	unsigned long long consume_rate = 0;
 	unsigned long long consume_rate_div_tmp = 0;
 	unsigned long long consume_rate_div = 0;
-	unsigned int if_fps = 60;
+#if !defined(CONFIG_TCT_PROJECT_PASSAT)
+		unsigned int if_fps = 60;
+#endif
 	unsigned int fifo_valid_size = 384;
 	unsigned int fifo_off_drs_enter = 0;
 	unsigned int fifo_off_drs_leave = 0;
@@ -636,15 +638,31 @@ void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 		fifo_off_drs_leave = 1;
 		fifo_off_spm = 50; /* 10 times*/
 		fifo_off_dvfs = 2;
-		if (is_wrot_sram)
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+		if (is_wrot_sram) 
+			fifo_off_ultra = 535; /* 10 times */
+		else if (is_rsz_sram)
+			fifo_off_ultra = 190; /* 10 times */
+		else
+			fifo_off_ultra = 0;
+#else
+    	if (is_wrot_sram)
 			fifo_off_ultra = 50;
 		else if (is_rsz_sram)
 			fifo_off_ultra = 10;
 		else
 			fifo_off_ultra = 0;
+#endif
+
+
 		consume_rate = rdma_golden_setting->dst_width;
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+		consume_rate = consume_rate * rdma_golden_setting->dst_height
+				*frame_rate * Bytes_per_sec;
+#else
 		consume_rate = consume_rate * rdma_golden_setting->dst_height
 				*if_fps * Bytes_per_sec;
+#endif
 		do_div(consume_rate, 1000);
 
 	} else {
@@ -654,19 +672,55 @@ void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 		fifo_off_dvfs = 2;
 		fifo_off_ultra = 0;
 		consume_rate = rdma_golden_setting->ext_dst_width;
+		
+		
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+		consume_rate = consume_rate *
+				rdma_golden_setting->ext_dst_height
+				* frame_rate * Bytes_per_sec;
+#else
 		consume_rate = consume_rate *
 				rdma_golden_setting->ext_dst_height
 				* if_fps * Bytes_per_sec;
-
+#endif
 		do_div(consume_rate, 1000);
 	}
-
 	consume_rate *= 1250;
 	do_div(consume_rate, 16*1000);
 	consume_rate_div_tmp = consume_rate;
 	do_div(consume_rate_div_tmp, 100);
 	consume_rate_div = DIV_ROUND_UP((unsigned int)consume_rate_div_tmp, 10);
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+	preultra_low = (preultra_low_us * 10 + fifo_off_ultra) * consume_rate_div;
+	preultra_low = DIV_ROUND_UP(preultra_low, 10);
 
+	preultra_high = (preultra_high_us * 10 + fifo_off_ultra) * consume_rate_div;
+	preultra_high = DIV_ROUND_UP(preultra_high, 10);
+
+	ultra_low = (ultra_low_us * 10 + fifo_off_ultra) * consume_rate_div;
+	ultra_low = DIV_ROUND_UP(ultra_low, 10);
+
+	if (idx == 0) {
+		/* only rdma0 can share sram */
+		if (is_wrot_sram) {
+			fifo_valid_size = 2048;
+			preultra_low = preultra_low - (10 * consume_rate_div);
+			preultra_high = preultra_high - (10 * consume_rate_div);
+			ultra_low = ultra_low - (10 * consume_rate_div);
+		} else if (is_rsz_sram) {
+			fifo_valid_size = 736;
+			preultra_low = preultra_low - (10 * consume_rate_div);
+			preultra_high = preultra_high - (10 * consume_rate_div);
+			ultra_low = ultra_low - (10 * consume_rate_div);
+
+		} else {
+			fifo_valid_size = 384;
+		}
+	} else {
+		fifo_valid_size = 128;
+	}
+	ultra_high = preultra_low;
+#else
 	preultra_low = (preultra_low_us + fifo_off_ultra) * consume_rate_div;
 
 	preultra_high = (preultra_high_us + fifo_off_ultra) * consume_rate_div;
@@ -685,6 +739,9 @@ void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 	} else {
 		fifo_valid_size = 128;
 	}
+
+#endif
+
 	issue_req_threshold =
 		(fifo_valid_size - preultra_low) < 255
 				? (fifo_valid_size - preultra_low) : 255;
@@ -798,7 +855,29 @@ void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 		DISP_REG_RDMA_DRAM_CON,
 		REG_FLD_VAL(DRAM_CON_FLD_FORCE_GCLAST_0, 0) |
 		REG_FLD_VAL(DRAM_CON_FLD_BANK_BOUNDARY_SEL, 1));
+#if defined(CONFIG_TCT_PROJECT_PASSAT)
+	/*DISP_RDMA_DVFS_SETTING_PREULTRA*/
+	dvfs_preultra_low = (preultra_low_us * 10 + fifo_off_ultra + fifo_off_dvfs * 10)
+						* consume_rate_div;
+	dvfs_preultra_low = DIV_ROUND_UP(dvfs_preultra_low, 10);
 
+	dvfs_preultra_high = (preultra_high_us * 10 + fifo_off_ultra + fifo_off_dvfs * 10)
+						* consume_rate_div;
+	dvfs_preultra_high = DIV_ROUND_UP(dvfs_preultra_high, 10);
+
+	dvfs_ultra_low = (ultra_low_us * 10 + fifo_off_ultra + fifo_off_dvfs * 10)
+						* consume_rate_div;
+	dvfs_ultra_low = DIV_ROUND_UP(dvfs_ultra_low, 10);
+
+	if (idx == 0) {
+		/* only rdma0 can share sram */
+		if (is_wrot_sram || is_rsz_sram) {
+			dvfs_preultra_low = dvfs_preultra_low - (10 * consume_rate_div);
+			dvfs_preultra_high = dvfs_preultra_high - (10 * consume_rate_div);
+			dvfs_ultra_low = dvfs_ultra_low - (10 * consume_rate_div);
+		}
+	}
+#else
 	/*DISP_RDMA_DVFS_SETTING_PREULTRA*/
 	dvfs_preultra_low = (preultra_low_us + fifo_off_ultra + fifo_off_dvfs)
 						* consume_rate_div;
@@ -808,7 +887,7 @@ void rdma_set_ultra_l(unsigned int idx, unsigned int bpp, void *handle,
 
 	dvfs_ultra_low = (ultra_low_us + fifo_off_ultra + fifo_off_dvfs)
 						* consume_rate_div;
-
+#endif
 	dvfs_ultra_high = dvfs_preultra_low;
 	DISP_REG_SET(handle, idx * DISP_RDMA_INDEX_OFFSET +
 		DISP_REG_RDMA_DVFS_SETTING_PRE,
@@ -1014,6 +1093,7 @@ int rdma_clock_on(enum DISP_MODULE_ENUM module, void *handle)
 
 int rdma_clock_off(enum DISP_MODULE_ENUM module, void *handle)
 {
+	DISPCHECK("%s clock_off\n", ddp_get_module_name(module));
 	ddp_clk_disable_unprepare(ddp_get_module_clk_id(module));
 	return 0;
 }

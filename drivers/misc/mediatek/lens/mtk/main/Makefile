@@ -36,18 +36,30 @@ endif
 obj-$(CONFIG_MTK_LENS)    += mainaf.o
 
 mainaf-y  += main_lens.o
+#Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108
+mainaf-y  += common/aw86014af/AW86014AF.o
+mainaf-y  += common/aw8601xaf/AW8601xAF.o
+#End   ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108
 mainaf-y  += common/fp5510e2af/FP5510E2AF.o
 mainaf-y  += common/bu6424af/BU6424AF.o
 mainaf-y  += common/bu6429af/BU6429AF.o
 mainaf-y  += common/bu64748af/bu64748_function.o
 mainaf-y  += common/bu64748af/bu64748af.o
 mainaf-y  += common/dw9714af/DW9714AF.o
+#Begain modified by chengyixuan for CIVIC-3005 on 2022-07-12
+mainaf-y  += common/dw9714afcivi/DW9714AFCIVI.o
+#End modified by chengyixuan for CIVIC-3005 on 2022-07-12
 mainaf-y  += common/dw9800waf/DW9800WAF.o
+#Begain modified by chengyixuan for CIVIC-3005 on 2022-07-12
+mainaf-y  += common/dw9800wafmac/DW9800WAFMAC.o
+#End modified by chengyixuan for CIVIC-3005 on 2022-07-12
 mainaf-y  += common/dw9814af/DW9814AF.o
 mainaf-y  += common/dw9718af/DW9718AF.o
 mainaf-y  += common/dw9718saf/DW9718SAF.o
+mainaf-y  += common/dw9718saf2nd/DW9718SAF2ND.o
 mainaf-y  += common/dw9718taf/DW9718TAF.o
-mainaf-y  += common/dw9718t2ndaf/DW9718T2NDAF.o
+#majinrui Hi846+DW9718PAF porting
+mainaf-y  += common/dw9718paf/DW9718PAF.o
 mainaf-y  += common/dw9719taf/DW9719TAF.o
 mainaf-y  += common/dw9763af/DW9763AF.o
 mainaf-y  += common/dw9839af/DW9839AF.o
@@ -73,4 +85,6 @@ mainaf-y  += common/bu63169af/OIS_func.o
 mainaf-y  += common/bu63169af/OIS_main.o
 mainaf-y  += common/bu63169af/OIS_user.o
 mainaf-y  += common/bu64253gwzaf/BU64253GWZAF.o
+mainaf-y  += common/gt9768af/GT9768AF.o
+mainaf-y  += common/gt9772af/GT9772AF.o
 

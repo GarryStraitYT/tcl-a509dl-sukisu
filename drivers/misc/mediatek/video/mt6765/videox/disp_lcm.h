@@ -40,6 +40,16 @@ int disp_lcm_esd_check(struct disp_lcm_handle *plcm);
 int disp_lcm_esd_recover(struct disp_lcm_handle *plcm);
 int disp_lcm_suspend(struct disp_lcm_handle *plcm);
 int disp_lcm_resume(struct disp_lcm_handle *plcm);
+
+/* Begin add for particular timing control */
+#ifdef CONFIG_TCT_FEATURE_PARAM_SEPARATION
+int disp_lcm_pre_suspend(struct disp_lcm_handle *plcm);
+int disp_lcm_post_suspend(struct disp_lcm_handle *plcm);
+int disp_lcm_pre_resume(struct disp_lcm_handle *plcm);
+int disp_lcm_post_resume(struct disp_lcm_handle *plcm);
+#endif
+/* End add for particular timing control */
+
 int disp_lcm_is_support_adjust_fps(struct disp_lcm_handle *plcm);
 int disp_lcm_adjust_fps(void *cmdq, struct disp_lcm_handle *plcm, int fps);
 int disp_lcm_set_backlight(struct disp_lcm_handle *plcm,
@@ -58,7 +68,12 @@ int disp_lcm_set_lcm_cmd(struct disp_lcm_handle *plcm,
 int disp_lcm_is_partial_support(struct disp_lcm_handle *plcm);
 int disp_lcm_validate_roi(struct disp_lcm_handle *plcm,
 	int *x, int *y, int *w, int *h);
+#if defined(CONFIG_TCT_FEATURE_AOD_FUNCTION)
+int disp_lcm_aod(int enter, struct disp_lcm_handle *plcm, void *qhandle);
+#else
 int disp_lcm_aod(struct disp_lcm_handle *plcm, int enter);
+#endif
+
 int disp_lcm_is_arr_support(struct disp_lcm_handle *plcm);
 
 /*-----------------------DynFPS start-----------------------------------*/

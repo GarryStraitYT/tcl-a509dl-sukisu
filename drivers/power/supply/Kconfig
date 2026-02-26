@@ -555,7 +555,7 @@ config CHARGER_BQ24257
 	tristate "TI BQ24250/24251/24257 battery charger driver"
 	depends on I2C
 	depends on GPIOLIB || COMPILE_TEST
-	depends on REGMAP_I2C
+	select REGMAP_I2C
 	help
 	  Say Y to enable support for the TI BQ24250, BQ24251, and BQ24257 battery
 	  chargers.
@@ -574,6 +574,15 @@ config CHARGER_BQ25890
 	select REGMAP_I2C
 	help
 	  Say Y to enable support for the TI BQ25890 battery charger.
+
+config CHARGER_SC8551
+	tristate "Southchip SC8551 battery charger driver"
+	depends on I2C
+	help
+	  This adds support for charger in SC8551.
+	  Say Y to include support for Southchip Semiconductor Technology
+	  SC8551 charger IC Battery Charger. The base name for this driver is
+	  'sc8551.c'.
 
 config CHARGER_SMB347
 	tristate "Summit Microelectronics SMB347 Battery Charger"
@@ -807,26 +816,221 @@ config CHARGER_BQ25601
 	  It depends on
 	  the config MTK_CHARGER.
 
-# Begin added by bitao.xiong for task-7863367 on 2019-06-13
-config CHARGER_BQ2560X
-	bool "Charger Driver for TI BQ2560X Charger IC"
+# Begin added by bitao.xiong for BORATMO-3006 on 2022-06-17
+config CHARGER_ETA6963
+	bool "CHARGER_ETA6963"
+	depends on MTK_CHARGER
+	help
+	  Say Yes to enable
+	  ETA ETA6963 driver.
+	  It depends on
+	  the config MTK_CHARGER.
+# End added by bitao.xiong for BORATMO-3006 on 2022-06-17
+
+# Begin added by bin.song.hz for task 9672905 on 2020-07-25
+config MTK_BQ25890H_SUPPORT
+	bool "Charger driver for TI BQ25890H charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  This is to enable MediaTek support to BQ25890.
+	  It also supports BC1.2 function.
+	  It depends on config MTK_CHARGER.
+	  Say yes to enable BQ25890H charger driver.
+# End added by bin.song.hz for task 9672905 on 2020-07-25
+
+# Begin added by hailong.chen for task 9785237 on 2020-10-10
+config TCT_CHARGER
+	bool "TCT charger and battery patch"
+	default n
+	depends on MTK_CHARGER
+	help
+	  TCT charger and battery patch.
+# End added by hailong.chen for task 9785237 on 2020-10-10
+
+# Begin added by bitao.xiong for BORATF-2814 on 2022-07-20
+config TCT_CHARGER_GCS
+	bool "GCS Feature for TCT charger and battery"
+	default n
+	depends on TCT_CHARGER
+	help
+	  GCS Feature for TCT charger and battery.
+# End added by bitao.xiong for BORATF-2814 on 2022-07-20
+
+#Begin add by dapeng.qiao for task 10672631 porting form prague_bsp on 2021.1.13
+config TCT_POGO
+	bool "TCT_POGO"
+	default n
+	help
+	  TCT_POGO.
+
+config CHARGER_BQ25601_SLAVE
+	bool "Charger Driver for TI BQ25601 slave Charger IC"
 	default n
 	depends on MTK_CHARGER
 	help
 	  Say Y to enable
-	  TI BQ2560X driver.
+	  TI BQ25601 slave driver.
 	  It depends on config MTK_CHARGER
 	  and config MTK_SWCHR_SUPPORT.
-# End added by bitao.xiong for task-7863367 on 2019-06-13
+#End add by dapeng.qiao for task 10672631 porting form prague_bsp on 2021.1.13
 
-#Add-start by baiwei.peng for otg porting on 2020/09/21
-config MTK_GAUGE_VERSION_30
-        bool "MTK_GAUGE_VERSION 30"
-        default n
-        help
-          Say Y to enable MTK_GAUGE_VERSION 30.
-#Add-end by baiwei.peng for otg porting on 2020/09/21
+#Add-start by jin.wang for task 2064 on 2021/10/25
+config MTK_PD_SUPPORT
+	bool "add mtk pd support"
+	default n
+	help
+	  Say Y to enable mtk pd chg driver.
 
+config TCT_NB_CHG_PATCH
+	bool "add tct-nb chg patch"
+	default n
+	help
+	  Say Y to enable tct-nb chg driver.
+#Add-end by jin.wang
+
+#Add-start by jin.wang for FR 11356632 on 2021/10/26
+config TCT_CHG_CRUZE_PRO
+	bool "TCT special patches for cruze pro"
+	select MUSB_OLD_ARCH
+	select TCT_CHARGER
+	select TCT_NB_CHG_PATCH
+	default n
+	help
+	  Say Y to enable TCT_CHG_CRUZE_PRO.
+
+config TCT_CHG_CRUZE
+	bool "TCT special patches for cruze"
+	select MUSB_OLD_ARCH
+	select TCT_CHARGER
+	select TCT_NB_CHG_PATCH
+	default n
+	help
+	  Say Y to enable TCT_CHG_CRUZE.
+
+config TCT_CHG_CRUZE_LITE_S
+	bool "TCT special patches for cruze_lite_s"
+	select MUSB_OLD_ARCH
+	select TCT_CHARGER
+	select TCT_NB_CHG_PATCH
+	default n
+	help
+	  Say Y to enable TCT_CHG_CRUZE_LITE_S.
+
+config TCT_INIT_SPEED_UP
+	bool "tct speed up init"
+	default n
+	help
+	  Say Y here to enable tct speed up init.
+#Add-end by jin.wang
+
+#Add-start by jin.wang for task 2064 on 2021/10/3
+config TCT_CHG_PASSAT
+	bool "TCT special patches for passat 4g"
+	select MUSB_OLD_ARCH
+	select TCT_CHARGER
+	select TCT_NB_CHG_PATCH
+	default n
+	help
+	  Say Y to enable TCT_CHG_PASSAT.
+#Add-end by jin.wang
+
+# Begin added by bitao.xiong for task-11599163 on 2021-10-21
+config CHARGER_BQ2589X
+	bool "CHARGER_BQ2589X"
+	depends on MTK_CHARGER
+	help
+	  Say Yes to enable
+	  TI BQ25890 driver.
+	  It depends on
+	  the config MTK_CHARGER.
+
+config CHARGER_BQ25601_SLAVE
+	bool "Charger Driver for TI BQ25601 slave Charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  Say Y to enable TI BQ25601 slave driver.
+	  It depends on config MTK_CHARGER
+
+config TCT_CD_CHG_PATCH
+	bool "add tct-cd chg patch"
+	default n
+	help
+	  Say Y to enable tct-cd chg driver.
+
+config TCT_CHG_AUSTINTF
+	bool "TCT special patches for austintf"
+	select TCT_NB_CHG_PATCH
+	default n
+	help
+	  Say Y to enable TCT_CHG_AUSTINTF.
+# End added by bitao.xiong for task-11599163 on 2021-10-21
+
+#Add-start by jin.wang for task 5195 on 2021/12/27
+config CHARGER_SGM4154X
+	bool "Charger Driver for SG SGM41541 or SGM41542 main Charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  Say Y to enable
+	  SG SGM41541 or SGM41542 chg driver.
+#Add-end by jin.wang
+# Begin modified by zhangkun for MODEL3-1888 on 2022-09-19
+config CHARGER_MODEL3_RT9471
+	bool "Charger Driver for SG RT9471 or RT9471 main Charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  Say Y to enable
+	  SG RT9471 or RT9471 chg driver.
+# End modified by zhangkun for MODEL3-1888 on 2022-09-19
+#Add-start by weijun for task JTVZ-7583 on 2022/02/23
+config TCT_CHG_JETTA_VZW
+	bool "TCT special patches for jetta_vzw"
+	default n
+	help
+	  Say Y to enable TCT_CHG_JETTA_VZW.
+#End added by weijun for task JTVZ-7583 on 2022/02/23
+
+#Add-start by bitao.xiong for SOCAOSP13-6606 on 2022/06/06
+config CHARGER_SGM41513
+	bool "Charger Driver for SG SGM41513 Charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  Say Y to enable
+	  SG SGM41513  chg driver.
+# End added by bitao.xiong for alm-11715746 on 2022-03-19
+
+# Begin added by weijun for LUNATMO-1812 on 2022-05-21
+config CHARGER_SGM41513_MASTER
+	bool "Charger Driver for SG SGM41513 Charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  Say Y to enable
+	  SG SGM41513 master chg driver.
+
+config CHARGER_SGM41513_SLAVE
+	bool "Charger Driver for SG SGM41513 Charger IC"
+	default n
+	depends on MTK_CHARGER
+	help
+	  Say Y to enable
+	  SG SGM41513 slave chg driver.
+# End added by weijun for LUNATMO-1812 on 2022-05-21
+
+# Begin added by bitao.xiong for ASTUS-952 on 2022-03-28
+config TCT_FIX_ROBUST_ERROR
+	bool "TCT_FIX_ROBUST_ERROR"
+	depends on MTK_CHARGER
+	help
+	  Say Yes to fix battery fuel gauge error in robust reboot test.
+
+# End added by bitao.xiong for ASTUS-952 on 2022-03-28
+
+# Begin added by bitao.xiong for RACKT-935 on 2022-04-22
 config CHARGER_BQ24158
 	bool "CHARGER_BQ24158"
 	depends on MTK_CHARGER
@@ -835,5 +1039,105 @@ config CHARGER_BQ24158
 	  TI BQ24158 driver.
 	  It depends on
 	  the config MTK_CHARGER.
+
+config CHARGER_BQ24158_V1
+	bool "Charger Driver for TI BQ24158 Charger IC"
+	depends on MTK_CHARGER
+	depends on I2C && OF
+	select REGMAP_I2C
+	help
+	  Say Y to enable
+	  TI BQ24158 driver.
+	  It depends on config MTK_CHARGER.
+# End added by bitao.xiong for RACKT-935 on 2022-04-22
+
+config CUSTOM_BATTERY_EXTERNAL_CHANNEL
+	bool "customer external gauge test"
+	depends on MTK_PMIC_CHIP_MT6359P
+	default n
+	help
+	  This config is for internal testing only.
+	  Say Yes to enable support for Customer external gauge.
+          It depends on MTK_PMIC_CHIP_MT6359P
+          Added for Battery System test
+
+#Begin Added by tangshan.bai for LEVIN-6148
+config TCT_FEATURE_PEAK_MANAGMENT
+	bool "TCT smart peak level management function enable"
+	default n
+	help
+	Say Y to enable TCT smart peak level management function
+#End Added by tangshan.bai for LEVIN-6148
+
+
+#Begin Added by tangshan.bai for LEVIN-6148
+config TCT_FEATURE_SLEEP_CHARGE
+	bool "TCT smart sleep charge management function enable"
+	default n
+	help
+	Say Y to enable TCT smart sleep charge management function
+#End Added by tangshan.bai for LEVIN-6148
+
+config HELAEYE_BSP_CHARGER_ON
+	bool "Hela Eye charger driver tracker "
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+
+if MACH_MT6768
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6739
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6771
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6877
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6781
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6833
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6893
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6885
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6853
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6873
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
+
+if MACH_MT6785
+source "drivers/power/supply/mediatek/battery/Kconfig"
+source "drivers/power/supply/mediatek/charger/Kconfig"
+endif
 
 endif # POWER_SUPPLY

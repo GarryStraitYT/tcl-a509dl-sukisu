@@ -506,6 +506,11 @@ static u64 update_triggers(struct psi_group *group, u64 now)
 	bool new_stall = false;
 	u64 *total = group->total[PSI_POLL];
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix psi report rule
+	unsigned long cache = global_node_page_state(NR_INACTIVE_FILE) +
+					global_node_page_state(NR_ACTIVE_FILE);
+// #endif /* VENDER_EDIT */
 	/*
 	 * On subsequent updates, calculate growth deltas and let
 	 * watchers know when their specified thresholds are exceeded.
@@ -533,6 +538,13 @@ static u64 update_triggers(struct psi_group *group, u64 now)
 		/* Limit event signaling to once per window */
 		if (now < t->last_event_time + t->win.size)
 			continue;
+
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix psi report rule
+		/* Limit event Limit event signaling to min_cache~max_cache */
+		if (cache < t->min_cache || cache > t->max_cache)
+			continue;
+// #endif /* VENDER_EDIT */
 
 		/* Generate an event */
 		if (cmpxchg(&t->event, 0, 1) == 0)
@@ -1014,14 +1026,22 @@ struct psi_trigger *psi_trigger_create(struct psi_group *group,
 	enum psi_states state;
 	u32 threshold_us;
 	u32 window_us;
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix psi report rule
+	u32 min_cache = 0;
+	u32 max_cache = U32_MAX;
+// #endif /* VENDER_EDIT */
 
 	if (static_branch_likely(&psi_disabled))
 		return ERR_PTR(-EOPNOTSUPP);
 
-	if (sscanf(buf, "some %u %u", &threshold_us, &window_us) == 2)
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix psi report rule
+	if (sscanf(buf, "some %u %u %u %u", &threshold_us, &window_us, &min_cache, &max_cache) >= 2)
 		state = PSI_IO_SOME + res * 2;
-	else if (sscanf(buf, "full %u %u", &threshold_us, &window_us) == 2)
+	else if (sscanf(buf, "full %u %u %u %u", &threshold_us, &window_us, &min_cache, &max_cache) >= 2)
 		state = PSI_IO_FULL + res * 2;
+// #endif /* VENDER_EDIT */
 	else
 		return ERR_PTR(-EINVAL);
 
@@ -1035,6 +1055,12 @@ struct psi_trigger *psi_trigger_create(struct psi_group *group,
 	/* Check threshold */
 	if (threshold_us == 0 || threshold_us > window_us)
 		return ERR_PTR(-EINVAL);
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix psi report rule
+	/* Check cache */
+	if (min_cache > max_cache)
+		return ERR_PTR(-EINVAL);
+// #endif /* VENDER_EDIT */
 
 	t = kmalloc(sizeof(*t), GFP_KERNEL);
 	if (!t)
@@ -1044,6 +1070,11 @@ struct psi_trigger *psi_trigger_create(struct psi_group *group,
 	t->state = state;
 	t->threshold = threshold_us * NSEC_PER_USEC;
 	t->win.size = window_us * NSEC_PER_USEC;
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, modeify for fix psi report rule
+	t->min_cache = min_cache;
+	t->max_cache = max_cache;
+// #endif /* VENDER_EDIT */
 	window_reset(&t->win, 0, 0, 0);
 
 	t->event = 0;
@@ -1194,7 +1225,10 @@ __poll_t psi_trigger_poll(void **trigger_ptr,
 static ssize_t psi_write(struct file *file, const char __user *user_buf,
 			 size_t nbytes, enum psi_res res)
 {
-	char buf[32];
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/06/29, The native buf size is 32, but this may be out of bounds for us
+	char buf[48];
+// #endif /* VENDER_EDIT */
 	size_t buf_size;
 	struct seq_file *seq;
 	struct psi_trigger *new;

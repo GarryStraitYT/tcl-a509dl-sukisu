@@ -85,14 +85,7 @@
 #define ISINK_MODE_REGISTER		(0x11)
 
 #define mt6357_MAX_PERIOD		10000
-/* Begin modified by bitao.xiong for task-10075354 on 2020-10-20 */
-#if defined(JRD_PROJECT_FULL_BANGKOK_TF) || defined(JRD_PROJECT_VND_BANGKOK_TF) \
-	|| defined(JRD_PROJECT_FULL_BANGKOK_NA_OM) || defined(JRD_PROJECT_VND_BANGKOK_NA_OM)
-#define mt6357_MAX_BRIGHTNESS	130
-#else
 #define mt6357_MAX_BRIGHTNESS	255
-#endif
-/* End modified by bitao.xiong for task-10075354 on 2020-10-20 */
 
 //#define LED_TEST
 #undef pr_fmt
@@ -320,7 +313,7 @@ static int mt6357_led_change_mode(struct led_classdev *cdev, int mode)
 	}
 
 	//PMIC ISINK disable
-	//mt6357_led_set_ISINK(cdev, false); //modified by baiwei.peng for led flash issue when bootup
+	mt6357_led_set_ISINK(cdev, false);
 
 	//PMIC mode: PWM mode(0x00) / Breath mode(0x01) / CC mode(0x10)
 	switch (led->id) {
@@ -344,7 +337,7 @@ static int mt6357_led_change_mode(struct led_classdev *cdev, int mode)
 	}
 
 	//PMIC ISINK enable
-	//mt6357_led_set_ISINK(cdev, true); //modified by baiwei.peng for led flash issue when bootup
+	mt6357_led_set_ISINK(cdev, true);
 
 	//default mode
 	if (MT_LEDMODE_PWM == mode || MT_LEDMODE_DEFAULT == mode) {
@@ -850,7 +843,6 @@ static int mt6357_led_set_breath_tf2(struct mt_led_info *info, int time)
 	struct regmap *regmap = leds->regmap;
 	int ret;
 	unsigned int value;
-
 
 	if (time > 15 || time < 0) {
 		dev_notice(led->parent->dev, "%s: Input %d is out of range.\n", __func__, time);

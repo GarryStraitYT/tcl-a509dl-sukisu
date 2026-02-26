@@ -13,6 +13,11 @@
 #include "mtk-eint.h"
 #include "pinctrl-mtk-common-v2.h"
 
+
+#define SET_OFFSET 0x4
+#define CLR_OFFSET 0x8
+#define MWR_OFFSET 0xC
+
 struct mtk_drive_desc {
 	u8 min;
 	u8 max;
@@ -47,6 +52,37 @@ void mtk_rmw(struct mtk_pinctrl *pctl, u8 i, u32 reg, u32 mask, u32 set)
 	val &= ~mask;
 	val |= set;
 	mtk_w32(pctl, i, reg, val);
+}
+
+void mtk_hw_set_value_race_free(struct mtk_pinctrl *pctl,
+		struct mtk_pin_field *pf, u32 value)
+{
+	unsigned int set, clr;
+
+	set = value & pf->mask;
+	clr = (~set) & pf->mask;
+
+	if (set)
+		mtk_w32(pctl, pf->index, pf->offset + SET_OFFSET,
+			set << pf->bitpos);
+	if (clr)
+		mtk_w32(pctl, pf->index, pf->offset + CLR_OFFSET,
+			clr << pf->bitpos);
+}
+
+void mtk_hw_set_mode_race_free(struct mtk_pinctrl *pctl,
+		struct mtk_pin_field *pf, u32 value)
+{
+	unsigned int value_new;
+
+	/* MSB of mask is modification-enable bit, set this bit */
+	value_new = 0x8 | value;
+	if (value_new == value)
+		dev_notice(pctl->dev,
+			"invalid mode 0x%x, use it by ignoring MSBit!\n",
+			value);
+	mtk_w32(pctl, pf->index, pf->offset + MWR_OFFSET,
+		value_new << pf->bitpos);
 }
 
 static int mtk_hw_pin_field_lookup(struct mtk_pinctrl *hw,
@@ -178,10 +214,16 @@ int mtk_hw_set_value(struct mtk_pinctrl *hw, const struct mtk_pin_desc *desc,
 	if (value < 0 || value > pf.mask)
 		return -EINVAL;
 
-	if (!pf.next)
-		mtk_rmw(hw, pf.index, pf.offset, pf.mask << pf.bitpos,
-			(value & pf.mask) << pf.bitpos);
-	else
+	if (!pf.next) {
+		if (hw->soc->race_free_access) {
+			if (field == PINCTRL_PIN_REG_MODE)
+				mtk_hw_set_mode_race_free(hw, &pf, value);
+			else
+				mtk_hw_set_value_race_free(hw, &pf, value);
+		} else
+			mtk_rmw(hw, pf.index, pf.offset, pf.mask << pf.bitpos,
+				(value & pf.mask) << pf.bitpos);
+	} else
 		mtk_hw_write_cross_field(hw, &pf, value);
 
 	return 0;
@@ -207,6 +249,59 @@ int mtk_hw_get_value(struct mtk_pinctrl *hw, const struct mtk_pin_desc *desc,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(mtk_hw_get_value);
+
+void mtk_eh_ctrl(struct mtk_pinctrl *hw, const struct mtk_pin_desc *desc,
+		 u16 mode)
+{
+	const struct mtk_eh_pin_pinmux *p = hw->soc->eh_pin_pinmux;
+	u32 val = 0, on = 0;
+
+	while (p->pin != 0xffff) {
+		if (desc->number == p->pin) {
+			if (mode == p->pinmux) {
+				on = 1;
+				break;
+			} else if (desc->number != (p + 1)->pin) {
+				/*
+				 * If the target mode does not match
+				 * the mode in current entry.
+				 *
+				 * Check the next entry if the pin
+				 * number is the same.
+				 * Yes: target pin have more than one
+				 *    pinmux shall enable eh. Check the
+				 *    next entry.
+				 * No: target pin do not have other
+				 *    pinmux shall enable eh. Just disable
+				 *    the EH function.
+				 */
+				break;
+			}
+		}
+		/* It is possible that one pin may have more than one pinmux
+		 *   that shall enable eh.
+		 * Besides, we assume that hw->soc->eh_pin_pinmux is sorted
+		 *   according to field 'pin'.
+		 * So when desc->number < p->pin, it mean no match will be
+		 *   found and we can leave.
+		 */
+		if (desc->number < p->pin)
+			return;
+
+		p++;
+	}
+
+	/* If pin not found, just return */
+	if (p->pin == 0xffff)
+		return;
+
+	(void)mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_DRV_EH, &val);
+	if (on)
+		val |= on;
+	else
+		val &= 0xfffffffe;
+	(void)mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DRV_EH, val);
+}
 
 static int mtk_xt_find_eint_num(struct mtk_pinctrl *hw, unsigned long eint_n)
 {
@@ -303,6 +398,8 @@ static int mtk_xt_set_gpio_as_eint(void *data, unsigned long eint_n)
 			       desc->eint.eint_m);
 	if (err)
 		return err;
+	if (hw->soc->eh_pin_pinmux)
+		mtk_eh_ctrl(hw, desc, desc->eint.eint_m);
 
 	err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR, MTK_INPUT);
 	if (err)
@@ -370,15 +467,23 @@ int mtk_build_eint(struct mtk_pinctrl *hw, struct platform_device *pdev)
 		}
 
 		hw->eint->base = devm_ioremap_resource(&pdev->dev, res);
-		if (IS_ERR(hw->eint->base))
-			return PTR_ERR(hw->eint->base);
 	} else {
+	#if (defined CONFIG_MACH_MT6739) || (defined CONFIG_MACH_MT6771)
+		node = of_parse_phandle(np, "reg_base_eint", 0);
+	#else
 		node = of_find_node_by_name(NULL, "eint");
+	#endif /* CONFIG_MACH_MT6739 */
 		if (!node)
 			return -ENODEV;
 		hw->eint->base = of_iomap(node, 0);
 		of_node_put(node);
 	}
+
+	if (hw->eint->base == NULL)
+		return -ENOMEM;
+
+	if (IS_ERR(hw->eint->base))
+		return PTR_ERR(hw->eint->base);
 
 	hw->eint->irq = irq_of_parse_and_map(np, 0);
 	if (!hw->eint->irq)

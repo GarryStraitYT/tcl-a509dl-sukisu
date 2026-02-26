@@ -28,7 +28,6 @@ struct IMGSENSOR_HW_CFG imgsensor_custom_config[] = {
 			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_AVDD},
 			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_DOVDD},
 			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_DVDD},
-			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_AFVDD},
 			{IMGSENSOR_HW_ID_GPIO, IMGSENSOR_HW_PIN_PDN},
 			{IMGSENSOR_HW_ID_GPIO, IMGSENSOR_HW_PIN_RST},
 			{IMGSENSOR_HW_ID_NONE, IMGSENSOR_HW_PIN_NONE},
@@ -62,12 +61,12 @@ struct IMGSENSOR_HW_CFG imgsensor_custom_config[] = {
 	},
 	{
 		IMGSENSOR_SENSOR_IDX_SUB2,
-		IMGSENSOR_I2C_DEV_1,
+		IMGSENSOR_I2C_DEV_0,
 		{
 			{IMGSENSOR_HW_ID_MCLK, IMGSENSOR_HW_PIN_MCLK},
-			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_AVDD},
+			{IMGSENSOR_HW_ID_GPIO, IMGSENSOR_HW_PIN_AVDD},
 			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_DOVDD},
-			{IMGSENSOR_HW_ID_REGULATOR, IMGSENSOR_HW_PIN_DVDD},
+			{IMGSENSOR_HW_ID_GPIO, IMGSENSOR_HW_PIN_DVDD},
 			{IMGSENSOR_HW_ID_GPIO, IMGSENSOR_HW_PIN_PDN},
 			{IMGSENSOR_HW_ID_GPIO, IMGSENSOR_HW_PIN_RST},
 			{IMGSENSOR_HW_ID_NONE, IMGSENSOR_HW_PIN_NONE},
@@ -139,190 +138,443 @@ struct IMGSENSOR_HW_POWER_SEQ platform_power_sequence[] = {
 
 /* Legacy design */
 struct IMGSENSOR_HW_POWER_SEQ sensor_power_sequence[] = {
-#if defined(S5K3L6_SHINETECH_MIPI_RAW)
+/*Begin 20220112 junyiliu add for rapidtf camera porting*/
+#if defined(CXTVM15502_GC5035_MIPI_RAW)
 	{
-		SENSOR_DRVNAME_S5K3L6_SHINETECH_MIPI_RAW,
-		{
-			{SensorMCLK, Vol_High, 0, Vol_Low, 1},
-			{RST, Vol_Low, 0, Vol_Low, 5},
-			{DOVDD, Vol_1800, 1, Vol_Low, 1},
-			{AVDD, Vol_2800, 1, Vol_Low, 1},
-			{DVDD, Vol_1000, 1, Vol_Low, 1},
-			{AFVDD, Vol_2800, 5, Vol_Low, 1},
-			{RST, Vol_High, 1, Vol_Low, 1},
-		},
-	},
-#endif
-#if defined(TOKYO_TF_OV13B10_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_OV13B10_MIPI_RAW,
+		SENSOR_DRVNAME_CXTVM15502_GC5035_MIPI_RAW,
 		{
 			{SensorMCLK, Vol_High, 0},
-			{PDN, Vol_Low, 1},
+			{PDN, Vol_Low, 0},
 			{RST, Vol_Low, 0},
 			{DOVDD, Vol_1800, 1},
-			{AVDD, Vol_2800, 1},
 			{DVDD, Vol_1200, 1},
-			//{AFVDD, Vol_2800, 5},
-			{RST, Vol_High, 1},
+			{AVDD, Vol_2800, 1},
+			{AFVDD, Vol_2800, 1},
+			{RST, Vol_High, 2},
 			{PDN, Vol_High, 1},
+
 		},
 	},
 #endif
-
-#if defined(GC5035_SHINETECH_MIPI_RAW)
+#if defined(CXTVC12301_GC02M1_MIPI_RAW)
 	{
-		SENSOR_DRVNAME_GC5035_SHINETECH_MIPI_RAW,
+		SENSOR_DRVNAME_CXTVC12301_GC02M1_MIPI_RAW,
+		{{SensorMCLK, Vol_High, 0},
+		{PDN, Vol_Low, 5},
+		{RST, Vol_Low, 5},
+		{DOVDD, Vol_1800, 5},
+		{DVDD, Vol_1800, 5},
+		{AVDD, Vol_2800, 5},
+		{PDN, Vol_High, 5},
+		{RST, Vol_High, 5}},
+	},
+
+#endif
+/*End 20220112 junyiliu add for rapidtf camera porting*/
+/*Begin 20211102 junyiliu add for Jetta_VZW camera porting*/
+#if defined(SHNBF821B_GC08A3_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHNBF821B_GC08A3_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 0},
+			{RST, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 1},
+			{DOVDD, Vol_1800, 0},
+			{DVDD, Vol_1200, 0},
+			{AVDD, Vol_2800, 1},
+			//{AFVDD, Vol_2800, 5},
+			{PDN, Vol_High, 1},
+			{RST, Vol_High, 1},
+		}
+	},
+#endif
+#if defined(SHNBAD17B_OV13B10_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHNBAD17B_OV13B10_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 0},
+			{RST, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 0},
+			{AVDD, Vol_2800, 0},
+			{DOVDD, Vol_1800, 0},
+			{DVDD, Vol_1200, 0},
+			{AFVDD, Vol_2800, 0},
+			{RST, Vol_High, 5},
+		}
+	},
+#endif
+/*End 20211102 junyiliu add for Jetta_VZW camera porting*/
+
+/*Begin 20210805 liuhui add for cruze camera*/
+#if defined(TSPPHCP1088_HI1336_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_TSPPHCP1088_HI1336_MIPI_RAW,
+		{
+			{PDN,   Vol_Low,  0},
+			{RST,   Vol_Low,  1},
+			{DOVDD, Vol_1800, 1},
+			{AVDD, Vol_2800, 1},
+			{DVDD,  Vol_1100, 2},
+			{SensorMCLK, Vol_High, 2},
+			{PDN,   Vol_High, 2},
+			{RST,   Vol_High, 5},
+		},
+	},
+#endif
+#if defined(SHN9F511B_GC5035_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHN9F511B_GC5035_MIPI_RAW,
 		{
 			{PDN, Vol_Low, 1},
 			{RST, Vol_Low, 1},
 			{DOVDD, Vol_1800, 1},
 			{DVDD, Vol_1200, 1},
 			{AVDD, Vol_2800, 1},
-			{RST, Vol_High, 1},
-			{PDN, Vol_High, 1},
-			{SensorMCLK, Vol_High, 1},
+			{SensorMCLK, Vol_High, 2},
+			{RST, Vol_High, 2},
+			{PDN, Vol_High, 2},
 		},
 	},
 #endif
-#if defined(TOKYO_TF_HI556_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_T_HI556_MIPI_RAW,
+#if defined(EWYPC5319_HI556_MIPI_RAW)
 		{
-			{PDN, Vol_Low, 2},
-			{RST, Vol_Low, 2},
-			{DOVDD, Vol_1800, 2},
-			{AVDD, Vol_2800, 2},
-			{DVDD, Vol_1200, 2},
+			SENSOR_DRVNAME_EWYPC5319_HI556_MIPI_RAW,
+			{
+				{PDN, Vol_Low, 1},
+				{RST, Vol_Low, 1},
+				{DOVDD, Vol_1800, 1},
+				{AVDD, Vol_2800, 1},
+				{DVDD, Vol_1200, 1},
+				{SensorMCLK, Vol_High, 2},
+				{PDN, Vol_High, 2},
+				{RST, Vol_High, 2},
+			},
+		},
+#endif
+#if defined(SHNBA815M_GC08A3_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHNBA815M_GC08A3_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 1},
+			{RST, Vol_Low, 1},
+			{DOVDD, Vol_1800, 1},
+			{DVDD, Vol_1200, 1},
+			{AVDD, Vol_2800, 1},
 			{SensorMCLK, Vol_High, 2},
 			{PDN, Vol_High, 2},
 			{RST, Vol_High, 2},
 		},
 	},
 #endif
-/* GC */
-#if defined(GC5035_MIPI_RAW)
+#if defined(TSPPH8A1327_HI846_MIPI_RAW)
 	{
-		SENSOR_DRVNAME_GC5035MIPI_RAW,
-		{
-			{PDN, Vol_High, 0},
-			{RST, Vol_Low, 0},
-			{AVDD, Vol_2800, 0},
-			{DOVDD, Vol_1800, 0},
-			{DVDD, Vol_1200, 0},
-			{SensorMCLK, Vol_High, 1},
-			{PDN, Vol_Low, 0},
-			{RST, Vol_High, 10}
-		},
-	},
-#endif
-#if defined(GC2375H_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_GC2375H_MIPI_RAW,
-		{
-			{PDN, Vol_High, 0},
-			{RST, Vol_Low, 0},
-			{AVDD, Vol_2800, 1},
-			{DOVDD, Vol_1800, 1},
-			{DVDD, Vol_1800, 0},
-			{SensorMCLK, Vol_High, 0},
-			{PDN, Vol_Low, 0},
-			{RST, Vol_High, 10},
-		},
-	},
-#endif
-#if defined(S5K3L6_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_S5K3L6_MIPI_RAW,
-		{
-			{SensorMCLK, Vol_High, 0},
-			{RST, Vol_Low, 0},
-			{DOVDD, Vol_1800, 1},
-			{AVDD, Vol_2800, 1},
-			{DVDD, Vol_1200, 1},
-			{AFVDD, Vol_2800, 5},
-			{RST, Vol_High, 1},
-		},
-	},
-#endif
-#if defined(SP250ASUB2_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_SP250ASUB2_MIPI_RAW,
-		{
-			{PDN, Vol_High, 0},
-			{RST, Vol_Low, 0},
-			{DOVDD, Vol_1800, 2},
-			{DVDD, Vol_1200, 2},
-			{AVDD, Vol_2800, 7},
-			{SensorMCLK, Vol_High, 0},
-			{PDN, Vol_Low, 15},
-			{RST, Vol_High, 15},
-		},
-	},
-#endif
-#if defined(GC8034_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_GC8034_MIPI_RAW,
-		{
-			{PDN, Vol_Low, 0},
-			{RST, Vol_Low, 0},
-			{DOVDD, Vol_1800, 1},
-			{DVDD, Vol_1200, 1},
-			//{AFVDD, Vol_1200, 1},
-			{AVDD, Vol_2800, 1},
-			{SensorMCLK, Vol_High, 1},
-			{PDN, Vol_High, 0},
-			{RST, Vol_High, 5}
-		},
-	},
-#endif
-#if defined(GC8C34_MIPI_RAW)
-	{
-		SENSOR_DRVNAME_GC8C34_MIPI_RAW,
+		SENSOR_DRVNAME_TSPPH8A1327_HI846_MIPI_RAW,
 		{
 			{PDN, Vol_Low, 1},
-			{RST, Vol_Low, 3},
-			{DOVDD, Vol_1800, 3},
-			{DVDD, Vol_1200, 3},
-			{AVDD, Vol_2800, 3},
-			{SensorMCLK, Vol_High, 3},
-			{PDN, Vol_High, 1},
+			{RST, Vol_Low, 1},
+			{DOVDD, Vol_1800, 1},
+			{DVDD, Vol_1200, 1},
+			{AVDD, Vol_2800, 1},
+			{SensorMCLK, Vol_High, 2},
+			{PDN, Vol_High, 2},
+			{RST, Vol_High, 2},
+		},
+	},
+#endif
+#if defined(SHNBF204C_GC02M1_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHNBF204C_GC02M1_MIPI_RAW,
+		{
+			{PDN  , Vol_Low , 0},
+			{SensorMCLK, Vol_High, 1},
+			{DOVDD, Vol_1800, 2},
+			{DVDD , Vol_1800, 1},
+			{AVDD , Vol_2800, 3},
+			{PDN  , Vol_High, 1},
+		},
+	},
+#endif
+#if defined(TSPPSNP1082_S5KJN1_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_TSPPSNP1082_S5KJN1_MIPI_RAW,
+		{
+			{RST, Vol_Low, 0},
+			{DOVDD, Vol_1800, 0},
+			{DVDD, Vol_1200, 0},
+			{AVDD, Vol_2800, 0},
+			{RST, Vol_High, 1},
+			{SensorMCLK, Vol_High, 1},
+			{AFVDD, Vol_2800, 2},
+		},
+	},
+#endif
+#if defined(TSPS8F9074_S5K4H7_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_TSPS8F9074_S5K4H7_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 0},
+			{RST, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 0},
+			{AVDD, Vol_2800, 1},
+			{DVDD, Vol_1200, 1},
+			{DOVDD, Vol_1800, 1},
 			{RST, Vol_High, 5},
 		},
 	},
 #endif
-#if defined(IMX499_MIPI_RAW)
+#if defined(CXTVC12511_GC2905_MIPI_RAW)
 	{
-		SENSOR_DRVNAME_IMX499_MIPI_RAW,
+		SENSOR_DRVNAME_CXTVC12511_GC2905_MIPI_RAW,
 		{
-			{PDN, Vol_Low, 0},
-			{RST, Vol_Low, 0},
-			{AVDD, Vol_2800, 0},
-			{DOVDD, Vol_1800, 0},
-			{DVDD, Vol_1100, 0},
-			{AFVDD, Vol_2800, 1},
-			{SensorMCLK, Vol_High, 1},
-			{PDN, Vol_High, 0},
-			{RST, Vol_High, 10}
+			{PDN,Vol_Low, 0},
+			{DOVDD, Vol_1800, 1},
+			{DVDD, Vol_1200, 1},
+			{AVDD, Vol_2800, 1},
+			{SensorMCLK, Vol_High, 3},
+			{PDN,Vol_High, 1},
 		},
 	},
 #endif
-#if defined(IMX499_MIPI_RAW_13M)
+#if defined(CXTVC12499_GC02M1B_MIPI_RAW)
 	{
-		SENSOR_DRVNAME_IMX499_MIPI_RAW_13M,
+		SENSOR_DRVNAME_CXTVC12499_GC02M1B_MIPI_RAW,
 		{
-			{PDN, Vol_Low, 0},
-			{RST, Vol_Low, 0},
-			{AVDD, Vol_2800, 0},
-			{DOVDD, Vol_1800, 0},
-			{DVDD, Vol_1100, 0},
-			{AFVDD, Vol_2800, 1},
+			{PDN  , Vol_Low , 0},
 			{SensorMCLK, Vol_High, 1},
-			{PDN, Vol_High, 0},
-			{RST, Vol_High, 10}
+			{DOVDD, Vol_1800, 2},
+			{DVDD , Vol_1800, 1},
+			{AVDD , Vol_2800, 3},
+			{PDN  , Vol_High, 1},
 		},
 	},
 #endif
+
+/*End 20210805 liuhui add for cruze camera*/
+// add by lihao.zhu for applo84gboost_refresh
+#if defined(R_CXT_GC5035_MIPI_RAW)
+    {
+        SENSOR_DRVNAME_R_CXT_GC5035_MIPI_RAW,
+        {
+                {PDN, Vol_Low, 1, Vol_Low, 1},
+                {RST, Vol_Low, 1, Vol_Low, 1},
+                {DOVDD, Vol_1800, 1, Vol_Low, 1},
+                {DVDD, Vol_1200, 1, Vol_Low, 1},
+                {AVDD, Vol_2800, 1, Vol_Low, 1},
+                {RST, Vol_High, 1, Vol_Low, 1},
+                {PDN, Vol_High, 1, Vol_Low, 1},
+                {SensorMCLK, Vol_High, 1, Vol_Low, 1},
+        },
+    },
+#endif
+#if defined(F_SHINETECH_GC5035_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_F_SHINETECH_GC5035_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 5, Vol_Low, 1},
+			{RST, Vol_Low, 5, Vol_Low, 1},
+			{DOVDD, Vol_1800, 5, Vol_Low, 1},
+			{DVDD, Vol_1200, 5, Vol_Low, 1},
+			{AVDD, Vol_2800, 5, Vol_Low, 1},
+			{RST, Vol_High, 5, Vol_Low, 1},
+			{PDN, Vol_High, 5, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 5, Vol_Low, 1},
+		},
+	},
+#endif
+#if defined(R_SHINETECH_GC5035_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_R_SHINETECH_GC5035_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 5, Vol_Low, 1},
+			{RST, Vol_Low, 5, Vol_Low, 1},
+			{DOVDD, Vol_1800, 5, Vol_Low, 1},
+			{DVDD, Vol_1200, 5, Vol_Low, 1},
+			{AVDD, Vol_2800, 5, Vol_Low, 1},
+			{AFVDD, Vol_Low, 5, Vol_Low, 1},
+			{RST, Vol_High, 5, Vol_Low, 1},
+			{PDN, Vol_High, 5, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 5, Vol_Low, 1},
+		},
+	},
+#endif
+#if defined(F_EWELLY_HI556_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_F_EWELLY_HI556_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 5, Vol_Low, 1},
+			{RST, Vol_Low, 5, Vol_Low, 1},
+			{DOVDD, Vol_1800, 5, Vol_Low, 1},
+			{AVDD, Vol_2800, 5, Vol_Low, 1},
+			{DVDD, Vol_1200, 5, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 5, Vol_Low, 1},
+			{PDN, Vol_High, 5, Vol_Low, 1},
+			{RST, Vol_High, 5, Vol_Low, 1},
+		},
+	},
+#endif
+#if defined(R_EWELLY_HI556_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_R_EWELLY_HI556_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 5, Vol_Low, 1},
+			{RST, Vol_Low, 5, Vol_Low, 1},
+			{DOVDD, Vol_1800, 5, Vol_Low, 1},
+			{AVDD, Vol_2800, 5, Vol_Low, 1},
+			{DVDD, Vol_1200, 5, Vol_Low, 1},
+			{AFVDD, Vol_Low, 5, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 5, Vol_Low, 1},
+			{PDN, Vol_High, 5, Vol_Low, 1},
+			{RST, Vol_High, 5, Vol_Low, 1},
+		},
+	},
+#endif
+#if defined(GC5025HMIPI_RAW)
+	{
+                SENSOR_DRVNAME_GC5025HMIPI_RAW,
+                {
+                        {RST, Vol_Low, 1, Vol_Low, 1},
+                        {PDN, Vol_Low, 1, Vol_Low, 1},
+                        {DOVDD, Vol_1800, 1, Vol_Low, 1},
+                        {DVDD, Vol_1200, 1, Vol_Low, 1},
+                        {AVDD, Vol_2800, 1, Vol_Low, 1},
+                        {SensorMCLK, Vol_High, 2, Vol_Low, 1},
+                        {PDN, Vol_High, 1, Vol_Low, 1},
+                        {RST, Vol_High, 1, Vol_Low, 1},
+                        {PDN, Vol_High, 1, Vol_Low, 1},
+                },
+	},
+#endif
+#if defined(F_SHINETECH_OV5670_MIPI_RAW)
+    {
+                SENSOR_DRVNAME_F_SHINETECH_OV5670_MIPI_RAW,
+                {
+                        {SensorMCLK, Vol_High, 0},
+                        {PDN, Vol_Low, 1},
+                        {RST, Vol_Low, 2},
+                        {DOVDD, Vol_1800, 1},
+                        {AVDD, Vol_2800, 1},
+                        {DVDD, Vol_1200, 2},
+                        {PDN, Vol_High, 1},
+                        {RST, Vol_High, 5},
+                },
+    },
+#endif
+// add by lihao.zhu for applo84gboost_refresh
+#if defined(GC5035_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_TSPPHCP1088_HI1336_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 0},
+			{RST,   Vol_Low,  1},
+			{DOVDD, Vol_1800, 1},
+			{AVDD, Vol_2800, 1},
+			{DVDD,  Vol_1200, 2},
+			{SensorMCLK, Vol_High, 2},
+			{PDN,   Vol_High, 2},
+			{RST,   Vol_High, 5},
+		},
+	},
+#endif
+#if defined(SHN9F511B_GC5035_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHN9F511B_GC5035_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 1},
+			{RST, Vol_Low, 1},
+			{DOVDD, Vol_1800, 1},
+			{DVDD, Vol_1200, 1},
+			{AVDD, Vol_2800, 1},
+			{SensorMCLK, Vol_High, 2},
+			{PDN, Vol_High, 2},
+			{RST, Vol_High, 2},
+		},
+	},
+#endif
+#if defined(EWYPC5319_HI556_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_EWYPC5319_HI556_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 1},
+			{RST, Vol_Low, 1},
+			{DOVDD, Vol_1800, 1},
+			{AVDD, Vol_2800, 1},
+			{DVDD, Vol_1200, 1},
+			{SensorMCLK, Vol_High, 2},
+			{PDN, Vol_High, 2},
+			{RST, Vol_High, 2},
+		},
+	},
+#endif
+#if defined(SHNBA815M_GC08A3_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHNBA815M_GC08A3_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 1},
+			{RST, Vol_Low, 1},
+			{DOVDD, Vol_1800, 1},
+			{DVDD, Vol_1200, 1},
+			{AVDD, Vol_2800, 1},
+			{SensorMCLK, Vol_High, 2},
+			{PDN, Vol_High, 2},
+			{RST, Vol_High, 2},
+		},
+	},
+#endif
+#if defined(SHNBF204C_GC02M1_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_SHNBF204C_GC02M1_MIPI_RAW,
+		{
+			{PDN  , Vol_Low , 0},
+			{SensorMCLK, Vol_High, 1},
+			{DOVDD, Vol_1800, 2},
+			{DVDD , Vol_1800, 1},
+			{AVDD , Vol_2800, 3},
+			{PDN  , Vol_High, 1},
+		},
+	},
+#endif
+#if defined(TSPPSNP1082_S5KJN1_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_TSPPSNP1082_S5KJN1_MIPI_RAW,
+		{
+			{RST, Vol_Low, 0},
+			{DOVDD, Vol_1800, 0},
+			{DVDD, Vol_1200, 0},
+			{AVDD, Vol_2800, 0},
+			{RST, Vol_High, 1},
+			{SensorMCLK, Vol_High, 1},
+			{AFVDD, Vol_2800, 2},
+		},
+	},
+#endif
+#if defined(TSPS8F9074_S5K4H7_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_TSPS8F9074_S5K4H7_MIPI_RAW,
+		{
+			{PDN, Vol_Low, 0},
+			{RST, Vol_Low, 1},
+			{SensorMCLK, Vol_High, 0},
+			{AVDD, Vol_2800, 1},
+			{DVDD, Vol_1200, 1},
+			{DOVDD, Vol_1800, 1},
+			{RST, Vol_High, 5},
+		},
+	},
+#endif
+#if defined(CXTVC12511_GC2905_MIPI_RAW)
+	{
+		SENSOR_DRVNAME_CXTVC12511_GC2905_MIPI_RAW,
+		{
+			{PDN,Vol_Low, 0},
+			{DOVDD, Vol_1800, 1},
+			{DVDD, Vol_1200, 1},
+			{AVDD, Vol_2800, 1},
+			{SensorMCLK, Vol_High, 3},
+			{PDN,Vol_High, 1},
+		},
+	},
+#endif
+/*End 20210805 liuhui add for cruze camera*/
 #if defined(IMX398_MIPI_RAW)
 	{
 		SENSOR_DRVNAME_IMX398_MIPI_RAW,
@@ -916,4 +1168,5 @@ struct IMGSENSOR_HW_POWER_SEQ sensor_power_sequence[] = {
 	/* add new sensor before this line */
 	{NULL,},
 };
-
+int platform_power_sequence_size=sizeof(platform_power_sequence)/sizeof(platform_power_sequence[0]);
+int sensor_power_sequence_size=sizeof(sensor_power_sequence)/sizeof(sensor_power_sequence[0]);

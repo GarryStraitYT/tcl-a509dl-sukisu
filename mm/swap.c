@@ -261,15 +261,143 @@ void rotate_reclaimable_page(struct page *page)
 	}
 }
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 static void update_page_reclaim_stat(struct lruvec *lruvec,
 				     int file, int rotated)
 {
 	struct zone_reclaim_stat *reclaim_stat = &lruvec->reclaim_stat;
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
+	struct zone_reclaim_stat *node_reclaim_stat;
+
+	node_reclaim_stat = &pgdat->lruvec.reclaim_stat;
+	if (!file)
+		node_reclaim_stat->recent_scanned[0]++;
+#endif
 
 	reclaim_stat->recent_scanned[file]++;
-	if (rotated)
+	if (rotated) {
 		reclaim_stat->recent_rotated[file]++;
+#ifdef CONFIG_TCL_FINE_MM_CORE
+		if (!file)
+			node_reclaim_stat->recent_rotated[0]++;
+#endif
+	}
 }
+#else
+static void update_page_reclaim_stat(struct lruvec *lruvec,
+				     int file, int rotated) {}
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+static void __lru_note_cost(struct lruvec *lruvec, bool file,
+			    unsigned int nr_pages)
+{
+	unsigned long lrusize;
+	unsigned long file_cost =
+		lruvec_page_state(lruvec, WORKINGSET_FILE_COST);
+	unsigned long anon_cost =
+		lruvec_page_state(lruvec, WORKINGSET_ANON_COST);
+	int reduct_file, reduct_anon;
+
+	/* Record cost event */
+	if (file) {
+		mod_lruvec_state(lruvec, WORKINGSET_FILE_COST, nr_pages);
+		file_cost += nr_pages;
+	}
+	else {
+		mod_lruvec_state(lruvec, WORKINGSET_ANON_COST, nr_pages);
+		anon_cost +=nr_pages;
+	}
+
+	/*
+	 * Decay previous events
+	 *
+	 * Because workloads change over time (and to avoid
+	 * overflow) we keep these statistics as a floating
+	 * average, which ends up weighing recent refaults
+	 * more than old ones.
+	 */
+	lrusize = lruvec_page_state(lruvec, NR_INACTIVE_ANON) +
+			lruvec_page_state(lruvec, NR_ACTIVE_ANON) +
+			lruvec_page_state(lruvec, NR_INACTIVE_FILE) +
+			lruvec_page_state(lruvec, NR_ACTIVE_FILE);
+
+	if (file_cost + anon_cost > lrusize / 4) {
+		reduct_file = (int)(file_cost >> 1);
+		reduct_anon = (int)(anon_cost >> 1);
+		mod_lruvec_state(lruvec, WORKINGSET_FILE_COST, -reduct_file);
+		mod_lruvec_state(lruvec, WORKINGSET_ANON_COST, -reduct_anon);
+	}
+}
+
+/*
+ * In memcg, parent lruvec will not stop at root memcg and not record node lruvec
+ * But, we need to record node anon/file cost status, and then do something.
+ * So, if the input lruvec is not node lruvec, we need record into node first.
+ */
+static void lru_note_node_cost(struct lruvec *lruvec, bool file,
+			       unsigned int nr_pages)
+{
+	struct lruvec *node_lruvec = NULL;
+	/* Node record will start in lru note cost, so just skip */
+	if (is_node_lruvec(lruvec))
+		return;
+
+	node_lruvec = &lruvec_pgdat(lruvec)->lruvec;
+	__lru_note_cost(node_lruvec, file, nr_pages);
+}
+#else
+static void __lru_note_cost(struct lruvec *lruvec, bool file,
+			    unsigned int nr_pages)
+{
+	unsigned long lrusize;
+
+	/* Record cost event */
+	if (file)
+		lruvec->file_cost += nr_pages;
+	else
+		lruvec->anon_cost += nr_pages;
+	/*
+	 * Decay previous events
+	 *
+	 * Because workloads change over time (and to avoid
+	 * overflow) we keep these statistics as a floating
+	 * average, which ends up weighing recent refaults
+	 * more than old ones.
+	 */
+	lrusize = lruvec_page_state(lruvec, NR_INACTIVE_ANON) +
+			lruvec_page_state(lruvec, NR_ACTIVE_ANON) +
+			lruvec_page_state(lruvec, NR_INACTIVE_FILE) +
+			lruvec_page_state(lruvec, NR_ACTIVE_FILE);
+
+	if (lruvec->file_cost + lruvec->anon_cost > lrusize / 4) {
+		lruvec->file_cost /= 2;
+		lruvec->anon_cost /= 2;
+	}
+}
+#endif
+
+void lru_note_cost(struct lruvec *lruvec, bool file, unsigned int nr_pages)
+{
+	if (nr_pages == 0)
+		return;
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	lru_note_node_cost(lruvec, file, nr_pages);
+#endif
+	do {
+		__lru_note_cost(lruvec, file, nr_pages);
+	} while ((lruvec = parent_lruvec(lruvec)));
+}
+
+void lru_note_cost_page(struct page *page)
+{
+	lru_note_cost(mem_cgroup_page_lruvec(page, page_pgdat(page)),
+		      page_is_file_cache(page), hpage_nr_pages(page));
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 static void __activate_page(struct page *page, struct lruvec *lruvec,
 			    void *arg)
@@ -451,6 +579,9 @@ void lru_cache_add(struct page *page)
  * directly back onto it's zone's unevictable list, it does NOT use a
  * per cpu pagevec.
  */
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifndef CONFIG_REFAULT_IO_VMSCAN
 void __lru_cache_add_active_or_unevictable(struct page *page,
 					   unsigned long vma_flags)
 {
@@ -470,6 +601,29 @@ void __lru_cache_add_active_or_unevictable(struct page *page,
 	}
 	lru_cache_add(page);
 }
+#else
+void __lru_cache_add_active_or_unevictable(struct page *page,
+					   unsigned long vma_flags)
+{
+	bool unevictable;
+
+	VM_BUG_ON_PAGE(PageLRU(page), page);
+
+	unevictable = (vma_flags & (VM_LOCKED | VM_SPECIAL)) == VM_LOCKED;
+	if (unlikely(unevictable) && !TestSetPageMlocked(page)) {
+		/*
+		 * We use the irq-unsafe __mod_zone_page_stat because this
+		 * counter is not modified from interrupt context, and the pte
+		 * lock is held(spinlock), which implies preemption disabled.
+		 */
+		__mod_zone_page_state(page_zone(page), NR_MLOCK,
+				    hpage_nr_pages(page));
+		count_vm_event(UNEVICTABLE_PGMLOCKED);
+	}
+	lru_cache_add(page);
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 /*
  * If the page can not be invalidated, it is moved to the
@@ -556,6 +710,12 @@ static void lru_lazyfree_fn(struct page *page, struct lruvec *lruvec,
 		 * pages
 		 */
 		ClearPageSwapBacked(page);
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for per-app workingset/PERAPPWK-43 on 2022/10/31, resolve the problem of adding anon page to memcg's file LRU
+#ifdef CONFIG_TCL_FINE_MM_CORE
+		lruvec = node_lruvec(lruvec_pgdat(lruvec));
+#endif
+// #endif
 		add_page_to_lru_list(page, lruvec, LRU_INACTIVE_FILE);
 
 		__count_vm_events(PGLAZYFREE, hpage_nr_pages(page));
@@ -902,6 +1062,18 @@ static void __pagevec_lru_add_fn(struct page *page, struct lruvec *lruvec,
 
 	if (page_evictable(page)) {
 		lru = page_lru(page);
+// #ifdef VENDOR_EDIT
+// Yuwei.Zhang@TEK_ARCH_KERNEL for per-app workingset/PERAPPWK-49 on 2022/11/15, resolve the problem of adding file pages to memcg's file LRU
+#ifdef CONFIG_TCL_FINE_MM_CORE
+		{
+			struct lruvec * _lruvec = node_lruvec(lruvec_pgdat(lruvec));
+			if (unlikely(is_file_lru(lru) && (lruvec != _lruvec))) {
+				lruvec = _lruvec;
+			}
+		}
+#endif
+// #endif
+
 		update_page_reclaim_stat(lruvec, page_is_file_cache(page),
 					 PageActive(page));
 		if (was_unevictable)

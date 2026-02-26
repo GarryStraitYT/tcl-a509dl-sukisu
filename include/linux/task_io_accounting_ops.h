@@ -11,6 +11,12 @@
 static inline void task_io_account_read(size_t bytes)
 {
 	current->ioac.read_bytes += bytes;
+        // #ifdef VENDOR_EDIT
+        // xiwu1.peng@kernel 2021/09/03 add for io acct
+        #ifdef CONFIG_TCL_IOACCT
+	current->io_swi[current->io_index].read_bytes += bytes;
+        #endif
+        // #endif /* VENDOR_EDIT */
 }
 
 /*
@@ -39,6 +45,12 @@ static inline unsigned long task_io_get_oublock(const struct task_struct *p)
 static inline void task_io_account_cancelled_write(size_t bytes)
 {
 	current->ioac.cancelled_write_bytes += bytes;
+        // #ifdef VENDOR_EDIT
+        // xiwu1.peng@kernel 2021/09/03 add for io acct
+        #ifdef CONFIG_TCL_IOACCT
+	current->io_swi[current->io_index].cancelled_write_bytes += bytes;
+        #endif
+        // #endif /* VENDOR_EDIT */
 }
 
 static inline void task_io_accounting_init(struct task_io_accounting *ioac)

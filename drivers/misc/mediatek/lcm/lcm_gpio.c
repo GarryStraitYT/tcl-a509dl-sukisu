@@ -28,8 +28,12 @@
 #include <mach/upmu_hw.h>
 #else
 #include <mt-plat/upmu_common.h>
-#include <mach/upmu_sw.h>
-#include <mach/upmu_hw.h>
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if !defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+//#include <mach/upmu_sw.h>
+//#include <mach/upmu_hw.h>
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 #endif
 #endif
 #ifdef CONFIG_MTK_LEGACY
@@ -37,7 +41,11 @@
 #include <cust_gpio_usage.h>
 #include <cust_i2c.h>
 #else
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if !defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
 #include <mt-plat/mt_gpio.h>
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 #endif
 
 #include "lcm_define.h"
@@ -72,8 +80,12 @@ static unsigned int GPIO_LCD_BL_EN;
 #endif
 
 /* function definitions */
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if !defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
 static int __init _lcm_gpio_init(void);
 static void __exit _lcm_gpio_exit(void);
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 static int _lcm_gpio_probe(struct platform_device *pdev);
 static int _lcm_gpio_remove(struct platform_device *pdev);
 
@@ -169,7 +181,8 @@ static int _lcm_gpio_remove(struct platform_device *pdev)
 	return 0;
 }
 
-
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if !defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
 /* called when loaded into kernel */
 static int __init _lcm_gpio_init(void)
 {
@@ -189,6 +202,8 @@ static void __exit _lcm_gpio_exit(void)
 	platform_driver_unregister(&_lcm_gpio_driver);
 }
 #endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
+#endif
 
 
 static enum LCM_STATUS _lcm_gpio_check_data(char type,
@@ -196,15 +211,23 @@ static enum LCM_STATUS _lcm_gpio_check_data(char type,
 {
 	switch (type) {
 	case LCM_GPIO_MODE:
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	case LCM_GPIO_BIAS_ENN_MODE:
+	case LCM_GPIO_BIAS_ENP_MODE:
+	case TP_GPIO_RESET_MODE:
+	case LCM_GPIO_VDD3V3_EN_MODE:
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 		switch (t1->data) {
-		case LCM_GPIO_MODE_00:
-		case LCM_GPIO_MODE_01:
-		case LCM_GPIO_MODE_02:
-		case LCM_GPIO_MODE_03:
-		case LCM_GPIO_MODE_04:
-		case LCM_GPIO_MODE_05:
-		case LCM_GPIO_MODE_06:
-		case LCM_GPIO_MODE_07:
+			case LCM_GPIO_MODE_00:
+			case LCM_GPIO_MODE_01:
+			case LCM_GPIO_MODE_02:
+			case LCM_GPIO_MODE_03:
+			case LCM_GPIO_MODE_04:
+			case LCM_GPIO_MODE_05:
+			case LCM_GPIO_MODE_06:
+			case LCM_GPIO_MODE_07:
 			break;
 
 		default:
@@ -215,6 +238,14 @@ static enum LCM_STATUS _lcm_gpio_check_data(char type,
 		break;
 
 	case LCM_GPIO_DIR:
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	case LCM_GPIO_BIAS_ENN_DIR:
+	case LCM_GPIO_BIAS_ENP_DIR:
+	case TP_GPIO_RESET_DIR:
+	case LCM_GPIO_VDD3V3_EN_DIR:
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 		switch (t1->data) {
 		case LCM_GPIO_DIR_IN:
 		case LCM_GPIO_DIR_OUT:
@@ -228,6 +259,14 @@ static enum LCM_STATUS _lcm_gpio_check_data(char type,
 		break;
 
 	case LCM_GPIO_OUT:
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
+	case LCM_GPIO_BIAS_ENN_OUT:
+	case LCM_GPIO_BIAS_ENP_OUT:
+	case TP_GPIO_RESET_OUT:
+	case LCM_GPIO_VDD3V3_EN_OUT:
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 		switch (t1->data) {
 		case LCM_GPIO_OUT_ZERO:
 		case LCM_GPIO_OUT_ONE:
@@ -313,11 +352,15 @@ enum LCM_STATUS lcm_gpio_set_data(char type, const struct LCM_DATA_T1 *t1)
 
 #ifdef CONFIG_MTK_LEGACY
 #else
+//Begin modified by yangao.chen for T10722530 on 2021-05-10
+#if !defined(CONFIG_TCT_FEATURE_PARAM_SEPARATION)
 module_init(_lcm_gpio_init);
 module_exit(_lcm_gpio_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("MediaTek LCM GPIO driver");
 MODULE_AUTHOR("Joey Pan<joey.pan@mediatek.com>");
+#endif
+//End modified by yangao.chen for T10722530 on 2021-05-10
 #endif
 #endif

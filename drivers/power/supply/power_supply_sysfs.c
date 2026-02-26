@@ -48,13 +48,17 @@ static const char * const power_supply_type_text[] = {
 	"BMS", "Parallel", "Main", "USB_C_UFP", "USB_C_DFP",
 	"Charge_Pump",
 };
-
-/* Begin modified by bitao.xiong for task-10075354 on 2020-10-21 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
+static const char * const power_supply_usb_type_text[] = {
+	"Unknown", "SDP", "DCP", "CDP", "ACA", "C",
+	"PD", "PD_DRP", "PD_PPS", "BrickID"
+};
+#else
 static const char * const power_supply_usb_type_text[] = {
 	"Unknown", "SDP", "DCP", "CDP", "ACA", "C",
 	"PD", "PD_DRP", "PD_PPS", "BrickID", "FLOAT"
 };
-/* End modified by bitao.xiong for task-10075354 on 2020-10-21 */
+#endif
 
 static const char * const power_supply_status_text[] = {
 	"Unknown", "Charging", "Discharging", "Not charging", "Full"
@@ -354,10 +358,23 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(charge_term_current),
 	POWER_SUPPLY_ATTR(calibrate),
 	/* Local extensions */
-	/* Begin added by bitao.xiong for task-9878355 on 2020-09-05 */
+	/* Begin added by hailong.chen for task 9777034 on 2020-08-20 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	POWER_SUPPLY_ATTR(ISenseCurrent),
+	POWER_SUPPLY_ATTR(batt_id),
+	POWER_SUPPLY_ATTR(coulomb_count),
 	POWER_SUPPLY_ATTR(tcl_fixtemp),
-	/* End added by bitao.xiong for task-9878355 on 2020-09-05 */
-        POWER_SUPPLY_ATTR(batt_id), //Added by baiwei.peng for batt_id on 2020/12/02
+	POWER_SUPPLY_ATTR(hv_flag),
+	POWER_SUPPLY_ATTR(others_ibus_limit),
+	POWER_SUPPLY_ATTR(others_ibat_limit),
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	POWER_SUPPLY_ATTR(peak_level),//add by tangshan for LEVIN-6148
+	POWER_SUPPLY_ATTR(BatteryVerify),//add by dapeng for LEVIN-6148
+	POWER_SUPPLY_ATTR(BatteryVsoc),//add by dapeng for LEVIN-6148
+	POWER_SUPPLY_ATTR(BatteryUsoc),//add by dapeng for LEVIN-6148
+#endif
+#endif
+	/* End added by hailong.chen for task 9777034 on 2020-08-20 */
 	POWER_SUPPLY_ATTR(usb_hc),
 	POWER_SUPPLY_ATTR(usb_otg),
 	POWER_SUPPLY_ATTR(charge_enabled),
@@ -389,8 +406,10 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(resistance),
 	POWER_SUPPLY_ATTR(resistance_capacitive),
 	POWER_SUPPLY_ATTR(resistance_id),
-	POWER_SUPPLY_ATTR(ocv_pl), 
+	/* begin add by bing-zhang for getting ocv from preloader on 20210827 */
+	POWER_SUPPLY_ATTR(ocv_pl),
 	POWER_SUPPLY_ATTR(soc_pl),
+	/* end add by bing-zhang for getting ocv from preloader on 20210827 */
 	POWER_SUPPLY_ATTR(resistance_now),
 	POWER_SUPPLY_ATTR(flash_current_max),
 	POWER_SUPPLY_ATTR(update_now),
@@ -515,12 +534,18 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(parallel_output_mode),
 	POWER_SUPPLY_ATTR(alignment),
 	POWER_SUPPLY_ATTR(moisture_detection_enabled),
+	POWER_SUPPLY_ATTR(cc_toggle_enable),
 	POWER_SUPPLY_ATTR(fg_type),
+	POWER_SUPPLY_ATTR(charger_status),
 	/* Local extensions of type int64_t */
 	POWER_SUPPLY_ATTR(charge_counter_ext),
 	POWER_SUPPLY_ATTR(charge_charger_state),
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_ATTR(model_name),
+#if defined(CONFIG_TCT_FEATURE_PEAK_MANAGMENT)
+	POWER_SUPPLY_ATTR(batt_resistance),//add by tangshan for LEVIN-6148
+	POWER_SUPPLY_ATTR(charging_cycle_table),//add by tangshan for LEVIN-6148
+#endif
 	POWER_SUPPLY_ATTR(ptmc_id),
 	POWER_SUPPLY_ATTR(manufacturer),
 	POWER_SUPPLY_ATTR(battery_type),

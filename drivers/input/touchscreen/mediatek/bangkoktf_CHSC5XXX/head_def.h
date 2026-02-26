@@ -9,10 +9,10 @@
 #define LOG_LEVEL_E              KERN_EMERG
 #define LOG_LEVEL_D              KERN_EMERG /*KERN_DEBUG*/
 #define MODULE_NAME              "CHSC"
-#define CHSC_DRIVER_VERSION      "v3.0"
+#define CHSC_DRIVER_VERSION      "v2.3"
 
+#define CFG_MAX_LENGTH           256
 #define MAX_CORE_WRITE_LEN       128
-#define MAX_VKEY_NUMBER          5
 
 #if SEMI_TOUCH_APK_NODE_EN
 #define MAX_IO_BUFFER_LEN        512
@@ -62,7 +62,7 @@ typedef void (*de_init_fun)(void);
 #define TP_AUTO_FEED_VAL             0x0000925a
 #define TP_REMAP_MCU_VAL             0x12044002
 #define TP_RELEASE_MCU_VAL           0x12044003
-#define CFG_ROM_ADDRESS              0
+#define CFG_ROM_ADDRESS              (39 * 1024 + 256 * 3)
 #define VID_PID_BACKUP_ADDR          (40 * 1024 + 0X10)
 #define ADC_NUM_MAX                  16
 #endif
@@ -206,10 +206,6 @@ struct semi_touch_init_d
     bool dog_feed_flag;
     unsigned int ctp_run_status;
     unsigned int custom_function_en;
-
-    int vkey_num;
-    int vkey_evt_arr[MAX_VKEY_NUMBER];
-    int vkey_dim_map[MAX_VKEY_NUMBER][4];
 };
 
 struct chsc_updfile_header {

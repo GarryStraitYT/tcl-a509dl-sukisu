@@ -1,0 +1,71 @@
+/*
+ * Copyright (C) 2010 - 2018 Novatek, Inc.
+ *
+ * $Revision: 52935 $
+ * $Date: 2019-11-11 10:24:25 +0800 (Mon, 11 Nov 2019) $
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ */
+
+&spi0 {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        status = "okay";
+		mediatek,pad-select = <0>, <1>;
+        tct,touch@0 {
+            status = "okay";
+            compatible = "tct,touch";
+            reg = <0x0>;
+            interrupt-parent = <&pio>;
+            interrupts = <0 IRQ_TYPE_EDGE_FALLING 0 0>;
+            
+            spi-max-frequency = <4800000>;
+			/*Begind For ICNL9911C*/
+			chipone,rst-gpio = <&pio 174 0x00>;
+			chipone,irq-gpio = <&pio 0 0x00>;
+			chipone,x-res = <720>;
+			chipone,y-res = <1600>;
+			/*End For ICNL9911C*/
+
+			        /* For tp selftest */
+			chipone,test-reset-pin;
+			//chipone,test-int-pin;
+			chipone,test-rawdata;
+			chipone,test-rawdata-frames      = <1>;
+			chipone,rawdata-min              = <1202>;	//base2000, ±40%
+			chipone,rawdata-max              = <2903>;
+			chipone,test-noise;
+			chipone,test-noise-frames        = <30>;
+			chipone,noise-max                = <79>;
+			chipone,test-open;
+			chipone,open-min                 = <1900>;
+			chipone,test-short;
+			chipone,short-min                = <1500>;
+			chipone,test-compensate-cap;
+			chipone,compensate-cap-min       = <1>;
+			chipone,compensate-cap-max       = <126>;
+
+            
+    };
+	focaltech@1 {
+                        status = "okay";
+			compatible = "focaltech,fts";
+			reg = <0x1>;
+			spi-max-frequency = <6000000>;
+			interrupt-parent = <&pio>;
+			interrupts = <0 IRQ_TYPE_EDGE_FALLING 0 0>;
+			focaltech,reset-gpio = <&pio 174 0x00>; 
+			focaltech,irq-gpio = <&pio 0 0x00>; 	
+			focaltech,max-touch-number = <10>;			
+			focaltech,display-coords =  <0 0 720 1600>;
+		};
+};

@@ -263,6 +263,14 @@ int invalidate_inode_page(struct page *page)
 		return 0;
 	if (page_mapped(page))
 		return 0;
+	// #ifdef VENDOR_EDIT
+	// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+	#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	if (PageProtect(page))
+		return 0;
+	#endif
+	// #endif /* VENDOR_EDIT */
+
 	return invalidate_complete_page(mapping, page);
 }
 
@@ -612,6 +620,84 @@ unsigned long invalidate_mapping_pages(struct address_space *mapping,
 	return count;
 }
 EXPORT_SYMBOL(invalidate_mapping_pages);
+
+#ifdef CONFIG_INTELLIGENT_RECLAIM
+unsigned long invalidate_mapping_pages_ext(struct address_space *mapping,
+		pgoff_t start, pgoff_t end)
+{
+	pgoff_t indices[PAGEVEC_SIZE];
+	struct pagevec pvec;
+	pgoff_t index = start;
+	unsigned long ret;
+	unsigned long count = 0;
+	int i;
+
+	pagevec_init(&pvec);
+	while (index <= end && pagevec_lookup_entries(&pvec, mapping, index,
+			min(end - index, (pgoff_t)PAGEVEC_SIZE - 1) + 1,
+			indices)) {
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			struct page *page = pvec.pages[i];
+
+			/* We rely upon deletion not changing page->index */
+			index = indices[i];
+			if (index > end)
+				break;
+
+			if (radix_tree_exceptional_entry(page)) {
+				invalidate_exceptional_entry(mapping, index,
+							     page);
+				continue;
+			}
+
+			if (!trylock_page(page))
+				continue;
+
+			WARN_ON(page_to_index(page) != index);
+
+			/*actually modify begin*/
+			if(PageActive(page) && PageReferenced(page)){
+				unlock_page(page);
+				continue;
+			}
+			/*actually modify end*/
+
+			/* Middle of THP: skip */
+			if (PageTransTail(page)) {
+				unlock_page(page);
+				continue;
+			} else if (PageTransHuge(page)) {
+				index += HPAGE_PMD_NR - 1;
+				i += HPAGE_PMD_NR - 1;
+				/*
+				 * 'end' is in the middle of THP. Don't
+				 * invalidate the page as the part outside of
+				 * 'end' could be still useful.
+				 */
+				if (index > end) {
+					unlock_page(page);
+					continue;
+				}
+			}
+
+			ret = invalidate_inode_page(page);
+			unlock_page(page);
+			/*
+			 * Invalidation is a hint that the page is no longer
+			 * of interest and try to speed up its reclaim.
+			 */
+			if (!ret)
+				deactivate_file_page(page);
+			count += ret;
+		}
+		pagevec_remove_exceptionals(&pvec);
+		pagevec_release(&pvec);
+		cond_resched();
+		index++;
+	}
+	return count;
+}
+#endif
 
 /*
  * This is like invalidate_complete_page(), except it ignores the page's

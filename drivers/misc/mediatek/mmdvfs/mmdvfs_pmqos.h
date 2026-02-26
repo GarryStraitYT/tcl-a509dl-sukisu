@@ -4,6 +4,10 @@
 #define __MMDVFS_PMQOS_H__
 
 #include <linux/pm_qos.h>
+#if !defined(CONFIG_MACH_MT6771)
+#include <linux/soc/mediatek/mtk-pm-qos.h>
+#endif
+
 
 #define MAX_FREQ_STEP 6
 
@@ -38,7 +42,7 @@ struct mm_qos_request {
 	u32 comp_type;	/* compression type */
 	bool init;	/* initialized check */
 	bool updated;	/* update check */
-	struct pm_qos_request qos_request;	/* EMI setting */
+	struct mtk_pm_qos_request qos_request;	/* EMI setting */
 };
 
 enum mmdvfs_limit_source {
@@ -96,6 +100,8 @@ void mmdvfs_prepare_action(enum mmdvfs_prepare_event event);
 
 
 s32 get_virtual_port(enum virtual_source_id id);
+
+void mm_qos_update_larb_bwl(u32 larb_update, bool bw_change);
 
 #endif /* __MMDVFS_PMQOS_H__ */
 

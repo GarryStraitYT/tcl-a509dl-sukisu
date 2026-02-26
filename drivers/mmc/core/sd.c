@@ -29,6 +29,13 @@
 #include "sd.h"
 #include "sd_ops.h"
 
+#ifdef CONFIG_HELAEYE_BSP_EMMC_UFS_SD_ON
+extern int emmc_ufs_sd_lasterrcode;
+extern char hela_emmc_errinfo[128];
+#define SD_INIT_BADCARD 1<<7
+#endif
+
+
 static const unsigned int tran_exp[] = {
 	10000,		100000,		1000000,	10000000,
 	0,		0,		0,		0
@@ -138,6 +145,9 @@ static int mmc_decode_csd(struct mmc_card *card)
 			csd->erase_size = UNSTUFF_BITS(resp, 39, 7) + 1;
 			csd->erase_size <<= csd->write_blkbits - 9;
 		}
+
+		if (UNSTUFF_BITS(resp, 13, 1))
+			mmc_card_set_readonly(card);
 		break;
 	case 1:
 		/*
@@ -172,6 +182,9 @@ static int mmc_decode_csd(struct mmc_card *card)
 		csd->write_blkbits = 9;
 		csd->write_partial = 0;
 		csd->erase_size = 1;
+
+		if (UNSTUFF_BITS(resp, 13, 1))
+			mmc_card_set_readonly(card);
 		break;
 	default:
 		pr_err("%s: unrecognised CSD structure version %d\n",
@@ -785,8 +798,7 @@ try_again:
 			retries--;
 			goto try_again;
 		} else if (err) {
-			retries = 0;
-			goto try_again;
+			return err;
 		}
 	}
 
@@ -1317,6 +1329,13 @@ err:
 
 	pr_err("%s: error %d whilst initialising SD card\n",
 		mmc_hostname(host), err);
+
+#ifdef CONFIG_HELAEYE_BSP_EMMC_UFS_SD_ON
+emmc_ufs_sd_lasterrcode=SD_INIT_BADCARD;
+memset(hela_emmc_errinfo, 0, sizeof(hela_emmc_errinfo));
+sprintf(hela_emmc_errinfo,"%s:_error_%d_init_SDCARD",
+		mmc_hostname(host), err);
+#endif
 
 	return err;
 }

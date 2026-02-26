@@ -210,6 +210,12 @@ source "drivers/input/serio/Kconfig"
 
 source "drivers/input/gameport/Kconfig"
 
+#Add-start by baiwei.peng for hall & sar sensor porting on 2022/03/16
+source "drivers/input/aw9610x/Kconfig"
+source "drivers/input/hallsensor/Kconfig"
+source "drivers/input/hallsensor_2/Kconfig"
+#Add-end by baiwei.peng for hall & sar sensor porting on 2022/03/16
+
 endmenu
 
 endmenu

@@ -66,6 +66,13 @@
 #include "mt-plat/mboot_params.h"
 #endif
 
+// #ifdef VENDOR_EDIT
+// shu.zhang@tcl.com 2021/06/24 add for GPU frep governor
+#ifdef CONFIG_GRAPHICS_GT
+#include <trace/events/power.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
 static int __mt_gpufreq_pdrv_probe(struct platform_device *pdev);
 static void __mt_gpufreq_set(unsigned int freq_old, unsigned int freq_new,
 	unsigned int volt_old, unsigned int volt_new,
@@ -1294,6 +1301,12 @@ static void __mt_gpufreq_set(unsigned int freq_old, unsigned int freq_new,
 		__func__, freq_old, freq_new, volt_old, volt_new,
 		vsram_volt_old, vsram_volt_new);
 
+// #ifdef VENDOR_EDIT
+// shu.zhang@tcl.com 2021/06/24 add for GPU frep governor
+#ifdef CONFIG_GRAPHICS_GT
+	trace_clock_set_rate("mali_gpu_clk", freq_new, 0);
+#endif
+// #endif /* VENDOR_EDIT */
 	if (freq_new > freq_old) {
 		__mt_gpufreq_vcore_volt_switch(volt_new);
 		__mt_gpufreq_clock_switch(freq_new);

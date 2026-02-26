@@ -66,10 +66,10 @@ struct thermal_zone_device *thermal, unsigned long *t)
 
 	*t = (t1 > t2) ? t1 : t2;
 
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 	mtktsdram_dprintk("temp =%lu\n", *t);
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-dram] %s t_dram=%d\n", __func__, *t);
+#endif
 	return 0;
 }
 

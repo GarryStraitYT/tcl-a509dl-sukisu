@@ -21,6 +21,8 @@ enum cpu_level {
 	CPU_LEVEL_6, /* 65R */
 	CPU_LEVEL_7, /* 62D */
 	CPU_LEVEL_8, /* 62DLY */
+	CPU_LEVEL_9, /* 65OD */
+	CPU_LEVEL_10, /* 62X/65X */
 	NUM_CPU_LEVEL,
 };
 
@@ -56,5 +58,6 @@ enum top_ckmuxsel {
 
 	NR_TOP_CKMUXSEL,
 };
+
 
 #endif	/* __MTK_CPUFREQ_CONFIG_H__ */

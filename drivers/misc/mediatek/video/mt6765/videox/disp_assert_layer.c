@@ -313,6 +313,26 @@ enum DAL_STATUS DAL_Printf(const char *fmt, ...)
 	return ret;
 }
 EXPORT_SYMBOL(DAL_Printf);
+// Add by jinggao.zhou for ENCOREVZW-7282, add BOOT DETECT timeout 5 mins 2022/11/01
+#ifdef CONFIG_TCL_BOOT_DETECT
+enum DAL_STATUS DAL_Printf_SetCursor(unsigned int x, unsigned int y)
+{
+	va_list args;
+	uint i;
+	enum DAL_STATUS ret = DAL_STATUS_OK;
+
+	DISPFUNC();
+	if (mfc_handle == NULL)
+		return DAL_STATUS_NOT_READY;
+
+	DAL_CHECK_MFC_RET(MFC_SetCursor(mfc_handle, x,y));
+
+	/* flush_cache_all(); */
+
+	return ret;
+}
+EXPORT_SYMBOL(DAL_Printf_SetCursor);
+#endif
 
 enum DAL_STATUS DAL_OnDispPowerOn(void)
 {

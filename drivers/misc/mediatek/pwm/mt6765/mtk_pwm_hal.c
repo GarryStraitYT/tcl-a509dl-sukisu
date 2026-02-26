@@ -569,8 +569,11 @@ void mt_pwm_clk_sel_hal(u32 pwm_no, u32 clk_src)
 void mt_pwm_platform_init(void)
 {
 	struct device_node *node;
-
+#ifdef CONFIG_TCT_APOLLO84GBOOSTREFRESH
+    node = of_find_compatible_node(NULL, NULL, "mediatek,common-infracfg_ao");
+#else
 	node = of_find_compatible_node(NULL, NULL, "mediatek,infracfg_ao");
+#endif
 	if (node) {
 		pwm_infracfg_base = of_iomap(node, 0);
 		pr_debug("PWM pwm_infracfg_base=0x%p\n", pwm_infracfg_base);

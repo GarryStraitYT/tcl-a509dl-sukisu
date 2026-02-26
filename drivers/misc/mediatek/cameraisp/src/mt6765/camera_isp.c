@@ -746,7 +746,6 @@ struct ISP_IRQ_ERR_WAN_CNT_STRUCT {
 };
 
 static signed int FirstUnusedIrqUserKey = 1;
-#define USERKEY_STR_LEN 128
 
 struct UserKeyInfo {
 	/* for the user that register a userKey */
@@ -4258,7 +4257,8 @@ static signed int ISP_WriteReg(struct ISP_REG_IO_STRUCT *pRegIo)
 	/* unsigned char* pData = NULL; */
 	struct ISP_REG_STRUCT *pData = NULL;
 
-	if (pRegIo->Count > 0xFFFFFFFF) {
+	if (((pRegIo->Count * sizeof(struct ISP_REG_STRUCT)) > 0xFFFFF000) ||
+		(pRegIo->Count == 0)) {
 		pr_err("pRegIo->Count error");
 		Ret = -EFAULT;
 		goto EXIT;
@@ -4766,8 +4766,7 @@ static long ISP_REF_CNT_CTRL_FUNC(unsigned long Param)
 				ref_cnt_ctrl.ctrl, ref_cnt_ctrl.id);
 
 		/*  */
-		if (ref_cnt_ctrl.id < ISP_REF_CNT_ID_MAX &&
-		    ref_cnt_ctrl.id >= 0) {
+		if (ref_cnt_ctrl.id < ISP_REF_CNT_ID_MAX) {
 			/* //////////////////---add lock here */
 			spin_lock(&(IspInfo.SpinLockIspRef));
 			/* ////////////////// */
@@ -5110,7 +5109,7 @@ static int ISP_SetPMQOS(unsigned int cmd, unsigned int module)
 #endif
 
 static signed int ISP_P2_BufQue_Update_ListCIdx(
-	enum ISP_P2_BUFQUE_PROPERTY property,
+	enum ISP_P2_BUFQUE_PROPERTY propertyU,
 	enum ISP_P2_BUFQUE_LIST_TAG listTag)
 {
 	signed int ret = 0;
@@ -5118,7 +5117,9 @@ static signed int ISP_P2_BufQue_Update_ListCIdx(
 	signed int cnt = 0;
 	bool stop = false;
 	int i = 0;
+	unsigned int property = 0;
 	enum ISP_P2_BUF_STATE_ENUM cIdxSts = ISP_P2_BUF_STATE_NONE;
+	property = propertyU;
 
 	switch (listTag) {
 	case ISP_P2_BUFQUE_LIST_TAG_UNIT:
@@ -5216,14 +5217,23 @@ static signed int ISP_P2_BufQue_Update_ListCIdx(
 	}
 	return ret;
 }
-static signed int ISP_P2_BufQue_Erase(enum ISP_P2_BUFQUE_PROPERTY property,
-enum ISP_P2_BUFQUE_LIST_TAG listTag, signed int idx)
+static signed int ISP_P2_BufQue_Erase(enum ISP_P2_BUFQUE_PROPERTY propertyU,
+enum ISP_P2_BUFQUE_LIST_TAG listTag, signed int idxU)
 {
 	signed int ret =  -1;
 	bool stop = false;
 	int i = 0;
 	signed int cnt = 0;
 	int tmpIdx = 0;
+	unsigned int property = 0;
+	unsigned int idx = 0;
+
+	if (idxU < 0) {
+		pr_info("idxU abnormal error(%d)\n", idxU);
+		return ret;
+	}
+	idx = idxU;
+	property = propertyU;
 
 	switch (listTag) {
 	case ISP_P2_BUFQUE_LIST_TAG_PACKAGE:
@@ -5235,43 +5245,44 @@ enum ISP_P2_BUFQUE_LIST_TAG listTag, signed int idx)
 		P2_FramePackage_List[property][idx].frameNum = 0;
 		P2_FramePackage_List[property][idx].dequedNum = 0;
 		/* [2] update first index */
-		if (P2_FramePackage_List[property][tmpIdx].dupCQIdx == -1) {
-			/* traverse count needed, cuz user may erase the */
-			/* element but not the one at first idx */
-			/* (pip or vss scenario) */
-			if (P2_FramePack_List_Idx[property].start <=
-			P2_FramePack_List_Idx[property].end) {
-				cnt = P2_FramePack_List_Idx[property].end -
-					P2_FramePack_List_Idx[property].start;
-			} else {
-				cnt = _MAX_SUPPORT_P2_PACKAGE_NUM_ -
-					P2_FramePack_List_Idx[property].start;
-				cnt += P2_FramePack_List_Idx[property].end;
-			}
-			do { /* to find the newest first lindex */
-				tmpIdx = (tmpIdx + 1) %
-					_MAX_SUPPORT_P2_PACKAGE_NUM_;
-				switch (
-				P2_FramePackage_List[property][tmpIdx].
-				dupCQIdx){
-				case (-1):
-					break;
-				default:
-					stop = true;
-					P2_FramePack_List_Idx[property].start =
-						tmpIdx;
-					break;
+		if (tmpIdx >= 0) {
+			if (P2_FramePackage_List[property][tmpIdx].dupCQIdx == -1) {
+				/* traverse count needed, cuz user may erase the */
+				/* element but not the one at first idx */
+				/* (pip or vss scenario) */
+				if (P2_FramePack_List_Idx[property].start <=
+				P2_FramePack_List_Idx[property].end) {
+					cnt = P2_FramePack_List_Idx[property].end -
+						P2_FramePack_List_Idx[property].start;
+				} else {
+					cnt = _MAX_SUPPORT_P2_PACKAGE_NUM_ -
+						P2_FramePack_List_Idx[property].start;
+					cnt += P2_FramePack_List_Idx[property].end;
 				}
-				i++;
-			} while ((i < cnt) && (!stop));
-			/* current last erased element in list is the one */
-			/* firstBufindex point at and all the buffer node */
-			/* are deque done in the current moment, should */
-			/* update first index to the last node */
-			if ((!stop) && (i == cnt))
-				P2_FramePack_List_Idx[property].start =
-					P2_FramePack_List_Idx[property].end;
+				do { /* to find the newest first lindex */
+					tmpIdx = (tmpIdx + 1) %
+						_MAX_SUPPORT_P2_PACKAGE_NUM_;
+					switch (
+					P2_FramePackage_List[property][tmpIdx].dupCQIdx){
+					case (-1):
+						break;
+					default:
+						stop = true;
+						P2_FramePack_List_Idx[property].start =
+							tmpIdx;
+						break;
+					}
+					i++;
+				} while ((i < cnt) && (!stop));
+				/* current last erased element in list is the one */
+				/* firstBufindex point at and all the buffer node */
+				/* are deque done in the current moment, should */
+				/* update first index to the last node */
+				if ((!stop) && (i == cnt))
+					P2_FramePack_List_Idx[property].start =
+						P2_FramePack_List_Idx[property].end;
 
+			}
 		}
 		break;
 	case ISP_P2_BUFQUE_LIST_TAG_UNIT:
@@ -5282,50 +5293,51 @@ enum ISP_P2_BUFQUE_LIST_TAG listTag, signed int idx)
 		P2_FrameUnit_List[property][idx].cqMask =  0x0;
 		P2_FrameUnit_List[property][idx].bufSts = ISP_P2_BUF_STATE_NONE;
 		/* [2]update first index */
-		if (P2_FrameUnit_List[property][tmpIdx].bufSts ==
-		ISP_P2_BUF_STATE_NONE) {
-			/* traverse count needed, cuz user may erase the */
-			/* element but not the one at first idx */
-			if (P2_FrameUnit_List_Idx[property].start <=
-			P2_FrameUnit_List_Idx[property].end) {
-				cnt = P2_FrameUnit_List_Idx[property].end -
-					P2_FrameUnit_List_Idx[property].start;
-			} else {
-				cnt = _MAX_SUPPORT_P2_FRAME_NUM_ -
-					P2_FrameUnit_List_Idx[property].start;
-				cnt += P2_FrameUnit_List_Idx[property].end;
-			}
-			/* to find the newest first lindex */
-			do {
-				tmpIdx = (tmpIdx + 1) %
-					_MAX_SUPPORT_P2_FRAME_NUM_;
-				switch (
-				P2_FrameUnit_List[property][tmpIdx].bufSts) {
-				case ISP_P2_BUF_STATE_ENQUE:
-				case ISP_P2_BUF_STATE_RUNNING:
-				case ISP_P2_BUF_STATE_DEQUE_SUCCESS:
-					stop = true;
-					P2_FrameUnit_List_Idx[property].start =
-						tmpIdx;
-					break;
-				case ISP_P2_BUF_STATE_WAIT_DEQUE_FAIL:
-				case ISP_P2_BUF_STATE_DEQUE_FAIL:
-					/* ASSERT */
-					break;
-				case ISP_P2_BUF_STATE_NONE:
-				default:
-					break;
+		if (tmpIdx >= 0) {
+			if (P2_FrameUnit_List[property][tmpIdx].bufSts ==
+			ISP_P2_BUF_STATE_NONE) {
+				/* traverse count needed, cuz user may erase the */
+				/* element but not the one at first idx */
+				if (P2_FrameUnit_List_Idx[property].start <=
+				P2_FrameUnit_List_Idx[property].end) {
+					cnt = P2_FrameUnit_List_Idx[property].end -
+						P2_FrameUnit_List_Idx[property].start;
+				} else {
+					cnt = _MAX_SUPPORT_P2_FRAME_NUM_ -
+						P2_FrameUnit_List_Idx[property].start;
+					cnt += P2_FrameUnit_List_Idx[property].end;
 				}
-				i++;
-			} while ((i < cnt) && (!stop));
-			/* current last erased element in list is the one */
-			/* firstBufindex point at and all the buffer node are */
-			/* deque done in the current moment, should */
-			/* update first index to the last node */
-			if ((!stop) && (i == (cnt)))
-				P2_FrameUnit_List_Idx[property].start =
-					P2_FrameUnit_List_Idx[property].end;
-
+				/* to find the newest first lindex */
+				do {
+					tmpIdx = (tmpIdx + 1) %
+						_MAX_SUPPORT_P2_FRAME_NUM_;
+					switch (
+					P2_FrameUnit_List[property][tmpIdx].bufSts) {
+					case ISP_P2_BUF_STATE_ENQUE:
+					case ISP_P2_BUF_STATE_RUNNING:
+					case ISP_P2_BUF_STATE_DEQUE_SUCCESS:
+						stop = true;
+						P2_FrameUnit_List_Idx[property].start =
+							tmpIdx;
+						break;
+					case ISP_P2_BUF_STATE_WAIT_DEQUE_FAIL:
+					case ISP_P2_BUF_STATE_DEQUE_FAIL:
+						/* ASSERT */
+						break;
+					case ISP_P2_BUF_STATE_NONE:
+					default:
+						break;
+					}
+					i++;
+				} while ((i < cnt) && (!stop));
+				/* current last erased element in list is the one */
+				/* firstBufindex point at and all the buffer node are */
+				/* deque done in the current moment, should */
+				/* update first index to the last node */
+				if ((!stop) && (i == (cnt)))
+					P2_FrameUnit_List_Idx[property].start =
+						P2_FrameUnit_List_Idx[property].end;
+			}
 		}
 		break;
 	default:
@@ -5340,7 +5352,7 @@ static signed int ISP_P2_BufQue_GetMatchIdx(struct ISP_P2_BUFQUE_STRUCT param,
 {
 	int idx = -1;
 	int i = 0;
-	int property;
+	unsigned int property;
 
 	if (param.property >= ISP_P2_BUFQUE_PROPERTY_NUM) {
 		pr_err("property err(%d)\n", param.property);
@@ -5554,29 +5566,42 @@ static inline unsigned int ISP_P2_BufQue_WaitEventState(
 {
 	unsigned int ret = MFALSE;
 	signed int index = -1;
-	enum ISP_P2_BUFQUE_PROPERTY property;
+	unsigned int local_idx = 0;
+	unsigned int property;
 
 	if (param.property >= ISP_P2_BUFQUE_PROPERTY_NUM) {
 		pr_err("property err(%d)\n", param.property);
 		return ret;
 	}
+
 	property = param.property;
+
 	/*  */
 	switch (type) {
 	case ISP_P2_BUFQUE_MATCH_TYPE_WAITDQ:
-		spin_lock(&(SpinLock_P2FrameList));
 		index = *idx;
-		if (P2_FrameUnit_List[property][index].bufSts ==
+		if (index < 0) {
+			pr_info("index abnormal error(%d) 1\n", index);
+			return ret;
+		}
+		spin_lock(&(SpinLock_P2FrameList));
+		local_idx = index;
+		if (P2_FrameUnit_List[property][local_idx].bufSts ==
 		    ISP_P2_BUF_STATE_RUNNING)
 			ret = MTRUE;
 
 		spin_unlock(&(SpinLock_P2FrameList));
 		break;
 	case ISP_P2_BUFQUE_MATCH_TYPE_WAITFM:
-		spin_lock(&(SpinLock_P2FrameList));
 		index = *idx;
-		if (P2_FramePackage_List[property][index].dequedNum ==
-		    P2_FramePackage_List[property][index].frameNum)
+		if (index < 0) {
+			pr_info("index abnormal error(%d) 2\n", index);
+			return ret;
+		}
+		spin_lock(&(SpinLock_P2FrameList));
+		local_idx = index;
+		if (P2_FramePackage_List[property][local_idx].dequedNum ==
+		    P2_FramePackage_List[property][local_idx].frameNum)
 			ret = MTRUE;
 
 		spin_unlock(&(SpinLock_P2FrameList));
@@ -5620,7 +5645,7 @@ static signed int ISP_P2_BufQue_CTRL_FUNC(struct ISP_P2_BUFQUE_STRUCT param)
 	int i = 0, q = 0;
 	int idx =  -1, idx2 =  -1;
 	signed int restTime = 0;
-	int property;
+	unsigned int property;
 
 	if (param.property >= ISP_P2_BUFQUE_PROPERTY_NUM) {
 		pr_err("property err(%d)\n", param.property);
@@ -5845,7 +5870,7 @@ static signed int ISP_P2_BufQue_CTRL_FUNC(struct ISP_P2_BUFQUE_STRUCT param)
 				idx, param.property, param.processID,
 				param.callerID);
 				ret =  -EFAULT;
-			} else if (restTime == -512) {
+			} else if (restTime == -SIG_ERESTARTSYS) {
 				pr_err("be stopped, restime(%d)", restTime);
 				ret =  -EFAULT;
 				break;
@@ -5947,7 +5972,7 @@ static signed int ISP_P2_BufQue_CTRL_FUNC(struct ISP_P2_BUFQUE_STRUCT param)
 				param.callerID, idx);
 			ret =  -EFAULT;
 			return ret;
-		} else if (restTime == -512) {
+		} else if (restTime == -SIG_ERESTARTSYS) {
 			pr_err("be stopped, restime(%d)", restTime);
 			ret =  -EFAULT;
 			return ret;
@@ -6003,7 +6028,7 @@ static signed int ISP_P2_BufQue_CTRL_FUNC(struct ISP_P2_BUFQUE_STRUCT param)
 					param.processID, param.callerID);
 				ret =  -EFAULT;
 				break;
-			} else if (restTime == -512) {
+			} else if (restTime == -SIG_ERESTARTSYS) {
 				pr_err("be stopped, restime(%d)", restTime);
 				ret =  -EFAULT;
 				break;
@@ -6105,19 +6130,17 @@ static signed int ISP_REGISTER_IRQ_USERKEY(char *userName)
 static signed int ISP_MARK_IRQ(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 {
 	unsigned long flags;
-	unsigned int idx = my_get_pow_idx(irqinfo->EventInfo.Status);
+	int idx = my_get_pow_idx(irqinfo->EventInfo.Status);
 
 	unsigned long long  sec = 0;
 	unsigned long       usec = 0;
 
-	if (irqinfo->Type >= ISP_IRQ_TYPE_AMOUNT ||
-	    irqinfo->Type < 0) {
+	if (irqinfo->Type >= ISP_IRQ_TYPE_AMOUNT) {
 		pr_err("MARK_IRQ: type error(%d)", irqinfo->Type);
 		return -EFAULT;
 	}
 
-	if (irqinfo->EventInfo.St_type >= ISP_IRQ_ST_AMOUNT ||
-	    irqinfo->EventInfo.St_type < 0) {
+	if (irqinfo->EventInfo.St_type >= ISP_IRQ_ST_AMOUNT) {
 		pr_err("MARK_IRQ: st_type error(%d)",
 			irqinfo->EventInfo.St_type);
 		return -EFAULT;
@@ -6127,6 +6150,11 @@ static signed int ISP_MARK_IRQ(struct ISP_WAIT_IRQ_STRUCT *irqinfo)
 	    irqinfo->EventInfo.UserKey < 0) {
 		pr_err("MARK_IRQ: userkey error(%d)",
 			irqinfo->EventInfo.UserKey);
+		return -EFAULT;
+	}
+
+	if ((idx < 0) || (idx >= 32)) {
+		pr_info("[Error] %s : Invalid idx = %d",  __func__, idx);
 		return -EFAULT;
 	}
 
@@ -6364,7 +6392,7 @@ static signed int ISP_WaitIrq(struct ISP_WAIT_IRQ_STRUCT *WaitIrq)
 	signed int Ret = 0, Timeout = WaitIrq->EventInfo.Timeout;
 	unsigned long flags;
 	unsigned int irqStatus;
-	unsigned int idx;
+	int idx;
 	bool freeze_passbysigcnt = false;
 
 	if ((WaitIrq->Type >= ISP_IRQ_TYPE_AMOUNT) ||
@@ -6585,9 +6613,7 @@ static signed int ISP_WaitIrq(struct ISP_WAIT_IRQ_STRUCT *WaitIrq)
 	}
 
 	/* check if user is interrupted by system signal */
-	if ((Timeout != 0) && (!ISP_GetIRQState(WaitIrq->Type,
-	    WaitIrq->EventInfo.St_type, WaitIrq->EventInfo.UserKey,
-	    WaitIrq->EventInfo.Status))) {
+	if (Timeout == -SIG_ERESTARTSYS) {
 		pr_info("interrupted by system signal,return value(%d),irq Type/User/Sts(0x%x/%d/0x%x)\n",
 			Timeout, WaitIrq->Type, WaitIrq->EventInfo.UserKey,
 			WaitIrq->EventInfo.Status);
@@ -6671,6 +6697,11 @@ EXIT:
 				      [WaitIrq->EventInfo.St_type]
 				      [WaitIrq->EventInfo.UserKey]) {
 		idx = my_get_pow_idx(WaitIrq->EventInfo.Status);
+		if ((idx < 0) || (idx >= 32)) {
+			pr_info("[Error] : Invalid idx = %d", idx);
+			Ret = -EFAULT;
+			return Ret;
+		}
 		IspInfo.IrqInfo.MarkedFlag[WaitIrq->Type]
 					  [WaitIrq->EventInfo.St_type]
 					  [WaitIrq->EventInfo.UserKey] &=

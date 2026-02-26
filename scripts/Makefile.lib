@@ -267,7 +267,7 @@ DTC_FLAGS += -Wnode_name_chars_strict \
 endif
 
 DTC_FLAGS += $(DTC_FLAGS_$(basetarget))
-# Begin added by bitao.xiong for task-9878355 on 2020-09-05
+# Begin added by bitao.xiong for task-11412249 on 2021-08-09
 dtc_cpp_flags += -include include/generated/autoconf.h
 
 ifeq ($(strip $(TARGET_BUILD_MMITEST)), true)
@@ -277,19 +277,36 @@ endif
 ifeq ($(strip $(TARGET_BUILD_CERTIFICATION)), true)
 dtc_cpp_flags += -DTARGET_BUILD_CERTIFICATION
 endif
+# End added by bitao.xiong for task-11412249 on 2021-08-09
 
-ifeq ($(strip $(TARGET_BUILD_GCF)), true)
-dtc_cpp_flags += -DTARGET_BUILD_GCF
+ifeq ($(strip $(TCL_THERMAL_DEBUG)), true)
+dtc_cpp_flags += -DTCL_THERMAL_DEBUG
 endif
 
-ifeq ($(strip $(TARGET_BUILD_HW)), true)
-dtc_cpp_flags += -DDISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY
+# Begin added by qiaozhen.li for task-11468129 20210901
+# add for GCF
+ifeq ($(strip $(TARGET_BUILD_GCF)), true)
+dtc_cpp_flags += -DTARGET_BUILD_GCF
 endif
 
 ifeq ($(strip $(TARGET_BUILD_ENDURANCE)), true)
 dtc_cpp_flags += -DTARGET_BUILD_ENDURANCE
 endif
-# End added by bitao.xiong for task-9878355 on 2020-09-05
+# End added by qiaozhen.li for task-11468129 20210901
+
+# Begin added by bitao.xiong for task-11672350 2021-11-15
+ifeq ($(strip $(TARGET_BUILD_IEEE1725)),true)
+dtc_cpp_flags += -DTARGET_BUILD_IEEE1725
+endif
+# End added by bitao.xiong for task-11672350 2021-11-15
+
+#Add-start by baiwei.peng for ENCOREVZW-8180 on 2022/11/17
+ifeq ($(strip $(TCT_TARGET_OP)),VZW)
+ifeq ($(strip $(TARGET_BUILD_CERTIFICATION)), true)
+dtc_cpp_flags += -DTARGET_BUILD_USBIF_COMPLIANCE
+endif
+endif
+#Add-start by baiwei.peng for ENCOREVZW-8180 on 2022/11/17
 
 # Generate an assembly file to wrap the output of the device tree compiler
 quiet_cmd_dt_S_dtb= DTB     $@
@@ -362,7 +379,8 @@ cmd_lzo = (cat $(filter-out FORCE,$^) | \
 
 quiet_cmd_lz4 = LZ4     $@
 cmd_lz4 = (cat $(filter-out FORCE,$^) | \
-	lz4c -l -c1 stdin stdout && $(call size_append, $(filter-out FORCE,$^))) > $@ || \
+	lz4 -l -12 --favor-decSpeed stdin stdout && \
+	$(call size_append, $(filter-out FORCE,$^))) > $@ || \
 	(rm -f $@ ; false)
 
 # U-Boot mkimage

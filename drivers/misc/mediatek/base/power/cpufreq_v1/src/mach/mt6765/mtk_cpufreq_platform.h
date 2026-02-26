@@ -26,9 +26,9 @@
 #define NORMAL_DIFF_VRSAM_VPROC		10000
 #define MAX_DIFF_VSRAM_VPROC		35000
 #define MIN_VSRAM_VOLT			85000
-#define MAX_VSRAM_VOLT			112000
+#define MAX_VSRAM_VOLT			120000
 #define MIN_VPROC_VOLT			60000
-#define MAX_VPROC_VOLT			112000
+#define MAX_VPROC_VOLT			120000
 
 #define PMIC_CMD_DELAY_TIME	5
 #define MIN_PMIC_SETTLE_TIME	5
@@ -38,7 +38,7 @@
 
 #define DVFSP_DT_NODE		"mediatek,mt6765-dvfsp"
 
-#define CSRAM_BASE		0x00110800
+#define CSRAM_BASE		0x00110C00
 #define CSRAM_SIZE		0x1400		/* 5K bytes */
 
 #define DVFS_LOG_NUM		150

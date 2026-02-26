@@ -8,7 +8,6 @@
 
 #include "lens_info.h"
 
-
 #define AF_DRVNAME "DW9800WAF_DRV"
 #define AF_I2C_SLAVE_ADDR        0x18
 
@@ -25,11 +24,14 @@ static struct i2c_client *g_pstAF_I2Cclient;
 static int *g_pAF_Opened;
 static spinlock_t *g_pAF_SpinLock;
 
-
 static unsigned long g_u4AF_INF;
 static unsigned long g_u4AF_MACRO = 1023;
 static unsigned long g_u4TargetPosition;
 static unsigned long g_u4CurrPosition;
+
+//Begin added by xiaoming-zhong [Task][11664625][change dw9800waf  parameter for cruze tsppsnp1269 s5kjn1] on 2021/11/05
+extern char CamNameB_module_name[256];
+//End added by xiaoming-zhong [Task][11664625][change dw9800waf  parameter for cruze tsppsnp1269 s5kjn1] on 2021/11/05
 
 static int i2c_read(u8 a_u2Addr, u8 *a_puBuff)
 {
@@ -37,7 +39,8 @@ static int i2c_read(u8 a_u2Addr, u8 *a_puBuff)
 	char puReadCmd[1] = { (char)(a_u2Addr) };
 
 	i4RetValue = i2c_master_send(g_pstAF_I2Cclient, puReadCmd, 1);
-	if (i4RetValue != 2) {
+	//if (i4RetValue != 2) {
+	if (i4RetValue < 0) {
 		LOG_INF(" I2C write failed!!\n");
 		return -1;
 	}
@@ -88,6 +91,48 @@ static int s4AF_WriteReg(u16 a_u2Data)
 	return 0;
 }
 
+// begin binchang.liang for passat 2021/11/15
+int W9800WAF_PowerDown(struct i2c_client *pstAF_I2Cclient, int *pAF_Opened)
+{
+	unsigned char uc_num;
+	int i4RetValue =0;
+	char pCmdArray[2][2] =
+	{
+		{0x02, 0x01},
+	//	{0x02, 0x00},
+		{0xFF, 0x01},//delay
+	};
+
+	LOG_INF("Start\n");
+	if(pstAF_I2Cclient ==NULL){
+		LOG_INF("pstAF_I2Cclient is null\n");
+		return -1;
+	}
+	g_pstAF_I2Cclient = pstAF_I2Cclient;
+	g_pAF_Opened = pAF_Opened;
+
+	if (*g_pAF_Opened > 0)
+		*g_pAF_Opened = 0;
+
+	for(uc_num =0; uc_num <2; uc_num++)
+	{
+		if(pCmdArray[uc_num][0] != 0xFF)
+		{
+			i4RetValue=i2c_master_send(g_pstAF_I2Cclient, pCmdArray[uc_num], 2);
+			if (i4RetValue <0) {
+				LOG_INF(" I2C write failed!!\n");
+			}
+		}else{
+			//mdelay(pCmdArray[uc_num][1]);
+		}
+	}
+
+	LOG_INF("End\n");
+
+	return 0;
+}
+// end binchang.liang for passat 2021/11/15
+
 static inline int getAFInfo(__user struct stAF_MotorInfo *pstMotorInfo)
 {
 	struct stAF_MotorInfo stMotorInfo;
@@ -114,11 +159,23 @@ static inline int getAFInfo(__user struct stAF_MotorInfo *pstMotorInfo)
 static int initdrv(void)
 {
 	int i4RetValue = 0;
+
+	/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+	/*for s5kjn1 motify {0x07,0x60} to {0x07, 0x01}*/
 	char puSendCmdArray[7][2] = {
 	{0x02, 0x01}, {0x02, 0x00}, {0xFE, 0xFE},
-	{0x02, 0x02}, {0x06, 0x40}, {0x07, 0x60}, {0xFE, 0xFE},
+	{0x02, 0x02}, {0x06, 0x40}, {0x07, 0x01}, {0xFE, 0xFE},
 	};
+	/*Begin ersen.shang for [Task][ 11425156][cruze/cruze pro camera bring up] 202108*/
+
 	unsigned char cmd_number;
+
+        //Begin added by xiaoming-zhong [Task][11664625][change dw9800waf  parameter for cruze tsppsnp1269 s5kjn1] on 2021/11/05
+        if (strcmp(CamNameB_module_name, "S5KJN1:TSP:50M:ASA5000001C1") == 0 )
+        {
+            puSendCmdArray[5][1]=0x7D;
+        }
+        //End added by xiaoming-zhong [Task][11664625][change dw9800waf  parameter for cruze tsppsnp1269 s5kjn1] on 2021/11/05
 
 	LOG_INF("InitDrv[1] %p, %p\n", &(puSendCmdArray[1][0]),
 		puSendCmdArray[1]);
@@ -148,30 +205,6 @@ static inline int moveAF(unsigned long a_u4Position)
 	if ((a_u4Position > g_u4AF_MACRO) || (a_u4Position < g_u4AF_INF)) {
 		LOG_INF("out of range\n");
 		return -EINVAL;
-	}
-
-	if (*g_pAF_Opened == 1) {
-		unsigned short InitPos;
-
-		initdrv();
-		ret = s4DW9800WAF_ReadReg(&InitPos);
-
-		if (ret == 0) {
-			LOG_INF("Init Pos %6d\n", InitPos);
-
-			spin_lock(g_pAF_SpinLock);
-			g_u4CurrPosition = (unsigned long)InitPos;
-			spin_unlock(g_pAF_SpinLock);
-
-		} else {
-			spin_lock(g_pAF_SpinLock);
-			g_u4CurrPosition = 0;
-			spin_unlock(g_pAF_SpinLock);
-		}
-
-		spin_lock(g_pAF_SpinLock);
-		*g_pAF_Opened = 2;
-		spin_unlock(g_pAF_SpinLock);
 	}
 
 	if (g_u4CurrPosition == a_u4Position)
@@ -250,8 +283,16 @@ long DW9800WAF_Ioctl(struct file *a_pstFile, unsigned int a_u4Command,
 /* Q1 : Try release multiple times. */
 int DW9800WAF_Release(struct inode *a_pstInode, struct file *a_pstFile)
 {
-	LOG_INF("Start\n");
+	unsigned char uc_num;
+	int i4RetValue =0;
 
+	char pCmdArray[2][2] =
+	{
+		{0x02, 0x01},
+	//	{0x02, 0x00},
+		{0xFF, 0x01},//delay
+	};
+	LOG_INF("Start\n");
 	if (*g_pAF_Opened == 2)
 		LOG_INF("Wait\n");
 
@@ -263,17 +304,55 @@ int DW9800WAF_Release(struct inode *a_pstInode, struct file *a_pstFile)
 		spin_unlock(g_pAF_SpinLock);
 	}
 
-	LOG_INF("End\n");
+	for(uc_num =0; uc_num <2; uc_num++)
+	{
+		if(pCmdArray[uc_num][0] != 0xFF)
+		{
+			i4RetValue=i2c_master_send(g_pstAF_I2Cclient, pCmdArray[uc_num], 2);
+			if (i4RetValue <0) {
+				LOG_INF(" I2C write failed!!\n");
+			}
+		}else{
+			//mdelay(pCmdArray[uc_num][1]);
+		}
+	}
 
+    LOG_INF("close\n");
+	LOG_INF("End\n");
 	return 0;
 }
 
 int DW9800WAF_SetI2Cclient(struct i2c_client *pstAF_I2Cclient,
 	spinlock_t *pAF_SpinLock, int *pAF_Opened)
 {
+	int ret = 0;
+	unsigned short InitPos = 0;
+
 	g_pstAF_I2Cclient = pstAF_I2Cclient;
 	g_pAF_SpinLock = pAF_SpinLock;
 	g_pAF_Opened = pAF_Opened;
+
+	if (*g_pAF_Opened == 1) {
+		initdrv();
+		ret = s4DW9800WAF_ReadReg(&InitPos);
+
+		if (ret == 0) {
+			LOG_INF("Init Pos %6d\n", InitPos);
+
+			spin_lock(g_pAF_SpinLock);
+			g_u4CurrPosition = (unsigned long)InitPos;
+			spin_unlock(g_pAF_SpinLock);
+
+		} else {
+			spin_lock(g_pAF_SpinLock);
+			g_u4CurrPosition = 0;
+			spin_unlock(g_pAF_SpinLock);
+		}
+
+		spin_lock(g_pAF_SpinLock);
+		*g_pAF_Opened = 2;
+		spin_unlock(g_pAF_SpinLock);
+	}
 
 	return 1;
 }

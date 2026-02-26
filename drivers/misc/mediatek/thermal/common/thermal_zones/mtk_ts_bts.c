@@ -80,6 +80,12 @@ static int polling_factor2 = 10000;
 
 int bts_cur_temp = 1;
 
+/* Begin added by bitao.xiong for manually modifying the ap temperature */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static int fixed_ap_tmp = -1; //0xffff
+module_param(fixed_ap_tmp, int, 0644);
+#endif
+/* End added by bitao.xiong for manually modifying the ap temperature */
 
 #define MTKTS_BTS_TEMP_CRIT 60000	/* 60.000 degree Celsius */
 
@@ -440,13 +446,15 @@ static struct BTS_TEMPERATURE BTS_Temperature_Table7[] = {
 
 
 /* convert register to temperature  */
-static __s16 mtkts_bts_thermistor_conver_temp(__s32 Res)
+static __s32 mtkts_bts_thermistor_conver_temp(__s32 Res)
 {
 	int i = 0;
 	int asize = 0;
 	__s32 RES1 = 0, RES2 = 0;
 	__s32 TAP_Value = -200, TMP1 = 0, TMP2 = 0;
-
+#ifdef APPLY_PRECISE_BTS_TEMP
+	TAP_Value = TAP_Value * 1000;
+#endif
 	asize = (ntc_tbl_size / sizeof(struct BTS_TEMPERATURE));
 
 	/* mtkts_bts_dprintk("mtkts_bts_thermistor_conver_temp() :
@@ -454,8 +462,14 @@ static __s16 mtkts_bts_thermistor_conver_temp(__s32 Res)
 	 */
 	if (Res >= BTS_Temperature_Table[0].TemperatureR) {
 		TAP_Value = -40;	/* min */
+#ifdef APPLY_PRECISE_BTS_TEMP
+		TAP_Value = TAP_Value * 1000;
+#endif
 	} else if (Res <= BTS_Temperature_Table[asize - 1].TemperatureR) {
 		TAP_Value = 125;	/* max */
+#ifdef APPLY_PRECISE_BTS_TEMP
+		TAP_Value = TAP_Value * 1000;
+#endif
 	} else {
 		RES1 = BTS_Temperature_Table[0].TemperatureR;
 		TMP1 = BTS_Temperature_Table[0].BTS_Temp;
@@ -478,9 +492,13 @@ static __s16 mtkts_bts_thermistor_conver_temp(__s32 Res)
 			 * __LINE__,i,RES1,TMP1);
 			 */
 		}
-
+#ifdef APPLY_PRECISE_BTS_TEMP
+		TAP_Value = mult_frac((((Res - RES2) * TMP1) +
+			((RES1 - Res) * TMP2)), 1000, (RES1 - RES2));
+#else
 		TAP_Value = (((Res - RES2) * TMP1) + ((RES1 - Res) * TMP2))
 								/ (RES1 - RES2);
+#endif
 	}
 
 
@@ -489,7 +507,7 @@ static __s16 mtkts_bts_thermistor_conver_temp(__s32 Res)
 
 /* convert ADC_AP_temp_volt to register */
 /*Volt to Temp formula same with 6589*/
-static __s16 mtk_ts_bts_volt_to_temp(__u32 dwVolt)
+static __s32 mtk_ts_bts_volt_to_temp(__u32 dwVolt)
 {
 	__s32 TRes;
 	__u64 dwVCriAP = 0;
@@ -507,7 +525,16 @@ static __s16 mtk_ts_bts_volt_to_temp(__u32 dwVolt)
 	dwVCriAP2 = (g_TAP_over_critical_low + g_RAP_pull_up_R);
 	do_div(dwVCriAP, dwVCriAP2);
 
-
+#ifdef APPLY_PRECISE_BTS_TEMP
+	if ((dwVolt / 100) > ((__u32)dwVCriAP)) {
+		TRes = g_TAP_over_critical_low;
+	} else {
+		/* TRes = (39000*dwVolt) / (1800-dwVolt); */
+		/* TRes = (RAP_PULL_UP_R*dwVolt) / (RAP_PULL_UP_VOLT-dwVolt); */
+		TRes = ((long long)g_RAP_pull_up_R * dwVolt) /
+					(g_RAP_pull_up_voltage * 100 - dwVolt);
+	}
+#else
 	if (dwVolt > ((__u32)dwVCriAP)) {
 		TRes = g_TAP_over_critical_low;
 	} else {
@@ -516,6 +543,7 @@ static __s16 mtk_ts_bts_volt_to_temp(__u32 dwVolt)
 		TRes = (g_RAP_pull_up_R * dwVolt) /
 					(g_RAP_pull_up_voltage - dwVolt);
 	}
+#endif
 	/* ------------------------------------------------------------------ */
 	g_AP_TemperatureR = TRes;
 
@@ -545,9 +573,11 @@ static int get_hw_bts_temp(void)
 		return ret;
 	}
 
-	/* NOT need to do the conversion "val * 1500 / 4096" */
-	/* iio_read_channel_processed can get mV immediately */
+#ifdef APPLY_PRECISE_BTS_TEMP
+	ret = val * 100;
+#else
 	ret = val;
+#endif
 
 #else
 #if defined(APPLY_AUXADC_CALI_DATA)
@@ -608,7 +638,12 @@ static int get_hw_bts_temp(void)
 	/* #define AUXADC_PRECISE      4096 // 12 bits */
 #if defined(APPLY_AUXADC_CALI_DATA)
 #else
+
+#ifdef APPLY_PRECISE_BTS_TEMP
+	ret = (val * 9375) >>  8;
+#else
 	ret = ret * 1500 / 4096;
+#endif
 #endif
 #endif /*CONFIG_MEDIATEK_MT6577_AUXADC*/
 
@@ -631,8 +666,9 @@ int mtkts_bts_get_hw_temp(void)
 	/* get HW AP temp (TSAP) */
 	/* cat /sys/class/power_supply/AP/AP_temp */
 	t_ret = get_hw_bts_temp();
+#ifndef APPLY_PRECISE_BTS_TEMP
 	t_ret = t_ret * 1000;
-
+#endif
 	mutex_unlock(&BTS_lock);
 
 
@@ -643,24 +679,70 @@ int mtkts_bts_get_hw_temp(void)
 	if (t_ret2 < 0)
 		pr_notice("[Thermal/TZ/BTS]wakeup_ta_algo out of memory\n");
 
+#ifndef TCL_THERMAL_DEBUG
+#if IS_ENABLED(TARGET_BUILD_CERTIFICATION) || IS_ENABLED(TARGET_BUILD_MMITEST) \
+	|| IS_ENABLED(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+	pr_info("fixed T_AP=25°C, actual T_AP=%d\n", t_ret);
+	t_ret = 25000;
+#endif
+#endif
+
+/* Begin added by bitao.xiong for manually modifying the ap temperature */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (fixed_ap_tmp > 0) {
+		t_ret = fixed_ap_tmp * 1000;
+	}
+#endif
+/* End added by bitao.xiong for manually modifying the ap temperature */
+
 	bts_cur_temp = t_ret;
-
-	if (t_ret > 40000)	/* abnormal high temp */
-		mtkts_bts_printk("T_AP=%d\n", t_ret);
-
-	mtkts_bts_dprintk("[%s] T_AP, %d\n", __func__, t_ret);
+//Begin modified by YuBin for thermal log
+//	if (t_ret > 40000)	/* abnormal high temp */
+//		mtkts_bts_printk("T_AP=%d\n", t_ret);
+	pr_info("[tcl_thermal_zone-bts] %s T_AP=%d fixed_ap_tmp=%d\n", __func__, t_ret, fixed_ap_tmp);
+//End modified by YuBin for thermal log
 	return t_ret;
 }
 
+/* [BSP]Begin modified by bitao.xiong for ENCORETF-42 on 2022/10/21 */
+#if  IS_ENABLED(CONFIG_TCT_CHARGER)
+static int mtkts_bts_notify_user_space(struct thermal_zone_device *tz, int trip)
+{
+    char *thermal_prop[5];
+    int i;
+
+    thermal_prop[0] = kasprintf(GFP_KERNEL, "NAME=%s", "SKIN");
+    thermal_prop[1] = kasprintf(GFP_KERNEL, "TEMP=%d", tz->temperature);
+    thermal_prop[2] = kasprintf(GFP_KERNEL, "TRIP=%d", trip);
+    thermal_prop[3] = kasprintf(GFP_KERNEL, "EVENT=%d", tz->notify_event);
+    thermal_prop[3] = NULL;
+    kobject_uevent_env(&tz->device.kobj, KOBJ_CHANGE, thermal_prop);
+    for (i = 0; i < 4; ++i)
+        kfree(thermal_prop[i]);
+
+    return 0;
+}
+#endif
+/* [BSP]End modified by bitao.xiong for ENCORETF-42 on 2022/10/21 */
+
 static int mtkts_bts_get_temp(struct thermal_zone_device *thermal, int *t)
 {
+/* [BSP]Begin added by bitao.xiong for ENCORETF-42 on 2022/10/21 */
+#if  IS_ENABLED(CONFIG_TCT_CHARGER)
+    static int pre_t = -127000;//mtkts_bts_get_hw_temp();
+#endif
+/* [BSP]End added by bitao.xiong for ENCORETF-42 on 2022/10/21 */
 	*t = mtkts_bts_get_hw_temp();
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 
 	/* if ((int) *t > 52000) */
 	/* mtkts_bts_dprintk("T=%d\n", (int) *t); */
+
+#ifdef CONFIG_LVTS_DYNAMIC_ENABLE_REBOOT
+	if (*t > DYNAMIC_REBOOT_TRIP_TEMP)
+		lvts_enable_all_hw_protect();
+	else if (*t < DYNAMIC_REBOOT_EXIT_TEMP)
+		lvts_disable_all_hw_protect();
+#endif
 
 	if ((int)*t >= polling_trip_temp1)
 		thermal->polling_delay = interval * 1000;
@@ -668,6 +750,14 @@ static int mtkts_bts_get_temp(struct thermal_zone_device *thermal, int *t)
 		thermal->polling_delay = interval * polling_factor2;
 	else
 		thermal->polling_delay = interval * polling_factor1;
+/* [BSP]Begin added by bitao.xiong for ENCORETF-42 on 2022/10/21 */
+#if  IS_ENABLED(CONFIG_TCT_CHARGER)
+    if (abs(*t - pre_t) >= 1000) {
+        mtkts_bts_notify_user_space(thermal, *t);
+        pre_t = *t;
+    }
+#endif
+/* [BSP]End added by bitao.xiong for ENCORETF-42 on 2022/10/21 */
 
 	return 0;
 }
@@ -1066,7 +1156,6 @@ static int mtkts_bts_param_read(struct seq_file *m, void *v)
 	seq_printf(m, "%d\n", g_TAP_over_critical_low);
 	seq_printf(m, "%d\n", g_RAP_ntc_table);
 	seq_printf(m, "%d\n", g_RAP_ADC_channel);
-
 	return 0;
 }
 

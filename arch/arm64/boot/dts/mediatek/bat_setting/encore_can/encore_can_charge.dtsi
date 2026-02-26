@@ -1,0 +1,186 @@
+&lk_charger {
+	fast_charge_voltage = <3200000>;
+	max_charger_voltage = <10500000>;
+
+	/* charging current */
+	usb_charger_current = <500000>;
+	ac_charger_current = <1000000>;
+	ac_charger_input_current = <1000000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <500000>;
+	ta_ac_charger_current = <500000>;
+	pd_charger_current = <500000>;
+
+	/* battery temperature protection */
+	temp_t4_threshold = <54>;
+	temp_t3_threshold = <45>;
+	temp_t1_threshold = <6>;
+	temp_t0_threshold = <1>;
+};
+
+&i2c6 {
+    #address-cells = <1>;
+    #size-cells = <0>;
+    clock-frequency = <400000>; 
+	sgm41513:sgm41513@1A {
+		compatible = "mediatek,sgm41513";
+		reg = <0x1A>;
+		status = "okay";
+		charger_name = "secondary_chg";
+		alias_name = "sgm41513";
+		gpio_sgm41513_en = <&pio 68 0x0>;
+		gpio_sgm41513_intr = <&pio 11 0x0>;
+		io-channels = <&auxadc 6>;
+		io-channel-names = "board_id-channel";
+		gpio_sgm41513_en_v0 = <&pio 131 0x0>; /* Mockup HW */
+	};
+
+	bq25601:bq25601@6B {
+		compatible = "mediatek,bq25601";
+		reg = <0x6B>;
+		status = "okay";
+		charger_name = "secondary_chg";
+		alias_name = "bq25601";
+		gpio_bq25601_en = <&pio 68 0x0>;
+		gpio_bq25601_intr = <&pio 11 0x0>;
+	};
+ };
+
+&charger {
+	charger = <&mt6360_chg>; 
+	power_path_support;
+	enable_dynamic_mivr;
+	gauge = <&bat_gm30>;
+	algorithm_name = "DualSwitchCharging";
+	enable_hv_charging;
+	enable_pe_plus;
+	enable_pe_2;
+
+	/* charging current */
+	usb_charger_current_suspend = <0>;
+	usb_charger_current_unconfigured = <70000>;
+	usb_charger_current_configured = <500000>;
+	usb_charger_current = <500000>;
+	ac_charger_current = <2050000>;
+	ac_charger_input_current = <2050000>;
+	weak_ac_charger_input_current = <1300000>;
+	ta_ac_charger_current = <3600000>;
+	pd_charger_current = <3600000>;
+	non_std_ac_charger_current = <500000>;
+	charging_host_charger_current = <1300000>;
+	chg1_ta_ac_charger_current = <1800000>;
+	chg2_ta_ac_charger_current = <1800000>;
+	battery_cv = <4400000>;
+	max_dmivr_charger_current = <2100000>;
+	dual_polling_ieoc = <750000>;
+	single_polling_ieoc = <200000>;
+
+	/* sw jeita */
+	enable_sw_jeita;
+	jeita_temp_above_t4_cv = <4100000>;
+	jeita_temp_t3_to_t4_cv = <4100000>;
+	jeita_temp_t2_to_t3_cv = <4400000>;
+	jeita_temp_t1_to_t2_cv = <4400000>;
+	jeita_temp_t0_to_t1_cv = <4400000>;
+	jeita_temp_below_t0_cv = <4400000>;
+
+	temp_t4_thres = <550>;
+	temp_t4_thres_minus_x_degree = <510>;
+	temp_t3_thres = <430>;
+	temp_t3_thres_minus_x_degree = <410>;
+	temp_t2_thres = <110>;
+	temp_t2_thres_plus_x_degree = <120>;
+	temp_t1_thres = <60>;
+	temp_t1_thres_plus_x_degree = <70>;
+
+	temp_t0_thres = <0>;
+	temp_t0_thres_plus_x_degree = <10>;
+	temp_neg_10_thres = <20>;
+
+	min_charge_temp = <1>;
+	min_charge_temp_plus_x_degree = <20>;
+	max_charge_temp = <550>;
+	max_charge_temp_minus_x_degree = <510>;
+
+	jeita_temp_above_t4_current = <0>;
+	jeita_temp_t3_to_t4_current = <2200000>;
+	jeita_temp_t2_to_t3_current = <3600000>;
+	jeita_temp_t1_to_t2_current = <800000>;
+	jeita_temp_t0_to_t1_current = <800000>;
+	jeita_temp_below_t0_current = <0>;
+
+	enable_step_chg;
+	step_chg_vbat = <4300000>;
+	step_chg_vbat_hysteresis = <100000>;
+	step_chg_current = <3000000>;
+
+	max_charger_voltage = <10500000>;
+	min_charger_voltage = <4400000>;
+	ovp_restore_voltage = <9500000>;
+
+	enable_sw_safety_timer;
+	max_charging_time = <86400>;
+
+	/* PE Plus and PE2 */
+	disable_ta_12_support;
+	ta_ac_9v_input_current = <2000000>;
+	ta_ac_7v_input_current = <2300000>;
+	ta_stop_battery_soc = <85>;
+
+	/*PD2.0*/
+	parallel_vbus;
+	pd_vbus_low_bound = <5000000>;
+	pd_vbus_upper_bound = <10000000>;
+	pd_stop_battery_soc = <85>;
+	ibus_err = <14>;
+	vsys_watt = <5000000>;
+
+	vbat_cable_imp_threshold = <0>;
+};
+
+&mt6360_typec {
+	pd-data {
+		pd,sink-pdo-size = <2>;
+		/*
+		* Fixed 5V, 500 mA <0x00019032>
+		* Fixed 5V, 1A <0x00019064>
+		* Fixed 5V, 2A <0x000190c8>
+		* Fixed 5V, 3A <0x0001912c>
+		* Fixed 9V, 500 mA <0x0002d032>
+		* Fixed 9V, 1A <0x0002d064>
+		* Fixed 9V, 2A <0x0002d0c8>
+		* Fixed 9V, 3A <0x0002d12c>
+		* Variable 5-9V, 1A <0x8642d064>
+		* Variable 5-9V, 2A <0x8642d0c8>
+		* Variable 5-9V, 3A <0x8642d12c>
+		* PPS 3V~5.9V, 3A <0xC0761E3C>
+		*/
+		/*(5V, 2A), (9V, 2A)*/
+ 		pd,sink-pdo-data = <0x000190c8 0x0002d0c8>;
+		pd,source-pdo-size = <1>;
+		pd,source-pdo-data = <0x00019064>;
+	};
+};
+
+/* Modify-start by baiwei.peng for usb eye diagram on 2022/09/23 */
+&u2port0 {
+	mediatek,eye-vrt = <7>;
+	mediatek,eye-term = <7>;
+	mediatek,eye-rev6 = <1>;
+	mediatek,eye-disc = <15>;
+	mediatek,host-eye-vrt = <6>; /* 0~7 */
+	mediatek,host-eye-term = <6>; /* 0~7 */
+	mediatek,host-eye-rev6 = <3>; /* 0~3 */
+	mediatek,host-eye-disc = <15>; /* 0~15 */
+};
+/* Modify-end by baiwei.peng for usb eye diagram on 2022/09/23 */
+
+/* [BSP]Begin added by bitao.xiong for ENCOREOM-2987 on 2023/03/22 */
+&mt6360_chg {
+	ieoc = <200000>; /* uA */
+	mivr = <4400000>;/* uV */
+	cv = <4400000>;	/* uA */
+	ircmp_resistor = <0>;
+	ircmp_vclamp = <0>;  
+};
+/* [BSP]End added by bitao.xiong for ENCOREOM-2987 on 2023/03/22 */

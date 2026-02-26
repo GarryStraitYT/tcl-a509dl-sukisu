@@ -34,7 +34,9 @@ EXPORT_SYMBOL(mtk_thermal_get_gpu_loading_fp);
 bool __attribute__ ((weak))
 mtk_get_gpu_loading(unsigned int *pLoading)
 {
+#ifdef CONFIG_MTK_GPU_SUPPORT
 	pr_notice("E_WF: %s doesn't exist\n", __func__);
+#endif
 	return 0;
 }
 
@@ -116,7 +118,7 @@ do { \
 } while (0)
 
 
-#define TRIMz_ex(tz, x)   ((tz = (unsigned long long)(x)) < 0 ? 0 : tz)
+#define TRIMz_ex(tz, x)   (tz = (unsigned long long)(x))
 
 /* ********************************************* */
 /* CPU Index */

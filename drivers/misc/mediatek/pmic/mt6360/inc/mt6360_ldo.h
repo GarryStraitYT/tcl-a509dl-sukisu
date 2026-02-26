@@ -8,7 +8,7 @@
 #include <linux/interrupt.h>
 #include <linux/of.h>
 #include "config.h"
-#include "rt-regmap.h"
+#include <mt-plat/rt-regmap.h>
 
 #define mt_dbg(dev, fmt, ...) \
 	do { \

@@ -41,6 +41,7 @@ struct accelhub_ipi_data {
 	bool android_enable;
 	struct completion calibration_done;
 	struct completion selftest_done;
+	int32_t accel_cali[3];
 };
 
 static struct acc_init_info accelhub_init_info;
@@ -257,7 +258,37 @@ static ssize_t cali_show(struct device_driver *ddri, char *buf)
 
 	return len;
 }
+static ssize_t cali_store(struct device_driver *ddri,
+			const char *buf, size_t count)
+{
+	struct accelhub_ipi_data *obj = obj_ipi_data;
+	int32_t accel_qiuyang[3] = {0,0,0}, res = 0;
 
+	if (obj == NULL) {
+		pr_err("obj is null\n");
+		return 0;
+	}
+	res = sscanf(buf,"%d,%d,%d\n",&accel_qiuyang[0],&accel_qiuyang[1],&accel_qiuyang[2]);
+	if (res == -1) {
+		pr_err("qiuyanginvalid content: '%s', length = %d\n",
+							buf, (int)count);
+		pr_err("qiuyanginvalid content:accel_qiuyang[0] '%d'\n",
+					accel_qiuyang[0]);					
+		return count;
+	}
+	obj->accel_cali[0] = accel_qiuyang[0];
+	obj->accel_cali[1] = accel_qiuyang[1];
+	obj->accel_cali[2] = accel_qiuyang[2];
+
+	res = sensor_set_cmd_to_hub(ID_ACCELEROMETER, CUST_ACTION_SET_CALI, accel_qiuyang);
+	pr_err("qiuyang sensor_set_cmd_to_hub(ID_ACCELEROMETER, CUST_ACTION_SET_CALI, %d);\n",accel_qiuyang[0]);
+	if (res < 0) {
+		pr_err("sensor_set_cmd_to_hub fail,(ID: %d),(action: %d)\n",
+			ID_ACCELEROMETER, CUST_ACTION_SET_CALI);
+		return 0;
+	}
+	return count;
+}
 static ssize_t trace_store(struct device_driver *ddri, const char *buf,
 				 size_t count)
 {
@@ -344,7 +375,7 @@ static ssize_t test_cali_store(struct device_driver *ddri, const char *buf,
 
 static DRIVER_ATTR_RO(chipinfo);
 static DRIVER_ATTR_RO(sensordata);
-static DRIVER_ATTR_RO(cali);
+static DRIVER_ATTR_RW(cali);
 static DRIVER_ATTR_WO(trace);
 static DRIVER_ATTR_RW(chip_orientation);
 static DRIVER_ATTR_WO(test_cali);
@@ -388,6 +419,31 @@ static int accelhub_delete_attr(struct device_driver *driver)
 	for (idx = 0; idx < num; idx++)
 		driver_remove_file(driver, accelhub_attr_list[idx]);
 
+	return err;
+}
+static ssize_t gsensor_show(struct device* dev,struct device_attribute *attr, char *buf)
+{
+	ssize_t res = 0;
+	//char name[16] ="0";
+	struct sensorInfo_t chipinfo;
+	res = sensor_set_cmd_to_hub(ID_ACCELEROMETER,
+		CUST_ACTION_GET_SENSOR_INFO, &chipinfo);
+
+	res = snprintf(buf, PAGE_SIZE, "%s\n", chipinfo.name);
+	return res;
+}
+extern struct device* get_deviceinfo_dev(void);
+static DEVICE_ATTR(gsensor, S_IWUSR | S_IRUGO, gsensor_show, NULL);
+static int create_chipinfo_node(void)
+{
+	int err=0;
+    struct device * chipinfo;
+	chipinfo=get_deviceinfo_dev();
+	err=device_create_file(chipinfo, &dev_attr_gsensor);
+	if (err){
+			pr_err("Failed to create device file(%s)!\n", dev_attr_gsensor.attr.name);
+			return 0;
+	}
 	return err;
 }
 
@@ -816,6 +872,10 @@ static int accelhub_probe(struct platform_device *pdev)
 		pr_err("register acc data path err\n");
 		goto exit_create_attr_failed;
 	}
+	if((err = create_chipinfo_node()))
+  	{
+  		pr_err("create chipinfo node %d\n", err);
+  	}
 	gsensor_init_flag = 0;
 	pr_debug("%s: OK\n", __func__);
 	return 0;

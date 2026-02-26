@@ -1,0 +1,4 @@
+config SR_HARDWARE_INFOMATION
+	bool "SR_HARDWARE_INFOMATION"
+	default n
+

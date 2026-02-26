@@ -1,0 +1,8 @@
+#ifndef _TCL_KVERSION_H
+#define _TCL_KVERSION_H
+
+#define KERNEL_COMMIT_ID 0f82778
+#define MSTAR2_COMMIT_ID c2f9369
+#define TCL_KVERSION "KL:0f82778 TCL_KERNEL:c2f9369"
+
+#endif

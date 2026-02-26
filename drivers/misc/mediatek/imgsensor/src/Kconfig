@@ -52,3 +52,19 @@ config IMGSENSOR_MAIN3
 	  This config is mainly mapping to userspace.
 	  Consider the numbers of sensors and usage on the phone.
 	  Compare the custom usage defined in user-custom folder.
+
+config TCT_CAM_DRIVER_SUPPORT
+	bool TCT_CAM_DRIVER_SUPPORT
+
+config TCT_CAMERA_PROJECT_BUFFALOTMO
+ 	tristate "build project name of Buffalo"
+ 	default n
+ 	help
+ 	  This option enables when build Buffalo.
+
+config TCT_CAMERA_PROJECT_BUFFALOTF
+	tristate "build project name of Buffalotf"
+	default n
+	help
+	  This option enables when build Buffalotf.
+

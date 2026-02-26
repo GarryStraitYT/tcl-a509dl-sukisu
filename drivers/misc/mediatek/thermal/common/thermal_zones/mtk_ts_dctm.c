@@ -159,8 +159,8 @@ static int tskinTransient(int tpcb)
 		rhs[i] = div_s64(CapMatrix[i] * tn_1[i], SCALE_UNIT_CAP);
 		tn[i] = 0;
 	}
-	rhs[TSKINNODE] += tamb_coef * tamb;
-	rhs[TPCBNODE]  += tpcb_coef * tpcb;
+	rhs[TSKINNODE] += (long long)tamb_coef * tamb;
+	rhs[TPCBNODE]  += (long long)tpcb_coef * tpcb;
 
 	for (i = 0; i < ACNZ; i++)
 		tn[AcMatrixNzRow[i]] += AcMatrixNz[i] *
@@ -218,13 +218,13 @@ static int mtkts_dctm_get_temp(struct thermal_zone_device *thermal, int *t)
 	temp = tskinTransient(tpcb);
 
 	mtkts_dctm_dprintk("tpcb:%d tskin:%d\n", tpcb, temp);
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-dctm] %s t_dctm=%d\n", __func__, *t);
+#endif
 
 	/* temp *= 1000; */
 
 	*t = temp;
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*t = 25000;
-	#endif
 
 	if (mtkts_dctm_ttj_on) {
 		if (mtkts_dctm_drc_reset) {

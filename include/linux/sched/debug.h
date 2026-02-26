@@ -34,6 +34,13 @@ extern void show_stack(struct task_struct *task, unsigned long *sp);
 
 extern void sched_show_task(struct task_struct *p);
 
+// #ifdef VENDOR_EDIT
+// yipeng@tcl.com 2022/06/01 add for tcl action monitor
+#ifdef CONFIG_TKPERF
+void stack_trace_save_tsk(struct task_struct *tsk, char *buf, int size);
+#endif
+// #endif /* VENDOR_EDIT */
+
 #ifdef CONFIG_SCHED_DEBUG
 struct seq_file;
 extern void proc_sched_show_task(struct task_struct *p,

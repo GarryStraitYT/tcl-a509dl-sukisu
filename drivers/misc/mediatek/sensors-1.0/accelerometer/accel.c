@@ -317,6 +317,13 @@ static ssize_t accenablenodata_show(struct device *dev,
 	pr_debug(" not support now\n");
 	return len;
 }
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+#include <tcl/tkperf.h>
+extern int sensor_driver_lasterrcode;
+extern int sensor_driver_lasterrcode_id;
+extern int sensor_driver_lasterrcode_cmd_or_errcode;
+void heraeye_sensor_fail(int errtype, int sensorid, int cmd_or_errcode);
+#endif
 
 static ssize_t accactive_store(struct device *dev,
 				struct device_attribute *attr, const char *buf,
@@ -407,8 +414,12 @@ static ssize_t accbatch_store(struct device *dev,
 		err = cxt->acc_ctl.batch(0, cxt->delay_ns, cxt->latency_ns);
 	else
 		err = cxt->acc_ctl.batch(0, cxt->delay_ns, 0);
-	if (err)
+	if (err){
 		pr_err("acc set batch(ODR) err %d\n", err);
+#ifdef CONFIG_HELAEYE_BSP_SENSOR_ON
+		heraeye_sensor_fail(SENSOR_POWER_UP,handle,flag);
+#endif
+	}
 #else
 	err = acc_enable_and_batch();
 #endif
@@ -488,46 +499,6 @@ static ssize_t acccali_store(struct device *dev, struct device_attribute *attr,
 	vfree(cali_buf);
 	return count;
 }
-
-/*Add-Begin by zhikui.li@tcl.com,Add gsensor calibration interface*/
-static char acc_calibuf[50]={0};
-static ssize_t tclacccali_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", acc_calibuf);
-}
-
-static ssize_t tclacccali_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	memset(acc_calibuf, 0, sizeof(acc_calibuf));
-        if(count>50){
-	    pr_err("tcl_acc_store_cali set cali count>50\n");
-	    return 0;
-        }
-
-        memcpy(acc_calibuf, buf, count);
-	return count;
-}
-static char light_calibuf[50]={0};
-static ssize_t tcllightcali_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", light_calibuf);
-}
-
-static ssize_t tcllightcali_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	memset(light_calibuf, 0, sizeof(light_calibuf));
-    if(count>50){
-	    pr_err("tcl_light_store_cali set cali count>50\n");
-	    return 0;
-    }
-    memcpy(light_calibuf, buf, count);
-	return count;
-}
-/*Add-End by zhikui.li@tcl.com,Add gsensor calibration interface*/
 
 static int gsensor_remove(struct platform_device *pdev)
 {
@@ -693,11 +664,6 @@ DEVICE_ATTR_RW(accbatch);
 DEVICE_ATTR_RW(accflush);
 DEVICE_ATTR_RW(acccali);
 DEVICE_ATTR_RO(accdevnum);
-/*Add-Begin by zhikui.li@tcl.com,Add gsensor calibration interface*/
-DEVICE_ATTR_RW(tclacccali);
-DEVICE_ATTR_RW(tcllightcali);
-/*Add-End by zhikui.li@tcl.com,Add gsensor calibration interface*/
-
 
 static struct attribute *acc_attributes[] = {
 	&dev_attr_accenablenodata.attr,
@@ -706,9 +672,6 @@ static struct attribute *acc_attributes[] = {
 	&dev_attr_accflush.attr,
 	&dev_attr_acccali.attr,
 	&dev_attr_accdevnum.attr,
-	/*Add-Begin by zhikui.li@tcl.com,Add gsensor calibration interface*/
-	&dev_attr_tclacccali.attr,
-/*Add-End by zhikui.li@tcl.com,Add gsensor calibration interface*/
 	NULL
 };
 

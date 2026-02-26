@@ -22,6 +22,7 @@ struct barohub_ipi_data {
 	/* sensor info */
 	atomic_t trace;
 	atomic_t suspend;
+	atomic_t pressure;
 	struct work_struct init_done_work;
 	atomic_t scp_init_done;
 	bool factory_enable;
@@ -93,6 +94,48 @@ static ssize_t sensordata_show(struct device_driver *ddri, char *buf)
 	}
 	return snprintf(buf, PAGE_SIZE, "%s\n", strbuf);
 }
+
+static ssize_t cali_store(struct device_driver *ddri,
+			const char *buf, size_t count)
+{
+	struct barohub_ipi_data *obj = obj_ipi_data;
+	int pressure = 0, res = 0;
+
+	if (obj == NULL) {
+		pr_err("obj is null\n");
+		return 0;
+	}
+	res = kstrtoint(buf, 10, &pressure);
+	if (res != 0) {
+		pr_err("invalid content: '%s', length = %d\n",
+							buf, (int)count);
+		return count;
+	}
+	atomic_set(&obj->pressure, pressure);
+	res = sensor_set_cmd_to_hub(ID_PRESSURE, CUST_ACTION_SET_CALI, &pressure);
+	pr_err("sensor_set_cmd_to_hub(ID_PRESSURE, CUST_ACTION_SET_CALI, %d);\n",pressure);
+	if (res < 0) {
+		pr_err("sensor_set_cmd_to_hub fail,(ID: %d),(action: %d)\n",
+			ID_PRESSURE, CUST_ACTION_SET_CALI);
+		return 0;
+	}
+	return count;
+}
+
+static ssize_t cali_show(struct device_driver *ddri, char *buf)
+{
+	ssize_t res = 0;
+	struct barohub_ipi_data *obj = obj_ipi_data;
+
+	if (obj == NULL) {
+		pr_err("pointer is null\n");
+		return 0;
+	}
+
+	res = snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&obj->pressure));
+	return res;
+}
+
 static ssize_t trace_show(struct device_driver *ddri, char *buf)
 {
 	ssize_t res = 0;
@@ -134,10 +177,11 @@ static ssize_t trace_store(struct device_driver *ddri,
 }
 static DRIVER_ATTR_RO(sensordata);
 static DRIVER_ATTR_RW(trace);
-
+static DRIVER_ATTR_RW(cali);
 static struct driver_attribute *barohub_attr_list[] = {
 	&driver_attr_sensordata,	/* dump sensor data */
 	&driver_attr_trace,	/* trace log */
+	&driver_attr_cali,
 };
 
 static int barohub_create_attr(struct device_driver *driver)
@@ -170,6 +214,33 @@ static int barohub_delete_attr(struct device_driver *driver)
 	for (idx = 0; idx < num; idx++)
 		driver_remove_file(driver, barohub_attr_list[idx]);
 
+	return err;
+}
+
+
+static ssize_t barometer_show(struct device* dev,struct device_attribute *attr, char *buf)
+{
+	ssize_t res = 0;
+	//char name[16] ="0";
+	struct sensorInfo_t chipinfo;
+	res = sensor_set_cmd_to_hub(ID_PRESSURE,
+		CUST_ACTION_GET_SENSOR_INFO, &chipinfo);
+
+	res = snprintf(buf, PAGE_SIZE, "%s\n", chipinfo.name);
+	return res;
+}
+extern struct device* get_deviceinfo_dev(void);
+static DEVICE_ATTR(barometer, S_IWUSR | S_IRUGO,  barometer_show, NULL);
+static int create_chipinfo_node(void)
+{
+	int err=0;
+    struct device * chipinfo;
+	chipinfo=get_deviceinfo_dev();
+	err=device_create_file(chipinfo, &dev_attr_barometer);
+	if (err){
+			pr_err("Failed to create device file(%s)!\n", dev_attr_barometer.attr.name);
+			return 0;
+	}
 	return err;
 }
 
@@ -444,7 +515,10 @@ static int barohub_probe(struct platform_device *pdev)
 		pr_err("baro_register_data_path failed, err = %d\n", err);
 		goto exit_create_attr_failed;
 	}
-
+  	if((err = create_chipinfo_node()))
+  	{
+  		pr_err("create chipinfo node %d\n", err);
+  	}
 	barohub_init_flag = 0;
 	pr_debug("%s: OK\n", __func__);
 	return 0;

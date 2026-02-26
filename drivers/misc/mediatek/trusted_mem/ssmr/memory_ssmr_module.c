@@ -64,7 +64,7 @@ const char *const ssmr_state_text[NR_STATES] = {
 
 static struct SSMR_Feature _ssmr_feats[__MAX_NR_SSMR_FEATURES] = {
 	[SSMR_FEAT_SVP] = {
-		.dt_prop_name = "svp-size",
+		.dt_prop_name = "svp-region-based-size",
 		.feat_name = "svp",
 		.cmd_online = "svp=on",
 		.cmd_offline = "svp=off",
@@ -452,7 +452,7 @@ static int memory_region_offline(struct SSMR_Feature *feature, phys_addr_t *pa,
 	 */
 	of_reserved_mem_device_init_by_idx(ssmr_dev, ssmr_dev->of_node, 0);
 	feature->virt_addr = dma_alloc_attrs(ssmr_dev, alloc_size,
-					&feature->phy_addr, GFP_KERNEL, 0);
+					&feature->phy_addr, GFP_KERNEL, DMA_ATTR_FORCE_CONTIGUOUS);
 
 	if (feature->phy_addr) {
 		pr_info("%s: pa=%pad is allocated\n", __func__,
@@ -629,12 +629,18 @@ static ssize_t ssmr_show(struct kobject *kobj, struct kobj_attribute *attr,
 	return ret;
 }
 
+#ifdef CONFIG_MTK_ENG_BUILD
 static ssize_t ssmr_store(struct kobject *kobj, struct kobj_attribute *attr,
 				const char *cmd, size_t count)
 {
 	char buf[64];
 	int buf_size;
 	int feat = 0, ret;
+
+	if (count >= 64) {
+		pr_info("copy size too long.\n");
+		return -EINVAL;
+	}
 
 	ret = sscanf(cmd, "%s", buf);
 	if (ret) {
@@ -699,6 +705,7 @@ static int memory_ssmr_sysfs_init(void)
 	return 0;
 }
 #endif /* end of CONFIG_SYSFS */
+#endif
 
 int ssmr_probe(struct platform_device *pdev)
 {
@@ -726,8 +733,10 @@ int ssmr_probe(struct platform_device *pdev)
 	}
 
 	/* ssmr sys file init */
+#ifdef CONFIG_MTK_ENG_BUILD
 #if IS_ENABLED(CONFIG_SYSFS)
 	memory_ssmr_sysfs_init();
+#endif
 #endif
 
 	get_reserved_cma_memory(&pdev->dev);

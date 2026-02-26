@@ -256,5 +256,12 @@ config MTK_REBOOT_MODE
 	  register, then the bootloader can read it to take different
 	  action according to the mode.
 
+config EMMC_RESET_PIN
+	tristate "emmc reset pin =2"
+	depends on OF
+	depends on REGMAP
+	select REBOOT_MODE
+	help
+	  Say y here will enable emmc reset pin =2
 endif
 

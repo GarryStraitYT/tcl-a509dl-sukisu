@@ -25,6 +25,9 @@ int ccci_port_recv_skb(int md_id, int hif_id, struct sk_buff *skb,
 	unsigned int flag);
 
 int ccci_port_check_critical_user(int md_id);
+
+int ccci_port_critical_user_only_fsd(int md_id);
+
 int ccci_port_get_critical_user(int md_id, unsigned int user_id);
 
 int ccci_port_send_msg_to_md(int md_id, int ch, unsigned int msg,

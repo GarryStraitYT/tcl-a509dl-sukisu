@@ -73,6 +73,12 @@ static int chrlmt_bat_chr_curr_limit = -1; /**< -1 is unlimit, unit is mA. */
 static bool chrlmt_is_lcmoff; /**0 is lcm on, 1 is lcm off */
 static int chrlmt_lcmoff_policy_enable; /**0: No lcmoff abcct */
 
+/* [TCTCD][BSP]Begin added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static bool enable_bcct_lcmoff = false;
+#endif
+/* [TCTCD][BSP]End added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
+
 struct chrlmt_handle {
 	int chr_input_curr_limit;
 	int bat_chr_curr_limit;
@@ -177,6 +183,8 @@ static void chrlmt_set_limit_handler(struct work_struct *work)
 	if (ret != 0)
 		pr_notice("%s input curr fail\n", __func__);
 
+/* Begin mod by jin.wang for androidT on 2022.4.12 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	/* High Voltage (Vbus) control*/
 	/*Only master charger need to control Vbus*/
 	/*prop.intval = 0, vbus 5V*/
@@ -196,6 +204,8 @@ static void chrlmt_set_limit_handler(struct work_struct *work)
 			pr_notice("%s set vbus fail\n",
 			__func__);
 	}
+#endif
+/* End mod by jin.wang */
 
 	power_supply_changed(chg_psy);
 
@@ -319,9 +329,18 @@ struct thermal_cooling_device *cdev, unsigned long *state)
 static int mtk_cl_bcct_set_cur_state(
 struct thermal_cooling_device *cdev, unsigned long state)
 {
+/* [TCTCD][BSP]Begin modified by bitao.xiong for SNTTF-4894 on 2022/09/19 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	/*Only active while lcm not off */
 	if (chrlmt_is_lcmoff)
 		state = 0;
+#else
+	if (!enable_bcct_lcmoff) {
+		if (chrlmt_is_lcmoff)
+			state = 0;
+	}
+#endif
+/* [TCTCD][BSP]End modified by bitao.xiong for SNTTF-4894 on 2022/09/19 */
 
 	mtk_cooler_bcct_dprintk("%s %s %lu\n", __func__, cdev->type, state);
 	MTK_CL_BCCT_SET_CURR_STATE(state, *((unsigned long *)cdev->devdata));
@@ -348,9 +367,17 @@ static int mtk_cooler_bcct_register_ltf(void)
 	chrlmt_register(&cl_bcct_chrlmt_handle);
 
 #if (MAX_NUM_INSTANCE_MTK_COOLER_BCCT == 3)
+/* Begin modified by bitao.xiong for ENCORETF-42 on 2022-08-20 */
+#if !IS_ENABLED(CONFIG_TCT_CHARGER)
 	MTK_CL_BCCT_SET_LIMIT(1000, cl_bcct_state[0]);
 	MTK_CL_BCCT_SET_LIMIT(500, cl_bcct_state[1]);
 	MTK_CL_BCCT_SET_LIMIT(0, cl_bcct_state[2]);
+#else
+	MTK_CL_BCCT_SET_LIMIT(3000, cl_bcct_state[0]);
+	MTK_CL_BCCT_SET_LIMIT(3000, cl_bcct_state[1]);
+	MTK_CL_BCCT_SET_LIMIT(3000, cl_bcct_state[2]);
+#endif
+/* End modified by bitao.xiong for ENCORETF-42 on 2022-08-20 */
 #endif
 
 	for (i = MAX_NUM_INSTANCE_MTK_COOLER_BCCT; i-- > 0;) {
@@ -1056,6 +1083,15 @@ static void bcct_lcmoff_switch(int onoff)
 {
 	mtk_cooler_bcct_dprintk("%s: onoff = %d\n", __func__, onoff);
 
+/* [TCTCD][BSP]Begin added by bitao.xiong for SNTTF-4894 on 2022/10/13 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	if (enable_bcct_lcmoff) {
+		cl_bcct_cur_limit = 65535;
+		chrlmt_chr_input_curr_limit = -1;
+		chrlmt_bat_chr_curr_limit = -1;
+	}
+#endif
+/* [TCTCD][BSP]End added by bitao.xiong for SNTTF-4894 on 2022/10/13 */
 	/* onoff = 0: LCM OFF */
 	/* others: LCM ON */
 	if (onoff) {
@@ -1169,7 +1205,20 @@ int mtk_cooler_is_abcct_unlimit(void)
 }
 EXPORT_SYMBOL(mtk_cooler_is_abcct_unlimit);
 
+/* [TCTCD][BSP]Begin added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+static void tcl_bcct_parse_dt(void)
+{
+	struct device_node *np;
 
+	np = of_find_compatible_node(NULL, NULL, "mediatek,charger");
+	if (np) {
+		enable_bcct_lcmoff = of_property_read_bool(np, "enable_bcct_lcmoff");
+		pr_info("%s, enable_bcct_lcmoff=%d\n", __func__, enable_bcct_lcmoff);
+	}
+}
+#endif
+/* [TCTCD][BSP]End added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
 
 static int __init mtk_cooler_bcct_init(void)
 {
@@ -1184,6 +1233,12 @@ static int __init mtk_cooler_bcct_init(void)
 	/* cl_bcct_dev = NULL; */
 
 	mtk_cooler_bcct_dprintk("%s\n", __func__);
+
+/* [TCTCD][BSP]Begin added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+	tcl_bcct_parse_dt();
+#endif
+/* [TCTCD][BSP]End added by bitao.xiong for SNTTF-4894 on 2022/09/19 */
 
 	err = mtk_cooler_bcct_register_ltf();
 	if (err)

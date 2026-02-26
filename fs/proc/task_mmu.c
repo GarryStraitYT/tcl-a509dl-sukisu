@@ -26,6 +26,26 @@
 #include <asm/tlbflush.h>
 #include "internal.h"
 
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+#include <tcl/tcl_healthinfo.h>
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru start
+#ifdef CONFIG_TCL_ADDR_RECLAIM
+#include <linux/ctype.h>
+#endif
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+#include <linux/hyperhold_inf.h>
+#include <trace/events/zswapd_tcl.h>
+#endif
+
+// #endif /* VENDOR_EDIT */
+
 #define SEQ_PUT_DEC(str, val) \
 		seq_put_decimal_ull_width(m, str, (val) << (PAGE_SHIFT-10), 8)
 void task_mem(struct seq_file *m, struct mm_struct *mm)
@@ -97,6 +117,41 @@ unsigned long task_statm(struct mm_struct *mm,
 	*resident = *shared + get_mm_counter(mm, MM_ANONPAGES);
 	return mm->total_vm;
 }
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for zram2disk
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+static ssize_t swapin_write(struct file *file, const char __user *buf,
+			size_t count, loff_t *ppos)
+{
+	char buffer[200];
+	struct task_struct *task = NULL;
+
+	memset(buffer, 0, sizeof(buffer));
+	if (count > sizeof(buffer) - 1)
+		count = sizeof(buffer) - 1;
+
+	if (unlikely(copy_from_user(buffer, buf, count)))
+		return -EFAULT;
+
+	task = get_proc_task(file->f_path.dentry->d_inode);
+	if (unlikely(!task)) {
+		pr_err("%s get_proc_task failed !\r\n", __func__);
+		return -ESRCH;
+	}
+
+	if (unlikely(hyperhold_batch_out(NULL, 0, false)))
+		put_task_struct(task);
+
+	return count;
+}
+
+const struct file_operations proc_swapin_operations = {
+	.write          = swapin_write,
+	.llseek         = noop_llseek,
+};
+#endif
+// #endif /* VENEDOR_EDIT */
 
 #ifdef CONFIG_NUMA
 /*
@@ -1743,6 +1798,11 @@ static int deactivate_pte_range(pmd_t *pmd, unsigned long addr,
 		page = vm_normal_page(vma, addr, ptent);
 		if (!page)
 			continue;
+		// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+		#ifdef CONFIG_MEMCG_PROTECT_LRU
+		if (PageProtect(page))
+			continue;
+		#endif
 		/*
 		 * XXX: we don't handle compound page at this moment but
 		 * it should revisit for THP page before upstream.
@@ -1897,6 +1957,231 @@ const struct file_operations proc_reclaim_operations = {
 };
 #endif
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru start
+#ifdef CONFIG_TCL_ADDR_RECLAIM
+static int reclaim_pte_ranges(pmd_t *pmd, unsigned long addr,
+			unsigned long end, struct mm_walk *walk)
+{
+	struct vm_area_struct *vma = walk->private;
+	pte_t *pte, ptent;
+	spinlock_t *ptl;
+	struct page *page;
+	LIST_HEAD(page_list);
+	int isolated;
+
+	split_huge_pmd(vma, pmd, addr);
+	if (pmd_trans_unstable(pmd))
+		return 0;
+cont:
+	isolated = 0;
+	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
+
+	for (; addr != end; pte++, addr += PAGE_SIZE) {
+		ptent = *pte;
+		if (!pte_present(ptent))
+			continue;
+
+		page = vm_normal_page(vma, addr, ptent);
+		if (!page)
+			continue;
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+		if (PageProtect(page))
+			continue;
+#endif
+#if defined(CONFIG_TCL_FREEZE)
+		if (atomic_read(&current->thaw_flag) & 0x1) {
+			pte_unmap_unlock(pte - 1, ptl);
+			goto put_back;
+		}
+#endif
+		//if (page_mapcount(page) > 1)
+		//	continue;
+		if (isolate_lru_page(page))
+			continue;
+		list_add(&page->lru, &page_list);
+		isolated++;
+		if (isolated >= SWAP_CLUSTER_MAX)
+			break;
+	}
+
+	pte_unmap_unlock(pte - 1, ptl);
+	isolated = reclaim_pages_from_list(&page_list, vma);
+	//printk("%s reclaim %d addr 0x%lx\n", __func__, isolated, addr);
+	if (addr != end)
+		goto cont;
+	cond_resched();
+	return 0;
+
+#if defined(CONFIG_TCL_FREEZE)
+put_back:
+	while (!list_empty(&page_list)) {
+		page = lru_to_page(&page_list);
+		list_del(&page->lru);
+		putback_lru_page(page);
+	}
+
+	return 0;
+#endif
+}
+
+#define ADDR_BUFFER_SIZE 200
+static ssize_t addr_reclaim_write(struct file *file, const char __user *buf,
+		size_t count, loff_t *ppos)
+{
+	struct task_struct *task;
+	char buffer[ADDR_BUFFER_SIZE];
+	struct mm_struct *mm;
+	struct vm_area_struct *vma;
+	char *type_buf, *token;
+	unsigned long long len, len_in, tmp;
+	unsigned long start = 0;
+	unsigned long end = 0;
+	unsigned int reclaim_process = 0;
+	struct mm_walk reclaim_walk_ops = {
+		.pmd_entry = reclaim_pte_ranges,
+	};
+
+	TRACE_BEGIN("addr_reclaim_write");
+	memset(buffer, 0, sizeof(buffer));
+	if (count > sizeof(buffer) - 1)
+		count = sizeof(buffer) - 1;
+
+	if (copy_from_user(buffer, buf,
+		count > ADDR_BUFFER_SIZE? ADDR_BUFFER_SIZE:count))
+		return -EFAULT;
+
+	type_buf = strstrip(buffer);
+	if (!isdigit(*type_buf))
+		goto out_err;
+
+	token = strsep(&type_buf, " ");
+	if (!token)
+		goto out_err;
+	tmp = memparse(token, &token);
+	if (tmp & ~PAGE_MASK || tmp > ULONG_MAX)
+		goto out_err;
+	start = tmp;
+
+	token = strsep(&type_buf, " ");
+	if (!token)
+		goto out_err;
+	len_in = memparse(token, &token);
+	len = (len_in + ~PAGE_MASK) & PAGE_MASK;
+	if (len > ULONG_MAX)
+		goto out_err;
+	if (len_in && !len)
+		goto out_err;
+
+	token = strsep(&type_buf, " ");
+	if (!token)
+		goto out_err;
+	// 1: reclaim start 2: reclaiming 3: reclaim end
+	reclaim_process = memparse(token, &token);
+
+	end = start + len;
+	if (end < start)
+		goto out_err;
+
+	task = get_proc_task(file->f_path.dentry->d_inode);
+	if (!task)
+		return -ESRCH;
+
+#if defined(CONFIG_TCL_FREEZE)
+	if (reclaim_process == 1) // reclaim start
+		atomic_set(&task->thaw_flag, 2);
+	if (atomic_read(&task->thaw_flag) & 0x1) { // thawed between reclaim
+		printk("%s: thaw-signal break reclaiming\n", __func__);
+		count = -EBUSY;
+		goto out;
+	}
+	if (reclaim_process == 3) // reclaim end
+		atomic_set(&task->thaw_flag, 0);
+#endif
+
+	mm = get_task_mm(task);
+	if (!mm)
+		goto out;
+
+	down_read(&mm->mmap_sem);
+	reclaim_walk_ops.mm = mm;
+	vma = find_vma(mm, start);
+	while (vma) {
+		if (vma->vm_start > end)
+			break;
+		if (is_vm_hugetlb_page(vma))
+			continue;
+		reclaim_walk_ops.private = vma;
+		walk_page_range(max(vma->vm_start, start),
+				min(vma->vm_end, end), &reclaim_walk_ops);
+		vma = vma->vm_next;
+	}
+
+	flush_tlb_mm(mm);
+	up_read(&mm->mmap_sem);
+	mmput(mm);
+
+out:
+	TRACE_END("addr_reclaim_write");
+	put_task_struct(task);
+	return count;
+out_err:
+	return -EINVAL;
+}
+
+const struct file_operations proc_addr_reclaim_operations = {
+	.write          = addr_reclaim_write,
+	.llseek         = noop_llseek,
+};
+#endif
+// #endif /* VENDOR_EDIT */
+
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), begin
+#ifdef CONFIG_TCL_HEALTHINFO
+static ssize_t laginfo_read(struct file *filp, char __user *buff, size_t count, loff_t *off)
+{
+	char buf[1024] = {0};
+	int size = 0;
+	size = sprintf(buf, "alloc_wait_fg_total_ms: %lld\n"
+				"ion_wait_total_ms: %lld\n"
+				"dstate_vip_total_ms: %lld\n"
+				"sched_vip_total_ms: %lld\n"
+				"iowait_total_ms: %lld\n",
+				alloc_wait_fg_total_laginfo(),
+				ion_wait_total_laginfo(),
+				dstate_vip_total_laginfo(),
+				sched_vip_total_laginfo(),
+				iowait_total_laginfo());
+
+    return simple_read_from_buffer(buff, count, off, buf, size);
+}
+
+static loff_t laginfo_llseek(struct file *filp, loff_t offset, int whence)
+{
+	loff_t newpos = -1;
+	switch (whence) {
+	case SEEK_SET:
+		newpos = offset;
+		break;
+	default:
+		return -EINVAL;
+	}
+	if (newpos < 0) {
+		return -EINVAL;
+	}
+	filp->f_pos = newpos;
+
+	return newpos;
+}
+
+const struct file_operations proc_laginfo_operations = {
+	.read	= laginfo_read,
+	.llseek = laginfo_llseek,
+};
+#endif
+//[TCL][performance][common]Added/Modified by yipeng.jiang@tcl.com
+//2022.05.18, for healthinfo and resourcemonitor, SOCAOSP13-2781, (1/2), end
 #ifdef CONFIG_NUMA
 
 struct numa_maps {

@@ -9,6 +9,7 @@
 #include <dt-bindings/gce/mt6765-gce.h>
 #include <generated/autoconf.h>
 #include <dt-bindings/soc/mediatek,boot-mode.h>
+#include <dt-bindings/phy/phy.h>
 
 /dts-v1/;
 
@@ -25,18 +26,32 @@
 slub_debug=OFZPU page_owner=on \
 swiotlb=noforce androidboot.hardware=mt6765 \
 maxcpus=8 loop.max_part=7 \
-firmware_class.path=/vendor/firmware";
+firmware_class.path=/vendor/firmware nokaslr";
 		kaslr-seed = <0 0>;
 	};
 
+// begin modified by tct-hq/yzheng4 in 2022-12-23
+// camera AF need 2.8V voltage
+#if defined(CONFIG_TCT_PROJECT_LUNA84GVZW)
+    regulator_vibrator {
+        compatible = "regulator-vibrator";
+        min-volt = <2300000>;
+        max-volt = <3200000>;
+        min-limit = <15>;
+        max-limit = <15000>;
+        vib-supply = <&mt_pmic_vibr_ldo_reg>;
+    };
+#else
+// end modified by tct-hq/yzheng4 in 2022-12-23
 	regulator_vibrator {
 		compatible = "regulator-vibrator";
-		min-volt = <2300000>;
+		min-volt = <3000000>;
 		max-volt = <3200000>;
 		min-limit = <15>;
 		max-limit = <15000>;
 		vib-supply = <&mt_pmic_vibr_ldo_reg>;
 	};
+#endif
 
 	cluster0_opp: opp_table0 {
 		compatible = "operating-points-v2";
@@ -264,7 +279,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <2301000000>;
 			operating-points-v2 = <&cluster0_opp>;
-			dynamic-power-coefficient = <275>;
+			dynamic-power-coefficient = <90>;
 			capacity-dmips-mhz = <1024>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -277,7 +292,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <2301000000>;
 			operating-points-v2 = <&cluster0_opp>;
-			dynamic-power-coefficient = <275>;
+			dynamic-power-coefficient = <90>;
 			capacity-dmips-mhz = <1024>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -290,7 +305,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <2301000000>;
 			operating-points-v2 = <&cluster0_opp>;
-			dynamic-power-coefficient = <275>;
+			dynamic-power-coefficient = <90>;
 			capacity-dmips-mhz = <1024>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -303,7 +318,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <2301000000>;
 			operating-points-v2 = <&cluster0_opp>;
-			dynamic-power-coefficient = <275>;
+			dynamic-power-coefficient = <90>;
 			capacity-dmips-mhz = <1024>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -316,7 +331,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <1800000000>;
 			operating-points-v2 = <&cluster1_opp>;
-			dynamic-power-coefficient = <85>;
+			dynamic-power-coefficient = <71>;
 			capacity-dmips-mhz = <801>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -329,7 +344,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <1800000000>;
 			operating-points-v2 = <&cluster1_opp>;
-			dynamic-power-coefficient = <85>;
+			dynamic-power-coefficient = <71>;
 			capacity-dmips-mhz = <801>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -342,7 +357,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <1800000000>;
 			operating-points-v2 = <&cluster1_opp>;
-			dynamic-power-coefficient = <85>;
+			dynamic-power-coefficient = <71>;
 			capacity-dmips-mhz = <801>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -355,7 +370,7 @@ firmware_class.path=/vendor/firmware";
 			enable-method = "psci";
 			clock-frequency = <1800000000>;
 			operating-points-v2 = <&cluster1_opp>;
-			dynamic-power-coefficient = <85>;
+			dynamic-power-coefficient = <71>;
 			capacity-dmips-mhz = <801>;
 			cpu-idle-states = <&STANDBY &MCDI_CPU &MCDI_CLUSTER>,
 				<&SODI &SODI3 &DPIDLE &SUSPEND>;
@@ -534,22 +549,6 @@ firmware_class.path=/vendor/firmware";
 			alloc-ranges = <0 0xc0000000 0 0x10000000>;
 		};
 
-#ifdef CONFIG_MICROTRUST_TEE_SUPPORT
-		soter-shared-mem {
-			compatible = "microtrust,shared_mem";
-			no-map;
-#if defined(CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT) || \
-	defined(CONFIG_MTK_CAM_SECURITY_SUPPORT)
-			size = <0 0x800000>;
-			alignment = <0 0x1000000>;
-#else
-			size = <0 0x200000>;
-			alignment = <0 0x200000>;
-#endif
-			alloc-ranges = <0 0x40000000 0 0x50000000>;
-		};
-#endif
-
 	};
 
 	cpu_dbgapb: cpu_dbgapb@0d410000 {
@@ -651,15 +650,16 @@ firmware_class.path=/vendor/firmware";
 
 	infracfg_ao: infracfg_ao@10001000 {
 		compatible = "mediatek,common-infracfg_ao",
+			     "mediatek,infracfg_ao",
 			     "mediatek,mt6765-infracfg", "syscon";
 		reg = <0 0x10001000 0 0x1000>;
 		interrupts = <GIC_SPI 147 IRQ_TYPE_EDGE_RISING>;
 		#clock-cells = <1>;
 	};
 
-	mcdi@0010fc00 {
+	mcdi@00110100 {
 		compatible = "mediatek,mt6765-mcdi";
-		reg = <0 0x0010fc00 0 0x800>;
+		reg = <0 0x00110100 0 0x800>;
 	};
 
 	scpsys: scpsys@10001000 {
@@ -953,6 +953,7 @@ firmware_class.path=/vendor/firmware";
 		interrupts = <GIC_SPI 192 IRQ_TYPE_LEVEL_HIGH>;
 		core_1 = "enable";
 		scp_sramSize = <0x00040000>;
+		scp_mpuRegionId = <27>;
 		scp_feature_tbl = <0 47>,   /* vow */
 				  <1 356>,  /* dsp */
 				  <2 62>,   /* sensor */
@@ -1039,7 +1040,7 @@ firmware_class.path=/vendor/firmware";
 	};
 
 	accdet: accdet {
-		compatible = "mediatek,mt6357-accdet";
+		compatible = "mediatek,pmic-accdet";
 	};
 
 	goodix_fp: fingerprint {
@@ -1085,9 +1086,9 @@ firmware_class.path=/vendor/firmware";
 			compatible = "mediatek,mt6765-dvfsrc-met";
 		};
 
-		qos@00110780 {
+		qos@00110b80 {
 			compatible = "mediatek,mt6765-qos";
-			reg = <0 0x00110780 0 0x80>;
+			reg = <0 0x00110b80 0 0x80>;
 		};
 	};
 
@@ -1456,10 +1457,10 @@ firmware_class.path=/vendor/firmware";
 		reg = <0 0x10227000 0 0x1000>;
 	};
 
-	dvfsp@00110800 {
+	dvfsp@00110c00 {
 		compatible = "mediatek,mt6765-dvfsp";
-		reg = <0 0x00110800 0 0x1400>,
-		      <0 0x00110800 0 0x1400>;
+		reg = <0 0x00110c00 0 0x1400>,
+		      <0 0x00110c00 0 0x1400>;
 		state = <1>;
 		change_flag = <0>;
 		little-rise-time = <1000>;
@@ -2383,7 +2384,7 @@ firmware_class.path=/vendor/firmware";
 		memory-region = <&consys_mem>;
 	};
 
-	wifi@18000000 {
+	wifi: wifi@18000000 {
 		compatible = "mediatek,wifi";
 		reg = <0 0x18000000 0 0x100000>;
 		interrupts = <GIC_SPI 268 IRQ_TYPE_LEVEL_LOW>;
@@ -2479,12 +2480,30 @@ firmware_class.path=/vendor/firmware";
 		clock-names = "usb0",
 			"usb0_clk_top_sel",
 			"usb0_clk_univpll3_d4";
-		charger = <&mt6370_chg>;
+		pericfg= <&pericfg>;
+		interrupt-names = "mc";
+		phys = <&u2port0 PHY_TYPE_USB2>;
+		dr_mode = "otg";
+		usb-role-switch;
 	};
 
-	usb_sif@11210000 {
-		compatible = "mediatek,usb_sif";
-		reg = <0 0x11210000 0 0x10000>;
+	u2phy0: usb-phy@11210000 {
+		compatible = "mediatek,generic-tphy-v1";
+		reg = <0 0x11cc0000 0 0x0800>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		status = "okay";
+		u2port0: usb-phy@11210000 {
+			reg = <0 0x11cc0800 0 0x800>;  // older:0x100, mod by jin.wang on 2022-3-23
+			clocks = <&clk26m>;
+			clock-names = "ref";
+			#phy-cells = <1>;
+			nvmem-cells = <&u2_phy_data>;
+			nvmem-cell-names = "intr_cal";
+			nvmem-cell-masks = <0x1f>;
+			status = "okay";
+		};
 	};
 
 	msdc0:msdc@11230000 {
@@ -2654,6 +2673,9 @@ firmware_class.path=/vendor/firmware";
 		efuse_ly: ly@210 {
 			reg = <0x210 0x4>;
 		};
+		u2_phy_data: u2_phy_data@1ac {
+			reg = <0x1ac 0x4>;
+		};
 	};
 
 	mipi_tx0@11c80000 {
@@ -2729,17 +2751,21 @@ firmware_class.path=/vendor/firmware";
 		clock-names = "CAM_MDP", "IMG_DL_RELAY", "IMG_DL_ASYNC_TOP";
 	};
 
+//Begin added by liangjiaqiang for MODEL3-2208 on 2022-10-20
+#ifdef CONFIG_TCT_PROJECT_MODEL_3
 	nfc:nfc {
-			compatible = "mediatek,nfc-gpio-v2";
-			gpio-rst = <172>;
-			gpio-rst-std = <&pio 172 0x0>;
-			gpio-irq = <10>;
-			gpio-irq-std = <&pio 10 0x0>;
-		};
+		compatible = "mediatek,nfc-gpio-v2";
+		gpio-rst = <172>;
+		gpio-rst-std = <&pio 172 0x0>;
+		gpio-irq = <10>;
+		gpio-irq-std = <&pio 10 0x0>;
+	};
 
 	irq_nfc: irq_nfc {
 		compatible = "mediatek,irq_nfc-eint";
 	};
+#endif
+//End added by liangjiaqiang for MODEL3-2208 on 2022-10-20
 
 	disp_mutex0: disp_mutex0@14001000 {
 		compatible = "mediatek,disp_mutex0";
@@ -3238,6 +3264,9 @@ firmware_class.path=/vendor/firmware";
 		reg = <0 0x1a040000 0 0x1000>;
 		/* SENINF_ADDR */
 		/* Camera Common Clock Framework (CCF) */
+		/* Begin majinrui for camera s5k3l6 DVDD 2021/11/17 */
+		pmic = <&main_pmic>;
+		/* End majinrui for camera s5k3l6 DVDD 2021/11/17 */
 		clocks = <&topckgen CLK_TOP_CAMTG_SEL>,
 		<&topckgen CLK_TOP_CAMTG1_SEL>,
 		<&topckgen CLK_TOP_CAMTG2_SEL>,
@@ -3312,7 +3341,7 @@ firmware_class.path=/vendor/firmware";
 
 	flashlights_mt6370: flashlights_mt6370 {
 		compatible = "mediatek,flashlights_mt6370";
-		decouple = <0>;
+		decouple = <1>;
 		channel@1 {
 			type = <0>;
 			ct = <0>;
@@ -3324,8 +3353,8 @@ firmware_class.path=/vendor/firmware";
 			part = <0>;
 		};
 	};
-/*begin 20200901 liujunting modified for bangkok*/
- 	flashlights_aw36518: flashlights_aw36518 {
+/*begin 20210721 ljt add for jettatf*/
+	flashlights_aw36518: flashlights_aw36518 {
 		compatible = "mediatek,flashlights_aw36518";
 		/*decouple = <0>;
 		channel@1 {
@@ -3338,8 +3367,27 @@ firmware_class.path=/vendor/firmware";
 			ct = <1>;
 			part = <0>;
 		};*/
-	};	
-/*end 20200901 liujunting modified for bangkok*/
+	};
+/*end 20210721 ljt add for jettatf*/
+/*begin 20211021 majinrui [Task:11650481] add for austintf*/
+	flashlights_aw36515: flashlights_aw36515 {
+		compatible = "mediatek,flashlights_aw36515";
+		/*decouple = <0>;
+		channel@1 {
+			type = <0>;
+			ct = <0>;
+			part = <0>;
+		};
+		channel@2 {
+			type = <0>;
+			ct = <1>;
+			part = <0>;
+		};*/
+	};
+/*end 20211021 majinrui add [Task:11650481] for austintf*/
+	flashlights_aw3641e_pwm: flashlights_aw3641e_pwm {
+ 		compatible = "mediatek,flashlights_aw3641e_pwm";
+ 	};
 	gps {
 		compatible = "mediatek,gps";
 	};
@@ -3354,6 +3402,8 @@ firmware_class.path=/vendor/firmware";
 			"CAM_PWR";
 	};
 
+/* Begin modified by bitao.xiong for can't use delete-property */
+#if !defined(CONFIG_TCT_CHARGER)
 	lk_charger: lk_charger {
 		compatible = "mediatek,lk_charger";
 		enable_anime;
@@ -3377,12 +3427,18 @@ firmware_class.path=/vendor/firmware";
 		temp_t3_threshold = <45>;
 		temp_t1_threshold = <0>;
 	};
+#else
+	lk_charger: lk_charger {
+		compatible = "mediatek,lk_charger";
+	};
+#endif
+/* End modified by bitao.xiong for can't use delete-property */
 
 	pe: pe {
 		compatible = "mediatek,charger,pe";
 		gauge = <&mtk_gauge>;
 
-		ta_12v_support;
+		// ta_12v_support;  // del by jin.wang
 		ta_9v_support;
 
 		pe_ichg_level_threshold = <1000000>; /* uA */
@@ -3540,6 +3596,16 @@ firmware_class.path=/vendor/firmware";
 		adapter_name = "pd_adapter";
 	};
 
+	extcon_usb: extcon_usb {
+		compatible = "mediatek,extcon-usb";
+		charger = <&mt6370_chg>;
+		vbus-supply = <&otg_vbus>;
+		vbus-voltage = <5000000>;
+		vbus-current = <1800000>;
+		dev-conn = <&usb>;
+		mediatek,bypss-typec-sink = <1>;
+	};
+
 	rt9465_slave_chr: rt9465_slave_chr {
 		compatible = "richtek,rt9465";
 		status = "disabled";
@@ -3555,6 +3621,19 @@ firmware_class.path=/vendor/firmware";
 	tcpc_pd: mt6370_pd_eint {
 	};
 
+/* Begin added by hailong.chen for task 9209018 on 2020-04-14 */
+	wusb3801x_eint: wusb3801x_eint {
+		compatible = "mediatek, EINT_TYPEC-eint";
+	};
+
+	chr_stat: chr_stat{
+	};
+/* End added by hailong.chen for task 9209018 on 2020-04-14 */
+/* Begin add by jin.wang for task 2064 at 2021-10-11 */
+       slave_chg_eint: slave_chg_eint{
+	};
+/* End add by jin.wang */
+
 	irtx_pwm:irtx_pwm {
 		compatible = "mediatek,irtx-pwm";
 		pwm_ch = <0>;
@@ -3566,13 +3645,49 @@ firmware_class.path=/vendor/firmware";
 		/* reserved for overlay by odm */
 	};
 
+/* [SYSD][tct_param]Begin add for lcd/tp param separation */
+	lcm_module_list: lcm_module_list{
+	};
+
+	lcd_0: lcd_0{
+		status = "disable";
+	};
+
+	lcd_1: lcd_1{
+		status = "disable";
+	};
+
+	lcd_2: lcd_2{
+		status = "disable";
+	};
+
+	lcd_3: lcd_3{
+		status = "disable";
+	};
+
+	lcd_4: lcd_4{
+		status = "disable";
+	};
+
+	lcd_5: lcd_5{
+		status = "disable";
+	};
+
+	lcd_6: lcd_6{
+		status = "disable";
+	};
+
+	lcd_7: lcd_7{
+		status = "disable";
+	};
+/* [SYSD][tct_param]End add for lcd/tp param separation */
 
 	memory_ssmr_features: memory-ssmr-features {
 		compatible = "mediatek,memory-ssmr-features";
 #if defined(CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT) || \
 	defined(CONFIG_TRUSTONIC_TEE_SUPPORT) || \
 	defined(CONFIG_MICROTRUST_TEE_SUPPORT)
-		svp-size = <0 0x10000000>;
+		svp-region-based-size = <0 0x10000000>;
 #endif
 #ifdef CONFIG_MTK_CAM_SECURITY_SUPPORT
 		2d_fr-size = <0 0x8000000>;
@@ -3585,7 +3700,7 @@ firmware_class.path=/vendor/firmware";
 		wfd-size = <0 0x4000000>;
 #endif
 #ifdef CONFIG_MTK_PROT_MEM_SUPPORT
-		prot-sharedmem-size = <0 0x8000000>;
+		prot-region-based-size = <0 0x8000000>;
 #endif
 #ifdef CONFIG_MTK_HAPP_MEM_SUPPORT
 		ta-elf-size = <0 0x1000000>;
@@ -3820,7 +3935,13 @@ firmware_class.path=/vendor/firmware";
 
 #include "mediatek/cust_mt6765_msdc.dtsi"
 #include "mediatek/mt6357.dtsi"
+
+/* Begin modified by hailong.chen for task 9785237 on 2020-10-31 */
+#if !defined(CONFIG_TCT_CHARGER)
 #include "mediatek/bat_setting/mt6765_battery_prop.dtsi"
+#endif
+/* End modified by hailong.chen for task 9785237 on 2020-10-31 */
+
 #include "mediatek/mt6370.dtsi"
 #include "mediatek/mt6370_pd.dtsi"
 #ifdef CONFIG_CHARGER_RT9471

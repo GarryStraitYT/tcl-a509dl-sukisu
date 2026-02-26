@@ -49,3 +49,132 @@ config MTK_PREEMPT_TRACER
 	  long time.
 
 	  If unsure, say N.
+
+config TCL_BOOT_DETECT
+	bool "TCL BOOT Failed ,mtprof will display Error information "
+	default n
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config TCL_FORCE_BOOT_DETECT
+	bool "TCL BOOT Failed ,mtprof will force display Error information all version "
+	default n
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config LONG_VOLUPKEY_LOG_STORE
+  default n
+	bool "LONG_POWERKEY_LOG_STORE Function "
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config TCL_FORCE_DAILY_KEY_DETECT
+	bool "TCL Key Press 5 senconds Failed ,mtprof will force display Error information Daily version "
+	default n
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_EMMC_UFS_SD_ON
+	bool "Hela Eye emmc/ufs/sd driver tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_TP_ON
+	bool "Hela Eye emmc/ufs/sd driver tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_TMO24H_TCP_RETRAN_ON
+	bool "Hela tcp/ip 5228 port GMS GCM tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_ABFOTA_ON
+	bool "Hela AB FOTA AB_retry_count tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+
+config HELAEYE_BSP_THERMAL_ON
+	bool "Hela Eye thermal tracking "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_LCD_ON
+	bool "Hela Eye lcd driver tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_MODEMCRASH_ON
+	bool "Hela modem crash trigger "
+	depends on TKPERF
+	help
+	  To support Hela modem crash trigger  feature, if yes,
+	  then it is supported, if no,
+	  it is disabled.
+	  The option default disabled.
+
+config HELAEYE_BSP_SENSOR_ON
+	bool "Hela Eye sensor driver tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_CHARGER_ON
+	bool "Hela Eye charger driver tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+
+config HELAEYE_BSP_BOOT_ON
+	bool "Hela Eye boot driver tracker "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N".
+	  
+config HELAEYE_BSP_AUDIO_ON
+	bool "Hela Eye audio driver tracking "
+	depends on TKPERF
+	help
+	  Select Y if you have such function.
+	  If unsure select "N". 
+
+config HELAEYE_BSP_OOM
+        bool "Hela Eye oom driver tracking "
+        depends on TKPERF
+        help
+          Select Y if you have such function.
+          If unsure select "N".
+
+config HELAEYE_BSP_HUNG_TASK
+        bool "Hela Eye hung task driver tracking "
+        depends on TKPERF
+        help
+          Select Y if you have such function.
+          If unsure select "N".
+
+config TCT_MP2_BLUESCREEN
+        bool "MP_BRANCH_VALUE=2 BLUESCERRN WILL Control BY UART FLAG=O ,depend CONFIG_TCL_BOOT_DETECT "
+        depends on TCL_BOOT_DETECT
+        help
+          Select Y if you have such function.
+          If unsure select "N".

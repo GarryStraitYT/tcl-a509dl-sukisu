@@ -68,6 +68,8 @@
 #include <linux/mount.h>
 #include <linux/pipe_fs_i.h>
 
+#include "../lib/kstrtox.h"
+
 #include <linux/uaccess.h>
 #include <asm/processor.h>
 
@@ -96,8 +98,21 @@
 #include <linux/nmi.h>
 #endif
 
-#if defined(CONFIG_SYSCTL)
+//[TCT-SAT][PERF]Begin added by ziyuanzhao for perf XR11008593 on 20210808
+#ifdef CONFIG_TCL_SPEED_DIRECT_RECLAIM
 extern int direct_vm_swappiness;
+#endif
+//[TCT-SAT][PERF]End added by ziyuanzhao for perf XR11008593 on 20210808
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+#include <linux/protect_lru.h>
+#endif
+// #endif /* VENDOR_EDIT */
+
+#if defined(CONFIG_SYSCTL)
+
 /* External variables not in a header file. */
 extern int suid_dumpable;
 #ifdef CONFIG_COREDUMP
@@ -315,86 +330,48 @@ static int min_extfrag_threshold;
 static int max_extfrag_threshold = 1000;
 #endif
 
-#ifdef CONFIG_TCT_UI_TURBO
-static int min_sched_delay_granularity;
-static int max_sched_delay_granularity = 16;
-static int min_dynamic_uiturbo_sched_granularity;
-static int max_dynamic_uiturbo_sched_granularity = 32;
-static int min_migration_delay_granularity;
-static int max_migration_delay_granulartiy = 16;
-extern int uiturbo_enable;
-extern int uiturbo_load_boost;
-extern int uiturbo_sched_delay_granularity;
-extern int dynamic_uiturbo_sched_granularity;
-extern int uiturbo_migration_delay;
-extern int uiturbo_max_depth;
-extern int uiturbo_max_threads;
+#ifdef CONFIG_TCT_LIMIT_MEDIASCANNER
+extern int mediascanner_sleep_msecs;
+extern int mediascanner_util_threshold;
+extern int mediascanner_runtime_threshold;
 #endif
 
 static struct ctl_table kern_table[] = {
-#ifdef CONFIG_TCT_UI_TURBO
+#ifdef CONFIG_TCT_LIMIT_MEDIASCANNER
 	{
-		.procname = "uiturbo_enable",
-		.data = &uiturbo_enable,
-		.maxlen = sizeof(unsigned int),
+		.procname = "mediascanner_sleep_msecs",
+		.data = &mediascanner_sleep_msecs,
+		.maxlen = sizeof(int),
 		.mode = 0644,
 		.proc_handler= proc_dointvec,
 	},
 	{
-		.procname   = "uiturbo_load_boost",
-		.data       = &uiturbo_load_boost,
-		.maxlen     = sizeof(int),
-		.mode       = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1     = &zero,
-		.extra2     = &one_hundred,
+		.procname = "mediascanner_util_threshold",
+		.data = &mediascanner_util_threshold,
+		.maxlen = sizeof(int),
+		.mode = 0644,
+		.proc_handler= proc_dointvec,
 	},
 	{
-		.procname   = "uiturbo_sched_delay_granularity",
-		.data       = &uiturbo_sched_delay_granularity,
-		.maxlen     = sizeof(int),
-		.mode       = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1     = &min_sched_delay_granularity,
-		.extra2     = &max_sched_delay_granularity,
-	},
-	{
-		.procname   = "dynamic_uiturbo_sched_granularity",
-		.data       = &dynamic_uiturbo_sched_granularity,
-		.maxlen     = sizeof(int),
-		.mode       = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1     = &min_dynamic_uiturbo_sched_granularity,
-		.extra2     = &max_dynamic_uiturbo_sched_granularity,
-	},
-	{
-		.procname   = "uiturbo_migration_delay",
-		.data       = &uiturbo_migration_delay,
-		.maxlen     = sizeof(int),
-		.mode       = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1     = &min_migration_delay_granularity,
-		.extra2     = &max_migration_delay_granulartiy,
-	},
-	{
-		.procname   = "uiturbo_max_depth",
-		.data       = &uiturbo_max_depth,
-		.maxlen     = sizeof(int),
-		.mode       = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1     = &zero,
-		.extra2     = &one_hundred,
-	},
-	{
-		.procname   = "uiturbo_max_threads",
-		.data       = &uiturbo_max_threads,
-		.maxlen     = sizeof(int),
-		.mode       = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1     = &zero,
-		.extra2     = &one_hundred,
+		.procname = "mediascanner_runtime_threshold",
+		.data = &mediascanner_runtime_threshold,
+		.maxlen = sizeof(int),
+		.mode = 0644,
+		.proc_handler= proc_dointvec,
 	},
 #endif
+// #ifdef VENDOR_EDIT
+// haiqun.yan@KERNEL, 2022/10/28, add boost kill task
+#ifdef CONFIG_BOOST_KILL
+        {
+                .procname       = "boost_killing",
+                .data           = &sysctl_boost_killing,
+                .maxlen         = sizeof(int),
+                .mode           = 0644,
+                .proc_handler   = proc_dointvec,
+        },
+#endif
+// #endif /* VENDOR_EDIT */
 	{
 		.procname	= "sched_child_runs_first",
 		.data		= &sysctl_sched_child_runs_first,
@@ -1403,6 +1380,13 @@ static struct ctl_table vm_table[] = {
 		.proc_handler	= proc_dointvec,
 	},
 	{
+		.procname       = "reap_mem_on_sigkill",
+		.data           = &sysctl_reap_mem_on_sigkill,
+		.maxlen         = sizeof(sysctl_reap_mem_on_sigkill),
+		.mode           = 0644,
+		.proc_handler   = proc_dointvec,
+	},
+	{
 		.procname	= "overcommit_ratio",
 		.data		= &sysctl_overcommit_ratio,
 		.maxlen		= sizeof(sysctl_overcommit_ratio),
@@ -1488,21 +1472,21 @@ static struct ctl_table vm_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
-#ifdef CONFIG_ANDROID
 		.extra2		= &two_hundred,
-#else
-		.extra2		= &one_hundred,
-#endif
 	},
+//[TCT-SAT][PERF]Begin added by ziyuanzhao for perf XR11008593 on 20210808
+#ifdef CONFIG_TCL_SPEED_DIRECT_RECLAIM
 	{
-        .procname       = "direct_swappiness",
-        .data           = &direct_vm_swappiness,
-        .maxlen         = sizeof(direct_vm_swappiness),
-        .mode           = 0644,
-        .proc_handler   = proc_dointvec_minmax,
-        .extra1         = &zero,
-	.extra2		= &two_hundred,
+		.procname	= "direct_swappiness",
+		.data		= &direct_vm_swappiness,
+		.maxlen		= sizeof(direct_vm_swappiness),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero,
+		.extra2		= &two_hundred,
 	},
+#endif
+//[TCT-SAT][PERF]End added by ziyuanzhao for perf XR11008593 on 20210808
 #ifdef CONFIG_HUGETLB_PAGE
 	{
 		.procname	= "nr_hugepages",
@@ -1560,7 +1544,16 @@ static struct ctl_table vm_table[] = {
 		.extra1		= &one,
 		.extra2		= &four,
 	},
-// [TCTOPTIMIZE] Added by dingpengzheng for 10223128 @{
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+	{
+		.procname       = "protect_lru",
+		.mode           = 0440,
+		.child          = protect_lru_table,
+	},
+#endif
+// #endif /* VENDOR_EDIT */
 #ifdef CONFIG_TCT_FAST_DROP_SUPPORT
 	{
 		.procname       = "fast_drop",
@@ -1570,7 +1563,6 @@ static struct ctl_table vm_table[] = {
 		.proc_handler   = fast_drop_sysctl_handler,
 	},
 #endif //CONFIG_TCT_FAST_DROP_SUPPORT
-// [TCTOPTIMIZE] @}
 #ifdef CONFIG_COMPACTION
 	{
 		.procname	= "compact_memory",
@@ -2232,6 +2224,41 @@ static void proc_skip_char(char **buf, size_t *size, const char v)
 	}
 }
 
+/**
+ * strtoul_lenient - parse an ASCII formatted integer from a buffer and only
+ *                   fail on overflow
+ *
+ * @cp: kernel buffer containing the string to parse
+ * @endp: pointer to store the trailing characters
+ * @base: the base to use
+ * @res: where the parsed integer will be stored
+ *
+ * In case of success 0 is returned and @res will contain the parsed integer,
+ * @endp will hold any trailing characters.
+ * This function will fail the parse on overflow. If there wasn't an overflow
+ * the function will defer the decision what characters count as invalid to the
+ * caller.
+ */
+static int strtoul_lenient(const char *cp, char **endp, unsigned int base,
+			   unsigned long *res)
+{
+	unsigned long long result;
+	unsigned int rv;
+
+	cp = _parse_integer_fixup_radix(cp, &base);
+	rv = _parse_integer(cp, base, &result);
+	if ((rv & KSTRTOX_OVERFLOW) || (result != (unsigned long)result))
+		return -ERANGE;
+
+	cp += rv;
+
+	if (endp)
+		*endp = (char *)cp;
+
+	*res = (unsigned long)result;
+	return 0;
+}
+
 #define TMPBUFLEN 22
 /**
  * proc_get_long - reads an ASCII formatted integer from a user buffer
@@ -2275,7 +2302,8 @@ static int proc_get_long(char **buf, size_t *size,
 	if (!isdigit(*p))
 		return -EINVAL;
 
-	*val = simple_strtoul(p, &p, 0);
+	if (strtoul_lenient(p, &p, 0, val))
+		return -EINVAL;
 
 	len = p - tmp;
 

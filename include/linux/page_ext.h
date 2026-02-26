@@ -34,6 +34,9 @@ enum page_ext_flags {
  */
 struct page_ext {
 	unsigned long flags;
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+	unsigned int age;
+#endif
 };
 
 extern void pgdat_page_ext_init(struct pglist_data *pgdat);

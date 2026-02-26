@@ -30,6 +30,9 @@
 #include <linux/vmstat.h>
 #include <linux/writeback.h>
 #include <linux/page-flags.h>
+#ifdef CONFIG_TCL_FINE_MM_CORE
+#include <linux/memcg_policy.h>
+#endif
 
 struct mem_cgroup;
 struct page;
@@ -70,6 +73,21 @@ struct mem_cgroup_reclaim_cookie {
 	int priority;
 	unsigned int generation;
 };
+
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#if defined(CONFIG_MEMCG_PROTECT_LRU)
+static inline bool is_prot_page(struct page *page)
+{
+	return PageProtect(page);
+}
+#else
+static inline bool is_prot_page(struct page *page)
+{
+	return false;
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 #ifdef CONFIG_MEMCG
 
@@ -288,6 +306,62 @@ struct mem_cgroup {
 	bool			tcpmem_active;
 	int			tcpmem_pressure;
 
+#ifdef CONFIG_TCL_FINE_MM_ZRAM2DISK
+	unsigned long long zram_lru;
+	unsigned long long ext_lru;
+	spinlock_t zram_init_lock;
+	struct zram *zram;
+
+	atomic64_t zram_stored_size;
+	atomic64_t zram_page_size;
+	unsigned long zram_watermark;
+
+	atomic_t hyperhold_extcnt;
+	atomic_t hyperhold_peakextcnt;
+
+	atomic64_t hyperhold_stored_pages;
+	atomic64_t hyperhold_stored_size;
+	atomic64_t hyperhold_ext_notify_free;
+
+	atomic64_t hyperhold_outcnt;
+	atomic64_t hyperhold_incnt;
+	atomic64_t hyperhold_allfaultcnt;
+	atomic64_t hyperhold_faultcnt;
+	atomic64_t hyperhold_hottestcnt;
+
+	atomic64_t hyperhold_outextcnt;
+	atomic64_t hyperhold_inextcnt;
+
+	atomic64_t zram_idle_size;
+	atomic64_t zram_idle_page;
+
+	atomic64_t zram_swapout_cnt;
+	atomic64_t zram_swapin_cnt;
+
+	bool in_swapin;
+#endif
+
+#ifdef CONFIG_TCL_FINE_MM_CORE_DEBUG
+	atomic64_t total_scan;
+	atomic64_t total_scan_count;
+	atomic64_t total_reclaim;
+	atomic64_t total_active;
+	atomic64_t zswapd_swapin;
+#endif
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	struct list_head score_node;
+#define MEM_CGROUP_NAME_MAX_LEN 48
+	char name[MEM_CGROUP_NAME_MAX_LEN];
+	struct memcg_reclaim memcg_reclaimed;
+#endif
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+#define AGE_RANGE 4
+	atomic_t age_flag;
+	atomic_t most_age;
+	unsigned long range[AGE_RANGE];
+	struct memcg_work *idle_scan;
+#endif
+
 #ifdef CONFIG_MEMCG_KMEM
         /* Index in the kmem_cache->memcg_params.memcg_caches array */
 	int kmemcg_id;
@@ -315,6 +389,10 @@ struct mem_cgroup {
 	/* WARNING: nodeinfo must be the last member here */
 };
 
+#ifdef CONFIG_TCL_FINE_MM_CORE
+struct mem_cgroup *get_next_memcg(struct mem_cgroup *prev);
+void get_next_memcg_break(struct mem_cgroup *prev);
+#endif
 /*
  * size of first charge trial. "32" comes from vmscan.c's magic value.
  * TODO: maybe necessary to use big numbers in big irons.
@@ -349,6 +427,20 @@ void mem_cgroup_cancel_charge(struct page *page, struct mem_cgroup *memcg,
 void mem_cgroup_uncharge(struct page *page);
 void mem_cgroup_uncharge_list(struct list_head *page_list);
 
+// #ifdef VENDOR_EDIT
+// xiwu1.peng@KERNEL, 2022/08/25 add for protect_lru
+#ifdef CONFIG_MEMCG_PROTECT_LRU
+void protect_memcg_drain_all_stock(struct mem_cgroup *root_memcg);
+void protect_memcg_cancel_charge(struct mem_cgroup *memcg,
+				unsigned int nr_pages);
+int protect_memcg_move_account(struct page *page, bool compound,
+				struct mem_cgroup *from, struct mem_cgroup *to);
+int set_cache_page_protect(struct page *page);
+int protect_memcg_resize_limit(struct mem_cgroup *memcg, unsigned long limit);
+unsigned long protect_memcg_usage(struct mem_cgroup *memcg, bool swap);
+#endif
+//  #endif /* VENDOR_EDIT */
+
 void mem_cgroup_migrate(struct page *oldpage, struct page *newpage);
 
 static struct mem_cgroup_per_node *
@@ -377,6 +469,11 @@ static inline struct lruvec *mem_cgroup_lruvec(struct pglist_data *pgdat,
 		goto out;
 	}
 
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/19, fix kernel panic when use NULL memcg
+	if (!memcg)
+		memcg = root_mem_cgroup;
+// #endif /* VENDOR_EDIT */
 	mz = mem_cgroup_nodeinfo(memcg, pgdat->node_id);
 	lruvec = &mz->lruvec;
 out:
@@ -424,6 +521,10 @@ static inline unsigned short mem_cgroup_id(struct mem_cgroup *memcg)
 {
 	if (mem_cgroup_disabled())
 		return 0;
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (!memcg)
+		return -1;
+#endif
 
 	return memcg->id.id;
 }
@@ -435,6 +536,11 @@ static inline struct mem_cgroup *lruvec_memcg(struct lruvec *lruvec)
 
 	if (mem_cgroup_disabled())
 		return NULL;
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (is_node_lruvec(lruvec))
+		return NULL;
+#endif
 
 	mz = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
 	return mz->memcg;
@@ -642,6 +748,10 @@ static inline unsigned long lruvec_page_state(struct lruvec *lruvec,
 	if (mem_cgroup_disabled())
 		return node_page_state(lruvec_pgdat(lruvec), idx);
 
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (is_node_lruvec(lruvec))
+		return node_page_state(lruvec_pgdat(lruvec), idx);
+#endif
 	pn = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
 	x = atomic_long_read(&pn->lruvec_stat[idx]);
 #ifdef CONFIG_SMP
@@ -662,6 +772,11 @@ static inline void __mod_lruvec_state(struct lruvec *lruvec,
 
 	if (mem_cgroup_disabled())
 		return;
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (is_node_lruvec(lruvec))
+		return;
+#endif
 
 	pn = container_of(lruvec, struct mem_cgroup_per_node, lruvec);
 
@@ -687,6 +802,16 @@ static inline void mod_lruvec_state(struct lruvec *lruvec,
 	local_irq_restore(flags);
 }
 
+#ifdef CONFIG_TCL_FINE_MM_CORE
+static __always_inline bool is_file_page(struct page *page)
+{
+	if (!PageUnevictable(page) && !PageSwapBacked(page))
+		return true;
+
+	return false;
+}
+#endif
+
 static inline void __mod_lruvec_page_state(struct page *page,
 					   enum node_stat_item idx, int val)
 {
@@ -694,7 +819,11 @@ static inline void __mod_lruvec_page_state(struct page *page,
 	struct lruvec *lruvec;
 
 	/* Untracked pages have no memcg, no lruvec. Update only the node */
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if ((!page->mem_cgroup) || (is_file_page(page) && !is_prot_page(page))) {
+#else
 	if (!page->mem_cgroup) {
+#endif
 		__mod_node_page_state(pgdat, idx, val);
 		return;
 	}
@@ -725,6 +854,11 @@ static inline void __count_memcg_events(struct mem_cgroup *memcg,
 
 	if (mem_cgroup_disabled())
 		return;
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (!memcg)
+		return;
+#endif
 
 	x = count + __this_cpu_read(memcg->stat_cpu->events[idx]);
 	if (unlikely(x > MEMCG_CHARGE_BATCH)) {
@@ -1214,6 +1348,30 @@ static inline void dec_lruvec_page_state(struct page *page,
 {
 	mod_lruvec_page_state(page, idx, -1);
 }
+
+// #ifdef VENDOR_EDIT
+// huan22.wang@tcl.com, 2021/10/14, Workingset protection/detection on the anonymous LRU list V7.0
+#ifdef CONFIG_REFAULT_IO_VMSCAN
+static inline struct lruvec *parent_lruvec(struct lruvec *lruvec)
+{
+	struct mem_cgroup *memcg = NULL;
+
+#ifdef CONFIG_TCL_FINE_MM_CORE
+	if (is_node_lruvec(lruvec))
+		return NULL;
+#endif
+
+	memcg = lruvec_memcg(lruvec);
+	if (!memcg)
+		return NULL;
+	memcg = parent_mem_cgroup(memcg);
+	if (!memcg)
+		return NULL;
+
+	return mem_cgroup_lruvec(lruvec_pgdat(lruvec), memcg);
+}
+#endif
+// #endif /* VENDOR_EDIT */
 
 #ifdef CONFIG_CGROUP_WRITEBACK
 

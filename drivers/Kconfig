@@ -226,8 +226,8 @@ source "drivers/slimbus/Kconfig"
 source "drivers/interconnect/Kconfig"
 
 source "drivers/energy_model/Kconfig"
-
-#[PERF]added by yanwu for uiturbo on 2020/08/25
-source "drivers/tct/Kconfig"
-
 endmenu
+
+# Begin added by hailong.chen for task 9783931 on 2020-08-13
+source "drivers/tct/Kconfig"
+# End added by hailong.chen for task 9783931 on 2020-08-13

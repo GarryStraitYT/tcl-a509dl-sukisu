@@ -825,6 +825,8 @@ config MTK_MM_DEBUG
 	  type of errors. Wrap the debug code with this config,
 	  so we can remove the debug code by disabling it.
 
+endmenu
+
 config TCT_MEMORY_DEFRAG
 	bool "Enable memory defrag feature"
 	default n
@@ -832,9 +834,15 @@ config TCT_MEMORY_DEFRAG
 config FORCE_ZONEAREA_SHIFT
 	int "order of memory areas per-zone"
 	depends on TCT_MEMORY_DEFRAG
+	default 1 if ARM
 	default 2
+config TCT_MM_MONITOR
+	bool "enable memory monitor"
+	default n
+config TCT_ION_MONITOR
+	bool "enable ion monitor"
+	default n
 
-# [TCTOPTIMIZE] Added by dingpengzheng for 10223128 @{
 config TCT_FAST_DROP_SUPPORT
 	bool "Add fast drop support for inactive file page"
 	help
@@ -843,7 +851,4 @@ config TCT_FAST_DROP_SUPPORT
 	  (echo xxx > /proc/sys/vm/fast_drop) try to drop xxx bytes of inactive
 	  pagecache.
 
-	  Say y here if you need to use BigMemory feature in framework.
-# [TCTOPTIMIZE] @}
-
-endmenu
+	  Say y here if you need to use BigMemory/MemSense feature in framework.

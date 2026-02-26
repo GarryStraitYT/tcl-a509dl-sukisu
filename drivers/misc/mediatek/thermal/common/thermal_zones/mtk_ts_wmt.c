@@ -33,6 +33,7 @@ static DEFINE_SEMAPHORE(sem_mutex);
 static int isTimerCancelled;
 
 static int wmt_tm_debug_log;
+static DEFINE_MUTEX(WMT_pg_task_lock);
 #define wmt_tm_dprintk(fmt, args...)   \
 do { \
 	if (wmt_tm_debug_log) \
@@ -188,9 +189,15 @@ static int wmt_send_signal(int level)
 	if (ret == 0 && tm_input_pid != tm_pid) {
 		tm_pid = tm_input_pid;
 
-		if (pg_task != NULL)
+		if (pg_task != NULL){
+			mutex_lock(&WMT_pg_task_lock);
 			put_task_struct(pg_task);
+			mutex_unlock(&WMT_pg_task_lock);
+		}
+
+		rcu_read_lock();
 		pg_task = get_pid_task(find_vpid(tm_pid), PIDTYPE_PID);
+		rcu_read_unlock();
 	}
 
 	if (ret == 0 && pg_task) {
@@ -620,6 +627,9 @@ static int wmt_thz_get_temp(struct thermal_zone_device *thz_dev, int *pv)
 					temp_ts[1], temp_ts[2], temp_ts[3]);
 
 	wmt_tm_dprintk("%s: WIFI temp %d\n", __func__, temp);
+#ifdef TCL_THERMAL_DEBUG
+	pr_info("[tcl_thermal_zone-wmt] %s T_WMT=%d\n", __func__, temp);
+#endif
 
 	g_prev_temp = g_curr_temp;
 	if (sensor_select < 0 || sensor_select >= NR_TS_SENSORS) {
@@ -639,9 +649,6 @@ static int wmt_thz_get_temp(struct thermal_zone_device *thz_dev, int *pv)
 
 	*pv = temp; /* TODO: fix this. */
 
-	#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
-	*pv = 25000;
-	#endif
 	if (temp != -127000) {
 		if (temp > 100000 || temp < -30000)
 			wmt_tm_info("[%s] temp = %d\n", __func__, temp);

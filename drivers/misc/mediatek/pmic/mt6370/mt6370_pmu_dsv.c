@@ -278,6 +278,9 @@ static int mt6370_dsv_disable(struct regulator_dev *rdev)
 	struct mt6370_pmu_dsv_data *info = rdev_get_drvdata(rdev);
 
 	pr_info("%s, id = %d\n", __func__, rdev->desc->id);
+//Begin add by jiaxin.pi for SONATAVZW-4704 on 20220725
+        mt6370_pmu_reg_set_bit(info->chip,mt6370_dsv_regulators[rdev->desc->id].enable_reg,(1<<1)|(1<<2)|(1<<4)|(1<<5));
+//End add by jiaxin.pi for SONATAVZW-4704 on 20220725
 	return mt6370_pmu_reg_clr_bit(info->chip,
 		mt6370_dsv_regulators[rdev->desc->id].enable_reg,
 		mt6370_dsv_regulators[rdev->desc->id].enable_bit);
@@ -363,7 +366,7 @@ static inline int mt_parse_dt(struct device *dev,
 {
 	struct device_node *np = dev->of_node;
 	int i;
-	uint32_t val;
+	uint32_t val = 0;
 
 	for (i = 0; i < ARRAY_SIZE(dbctrl1_desc); i++) {
 		if (of_property_read_u32(np, dbctrl1_desc[i].name, &val) == 0) {

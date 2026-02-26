@@ -35,6 +35,7 @@
 #define PD_DEBUG_LEVEL	3
 
 extern int pd_get_debug_level(void);
+#define pr_fmt(fmt) "[MTK-USBPD]: %s: " fmt, __func__
 #define pd_err(fmt, args...)					\
 do {								\
 	if (pd_get_debug_level() >= PD_ERROR_LEVEL) {	\
@@ -88,6 +89,7 @@ struct mtk_pd {
 	int state;
 	struct mutex access_lock;
 	struct mutex data_lock;
+	struct power_supply *bat_psy;
 
 	int cv;
 	int pd_input_current;
@@ -189,6 +191,14 @@ extern int pd_hal_enable_charger(struct chg_alg_device *alg,
 extern int pd_hal_charger_enable_chip(struct chg_alg_device *alg,
 	enum chg_idx chgidx, bool enable);
 extern int pd_hal_get_uisoc(struct chg_alg_device *alg);
+/* [BSP]Begin added by bitao.xiong for SNTTF-635 on 2023/02/08 */
+#if IS_ENABLED(CONFIG_TCT_CHARGER)
+extern int pd_hal_get_ibat(struct chg_alg_device *alg,
+	enum chg_idx chgidx, u32 *ibat);
+int pd_hal_get_bat_current(struct chg_alg_device *alg);
+int pd_hal_get_bat_voltage(struct chg_alg_device *alg);
+#endif
+/* [BSP]End added by bitao.xiong for SNTTF-635 on 2023/02/08 */
 
 #endif /* __MTK_PD_H */
 

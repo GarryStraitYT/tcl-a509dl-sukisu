@@ -93,23 +93,6 @@ static int input_device_deinit(void)
     return ret;  
 }
 
-bool semi_touch_vkey_handled(bool pointed, unsigned int x, unsigned int y)
-{
-#if SEMI_TOUCH_VKEY_MAPPING
-    int key = 0;
-    for(key = 0; key < st_dev.stc.vkey_num; key++)
-    {
-        //kernel_log_d("x = %d, y = %d, key_x = %d, key_y = %d\n", x, y, st_dev.stc.vkey_dim_map[key][0], st_dev.stc.vkey_dim_map[key][1]);
-        if(x == st_dev.stc.vkey_dim_map[key][0] && y == st_dev.stc.vkey_dim_map[key][1])
-        {
-            input_report_key(st_dev.input, st_dev.stc.vkey_evt_arr[key], pointed ? 1 : 0);
-            return true;
-        }
-    }
-#endif
-
-    return false;
-}
 
 static irqreturn_t semi_touch_irq_handler_imp(int irq, void *p)
 {
@@ -147,34 +130,30 @@ static irqreturn_t semi_touch_irq_handler_imp(int irq, void *p)
         {
             return semi_touch_gesture_report(readbuffer[1]);
         }
+        else if(0 == pointNum)
+        {
+            return semi_touch_clear_report();
+        }
 
 #if MULTI_PROTOCOL_TYPE_A == MULTI_PROTOCOL_TYPE
         for(index = 0; index < SEMI_TOUCH_MAX_POINTS; index++)
         { 
-            //EVENT_UP = 0x04
-            pointed = (0x04 == ppt->rp.event) ? false : true;
+            pointed = (0x08 == ppt->rp.event) ? true : false;
 
             if(ppt->rp.id != 0x0f)
             {
-                if(semi_touch_vkey_handled(pointed, (unsigned int)(ppt->rp.x_h4 << 8) | ppt->rp.x_l8, (unsigned int)(ppt->rp.y_h4 << 8) | ppt->rp.y_l8))
+                if(pointed)
                 {
-
+                    input_report_key(st_dev.input, BTN_TOUCH, 1);
+                    input_report_abs(st_dev.input, ABS_MT_POSITION_X, (unsigned int)(ppt->rp.x_h4 << 8) | ppt->rp.x_l8);
+                    input_report_abs(st_dev.input, ABS_MT_POSITION_Y, (unsigned int)(ppt->rp.y_h4 << 8) | ppt->rp.y_l8);
+                    input_report_abs(st_dev.input, ABS_MT_TOUCH_MAJOR, ppt->rp.z);
+                    input_report_abs(st_dev.input, ABS_MT_WIDTH_MAJOR, ppt->rp.z);
+                    input_report_abs(st_dev.input, ABS_MT_TRACKING_ID, ppt->rp.id);
+                    input_mt_sync(st_dev.input);
                 }
                 else
                 {
-                    if(pointed)
-                    {
-                        input_report_key(st_dev.input, BTN_TOUCH, 1);
-                        input_report_abs(st_dev.input, ABS_MT_POSITION_X, (unsigned int)(ppt->rp.x_h4 << 8) | ppt->rp.x_l8);
-                        input_report_abs(st_dev.input, ABS_MT_POSITION_Y, (unsigned int)(ppt->rp.y_h4 << 8) | ppt->rp.y_l8);
-                        input_report_abs(st_dev.input, ABS_MT_TOUCH_MAJOR, ppt->rp.z);
-                        input_report_abs(st_dev.input, ABS_MT_WIDTH_MAJOR, ppt->rp.z);
-                        input_report_abs(st_dev.input, ABS_MT_TRACKING_ID, ppt->rp.id);
-                        input_mt_sync(st_dev.input);
-                    }
-                    else
-                    {
-                    }
                 }
             }
             ppt++;
@@ -182,44 +161,30 @@ static irqreturn_t semi_touch_irq_handler_imp(int irq, void *p)
 #elif MULTI_PROTOCOL_TYPE_B == MULTI_PROTOCOL_TYPE
         for(index = 0; index < SEMI_TOUCH_MAX_POINTS; index++)
         { 
-            //EVENT_UP = 0x04
-            pointed = (0x04 == ppt->rp.event) ? false : true;
+            pointed = (0x08 == ppt->rp.event) ? true : false;
 
             if(ppt->rp.id != 0x0f)
             {
-                if(semi_touch_vkey_handled(pointed, (unsigned int)(ppt->rp.x_h4 << 8) | ppt->rp.x_l8, (unsigned int)(ppt->rp.y_h4 << 8) | ppt->rp.y_l8))
+                input_mt_slot(st_dev.input, ppt->rp.id);
+                input_mt_report_slot_state(st_dev.input, MT_TOOL_FINGER, pointed);
+                if(pointed)
                 {
-
+                    input_report_abs(st_dev.input, ABS_MT_POSITION_X, (unsigned int)(ppt->rp.x_h4 << 8) | ppt->rp.x_l8);
+                    input_report_abs(st_dev.input, ABS_MT_POSITION_Y, (unsigned int)(ppt->rp.y_h4 << 8) | ppt->rp.y_l8);
+                    input_report_abs(st_dev.input, ABS_MT_TOUCH_MAJOR, ppt->rp.z);
+                    input_report_abs(st_dev.input, ABS_MT_WIDTH_MAJOR, ppt->rp.z);
+                    input_report_key(st_dev.input, BTN_TOUCH, 1);
                 }
                 else
                 {
-                    input_mt_slot(st_dev.input, ppt->rp.id);
-                    input_mt_report_slot_state(st_dev.input, MT_TOOL_FINGER, pointed);
-                    if(pointed)
-                    {
-                        input_report_abs(st_dev.input, ABS_MT_POSITION_X, (unsigned int)(ppt->rp.x_h4 << 8) | ppt->rp.x_l8);
-                        input_report_abs(st_dev.input, ABS_MT_POSITION_Y, (unsigned int)(ppt->rp.y_h4 << 8) | ppt->rp.y_l8);
-                        input_report_abs(st_dev.input, ABS_MT_TOUCH_MAJOR, ppt->rp.z);
-                        input_report_abs(st_dev.input, ABS_MT_WIDTH_MAJOR, ppt->rp.z);
-                        input_report_key(st_dev.input, BTN_TOUCH, 1);
-                    }
-                    else
-                    {
-                    }
                 }
             }
             ppt++;
         }
 #endif
     }
-    if(0 == pointNum) 
-    {
-        semi_touch_clear_report();
-    }
-    else
-    {
-        input_sync(st_dev.input);
-    }
+    //input_mt_report_pointer_emulation(st_dev.input, true);
+    input_sync(st_dev.input);
 
     return IRQ_RETVAL(IRQ_HANDLED);
 }
@@ -283,58 +248,16 @@ static int semi_touch_irq_init(struct sm_touch_dev *st_dev)
 int semi_touch_resolution_adaption(struct sm_touch_dev *st_dev)
 {
     int ret = -SEMI_DRV_ERR_HAL_IO;
-    unsigned char readbuffer[0x10] = {0};
-    unsigned short index, pix_x, pix_y;
-    const int vkey_evt[] = SEMI_TOUCH_KEY_EVT;
+    unsigned char readbuffer[0x0c] = {0};
 
     ret = semi_touch_read_bytes(0x20000080, readbuffer, sizeof(readbuffer));
     check_return_if_fail(ret, NULL);
 
-    //xy switch
-    if(readbuffer[0x0f] & 0x02)
-    {
-        pix_x = (unsigned short)((readbuffer[0x09] << 8) + readbuffer[0x08]);
-        pix_y = (unsigned short)((readbuffer[0x07] << 8) + readbuffer[0x06]);
-    }
-    else
-    {
-        pix_x = (unsigned short)((readbuffer[0x07] << 8) + readbuffer[0x06]);
-        pix_y = (unsigned short)((readbuffer[0x09] << 8) + readbuffer[0x08]);
-    }
-    
-    input_set_abs_params(st_dev->input, ABS_MT_POSITION_X, 0, pix_x, 0, 0);
-    input_set_abs_params(st_dev->input, ABS_MT_POSITION_Y, 0, pix_y, 0, 0);
+    //pix 
+    input_set_abs_params(st_dev->input, ABS_MT_POSITION_X, 0, (unsigned short)((readbuffer[0x07] << 8) + readbuffer[0x06]), 0, 0);
+    input_set_abs_params(st_dev->input, ABS_MT_POSITION_Y, 0, (unsigned short)((readbuffer[0x09] << 8) + readbuffer[0x08]), 0, 0);
 
-    kernel_log_d("resolution = (%d, %d)\n", pix_x, pix_y);
-
-    ret = semi_touch_read_bytes(0x200000d0, readbuffer, sizeof(readbuffer));
-    check_return_if_fail(ret, NULL);
-
-    st_dev->stc.vkey_num = readbuffer[0x02];
-    memcpy(st_dev->stc.vkey_evt_arr, vkey_evt, sizeof(int) * MAX_VKEY_NUMBER);
-    //key xy switch
-    for(index = 0; (index < st_dev->stc.vkey_num) && (index < MAX_VKEY_NUMBER); index++)
-    {
-        if(readbuffer[0x03] & 0x02)
-        {
-            pix_x = (readbuffer[0x05] << 8) + readbuffer[0x04];
-            pix_y = (readbuffer[0x07 + index * 2] << 8) + readbuffer[0x06 + index * 2];
-        }
-        else
-        {
-            pix_y = (readbuffer[0x05] << 8) + readbuffer[0x04];
-            pix_x = (readbuffer[0x07 + index * 2] << 8) + readbuffer[0x06 + index * 2];
-        }
-
-        st_dev->stc.vkey_dim_map[index][0] = pix_x;
-        st_dev->stc.vkey_dim_map[index][1] = pix_y;
-        st_dev->stc.vkey_dim_map[index][2] = 10;
-        st_dev->stc.vkey_dim_map[index][3] = 10;
-
-        input_set_capability(st_dev->input, EV_KEY, st_dev->stc.vkey_evt_arr[index]);
-
-        kernel_log_d("vkey index = %d, xy = (%d, %d), event = %d\n", index, pix_x, pix_y, st_dev->stc.vkey_evt_arr[index]);
-    }
+    kernel_log_d("resolution = (%d, %d)\n", (unsigned short)((readbuffer[0x07] << 8) + readbuffer[0x06]), (unsigned short)((readbuffer[0x09] << 8) + readbuffer[0x08]));
 
     return ret;
 }

@@ -23,9 +23,7 @@
 #include "mt-plat/mtk_ccci_common.h"
 
 /* #define ENABLE_NAPI_GRO */
-#ifdef CONFIG_MTK_ECCCI_C2K
 #define ENABLE_WQ_GRO
-#endif
 
 #define  CCMNI_MTU              1500
 #define  CCMNI_TX_QUEUE         1000
@@ -42,7 +40,8 @@
 #define  SIOCFWDFILTER          (SIOCDEVPRIVATE + 2)
 /* disable ack first mechanism */
 #define  SIOCACKPRIO          (SIOCDEVPRIVATE + 3)
-
+/* push the queued packet to stack */
+#define  SIOPUSHPENDING       (SIOCDEVPRIVATE + 4)
 
 
 #define  IS_CCMNI_LAN(dev)      \
@@ -129,6 +128,10 @@ struct ccmni_instance {
 #endif
 	struct timespec    flush_time;
 	void               *priv_data;
+
+	/* For queue packet before ready */
+	struct workqueue_struct *worker;
+	struct delayed_work pkt_queue_work;
 };
 
 struct ccmni_ccci_ops {
@@ -144,6 +147,8 @@ struct ccmni_ccci_ops {
 	int (*napi_poll)(int md_id, int ccmni_idx,
 			struct napi_struct *napi, int weight);
 	int (*get_ccmni_ch)(int md_id, int ccmni_idx, struct ccmni_ch *channel);
+	void (*ccci_net_init)(char *name);
+	int (*ccci_handle_port_list)(int status, char *name);
 };
 
 struct ccmni_ctl_block {

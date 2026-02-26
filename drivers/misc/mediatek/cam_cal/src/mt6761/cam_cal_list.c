@@ -7,8 +7,14 @@
 
 struct stCAM_CAL_LIST_STRUCT g_camCalList[] = {
 	/*Below is commom sensor */
+	
+	//begin 20210816 ljt add for jetta 
+	{TSPPHCP1088_HI1336_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_gt24p64b},
+	{SHNBAD17B_OV13B10_SENSOR_ID, 0xA0, Common_read_region, Common_write_region_ov13b10},
+	{SHNBA815M_GC08A3_SENSOR_ID, 0xA0, gc08a3_read_region},
+	{TSPPH8A1327_HI846_SENSOR_ID, 0xA0, hi846_read_region},
+        //end 20210816 ljt add for jetta
 	{S5K3L6_SENSOR_ID, 0xA0, Common_read_region},
-	{OV13B10_SENSOR_ID, 0xA0, Common_read_region},
 	{IMX230_SENSOR_ID, 0xA0, Common_read_region},
 	{S5K2T7SP_SENSOR_ID, 0xA4, Common_read_region},
 	{IMX338_SENSOR_ID, 0xA0, Common_read_region},

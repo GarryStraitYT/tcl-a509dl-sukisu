@@ -123,6 +123,7 @@
 		io-channels = <&pmic_auxadc AUXADC_VCDT>;
 		io-channel-names = "pmic_vbus";
 		bc12_active = <0>;
+		bootmode = <&chosen>;
 	};
 
 	mt6357_charger: mt6357_charger {
@@ -281,12 +282,45 @@
 			regulator-max-microvolt = <1800000>;
 			regulator-enable-ramp-delay = <264>;
 		};
+//Begin added by jingqing.yan for task PASSAT-2526 on 2021-10-03
+		#if defined (CONFIG_TCT_PROJECT_PASSAT)
+		mt_pmic_vldo28_ldo_reg: ldo_vldo28 {
+			regulator-name = "vldo28";
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3000000>;
+			regulator-enable-ramp-delay = <264>;
+		        regulator-always-on;
+			regulator-boot-on;
+		};
+                //Begin add by zhe.zuo for fix camera AF pin not power down on 20221118
+		#elif defined (CONFIG_TCT_PROJECT_MODEL_3)
 		mt_pmic_vldo28_ldo_reg: ldo_vldo28 {
 			regulator-name = "vldo28";
 			regulator-min-microvolt = <2800000>;
 			regulator-max-microvolt = <3000000>;
 			regulator-enable-ramp-delay = <264>;
 		};
+                //End add by zhe.zuo for fix camera AF pin not power down on 20221118
+//begin add by jiajunzhang for LUNA84GVZW-3586 on 20221215
+		#elif defined (CONFIG_TCT_PROJECT_LUNA84GVZW)
+		mt_pmic_vldo28_ldo_reg: ldo_vldo28 {
+			regulator-name = "vldo28";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <3000000>;
+			regulator-enable-ramp-delay = <264>;
+		};
+//end add by jiajunzhang for LUNA84GVZW-3586 on 20221215
+		#else
+		mt_pmic_vldo28_ldo_reg: ldo_vldo28 {
+			regulator-name = "vldo28";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <3000000>;
+			regulator-enable-ramp-delay = <264>;
+			regulator-always-on;
+			regulator-boot-on;
+		};
+		#endif
+//End added by jingqing.yan for task PASSAT-2526 on 2021-10-03
 		mt_pmic_vsram_others_ldo_reg: ldo_vsram_others {
 			regulator-name = "vsram_others";
 			regulator-min-microvolt = <518750>;
@@ -348,7 +382,7 @@
 			regulator-min-microvolt = <2900000>;
 			regulator-max-microvolt = <3300000>;
 			regulator-enable-ramp-delay = <44>;
-			/*Add for PoWP by jitao.bie 10218344*/
+                        /*Add for PoWP by jitao.bie 10218344*/
 			regulator-always-on;
 		};
 		mt_pmic_vsim1_ldo_reg: ldo_vsim1 {
@@ -452,12 +486,17 @@
 
 	clock_buffer_ctrl: clock_buffer_ctrl {
 		compatible = "mediatek,clock_buffer";
-		n-clkbuf-pmic-dependent = <5>;
+		n-clkbuf-pmic-dependent = <10>;
 		clkbuf-pmic-dependent = "pmic-drvcurr",
 					"pmic-auxout-sel",
 					"pmic-auxout-xo",
 					"pmic-auxout-drvcurr",
-					"pmic-auxout-bblpm-en";
+					"pmic-auxout-bblpm-en",
+					"pmic-cofst-fpm",
+					"pmic-cdac-fpm",
+					"pmic-core-idac-fpm",
+					"pmic-aac-fpm-swen",
+					"pmic-heater-sel";
 
 		pmic-dcxo-cw = <0x788>;
 		pmic-xo-mode = <0x788 0 0x788 3 0x788 6 0x788 9
@@ -481,6 +520,17 @@
 			0x7b6 7 0xffff 0xffff 0x7b6 1 0x7b6 12>;
 		n-pmic-auxout-bblpm-en = <1>;
 		pmic-auxout-bblpm-en = <0x7b6 0>;
+
+		n-pmic-cofst-fpm = <1>;
+		pmic-cofst-fpm = <0x796 14>;
+		n-pmic-cdac-fpm = <1>;
+		pmic-cdac-fpm = <0x794 0>;
+		n-pmic-core-idac-fpm = <1>;
+		pmic-core-idac-fpm = <0x79a 14>;
+		n-pmic-aac-fpm-swen = <1>;
+		pmic-aac-fpm-swen = <0x79e 14>;
+		n-pmic-heater-sel = <1>;
+		pmic-heater-sel = <0x7b8 1>;
 	};
 
 };

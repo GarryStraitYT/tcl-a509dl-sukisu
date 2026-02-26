@@ -15,6 +15,12 @@
 #define _GOVERNOR_H
 
 #include <linux/devfreq.h>
+// #ifdef VENDOR_EDIT
+// shu5.zhang@tcl.com 2021/08/23 add for GT
+#ifdef CONFIG_GPU_DEVFREQ
+#include <linux/device.h>
+#endif
+// #endif /* VENDOR_EDIT */
 
 #define to_devfreq(DEV)	container_of((DEV), struct devfreq, dev)
 
@@ -24,7 +30,12 @@
 #define DEVFREQ_GOV_INTERVAL			0x3
 #define DEVFREQ_GOV_SUSPEND			0x4
 #define DEVFREQ_GOV_RESUME			0x5
-
+// #ifdef VENDOR_EDIT
+// shu5.zhang@tcl.com, 2021/06/23, Added to limit frequency.
+#ifdef CONFIG_GPU_DEVFREQ
+#define DEVFREQ_GOV_LIMITS			0x6
+#endif
+// #endif /* VENDOR_EDIT */
 /**
  * struct devfreq_governor - Devfreq policy governor
  * @node:		list node - contains registered devfreq governors

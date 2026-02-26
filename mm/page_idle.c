@@ -92,7 +92,11 @@ static bool page_idle_clear_pte_refs_one(struct page *page,
 	return true;
 }
 
+#ifdef CONFIG_TCL_FINE_MM_WORKINGSET
+void page_idle_clear_pte_refs(struct page *page)
+#else
 static void page_idle_clear_pte_refs(struct page *page)
+#endif
 {
 	/*
 	 * Since rwc.arg is unused, rwc is effectively immutable, so we

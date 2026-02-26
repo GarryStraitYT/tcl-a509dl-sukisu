@@ -126,6 +126,13 @@
 #define CON6_VSAFE_SHIFT    0
 
 
+/* CON7 for ETA6937 */
+#define CON7_VINDPM_MASK 		0xF
+#define CON7_VINDPM_SHIFT 		4
+#define CON7_EN_ILIM2_MASK 		0x1
+#define CON7_EN_ILIM2_SHIFT 	3
+#define CON7_IIN_LIMIT_2_MASK 	0x7
+#define CON7_IIN_LIMIT_2_SHIFT	0
 
 
 

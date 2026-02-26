@@ -1,9 +1,17 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+
 #ifndef __MMDVFS_CONFIG_MT6739_H__
 #define __MMDVFS_CONFIG_MT6739_H__
 
 #include "mmdvfs_config_util.h"
+#ifdef VCORE_READY
 #include "mtk_vcorefs_manager.h"
+#else
+#define OPP_0 0
+#define OPP_1 1
+#define OPP_2 2
+#define OPP_3 3
+#endif
 
 /* Part I MMSVFS HW Configuration (OPP)*/
 /* Define the number of mmdvfs, vcore and mm clks opps */
@@ -33,7 +41,7 @@ struct mmdvfs_clk_hw_map mt6739_mmdvfs_clk_hw_map[MMDVFS_CLK_MUX_NUM] = {
 			{-1, -1},
 			{-1, -1}
 		},
-		{ MMDVFS_CLK_CONFIG_BY_MUX,
+		{ MMDVFS_CLK_CONFIG_NONE,
 			{ NULL, "MMDVFS_CLK_TOP_MMPLL_CK"}, -1, 2,
 			{-1, -1},
 			{MT6739_MMDVFS_CLK_TOP_VENCPLL_CK,
