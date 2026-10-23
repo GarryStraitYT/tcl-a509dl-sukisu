@@ -81,7 +81,7 @@ export BUILD_OPTIONS=(
 build_kernel(){
     # Make default configuration.
     # Replace 'your_defconfig' with the name of your kernel's defconfig
-    make "${BUILD_OPTIONS[@]}" bangkok_TF_defconfig
+    make "${BUILD_OPTIONS[@]}" bangkok_NA_OM_defconfig
 
     # Configure the kernel (GUI)
     make "${BUILD_OPTIONS[@]}" menuconfig
