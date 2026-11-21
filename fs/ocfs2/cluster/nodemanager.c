@@ -341,6 +341,7 @@ static ssize_t o2nm_node_local_store(struct config_item *item, const char *page,
 	struct o2nm_node *node = to_o2nm_node(item);
 	struct o2nm_cluster *cluster;
 	unsigned long tmp;
+	bool starting = false;
 	char *p = (char *)page;
 	ssize_t ret;
 
@@ -377,6 +378,7 @@ static ssize_t o2nm_node_local_store(struct config_item *item, const char *page,
 		ret = o2net_start_listening(node);
 		if (ret)
 			goto out;
+		starting = true;
 	}
 
 	if (!tmp && cluster->cl_has_local &&
@@ -389,6 +391,8 @@ static ssize_t o2nm_node_local_store(struct config_item *item, const char *page,
 	if (node->nd_local) {
 		cluster->cl_has_local = tmp;
 		cluster->cl_local_node = node->nd_num;
+		if (starting)
+			o2net_complete_start_listening(node);
 	}
 
 	ret = count;
@@ -705,7 +709,7 @@ static struct config_group *o2nm_cluster_group_make_group(struct config_group *g
 	struct o2nm_node_group *ns = NULL;
 	struct config_group *o2hb_group = NULL, *ret = NULL;
 
-	/* this runs under the parent dir's i_mutex; there can be only
+	/* this runs under the parent dir's i_rwsem; there can be only
 	 * one caller in here at a time */
 	if (o2nm_single_cluster)
 		return ERR_PTR(-ENOSPC);

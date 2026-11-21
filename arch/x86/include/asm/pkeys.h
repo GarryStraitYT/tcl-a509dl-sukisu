@@ -4,6 +4,11 @@
 
 #define ARCH_DEFAULT_PKEY	0
 
+/*
+ * If more than 16 keys are ever supported, a thorough audit
+ * will be necessary to ensure that the types that store key
+ * numbers and masks have sufficient capacity.
+ */
 #define arch_max_pkey() (boot_cpu_has(X86_FEATURE_OSPKE) ? 16 : 1)
 
 extern int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
@@ -88,6 +93,9 @@ int mm_pkey_alloc(struct mm_struct *mm)
 	 */
 	u16 all_pkeys_mask = ((1U << arch_max_pkey()) - 1);
 	int ret;
+
+	if (!arch_pkeys_enabled())
+		return -1;
 
 	/*
 	 * Are we out of pkeys?  We must handle this specially

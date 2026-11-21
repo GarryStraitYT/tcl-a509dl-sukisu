@@ -738,12 +738,16 @@ static int zynq_gpio_request(struct gpio_chip *chip, unsigned int offset)
 	int ret;
 
 	ret = pm_runtime_get_sync(chip->parent);
+	if (ret < 0) {
+		pm_runtime_put_noidle(chip->parent);
+		return ret;
+	}
 
 	/*
 	 * If the device is already active pm_runtime_get() will return 1 on
 	 * success, but gpio_request still needs to return 0.
 	 */
-	return ret < 0 ? ret : 0;
+	return 0;
 }
 
 static void zynq_gpio_free(struct gpio_chip *chip, unsigned int offset)
@@ -919,8 +923,12 @@ err_pm_dis:
 static int zynq_gpio_remove(struct platform_device *pdev)
 {
 	struct zynq_gpio *gpio = platform_get_drvdata(pdev);
+	int ret;
 
-	pm_runtime_get_sync(&pdev->dev);
+	ret = pm_runtime_get_sync(&pdev->dev);
+	if (ret < 0)
+		dev_warn(&pdev->dev, "pm_runtime_get_sync() Failed\n");
+	device_init_wakeup(&pdev->dev, 0);
 	gpiochip_remove(&gpio->chip);
 	clk_disable_unprepare(gpio->clk);
 	device_set_wakeup_capable(&pdev->dev, 0);

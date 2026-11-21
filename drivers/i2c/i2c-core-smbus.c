@@ -497,6 +497,13 @@ static s32 i2c_smbus_xfer_emulated(struct i2c_adapter *adapter, u16 addr,
 			break;
 		case I2C_SMBUS_BLOCK_DATA:
 		case I2C_SMBUS_BLOCK_PROC_CALL:
+			if (msg[1].buf[0] > I2C_SMBUS_BLOCK_MAX) {
+				dev_err(&adapter->dev,
+					"Invalid block size returned: %d\n",
+					msg[1].buf[0]);
+				status = -EPROTO;
+				goto cleanup;
+			}
 			for (i = 0; i < msg[1].buf[0] + 1; i++)
 				data->block[i] = msg[1].buf[i];
 			break;
@@ -546,6 +553,21 @@ s32 __i2c_smbus_xfer(struct i2c_adapter *adapter, u16 addr,
 	unsigned long orig_jiffies;
 	int try;
 	s32 res;
+
+	/*
+	 * Reject invalid caller-supplied block lengths before any
+	 * tracepoint or native smbus_xfer callback runs. data->block[0]
+	 * is filled in by the device on SMBus block reads, so only check
+	 * the operations where the length is supplied by the caller.
+	 */
+	if (data &&
+	    (protocol == I2C_SMBUS_I2C_BLOCK_DATA ||
+	     protocol == I2C_SMBUS_BLOCK_PROC_CALL ||
+	     (protocol == I2C_SMBUS_BLOCK_DATA &&
+	      read_write == I2C_SMBUS_WRITE)) &&
+	    (data->block[0] == 0 ||
+	     data->block[0] > I2C_SMBUS_BLOCK_MAX))
+		return -EINVAL;
 
 	/* If enabled, the following two tracepoints are conditional on
 	 * read_write and protocol.

@@ -577,7 +577,7 @@ static int pm8001_set_nvmd(struct pm8001_hba_info *pm8001_ha)
 	struct pm8001_ioctl_payload	*payload;
 	DECLARE_COMPLETION_ONSTACK(completion);
 	u8		*ioctlbuffer;
-	u32		ret;
+	int		ret;
 	u32		length = 1024 * 5 + sizeof(*payload) - 1;
 
 	if (pm8001_ha->fw_image->size > 4096) {
@@ -714,6 +714,15 @@ static ssize_t pm8001_store_update_fw(struct device *cdev,
 	filename_ptr = cmd_ptr + count;
 	res = sscanf(buf, "%s %s", cmd_ptr, filename_ptr);
 	if (res != 2) {
+		pm8001_ha->fw_status = FAIL_PARAMETERS;
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (pm8001_ha->controller_fatal_error) {
+		PM8001_FAIL_DBG(pm8001_ha,
+			pm8001_printk(
+			"controller in fatal error state, firmware update rejected\n"));
 		pm8001_ha->fw_status = FAIL_PARAMETERS;
 		ret = -EINVAL;
 		goto out;

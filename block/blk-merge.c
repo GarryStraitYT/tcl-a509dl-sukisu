@@ -7,6 +7,8 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/scatterlist.h>
+#include <linux/blkdev.h>
+#include <linux/blk-cgroup.h>
 
 #include <trace/events/block.h>
 #include <mt-plat/mtk_blocktag.h> /* MTK PATCH */
@@ -450,8 +452,10 @@ int blk_rq_map_sg(struct request_queue *q, struct request *rq,
 	    (blk_rq_bytes(rq) & q->dma_pad_mask)) {
 		unsigned int pad_len =
 			(q->dma_pad_mask & ~blk_rq_bytes(rq)) + 1;
+		unsigned int data_len = sg->length;
 
 		sg->length += pad_len;
+		sg_zero_buffer(sg, 1, pad_len, data_len);
 		rq->extra_len += pad_len;
 	}
 
@@ -489,6 +493,9 @@ static inline int ll_new_hw_segment(struct request_queue *q,
 	int nr_phys_segs = bio_phys_segments(q, bio);
 
 	if (req->nr_phys_segments + nr_phys_segs > queue_max_segments(q))
+		goto no_merge;
+
+	if (!blk_cgroup_mergeable(req, bio))
 		goto no_merge;
 
 	if (blk_integrity_merge_bio(q, req, bio) == false)
@@ -616,6 +623,9 @@ static int ll_merge_requests_fn(struct request_queue *q, struct request *req,
 	}
 
 	if (total_phys_segments > queue_max_segments(q))
+		return 0;
+
+	if (!blk_cgroup_mergeable(req, next->bio))
 		return 0;
 
 	if (blk_integrity_merge_rq(q, req, next) == false)
@@ -853,6 +863,10 @@ bool blk_rq_merge_ok(struct request *rq, struct bio *bio)
 
 	/* must be same device and not a special request */
 	if (rq->rq_disk != bio->bi_disk || req_no_special_merge(rq))
+		return false;
+
+	/* don't merge across cgroup boundaries */
+	if (!blk_cgroup_mergeable(rq, bio))
 		return false;
 
 	/* only merge integrity protected bio into ditto rq */

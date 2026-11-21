@@ -696,7 +696,8 @@ bool kallsyms_show_value(const struct cred *cred)
 			return true;
 	/* fallthrough */
 	case 1:
-		if (security_capable(cred, &init_user_ns, CAP_SYSLOG, CAP_OPT_NOAUDIT) == 0)
+		if (security_capable(cred, &init_user_ns, CAP_SYSLOG,
+				     CAP_OPT_NOAUDIT) == 0)
 			return true;
 	/* fallthrough */
 	default:
@@ -717,6 +718,10 @@ static int kallsyms_open(struct inode *inode, struct file *file)
 		return -ENOMEM;
 	reset_iter(iter, 0);
 
+	/*
+	 * Instead of checking this on every s_show() call, cache
+	 * the result here at open time.
+	 */
 	iter->show_value = kallsyms_show_value(file->f_cred);
 	return 0;
 }

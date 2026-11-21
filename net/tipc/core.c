@@ -93,6 +93,11 @@ out_sk_rht:
 static void __net_exit tipc_exit_net(struct net *net)
 {
 	tipc_net_stop(net);
+
+	/* Make sure the tipc_net_finalize_work stopped
+	 * before releasing the resources.
+	 */
+	flush_scheduled_work();
 	tipc_bcast_stop(net);
 	tipc_nametbl_stop(net);
 	tipc_sk_rht_destroy(net);
@@ -177,6 +182,11 @@ static void __exit tipc_exit(void)
 	tipc_socket_stop();
 	unregister_pernet_device(&tipc_net_ops);
 	tipc_unregister_sysctl();
+
+	/* TODO: Wait for all timers that called call_rcu() to finish before
+	 * calling rcu_barrier().
+	 */
+	rcu_barrier();
 
 	pr_info("Deactivated\n");
 }

@@ -965,7 +965,10 @@ void services_compute_xperms_decision(struct extended_perms_decision *xpermd,
 					xpermd->driver))
 			return;
 	} else {
-		BUG();
+		pr_warn_once(
+			"SELinux: unknown extended permission (%u) will be ignored\n",
+			node->datum.u.xperms->specified);
+		return;
 	}
 
 	if (node->key.specified == AVTAB_XPERMS_ALLOWED) {
@@ -1002,7 +1005,8 @@ void services_compute_xperms_decision(struct extended_perms_decision *xpermd,
 					node->datum.u.xperms->perms.p[i];
 		}
 	} else {
-		BUG();
+		pr_warn_once("SELinux: unknown specified key (%u)\n",
+			     node->key.specified);
 	}
 }
 
@@ -2884,8 +2888,12 @@ err:
 	if (*names) {
 		for (i = 0; i < *len; i++)
 			kfree((*names)[i]);
+		kfree(*names);
 	}
 	kfree(*values);
+	*len = 0;
+	*names = NULL;
+	*values = NULL;
 	goto out;
 }
 
@@ -3172,7 +3180,7 @@ int security_get_classes(struct selinux_state *state,
 			 char ***classes, int *nclasses)
 {
 	struct policydb *policydb = &state->ss->policydb;
-	int rc;
+	int rc, i;
 
 	if (!state->initialized) {
 		*nclasses = 0;
@@ -3190,14 +3198,29 @@ int security_get_classes(struct selinux_state *state,
 
 	rc = hashtab_map(policydb->p_classes.table, get_classes_callback,
 			*classes);
-	if (rc) {
-		int i;
-		for (i = 0; i < *nclasses; i++)
-			kfree((*classes)[i]);
-		kfree(*classes);
+	if (rc)
+		goto err;
+
+	/*
+	 * The class symtab may be sparse, which policydb_class_isvalid() exists
+	 * to absorb; the callback fills this array by value, so an unclaimed
+	 * one leaves a NULL that sel_make_classes() hands to sel_make_dir().
+	 */
+	for (i = 0; i < *nclasses; i++) {
+		if (!(*classes)[i]) {
+			rc = -EINVAL;
+			goto err;
+		}
 	}
 
 out:
+	read_unlock(&state->ss->policy_rwlock);
+	return rc;
+
+err:
+	for (i = 0; i < *nclasses; i++)
+		kfree((*classes)[i]);
+	kfree(*classes);
 	read_unlock(&state->ss->policy_rwlock);
 	return rc;
 }

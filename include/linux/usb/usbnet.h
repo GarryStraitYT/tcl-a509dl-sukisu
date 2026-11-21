@@ -86,7 +86,8 @@ struct usbnet {
 #		define EVENT_SET_RX_MODE	12
 #		define EVENT_NO_IP_ALIGN	13
 
-	ANDROID_KABI_RESERVE(1);
+#		define EVENT_LINK_CARRIER_ON	14
+	ANDROID_KABI_USE2(1, u32 rx_speed, u32 tx_speed); /* bps, not Mbps */
 	ANDROID_KABI_RESERVE(2);
 	ANDROID_KABI_RESERVE(3);
 	ANDROID_KABI_RESERVE(4);

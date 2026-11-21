@@ -201,13 +201,20 @@ static const struct nla_policy tunnel_key_policy[TCA_TUNNEL_KEY_MAX + 1] = {
 	[TCA_TUNNEL_KEY_ENC_TTL]      = { .type = NLA_U8 },
 };
 
+static void tunnel_key_release_params_rcu(struct rcu_head *head)
+{
+	struct tcf_tunnel_key_params *p = container_of(head, typeof(*p), rcu);
+
+	if (p->tcft_action == TCA_TUNNEL_KEY_ACT_SET)
+		dst_release(&p->tcft_enc_metadata->dst);
+	kfree(p);
+}
+
 static void tunnel_key_release_params(struct tcf_tunnel_key_params *p)
 {
 	if (!p)
 		return;
-	if (p->tcft_action == TCA_TUNNEL_KEY_ACT_SET)
-		dst_release(&p->tcft_enc_metadata->dst);
-	kfree_rcu(p, rcu);
+	call_rcu(&p->rcu, tunnel_key_release_params_rcu);
 }
 
 static int tunnel_key_init(struct net *net, struct nlattr *nla,
@@ -314,7 +321,7 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 
 			metadata = __ipv6_tun_set_dst(&saddr, &daddr, tos, ttl, dst_port,
 						      0, flags,
-						      key_id, 0);
+						      key_id, opts_len);
 		} else {
 			NL_SET_ERR_MSG(extack, "Missing either ipv4 or ipv6 src and dst");
 			ret = -EINVAL;

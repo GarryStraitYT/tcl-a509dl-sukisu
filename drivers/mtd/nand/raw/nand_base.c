@@ -5045,12 +5045,16 @@ static int nand_flash_detect_ext_param_page(struct nand_chip *chip,
 	struct onfi_ext_param_page *ep;
 	struct onfi_ext_section *s;
 	struct onfi_ext_ecc_info *ecc;
+	size_t remaining, section_len;
 	uint8_t *cursor;
 	int ret;
 	int len;
 	int i;
 
 	len = le16_to_cpu(p->ext_param_page_length) * 16;
+	if (len < (int)sizeof(*ep))
+		return -EINVAL;
+
 	ep = kmalloc(len, GFP_KERNEL);
 	if (!ep)
 		return -ENOMEM;
@@ -5085,11 +5089,27 @@ static int nand_flash_detect_ext_param_page(struct nand_chip *chip,
 
 	/* find the ECC section. */
 	cursor = (uint8_t *)(ep + 1);
+	remaining = len - sizeof(*ep);
 	for (i = 0; i < ONFI_EXT_SECTION_MAX; i++) {
 		s = ep->sections + i;
-		if (s->type == ONFI_SECTION_TYPE_2)
+		section_len = s->length * 16;
+		if (section_len > remaining) {
+			pr_debug("ONFI extended parameter section %d exceeds page\n",
+				 i);
+			goto ext_out;
+		}
+
+		if (s->type == ONFI_SECTION_TYPE_2) {
+			if (section_len < sizeof(*ecc)) {
+				pr_debug("ONFI extended parameter ECC section %d is too short\n",
+					 i);
+				goto ext_out;
+			}
 			break;
-		cursor += s->length * 16;
+		}
+
+		cursor += section_len;
+		remaining -= section_len;
 	}
 	if (i == ONFI_EXT_SECTION_MAX) {
 		pr_debug("We can not find the ECC section.\n");
@@ -5953,7 +5973,7 @@ static int nand_dt_init(struct nand_chip *chip)
 
 /**
  * nand_scan_ident - Scan for the NAND device
- * @mtd: MTD device structure
+ * @chip: NAND chip object
  * @maxchips: number of chips to scan for
  * @table: alternative NAND ID table
  *
@@ -5965,11 +5985,11 @@ static int nand_dt_init(struct nand_chip *chip)
  * prevented dynamic allocations during this phase which was unconvenient and
  * as been banned for the benefit of the ->init_ecc()/cleanup_ecc() hooks.
  */
-static int nand_scan_ident(struct mtd_info *mtd, int maxchips,
+static int nand_scan_ident(struct nand_chip *chip, int maxchips,
 			   struct nand_flash_dev *table)
 {
+	struct mtd_info *mtd = nand_to_mtd(chip);
 	int i, nand_maf_id, nand_dev_id;
-	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret;
 
 	/* Enforce the right timings for reset/detection */
@@ -6423,15 +6443,15 @@ static bool nand_ecc_strength_good(struct mtd_info *mtd)
 
 /**
  * nand_scan_tail - Scan for the NAND device
- * @mtd: MTD device structure
+ * @chip: NAND chip object
  *
  * This is the second phase of the normal nand_scan() function. It fills out
  * all the uninitialized function pointers with the defaults and scans for a
  * bad block table if appropriate.
  */
-static int nand_scan_tail(struct mtd_info *mtd)
+static int nand_scan_tail(struct nand_chip *chip)
 {
-	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct mtd_info *mtd = nand_to_mtd(chip);
 	struct nand_ecc_ctrl *ecc = &chip->ecc;
 	int ret, i;
 
@@ -6770,7 +6790,7 @@ static void nand_detach(struct nand_chip *chip)
 
 /**
  * nand_scan_with_ids - [NAND Interface] Scan for the NAND device
- * @mtd: MTD device structure
+ * @chip: NAND chip object
  * @maxchips: number of chips to scan for. @nand_scan_ident() will not be run if
  *	      this parameter is zero (useful for specific drivers that must
  *	      handle this part of the process themselves, e.g docg4).
@@ -6780,14 +6800,13 @@ static void nand_detach(struct nand_chip *chip)
  * The flash ID is read and the mtd/chip structures are filled with the
  * appropriate values.
  */
-int nand_scan_with_ids(struct mtd_info *mtd, int maxchips,
+int nand_scan_with_ids(struct nand_chip *chip, int maxchips,
 		       struct nand_flash_dev *ids)
 {
-	struct nand_chip *chip = mtd_to_nand(mtd);
 	int ret;
 
 	if (maxchips) {
-		ret = nand_scan_ident(mtd, maxchips, ids);
+		ret = nand_scan_ident(chip, maxchips, ids);
 		if (ret)
 			return ret;
 	}
@@ -6796,7 +6815,7 @@ int nand_scan_with_ids(struct mtd_info *mtd, int maxchips,
 	if (ret)
 		goto cleanup_ident;
 
-	ret = nand_scan_tail(mtd);
+	ret = nand_scan_tail(chip);
 	if (ret)
 		goto detach_chip;
 
@@ -6847,12 +6866,12 @@ EXPORT_SYMBOL_GPL(nand_cleanup);
 /**
  * nand_release - [NAND Interface] Unregister the MTD device and free resources
  *		  held by the NAND device
- * @mtd: MTD device structure
+ * @chip: NAND chip object
  */
-void nand_release(struct mtd_info *mtd)
+void nand_release(struct nand_chip *chip)
 {
-	mtd_device_unregister(mtd);
-	nand_cleanup(mtd_to_nand(mtd));
+	mtd_device_unregister(nand_to_mtd(chip));
+	nand_cleanup(chip);
 }
 EXPORT_SYMBOL_GPL(nand_release);
 
