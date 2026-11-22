@@ -548,6 +548,9 @@ PVRSRV_MMap(struct file *pFile, struct vm_area_struct *ps_vma)
 	IMG_HANDLE hSecurePMRHandle = (IMG_HANDLE)((uintptr_t)ps_vma->vm_pgoff);
 	PMR *psPMR;
 	PVRSRV_ERROR eError;
+	PVRSRV_MEMALLOCFLAGS_T uiProtFlags =
+	    (BITMASK_HAS(ps_vma->vm_flags, VM_READ) ? PVRSRV_MEMALLOCFLAG_CPU_READABLE : 0) |
+	    (BITMASK_HAS(ps_vma->vm_flags, VM_WRITE) ? PVRSRV_MEMALLOCFLAG_CPU_WRITEABLE : 0);
 
 	if (psConnection == NULL)
 	{
@@ -577,7 +580,7 @@ PVRSRV_MMap(struct file *pFile, struct vm_area_struct *ps_vma)
 	 * Unref the handle immediately, because we have now done
 	 * the required operation on the PMR (whether it succeeded or not)
 	 */
-	eError = PMRMMapPMR(psPMR, ps_vma);
+	eError = PMRMMapPMR(psPMR, ps_vma, uiProtFlags);
 	mutex_unlock(&g_sMMapMutex);
 	PVRSRVReleaseHandle(psConnection->psHandleBase, hSecurePMRHandle, PVRSRV_HANDLE_TYPE_PHYSMEM_PMR);
 	if (eError != PVRSRV_OK)
