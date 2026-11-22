@@ -37,7 +37,7 @@ extern void bl_ts_set_int_gpio(unsigned char level);
 
 #define CHIP_ID_REG     0xe7
 
-int bl_soft_reset_switch_int_wakemode()
+int bl_soft_reset_switch_int_wakemode(void)
 {
     unsigned char cmd[4];
 	int ret = 0x00;
