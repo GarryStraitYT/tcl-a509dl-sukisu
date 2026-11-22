@@ -740,7 +740,9 @@ PVRSRV_ERROR RGXFabricCoherencyTest(const void *hPrivate)
 	IMG_UINT32 ui32OddEvenSeed = 1;
 	PVRSRV_ERROR eError = PVRSRV_OK;
 	IMG_BOOL bFullTestPassed = IMG_TRUE;
+#if defined(DEBUG)
 	IMG_BOOL bSubTestPassed = IMG_FALSE;
+#endif
 	IMG_BOOL bExit = IMG_FALSE;
 
 	PVR_ASSERT(hPrivate != NULL);
@@ -1033,11 +1035,15 @@ PVRSRV_ERROR RGXFabricCoherencyTest(const void *hPrivate)
 				/* Compare to see if sub-test passed */
 				if (pui32FabricCohTestBufferCpuVA[i] == ui32FWValue)
 				{
+#if defined(DEBUG)
 					bSubTestPassed = IMG_TRUE;
+#endif
 				}
 				else
 				{
+#if defined(DEBUG)
 					bSubTestPassed = IMG_FALSE;
+#endif
 					bFullTestPassed = IMG_FALSE;
 					eError = PVRSRV_ERROR_INIT_FAILURE;
 					if (ui32LastFWValue != ui32FWValue)

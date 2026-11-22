@@ -4128,8 +4128,10 @@ PVRSRV_ERROR PVRSRVRGXKickTA3DKM(RGX_SERVER_RENDER_CONTEXT	*psRenderContext,
 	if (iCheckTAFence >= 0 || iUpdateTATimeline >= 0 ||
 	    iCheck3DFence >= 0 || iUpdate3DTimeline >= 0)
 	{
-		PRGXFWIF_UFO_ADDR	*pauiClientTAIntUpdateUFOAddress = NULL;
-		PRGXFWIF_UFO_ADDR	*pauiClient3DIntUpdateUFOAddress = NULL;
+#if defined(TA3D_CHECKPOINT_DEBUG) && defined(PVRSRV_NEED_PVR_DPF)
+		PRGXFWIF_UFO_ADDR *pauiClientTAIntUpdateUFOAddress;
+		PRGXFWIF_UFO_ADDR *pauiClient3DIntUpdateUFOAddress;
+#endif
 
 		CHKPT_DBG((PVR_DBG_ERROR,
 				   "%s: [TA] iCheckFence = %d, iUpdateTimeline = %d",
@@ -4175,9 +4177,10 @@ PVRSRV_ERROR PVRSRVRGXKickTA3DKM(RGX_SERVER_RENDER_CONTEXT	*psRenderContext,
 						   __func__, iUpdateTAFence,
 						   (void*)psTAFenceTimelineUpdateSync,
 						   ui32TAFenceTimelineUpdateValue));
-
-				/* Store the FW address of the update sync checkpoint in pauiClientTAIntUpdateUFOAddress */
-				pauiClientTAIntUpdateUFOAddress = SyncCheckpointGetRGXFWIFUFOAddr(psUpdateTASyncCheckpoint);
+#if defined(TA3D_CHECKPOINT_DEBUG) && defined(PVRSRV_NEED_PVR_DPF)
+				pauiClientTAIntUpdateUFOAddress =
+#endif
+				SyncCheckpointGetRGXFWIFUFOAddr(psUpdateTASyncCheckpoint);
 				CHKPT_DBG((PVR_DBG_ERROR,
 						   "%s: pauiClientIntUpdateUFOAddress[TA]->ui32Addr=0x%x",
 						   __func__, pauiClientTAIntUpdateUFOAddress->ui32Addr));
@@ -4244,9 +4247,10 @@ PVRSRV_ERROR PVRSRVRGXKickTA3DKM(RGX_SERVER_RENDER_CONTEXT	*psRenderContext,
 						   __func__, iUpdate3DFence,
 						   (void*)ps3DFenceTimelineUpdateSync,
 						   ui323DFenceTimelineUpdateValue));
-
-				/* Store the FW address of the update sync checkpoint in pauiClient3DIntUpdateUFOAddress */
-				pauiClient3DIntUpdateUFOAddress = SyncCheckpointGetRGXFWIFUFOAddr(psUpdate3DSyncCheckpoint);
+#if defined(TA3D_CHECKPOINT_DEBUG) && defined(PVRSRV_NEED_PVR_DPF)
+				pauiClient3DIntUpdateUFOAddress =
+#endif
+				SyncCheckpointGetRGXFWIFUFOAddr(psUpdate3DSyncCheckpoint);
 				CHKPT_DBG((PVR_DBG_ERROR,
 						   "%s: pauiClientIntUpdateUFOAddress[3D]->ui32Addr=0x%x",
 						   __func__, pauiClient3DIntUpdateUFOAddress->ui32Addr));

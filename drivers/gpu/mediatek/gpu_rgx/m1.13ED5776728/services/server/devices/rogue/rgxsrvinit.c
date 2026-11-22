@@ -302,7 +302,7 @@ static INLINE void GetApphints(PVRSRV_RGXDEV_INFO *psDevInfo, RGX_SRVINIT_APPHIN
 	void *pvParamState = SrvInitParamOpen();
 	IMG_UINT32 ui32ParamTemp;
 	IMG_BOOL bS7TopInfra = IMG_FALSE, bE42290 = IMG_FALSE, bTPUFiltermodeCtrl = IMG_FALSE;
-	IMG_BOOL bE42606 = IMG_FALSE, bAXIACELite = IMG_FALSE;
+	IMG_BOOL bE42606 = IMG_FALSE;
 
 	if (RGX_IS_FEATURE_SUPPORTED(psDevInfo, S7_TOP_INFRASTRUCTURE))
 	{
@@ -322,11 +322,6 @@ static INLINE void GetApphints(PVRSRV_RGXDEV_INFO *psDevInfo, RGX_SRVINIT_APPHIN
 	if (RGX_IS_ERN_SUPPORTED(psDevInfo, 42606))
 	{
 		bE42606 = IMG_TRUE;
-	}
-
-	if (RGX_IS_FEATURE_SUPPORTED(psDevInfo, AXI_ACELITE))
-	{
-		bAXIACELite = IMG_TRUE;
 	}
 
 	/*
@@ -408,7 +403,7 @@ static INLINE void GetApphints(PVRSRV_RGXDEV_INFO *psDevInfo, RGX_SRVINIT_APPHIN
 		SrvInitParamGetUINT32(pvParamState, TruncateMode, psHints->ui32TruncateMode);
 	}
 #if defined(EMULATOR)
-	if (bAXIACELite)
+	if (RGX_IS_FEATURE_SUPPORTED(psDevInfo, AXI_ACELITE))
 	{
 		SrvInitParamGetBOOL(pvParamState, EnableTrustedDeviceAceConfig, psHints->bEnableTrustedDeviceAceConfig);
 	}
@@ -1275,7 +1270,6 @@ _ParseHTBAppHints(PVRSRV_DEVICE_NODE *psDeviceNode)
 {
 	void *pvParamState = NULL;
 	IMG_UINT32 ui32LogType;
-	IMG_BOOL bAnyLogGroupConfigured;
 	IMG_UINT32 ui32BufferSize;
 	IMG_UINT32 ui32OpMode;
 
@@ -1285,7 +1279,6 @@ _ParseHTBAppHints(PVRSRV_DEVICE_NODE *psDeviceNode)
 		return;
 
 	SrvInitParamGetUINT32BitField(pvParamState, EnableHTBLogGroup, ui32LogType);
-	bAnyLogGroupConfigured = ui32LogType ? IMG_TRUE : IMG_FALSE;
 	SrvInitParamGetUINT32List(pvParamState, HTBOperationMode, ui32OpMode);
 	SrvInitParamGetUINT32(pvParamState, HTBufferSizeInKB, ui32BufferSize);
 

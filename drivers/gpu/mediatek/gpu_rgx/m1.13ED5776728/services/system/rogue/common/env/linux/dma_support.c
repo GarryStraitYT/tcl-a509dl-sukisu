@@ -397,7 +397,6 @@ PVRSRV_ERROR SysDmaRegisterForIoRemapping(DMA_ALLOC *psDmaAlloc)
  ******************************************************************************/
 void SysDmaDeregisterForIoRemapping(DMA_ALLOC *psDmaAlloc)
 {
-	size_t uiSize;
 	IMG_UINT32 ui32Idx;
 
 	if (psDmaAlloc == NULL ||
@@ -409,8 +408,6 @@ void SysDmaDeregisterForIoRemapping(DMA_ALLOC *psDmaAlloc)
 		PVR_LOG_IF_FALSE((IMG_FALSE), "Invalid parameter");
 		return;
 	}
-
-	uiSize = PVR_ALIGN(psDmaAlloc->ui64Size, PAGE_SIZE);
 
 	/* Remove specified entries from list of I/O remap entries */
 	for (ui32Idx = 0; ui32Idx < DMA_MAX_IOREMAP_ENTRIES; ++ui32Idx)
@@ -426,7 +423,7 @@ void SysDmaDeregisterForIoRemapping(DMA_ALLOC *psDmaAlloc)
 					"VA: 0x%p, PA: 0x%llx, Size: 0x"IMG_SIZE_FMTSPECX,
 					psDmaAlloc->pvVirtAddr,
 					psDmaAlloc->sBusAddr.uiAddr,
-					uiSize));
+					(size_t)PVR_ALIGN(psDmaAlloc->ui64Size, PAGE_SIZE)));
 
 			break;
 		}

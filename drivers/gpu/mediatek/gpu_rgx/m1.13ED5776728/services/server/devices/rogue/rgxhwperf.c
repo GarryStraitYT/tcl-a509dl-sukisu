@@ -3615,7 +3615,9 @@ PVRSRV_ERROR RGXHWPerfAcquireEvents(
 	PVRSRV_ERROR			eError;
 	RGX_KM_HWPERF_DEVDATA*	psDevData = (RGX_KM_HWPERF_DEVDATA*)hDevData;
 	IMG_PBYTE				pDataDest;
+#if defined(DEBUG)
 	IMG_UINT32			ui32TlPackets = 0;
+#endif
 	PVRSRVTL_PPACKETHDR psHDRptr;
 	PVRSRVTL_PPACKETHDR pBufferEnd;
 	PVRSRVTL_PACKETTYPE ui16TlType;
@@ -3693,7 +3695,9 @@ PVRSRV_ERROR RGXHWPerfAcquireEvents(
 		psHDRptr = GET_NEXT_PACKET_ADDR(psHDRptr);
 		/* Updated to keep track of the next packet to be read. */
 		psDevData->pTlBufRead[eStreamId] = IMG_OFFSET_ADDR(psHDRptr, 0);
+#if defined(DEBUG)
 		ui32TlPackets++;
+#endif
 	}
 
 	PVR_DPF((PVR_DBG_VERBOSE, "RGXHWPerfAcquireEvents: TL Packets processed %03d", ui32TlPackets));

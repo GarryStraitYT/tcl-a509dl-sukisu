@@ -129,16 +129,17 @@ PVRSRV_ERROR OSConnectionPrivateDataInit(IMG_HANDLE *phOsPrivateData, void *pvOS
 
 PVRSRV_ERROR OSConnectionPrivateDataDeInit(IMG_HANDLE hOsPrivateData)
 {
+#if defined(SUPPORT_ION) && (LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0))
 	ENV_CONNECTION_DATA *psEnvConnection;
+#endif
 
 	if (hOsPrivateData == NULL)
 	{
 		return PVRSRV_OK;
 	}
 
-	psEnvConnection = hOsPrivateData;
-
 #if defined(SUPPORT_ION) && (LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0))
+	psEnvConnection = hOsPrivateData;
 	PVR_ASSERT(psEnvConnection->psIonData != NULL);
 
 	PVR_ASSERT(psEnvConnection->psIonData->psIonClient != NULL);
