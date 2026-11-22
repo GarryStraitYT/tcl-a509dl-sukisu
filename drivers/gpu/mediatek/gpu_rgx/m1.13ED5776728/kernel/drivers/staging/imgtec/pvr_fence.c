@@ -171,7 +171,7 @@ pvr_fence_context_fences_dump(struct pvr_fence_context *fctx,
 		}
 
 		PVR_DUMPDEBUG_LOG(pfnDumpDebugPrintf, pvDumpDebugFile,
-				  " |  @%s (foreign)", value);
+				  " |  @%s (foreign)", fence_value_str);
 	}
 	spin_unlock_irqrestore(&fctx->list_lock, flags);
 }
