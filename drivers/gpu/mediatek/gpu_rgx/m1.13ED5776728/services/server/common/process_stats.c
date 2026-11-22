@@ -1900,10 +1900,12 @@ PVRSRVStatsIncrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 	IMG_PID				  currentCleanupPid = PVRSRVGetPurgeConnectionPid();
 	PVRSRV_DATA*		  psPVRSRVData = PVRSRVGetPVRSRVData();
 	PVRSRV_PROCESS_STATS* psProcessStats = NULL;
+#if defined(PVRSRV_DEBUG_LINUX_MEMORY_STATS)
 	enum { PVRSRV_PROC_NOTFOUND,
 	       PVRSRV_PROC_FOUND,
 	       PVRSRV_PROC_RESURRECTED
 	     } eProcSearch = PVRSRV_PROC_FOUND;
+#endif
 
 	/* Don't do anything if we are not initialised or we are shutting down! */
 	if (!bProcessStatsInitialised)
@@ -1931,7 +1933,9 @@ PVRSRVStatsIncrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 			if (!psProcessStats)
 			{
 				psProcessStats = _FindProcessStatsInDeadList(currentPid);
+#if defined(PVRSRV_DEBUG_LINUX_MEMORY_STATS)
 				eProcSearch = PVRSRV_PROC_RESURRECTED;
+#endif
 			}
 		}
 	}
@@ -1941,13 +1945,17 @@ PVRSRVStatsIncrMemAllocStat(PVRSRV_MEM_ALLOC_TYPE eAllocType,
 		if (!psProcessStats)
 		{
 			psProcessStats = _FindProcessStatsInDeadList(currentPid);
+#if defined(PVRSRV_DEBUG_LINUX_MEMORY_STATS)
 			eProcSearch = PVRSRV_PROC_RESURRECTED;
+#endif
 		}
 	}
 
 	if (psProcessStats == NULL)
 	{
+#if defined(PVRSRV_DEBUG_LINUX_MEMORY_STATS)
 		eProcSearch = PVRSRV_PROC_NOTFOUND;
+#endif
 
 #if defined(PVRSRV_DEBUG_LINUX_MEMORY_STATS)
 		PVR_DPF((PVR_DBG_WARNING,

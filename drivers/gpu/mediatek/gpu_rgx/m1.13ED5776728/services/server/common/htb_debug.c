@@ -147,18 +147,12 @@ static IMG_PBYTE HTB_GetNextMessage(HTB_Sentinel_t *pSentinel)
 	PVRSRVTL_PPACKETHDR	ppHdr;	/* Current packet header */
 	IMG_UINT32	uiHdrType;		/* Packet header type */
 	IMG_UINT32	uiMsgSize;		/* Message size of current packet (bytes) */
-	IMG_UINT32	ui32DataSize;
-	IMG_UINT32	uiBufLen;
 	IMG_BOOL	bUnrecognizedErrorPrinted = IMG_FALSE;
 	IMG_UINT32	ui32Data;
 	IMG_UINT32	ui32LogIdx;
 	PVRSRV_ERROR eError;
 
 	PVR_ASSERT(NULL != pSentinel);
-
-	uiBufLen = pSentinel->uiBufLen;
-	/* Convert from byte to uint32 size */
-	ui32DataSize = pSentinel->uiBufLen / sizeof(IMG_UINT32);
 
 	pLast = pSentinel->pBuf + pSentinel->uiBufLen;
 
@@ -838,8 +832,6 @@ DecodeHTB(HTB_Sentinel_t *pSentinel, OSDI_IMPL_ENTRY *pvDumpDebugFile,
 	IMG_CHAR	aszOneArgFmt[MAX_STRING_SIZE];
 	IMG_BOOL	bUnrecognizedErrorPrinted = IMG_FALSE;
 
-	IMG_UINT32	ui32DataSize;
-	IMG_UINT32	uiBufLen = pSentinel->uiBufLen;
 	size_t	nPrinted;
 
 	void	*pNext, *pLast, *pStart, *pData = NULL;
@@ -847,9 +839,6 @@ DecodeHTB(HTB_Sentinel_t *pSentinel, OSDI_IMPL_ENTRY *pvDumpDebugFile,
 	IMG_UINT32	uiHdrType;		/* Packet header type */
 	IMG_UINT32	uiMsgSize;		/* Message size of current packet (bytes) */
 	IMG_BOOL	bPacketsDropped;
-
-	/* Convert from byte to uint32 size */
-	ui32DataSize = uiBufLen / sizeof(IMG_UINT32);
 
 	pLast = pSentinel->pBuf + pSentinel->uiBufLen;
 	pStart = pSentinel->pCurr;
@@ -861,7 +850,7 @@ DecodeHTB(HTB_Sentinel_t *pSentinel, OSDI_IMPL_ENTRY *pvDumpDebugFile,
 
 #ifdef HTB_CHATTY
 	PVR_DPF((PVR_DBG_WARNING, "%s: Buf @ %p..%p, Length = %d", __func__,
-		pStart, pLast, uiBufLen));
+		pStart, pLast, pSentinel->uiBufLen));
 #endif	/* HTB_CHATTY */
 
 	/*

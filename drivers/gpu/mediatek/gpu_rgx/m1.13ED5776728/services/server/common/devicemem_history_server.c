@@ -674,7 +674,7 @@ static PVRSRV_ERROR CreateAllocation(const IMG_CHAR *pszName,
 
 	psAlloc = ALLOC_INDEX_TO_PTR(ui32Alloc);
 
-	InitialiseAllocation(ALLOC_INDEX_TO_PTR(ui32Alloc),
+	InitialiseAllocation(psAlloc,
 						pszName,
 						ui64Serial,
 						uiPID,
