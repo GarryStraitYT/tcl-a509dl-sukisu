@@ -1110,7 +1110,7 @@ void dprec_logger_dump_reset(void)
 		sizeof(dprec_string_buffer_analysize));
 }
 
-char *dprec_logger_get_dump_addr()
+char *dprec_logger_get_dump_addr(void)
 {
 	return dprec_string_buffer_analysize;
 }
@@ -1545,7 +1545,7 @@ void dprec_logger_dump_reset(void)
 {
 }
 
-char *dprec_logger_get_dump_addr()
+char *dprec_logger_get_dump_addr(void)
 {
 	return NULL;
 }
