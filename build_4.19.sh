@@ -41,33 +41,16 @@ install_dependencies() {
 if [ ! -f ".requirements" ]; then
     install_dependencies
 fi
-mkdir -p "${KERNEL_ROOT}/out" "${KERNEL_ROOT}/build" "${HOME}/toolchains"
+mkdir -p "${KERNEL_ROOT}/out" "${KERNEL_ROOT}/build" "/work/toolchains"
 
-# init clang-r383902
-if [ ! -d "${HOME}/toolchains/clang-r383902" ]; then
-    echo -e "\n[INFO] Cloning clang-r383902...\n"
-    mkdir -p "${HOME}/toolchains/clang-r383902" && cd "${HOME}/toolchains/clang-r383902"
-    curl -LO "https://github.com/ravindu644/Android-Kernel-Tutorials/releases/download/toolchains/clang-r383902.tar.gz"
-    tar -xf clang-r383902.tar.gz && rm clang-r383902.tar.gz
-    cd "${KERNEL_ROOT}"
-fi
-
-# init arm gnu toolchain
-if [ ! -d "${HOME}/toolchains/gcc" ]; then
-    echo -e "\n[INFO] Cloning ARM GNU Toolchain\n"
-    mkdir -p "${HOME}/toolchains/gcc" && cd "${HOME}/toolchains/gcc"
-    curl -LO "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz"
-    tar -xf arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz
-    cd "${KERNEL_ROOT}"
-fi
-
-# Export toolchain paths
-export PATH="${HOME}/toolchains/clang-r383902/bin:${PATH}"
-export LD_LIBRARY_PATH="${HOME}/toolchains/clang-r383902/lib64:${LD_LIBRARY_PATH}"
+# Use the toolchains provisioned in the container.
+export PATH="/work/toolchains/clang-r584948/bin:/work/toolchains/bangkok-cross/bin:${PATH}"
+export LD_LIBRARY_PATH="/work/toolchains/clang-r584948/lib:${LD_LIBRARY_PATH}"
 
 # Set cross-compile environment variables
-# export BUILD_CROSS_COMPILE="${HOME}/toolchains/gcc/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
-export BUILD_CC="${HOME}/toolchains/clang-r383902/bin/clang"
+export BUILD_CROSS_COMPILE="/work/toolchains/bangkok-cross/bin/aarch64-linux-gnu-"
+export BUILD_CROSS_COMPILE_ARM32="/work/toolchains/bangkok-cross/bin/arm-linux-gnueabi-"
+export BUILD_CC="/work/toolchains/clang-r584948/bin/clang"
 # Build options for the kernel
 export BUILD_OPTIONS=(
     -C "${KERNEL_ROOT}"
@@ -75,6 +58,9 @@ export BUILD_OPTIONS=(
     -j"$(nproc)"
     ARCH=arm64
     CC="${BUILD_CC}"
+    CLANG_TRIPLE="aarch64-linux-gnu-"
+    CROSS_COMPILE="${BUILD_CROSS_COMPILE}"
+    CROSS_COMPILE_ARM32="${BUILD_CROSS_COMPILE_ARM32}"
     LD="ld.lld"
 )
 
